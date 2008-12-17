@@ -3,56 +3,66 @@ package com.jackcholt.revel;
 import java.io.IOException;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
     private YbkFileReader mYbkReader;
+    private String mLibraryDir;
+    private SharedPreferences mSharedPref;
+    private static final String TAG = "YbkViewActivity";
     
-    public static final String KEY_FILEPATH = "filePath";
-        
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        YbkFileReader ybkReader;
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String strLibDir = mLibraryDir = mSharedPref.getString("library_dir", "/sdcard/");
+
         setContentView(R.layout.view_ybk);
         
         WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
         
         
-        String filePath = savedInstanceState != null 
-            ? (String) savedInstanceState.get(KEY_FILEPATH)
+        Long bookId = savedInstanceState != null 
+            ? (Long) savedInstanceState.get(YbkProvider._ID)
             : null;
             
-        if (null == filePath) {
+        if (null == bookId) {
             Bundle extras = getIntent().getExtras();
-            filePath = extras != null
-                ? (String) extras.get(KEY_FILEPATH)
+            bookId = extras != null
+                ? (Long) extras.get(YbkProvider._ID)
                 : null;
         }
         
-        if (null == filePath) {
-            throw new IllegalStateException("A YBK file name was not passed in the intent.");
+        if (null == bookId) {
+            throw new IllegalStateException("A YBK bookId was not passed in the intent.");
         } else {
-            try {
-                ybkReader = mYbkReader = new YbkFileReader(filePath);
-            } catch (IOException ioe) {
-                ybkView.loadData("That book could not be opened.",
-                        "text/plain","utf-8");
-                
-                Log.e("revel", filePath + " could not be opened. " + ioe.getMessage());
-                
-                return;
+            ContentResolver contRes = getContentResolver();
+            Cursor bookCursor = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), bookId),
+                    new String[] {YbkProvider.FILE_NAME}, null, null, null);
+            String filePath = "";
+            
+            if (bookCursor.getCount() == 1) {
+                bookCursor.moveToFirst();
+                filePath = bookCursor.getString(0);
             }
-
+            
             try {
-                String fileToOpen = "\\" + ybkReader.getMBookShortTitle() + ".html.gz";
+                YbkFileReader ybkReader = mYbkReader = new YbkFileReader(filePath);
+                
+                String fileToOpen = "\\" + ybkReader.getBookShortTitle() + ".html.gz";
                 String content = ybkReader.readInternalFile(fileToOpen);
                 if (content == null) {
-                    fileToOpen = "\\" + ybkReader.getMBookShortTitle() + ".html";
+                    fileToOpen = "\\" + ybkReader.getBookShortTitle() + ".html";
                     content = ybkReader.readInternalFile(fileToOpen);
                 }
                 
@@ -64,23 +74,38 @@ public class YbkViewActivity extends Activity {
                     return;
                 }
                 
-                ybkView.loadDataWithBaseURL("",Util.htmlize(content),
-                        "text/html","utf-8","");
-            } catch (IOException e) {
-                ybkView.loadData("The index of the book could not be opened.",
-                        "text/plain","utf-8");
-                
-                Log.e("revel", "The index of " + filePath + " could not be opened. " + e.getMessage());
-                
-                return;
+                loadChapter(filePath, fileToOpen);
+            } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
             }
+            
+            
+            
+            
+            
+            //ybkView.loadUrl(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId).toString());
             
             ybkView.setWebViewClient(new WebViewClient() {
                 @Override
                 public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
-                    Log.d(Global.TAG, "WebView URL: " + url);
-                    super.shouldOverrideUrlLoading(view, url);
+                    Log.d(TAG, "WebView URL: " + url);
+
+                    int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
+                    String dataString = url.substring(ContentUriLength + 1);
                     
+                    String[] urlParts = dataString.split("/");
+                    
+                    String book = mLibraryDir + urlParts[0] + ".ybk";
+                    
+                    String chapter = "";
+                    for (int i = 0; i < urlParts.length; i++) {
+                       chapter += "\\" + urlParts[i];
+                    }
+                    chapter += ".gz";
+                    
+                    Log.i(TAG, "Loading chapter '" + chapter + "'");
+                    
+                    loadChapter(book, chapter);
                     return true;
                 }
              });
@@ -89,4 +114,31 @@ public class YbkViewActivity extends Activity {
         
     }
     
+    private void loadChapter(String filePath, String chapter) {
+    
+        WebView ybkView = mYbkView;
+        
+        
+        try {
+            mYbkReader = new YbkFileReader(filePath);
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    
+        try {
+            
+            String content = mYbkReader.readInternalFile(chapter);
+            ybkView.loadDataWithBaseURL(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString(),
+                    Util.htmlize(content),
+                    "text/html","utf-8","");
+        } catch (IOException e) {
+            ybkView.loadData("The chapter could not be opened.",
+                    "text/plain","utf-8");
+            
+            Log.e(TAG, "A chapter in " + filePath + " could not be opened. " + e.getMessage());
+            
+            return;
+        }
+
+    }
 }

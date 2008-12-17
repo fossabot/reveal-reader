@@ -10,6 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import android.content.ContentUris;
+import android.content.Context;
+import android.database.Cursor;
+
 /**
  * A class to do all the work of reading and accessing YBK files.
  * 
@@ -46,7 +50,7 @@ public class YbkFileReader {
     private String mChapterHistoryTitle = "No Title";
     private int mChapterNavFile = CHAPTER_TYPE_SETTINGS;
     private int mChapterZoomPicture = CHAPTER_ZOOM_MENU_OFF;
-    
+    private Context context = null;
     /**
      * A class to act as a structure for holding information about the chapters 
      * held inside a YBK ebook.
@@ -143,6 +147,19 @@ public class YbkFileReader {
         this(new File(fileName));
     }
     
+//    public YbkFileReader(Context ctx, final int id) {
+//        
+//        Cursor c = ctx.getContentResolver().query(
+//                ContentUris.withAppendedId(YbkProvider.BOOK_CONTENT_URI, id), 
+//                new String[] {YbkProvider.FILE_NAME}, null, null, null);
+//        
+//        c.moveToFirst();
+//        String fileName = c.getString(0);
+//        
+//        this(fileName);
+//        
+//    }
+    
     /**
      * Return the title of the book.
      * 
@@ -155,7 +172,7 @@ public class YbkFileReader {
     /**
      * @return the mBookMetaData
      */
-    public final String getMBookMetaData() {
+    public final String getBookMetaData() {
         return mBookMetaData;
     }
 
@@ -205,6 +222,8 @@ public class YbkFileReader {
             
             // Add the internal file into the list
             mInternalFiles.add(iFile);
+            
+            
         }
         
         mBindingText = readBindingFile();
@@ -556,63 +575,63 @@ public class YbkFileReader {
     /**
      * @return the mChapterNavBarTitle
      */
-    public final String getMChapterNavBarTitle() {
+    public final String getChapterNavBarTitle() {
         return mChapterNavBarTitle;
     }
 
     /**
      * @param chapterNavBarTitle the mChapterNavBarTitle to set
      */
-    public final void setMChapterNavBarTitle(String chapterNavBarTitle) {
+    public final void setChapterNavBarTitle(String chapterNavBarTitle) {
         mChapterNavBarTitle = chapterNavBarTitle;
     }
 
     /**
      * @return the mChapterHistoryTitle
      */
-    public final String getMChapterHistoryTitle() {
+    public final String getChapterHistoryTitle() {
         return mChapterHistoryTitle;
     }
 
     /**
      * @param chapterHistoryTitle the mChapterHistoryTitle to set
      */
-    public final void setMChapterHistoryTitle(String chapterHistoryTitle) {
+    public final void setChapterHistoryTitle(String chapterHistoryTitle) {
         mChapterHistoryTitle = chapterHistoryTitle;
     }
 
     /**
      * @return the mChapterNavFile
      */
-    public final int getMChapterNavFile() {
+    public final int getChapterNavFile() {
         return mChapterNavFile;
     }
 
     /**
      * @param chapterNavFile the mChapterNavFile to set
      */
-    public final void setMChapterNavFile(int chapterNavFile) {
+    public final void setChapterNavFile(int chapterNavFile) {
         mChapterNavFile = chapterNavFile;
     }
 
     /**
      * @return the mChapterZoomPicture
      */
-    public final int getMChapterZoomPicture() {
+    public final int getChapterZoomPicture() {
         return mChapterZoomPicture;
     }
 
     /**
      * @param chapterZoomPicture the mChapterZoomPicture to set
      */
-    public final void setMChapterZoomPicture(int chapterZoomPicture) {
+    public final void setChapterZoomPicture(int chapterZoomPicture) {
         mChapterZoomPicture = chapterZoomPicture;
     }
 
     /**
      * @return the mBookShortTitle
      */
-    public final String getMBookShortTitle() {
+    public final String getBookShortTitle() {
         return mBookShortTitle;
     }
 }

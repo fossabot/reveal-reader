@@ -21,6 +21,6 @@
         </activity>
         <activity android:name=".Settings" android:label="@string/settings_name"/>
         <activity android:name=".YbkViewActivity"  android:label="@string/revel_ybk_view"/>
-	    <provider android:multiprocess="true" android:authorities="com.jackcholt.revel.ybk" android:name=".YbkProvider"></provider>
+	    <provider android:multiprocess="true" android:authorities="com.jackcholt.revel" android:name=".YbkProvider"></provider>
 	</application>
 </manifest> 

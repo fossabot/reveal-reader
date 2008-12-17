@@ -1,17 +1,21 @@
 package com.jackcholt.revel;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Vector;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 
 
 public class Main extends ListActivity {
@@ -33,7 +38,6 @@ public class Main extends ListActivity {
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
     
-    
     private static final int ACTIVITY_SETTINGS = 0;
     
     private SharedPreferences mSharedPref;
@@ -42,7 +46,7 @@ public class Main extends ListActivity {
     
     private File mCurrentDirectory = new File("/sdcard/"); 
     private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
-    //private Map<String,YbkFileReader> ybkReaders = new HashMap<String,YbkFileReader>();
+    private Cursor mListCursor; 
     
     /** Called when the activity is first created. */
     @Override
@@ -52,13 +56,107 @@ public class Main extends ListActivity {
         setContentView(R.layout.main);
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        setLibraryDir(mSharedPref.getString("library_dir", "/sdcard/"));
-        browseToRoot(false);
+        String strLibDir = mLibraryDir = mSharedPref.getString("library_dir", "/sdcard/");
+        ContentResolver contRes = getContentResolver();
+        Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
         
+        // get a list of files from the database
+        Cursor fileCursor = contRes.query(bookUri, 
+                new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
+                YbkProvider.FILE_NAME + " ASC");
         
-        /*setListAdapter(new ArrayAdapter<String>(this, 
-                android.R.layout.simple_list_item_1, mStrings));*/
+        startManagingCursor(fileCursor);
         
+        if (fileCursor.getCount() == 0) {
+            Log.w(Global.TAG, "Database has no books");
+        }
+        
+        // get a list of files from the library directory
+        File libraryDir = new File(strLibDir);
+        File[] ybkFiles = libraryDir.listFiles(new YbkFilter());
+
+        Vector<Integer> notFoundInDir = new Vector<Integer>();
+        
+        // add books that are not in the database
+        for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
+            String dirFilename = ybkFiles[i].getAbsolutePath();
+            
+            boolean fileFoundInDb = false;
+            
+            fileCursor.moveToFirst();
+            while(!fileCursor.isAfterLast()) {
+                String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
+                if (dirFilename.equalsIgnoreCase(dbFilename)) {
+                    fileFoundInDb = true;
+                    break;
+                } 
+                
+                fileCursor.moveToNext();
+            }
+            
+            if (!fileFoundInDb) {
+                ContentValues values = new ContentValues();
+                values.put(YbkProvider.FILE_NAME, dirFilename);
+                contRes.insert(bookUri, values);
+            }
+        }
+        
+        // remove the books from the database if they are not in the directory
+        fileCursor.moveToFirst();
+        while(!fileCursor.isAfterLast()) {
+            String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
+            
+            boolean fileFoundInDir = false;
+            for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
+                String dirFilename = ybkFiles[i].getAbsolutePath();
+                if (dirFilename.equalsIgnoreCase(dbFilename)) {
+                    fileFoundInDir = true;
+                    break;
+                } 
+            }
+            
+            if (!fileFoundInDir) {
+                String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
+                contRes.delete(bookUri, YbkProvider._ID + "=?" , new String[] {bookId});
+            }
+            
+            fileCursor.moveToNext();
+        }
+
+
+        for(Integer id : notFoundInDir) {
+            contRes.delete(ContentUris.withAppendedId(bookUri, id), null, null);
+        }
+        
+        // no longer need the fileCursor
+        stopManagingCursor(fileCursor);
+        fileCursor.close();
+        
+        Cursor mListCursor = contRes.query(bookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, null, null,
+                " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
+        
+        startManagingCursor(mListCursor);
+        
+        // Create an array to specify the fields we want to display in the list (only TITLE)
+        String[] from = new String[]{YbkProvider.FORMATTED_TITLE};
+        
+        // and an array of the fields we want to bind those fields to (in this case just text1)
+        int[] to = new int[]{R.id.bookText};
+        
+        // Now create a simple cursor adapter and set it to display
+        SimpleCursorAdapter bookAdapter = 
+                new SimpleCursorAdapter(this, R.layout.book_list_row, mListCursor, from, to);
+        
+        setListAdapter(bookAdapter);
+    }
+    
+    /**
+     * Class for filtering non-YBK files out of a list of files 
+     */
+    private class YbkFilter implements FileFilter {
+        public boolean accept(File file) {
+            return file.getName().endsWith(".ybk"); 
+        }
     }
     
     @Override
@@ -66,16 +164,17 @@ public class Main extends ListActivity {
         super.onResume();
         
         // Set preferences from Setting screen
-                
-        setShowSplashScreen(mSharedPref.getBoolean("show_splash_screen", true));
-        setLibraryDir(mSharedPref.getString("library_dir", "/sdcard/"));
-        setDisplayMode(mSharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE));
+          
+        SharedPreferences sharedPref = mSharedPref;
+        mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
+        String libDir = mLibraryDir = sharedPref.getString("library_dir", "/sdcard/");
+        mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
         
-        mCurrentDirectory = new File(getLibraryDir());
+        mCurrentDirectory = new File(libDir);
     }
     
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         super.onCreateOptionsMenu(menu);
         menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
             .setIcon(android.R.drawable.ic_menu_recent_history);
@@ -108,7 +207,7 @@ public class Main extends ListActivity {
      * root-directory of the file-system.
      */
     private void browseToRoot(final boolean showFolders) {
-         browseTo(new File(getLibraryDir()), showFolders);
+         browseTo(new File(mLibraryDir), showFolders);
     }
     
     /**
@@ -122,13 +221,10 @@ public class Main extends ListActivity {
     } 
     
     private void browseTo(final File aDirectory, final boolean showFolders) {
-        /*if(mDisplayMode == DISPLAYMODE_RELATIVE) 
-            this.setTitle(aDirectory.getAbsolutePath() + " :: " +
-                getString(R.string.app_name));*/
         
         if (aDirectory.isDirectory()){
              this.mCurrentDirectory = aDirectory;
-             fill(aDirectory.listFiles(), showFolders);
+             //fill(aDirectory.listFiles(), showFolders);
         } else {
              OnClickListener okButtonListener = new OnClickListener() {
                   // @Override
@@ -162,19 +258,27 @@ public class Main extends ListActivity {
      * 
      * @param files
      */
-    private void fill(final File[] files, final boolean showFolders) {
+    /*private void fill(final File[] files, final boolean showFolders) {
         mDirectoryEntries.clear();
+        
+        // create the book uri
+        Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
+        int recordsDeleted = getContentResolver().delete(bookUri, null, null);
+        Log.i(Global.TAG, recordsDeleted + " books cleaned out of the " 
+                + YbkProvider.BOOK_TABLE_NAME + " table.");
         
         // add the ".." == 'Up one level'
               
-        if(showFolders && !mCurrentDirectory.getParent().equalsIgnoreCase(getLibraryDir()))
+        if(showFolders && !mCurrentDirectory.getParent().equalsIgnoreCase(mLibraryDir)) {
              mDirectoryEntries.add(new IconifiedText(getString(R.string.up_one_level),
                      getResources().getDrawable(R.drawable.uponelevel),null));
+        }
         
         Drawable currentIcon = null;
-        for (File currentFile : files) {
+        for (int i=0; i < files.length; i++) {
+            File currentFile = files[i];
             String bookTitle = null;
-            YbkTitleReader ybk = null;
+            //YbkFileReader ybk = null;
             String filePath = "";
             
             if (showFolders && currentFile.isDirectory()) {
@@ -184,24 +288,36 @@ public class Main extends ListActivity {
                  currentIcon = null;
                  
                  
-                /* Determine the Icon to be used,
+                 Determine the Icon to be used,
                  * depending on the FileEndings defined in:
-                 * res/values/fileendings.xml. */
+                 * res/values/fileendings.xml. 
                 if(checkEndsWithInStringArray(fileName, getResources().
                                     getStringArray(R.array.fileEndingWebText))) {
                      currentIcon = getResources().getDrawable(R.drawable.webtext);
                 } else if(checkEndsWithInStringArray(fileName, getResources().
                                     getStringArray(R.array.fileEndingYbk))) {
                      currentIcon = getResources().getDrawable(R.drawable.ywd);
-                     try {
+                     //try {
                          filePath = mCurrentDirectory + "/" + fileName;
-                         ybk = new YbkTitleReader(filePath);
+                         //ybk = new YbkFileReader(filePath);
                      } catch (IOException ioe) {
                          Log.w("revel", "Could not create a file reader for '" + fileName + "'.");
                          continue;
                      }
                      
-                     bookTitle = Util.formatTitle(ybk.getBookTitle());
+                     Cursor c = getContentResolver().query(bookUri, 
+                             new String[] {YbkProvider.BOOK_TITLE}, 
+                             YbkProvider.FILE_NAME + "='" + filePath + "'", null, null);
+                     
+                     // Try getting it from the database
+                     if (c.getCount() > 0) {
+                         c.moveToFirst();        
+                         bookTitle = Util.formatTitle(c.getString(
+                                 c.getColumnIndexOrThrow(YbkProvider.BOOK_TITLE)));
+                     } else {
+                         throw new IllegalStateException("Book exists in the library but couldn't get book title");
+                     }
+                             
                 } else if(checkEndsWithInStringArray(fileName, getResources().
                         getStringArray(R.array.fileEndingText))){
                      currentIcon = getResources().getDrawable(R.drawable.text);
@@ -220,12 +336,19 @@ public class Main extends ListActivity {
                         int currentPathStringLength = this.mCurrentDirectory.getAbsolutePath().length();
                         bookTitle = currentFile.getAbsolutePath()
                                    .substring(currentPathStringLength);
+                    } else {
+                        ContentValues values = new ContentValues();
+                        values.put(YbkProvider.FILE_NAME, filePath);
+                        values.put(YbkProvider.BOOK_TITLE, bookTitle);
+                        //values.put(YbkProvider.SHORT_TITLE, ybk.getBookShortTitle());
+                        //values.put(YbkProvider.METADATA, ybk.getBookMetaData());
+                        //values.put(YbkProvider.BINDING_TEXT, ybk.getBindingText());                        
+                        Uri uri = getContentResolver().insert(
+                                bookUri, values);
                     }
                     
-                    mDirectoryEntries.add(new IconifiedText(bookTitle,currentIcon, filePath));
+                    mDirectoryEntries.add(new IconifiedText(bookTitle, currentIcon, filePath));
                     
-                    //ContentValues values = new ContentValues();
-                    //Uri uri = getContentResolver().insert(YbkProvider.BOOK_CONTENT_URI, values);
                     break;
                 }
             }
@@ -238,38 +361,7 @@ public class Main extends ListActivity {
 
         this.setListAdapter(itla); 
         
-    }
-
-    
-    /**
-     * @return the showSplashScreen
-     */
-    public final boolean isShowSplashScreen() {
-        return mShowSplashScreen;
-    }
-
-    /**
-     * @param showSplashScreen the showSplashScreen to set
-     */
-    public final void setShowSplashScreen(final boolean showSplashScreen) {
-        mShowSplashScreen = showSplashScreen;
-    }
-
-    
-    /**
-     * @return the mLibraryDir
-     */
-    public final String getLibraryDir() {
-        return mLibraryDir;
-    }
-    
-
-    /**
-     * @param libraryDir the mLibraryDir to set
-     */
-    public final void setLibraryDir(final String libraryDir) {
-        mLibraryDir = libraryDir;
-    }
+    }*/
 
     /** Checks whether checkItsEnd ends with
      * one of the Strings from fileEndings */
@@ -282,39 +374,14 @@ public class Main extends ListActivity {
          return false;
     }
 
-    /**
-     * @return the mDisplayMode
-     */
-    public final int getDisplayMode() {
-        return mDisplayMode;
-    }
-
-    /**
-     * @param displayMode the mDisplayMode to set
-     */
-    public final void setDisplayMode(final int displayMode) {
-        mDisplayMode = displayMode;
-    } 
-
     @Override
     protected void onListItemClick(final ListView listView, final View view, 
             final int selectionRowId, final long id) {
-        //super.onListItemClick(listView, view, selectionRowId, id);
         
-        String filePath = mDirectoryEntries.get(selectionRowId).getFilePath();
-         
-        /*if(selectedFileText.equals(getString(R.drawable.uponelevel))) {
-            this.upOneLevel();
-        } else {*/
-         
-        if (filePath != null) {
-             // Start the activity to view the file.
-             
-             Intent intent = new Intent(this, YbkViewActivity.class);
-             intent.putExtra(YbkViewActivity.KEY_FILEPATH, filePath);
-             startActivity(intent);
-                 
-        }
+        Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
         
-    } 
+        Intent intent = new Intent(this, YbkViewActivity.class);
+        intent.putExtra(YbkProvider._ID, id);
+        startActivity(intent);
+    }
 }

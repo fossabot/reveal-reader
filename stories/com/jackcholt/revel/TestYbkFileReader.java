@@ -37,7 +37,7 @@ public class TestYbkFileReader {
     
     @Test
     public void testGetBookMetaData() {
-        Log.i("TestYbkReader", "Book meta data: " + YbkRdr.getMBookMetaData());
+        Log.i("TestYbkReader", "Book meta data: " + YbkRdr.getBookMetaData());
     }
 
     @Test
