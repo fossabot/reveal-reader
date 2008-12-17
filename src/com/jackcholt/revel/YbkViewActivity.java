@@ -114,10 +114,16 @@ public class YbkViewActivity extends Activity {
         
     }
     
-    private void loadChapter(String filePath, String chapter) {
+    /**
+     * Uses a YbkFileReader to get the content of a chapter and loads into the 
+     * WebView.
+     * 
+     * @param filePath The path to the YBK file from which to read the chapter. 
+     * @param chapter The "filename" of the chapter to load.
+     */
+    private void loadChapter(final String filePath, final String chapter) {
     
-        WebView ybkView = mYbkView;
-        
+        WebView ybkView = mYbkView; 
         
         try {
             mYbkReader = new YbkFileReader(filePath);

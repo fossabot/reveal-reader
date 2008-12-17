@@ -1,16 +1,21 @@
 package com.jackcholt.revel;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -20,6 +25,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -101,6 +107,8 @@ public class YbkProvider extends ContentProvider {
         sUriMatcher.addURI(AUTHORITY, "ybk/order", ORDERS);
     }
     
+    private HashMap<Uri, File> mTempImgFiles = new HashMap<Uri, File>();
+    
     private static class DatabaseHelper extends SQLiteOpenHelper {
 
         DatabaseHelper(final Context context) {
@@ -157,7 +165,12 @@ public class YbkProvider extends ContentProvider {
     }
 
     private DatabaseHelper mOpenHelper;
-
+    private String mLibraryDir = "/sdcard/";
+    private SharedPreferences mSharedPref; 
+    
+    /**
+     * @see {@link ContentProvider.delete(Uri uri, String selection, String[] selectionArgs)}
+     */
     @Override
     public int delete(final Uri uri, final String selection, 
             final String[] selectionArgs) {
@@ -244,6 +257,12 @@ public class YbkProvider extends ContentProvider {
         return recordsAffected;
     }
 
+    /**
+     * Get the mime-type of a particular URI.
+     * 
+     * @param uri The URI for which to get a mime-type.
+     * @return The mime-type.
+     */
     @Override
     public String getType(final Uri uri) {
         switch (sUriMatcher.match(uri)) {
@@ -270,6 +289,9 @@ public class YbkProvider extends ContentProvider {
         }
     }
 
+    /**
+     * Insert records into the content provider.
+     */
     @Override
     public Uri insert(final Uri uri, final ContentValues initialValues) {
         ContentValues values;
@@ -374,6 +396,9 @@ public class YbkProvider extends ContentProvider {
     @Override
     public boolean onCreate() {
         mOpenHelper = new DatabaseHelper(getContext());
+        
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        mLibraryDir = mSharedPref.getString("library_dir", "/sdcard/");
         return true;
     }
 
@@ -386,7 +411,6 @@ public class YbkProvider extends ContentProvider {
         String where = null;
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         
-        long rowId;
         switch (sUriMatcher.match(uri)) {
         case CHAPTERS:
             qb.setTables(CHAPTER_TABLE_NAME);
@@ -417,38 +441,18 @@ public class YbkProvider extends ContentProvider {
         
         // Get the database and run the query
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-        //where = (TextUtils.isEmpty(selection) ? "" : selection) + (TextUtils.isEmpty(where) ? "" : " AND (" + where + ") ");
         Cursor c = qb.query(db, projection,  where, null, null, null, orderBy);
 
-        /*if (c.getCount() < 1) {
-            switch (sUriMatcher.match(uri)) {
-            case CHAPTERS:
-                break;
-            case BOOKS:
-             // The data couldn't be found in the database so we need to populate the data.
-                String token[] = selection.split("=", 1);
-                if (token.length == 2) {
-                    String fileName = token[1];
-                    if (fileName.indexOf("'") == 0 && fileName.lastIndexOf("'") == fileName.length() - 1) {
-                        fileName = fileName.substring(1, fileName.length() - 1);
-                    } else {
-                        throw new IllegalStateException(
-                                "Need to read file but the filename is not found in the selection correctly: '" + selection + "'");
-                    }
-                    populateBook(fileName);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown URI " + uri);
-            }
-
-        }
-        */
         // Tell the cursor what uri to watch, so it knows when its source data changes
         c.setNotificationUri(getContext().getContentResolver(), uri);
         return c;
     }
-
+    /**
+     * Updating of this content provider through this public interface is not 
+     * supported.
+     * 
+     * @deprecated This method does not do anything.
+     */
     @Override
     public int update(final Uri uri, final ContentValues values, 
             final String selection, final String[] selectionArgs) {
@@ -456,6 +460,12 @@ public class YbkProvider extends ContentProvider {
         return 0;
     }
 
+    /**
+     * Get and save the book information into the database.
+     * 
+     * @param fileName The file name of the book.
+     * @return The id of the book that was saved into the database.
+     */
     private long populateBook(final String fileName) {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         
@@ -548,7 +558,66 @@ public class YbkProvider extends ContentProvider {
         
         return fileText;
     }
-
+    
+    public byte[] readInternalBinaryFile(final DataInputStream dataInput, 
+            final String bookFileName, final String chapterName) 
+    throws IOException {
+        
+        String bookId = "";
+        int offset = 0;
+        int len = 0;
+        
+        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+        Cursor c = db.query(BOOK_TABLE_NAME, new String[] {_ID}, "lower(" + FILE_NAME + ")=?", 
+                new String[] {bookFileName.toLowerCase()}, null, null, null);
+        
+        if (c.getCount() == 1) {
+            c.moveToFirst();
+            bookId = c.getString(0);
+        }
+        
+        c = db.query(CHAPTER_TABLE_NAME, new String[] {CHAPTER_OFFSET, CHAPTER_LENGTH}, "lower(" + FILE_NAME + ")=? AND BOOK_ID =?", 
+                new String[] {chapterName.toLowerCase(), bookId}, null, null, null);
+        
+        if (c.getCount() == 1) {
+            c.moveToFirst();
+            offset = c.getInt(c.getColumnIndexOrThrow(CHAPTER_OFFSET));
+            len = c.getInt(c.getColumnIndexOrThrow(CHAPTER_LENGTH));
+        }
+        
+        
+        try {
+            dataInput.reset();
+        } catch (IOException ioe) {
+            
+            dataInput.close();
+            
+            initDataStream(new File(bookFileName));                
+            
+            Log.w(TAG, "YBK file's DataInputStream had to be closed and reopened. " 
+                    + ioe.getMessage());
+        }
+     
+        byte[] bytes = new byte[len];
+        dataInput.skipBytes(offset);
+        int amountRead = dataInput.read(bytes);
+        if (amountRead < len) {
+            throw new InvalidFileFormatException(
+                    "Couldn't read all of " + bookFileName + ".");
+        }
+        
+        return bytes;
+    }
+    
+    /**
+     * The brains behind reading YBK file chapters (or internal files).
+     * 
+     * @param dataInput The input stream that is the YanceyBook.
+     * @param bookId The id of the book record in the database.
+     * @param chapterId The id of the chapter record in the database.
+     * @return The text of the chapter.
+     * @throws IOException If the chapter cannot be read.
+     */
     public String readInternalFile(final DataInputStream dataInput, 
             final long bookId, final int chapterId) 
     throws IOException {
@@ -571,8 +640,7 @@ public class YbkProvider extends ContentProvider {
             try {
                 dataInput.reset();
             } catch (IOException ioe) {
-                Log.w(TAG, "YBK file's DataInputStream had to be closed and reopened. " 
-                        + ioe.getMessage());
+                
                 dataInput.close();
                 
                 Cursor bookCursor = query(ContentUris.withAppendedId(Uri.withAppendedPath(CONTENT_URI, "book"), bookId), 
@@ -582,8 +650,11 @@ public class YbkProvider extends ContentProvider {
                     bookCursor.moveToFirst();
                     initDataStream(new File(bookCursor.getString(0)));                
                 } else {
-                    throw new IllegalStateException("Could reopen the YBK file.");
+                    throw new IllegalStateException("Could not reopen the YBK file.");
                 }
+                
+                Log.w(TAG, "YBK file's DataInputStream had to be closed and reopened. " 
+                        + ioe.getMessage());
             }
          
             byte[] text = new byte[len];
@@ -629,6 +700,15 @@ public class YbkProvider extends ContentProvider {
         return fileText;
     }
     
+    /**
+     * Read in the Order Config information which tells us in what order the 
+     * chapters appear in a YanceyBook.
+     * 
+     * @param dataInput The input stream that is the YanceyBook.
+     * @param bookId The id of the book record in the database.
+     * @return The text of the order config &quot;chapter&quot;.
+     * @throws IOException If the YBK cannot be read.
+     */
     private String readOrderCfg(final DataInputStream dataInput, final int bookId) 
     throws IOException {
         String fileText = null;
@@ -723,12 +803,58 @@ public class YbkProvider extends ContentProvider {
         }
     }*/
 
-    public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
-        //Cursor c = query(uri,projection,null,null,null);
-        //c.moveToFirst();
-        //String file = c.getString(c.getColumnIndexOrThrow(ElementProvider.KEY_DATA));
-        //c.close();
-        File f = null; //new File(file);
+    /**
+     * Open a file and return a ParcelFileDescriptor reference to it.
+     * 
+     *  @param uri The URI which refers to the file.
+     *  @param mode The mode in which to open the file.
+     *  @return The ParcelFileDescriptor which refers to the file.
+     *  @throws FileNotFoundException If the file cannot be accessed.
+     *  @see {@link ContentProvider.openFile(Uri, String)}
+     */
+    @Override
+    public ParcelFileDescriptor openFile(final Uri uri, final String mode) 
+    throws FileNotFoundException {
+        
+        Log.d(TAG,"In openFile. URI is: " + uri.toString());
+        
+        HashMap<Uri, File> tempImgFiles = mTempImgFiles;
+        File f = null;
+        
+        String strUri = uri.toString();
+        String fileExt = strUri.substring(strUri.lastIndexOf("."));
+        
+        if (".jpg .gif".contains(fileExt)) {
+            if (tempImgFiles.containsKey(uri)) {
+                f = tempImgFiles.get(uri);
+            } else {
+                try {
+                    f = File.createTempFile("revel_img", fileExt, null);
+                } catch (IOException ioe) {
+                    throw new FileNotFoundException("Could not create a temporary file. " 
+                            + ioe.getMessage() + " " + ioe.getCause());
+                }
+                
+                HashMap<String,String> chapterMap = Util.getFileNameChapterFromUri(strUri, mLibraryDir, false);
+                String fileName = chapterMap.get("book");
+                String chapter = chapterMap.get("chapter");
+                DataInputStream in = initDataStream(new File(fileName));
+                
+                try {
+                    byte[] contents = readInternalBinaryFile(in, fileName, chapter);
+                    BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(f));
+                    out.write(contents);
+                } catch (IOException e) {
+                    throw new FileNotFoundException("Could not write internal file to temp file. " 
+                            + e.getMessage() + " " + e.getCause());
+                }
+                
+                tempImgFiles.put(uri, f);
+            }
+        } else {
+            Log.i(TAG, "openFile was called for non-image URI: " + uri);
+        }
+        
         int m = ParcelFileDescriptor.MODE_READ_ONLY;
         if (mode.equalsIgnoreCase("rw"))
             m = ParcelFileDescriptor.MODE_READ_WRITE;

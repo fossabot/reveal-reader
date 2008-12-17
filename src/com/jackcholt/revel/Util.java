@@ -3,6 +3,7 @@ package com.jackcholt.revel;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 
@@ -213,4 +214,31 @@ public class Util {
         return "<html><body>" + content + "</body></html>";
     }
 
+    public static final HashMap<String,String> getFileNameChapterFromUri(final String uri, 
+            final String libDir, final boolean isGzipped) {
+        
+        HashMap<String, String> map = new HashMap<String,String>();
+        
+        int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
+        String dataString = uri.substring(ContentUriLength + 1);
+        
+        String[] urlParts = dataString.split("/");
+        
+        String book = libDir + urlParts[0] + ".ybk";
+                
+        map.put("book", book);
+        
+        String chapter = "";
+        for (int i = 0; i < urlParts.length; i++) {
+           chapter += "\\" + urlParts[i];
+        }
+        
+        if (isGzipped) {
+            chapter += ".gz";
+        }
+        
+        map.put("chapter", chapter);
+        
+        return map;
+    }
 }
