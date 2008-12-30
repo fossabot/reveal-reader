@@ -12,7 +12,7 @@
         android:name="com.googlecode.autoandroid.positron.Positron"
         android:targetPackage="com.jackcholt.revel"/>
      
-    <application android:icon="@drawable/revel">
+    <application android:icon="@drawable/icon">
         <activity android:name=".Main" android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,4 +23,5 @@
         <activity android:name=".YbkViewActivity"  android:label="@string/revel_ybk_view"/>
 	    <provider android:multiprocess="true" android:authorities="com.jackcholt.revel" android:name=".YbkProvider"></provider>
 	</application>
+
 </manifest> 
