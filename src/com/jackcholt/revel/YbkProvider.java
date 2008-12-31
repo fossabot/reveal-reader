@@ -3,7 +3,6 @@ package com.jackcholt.revel;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -507,7 +506,8 @@ public class YbkProvider extends ContentProvider {
             throw new IllegalStateException("Could not update the book");
         }
 
-        //populateOrder(readOrderCfg(in, bookId));
+        populateOrder(readOrderCfg(in, bookId), bookId);
+        
         return bookId;
     }
     
@@ -709,17 +709,20 @@ public class YbkProvider extends ContentProvider {
      * @return The text of the order config &quot;chapter&quot;.
      * @throws IOException If the YBK cannot be read.
      */
-    private String readOrderCfg(final DataInputStream dataInput, final int bookId) 
-    throws IOException {
+    private String readOrderCfg(final DataInputStream dataInput, final long bookId) {
         String fileText = null;
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         
-        Cursor c = db.query(CHAPTER_TABLE_NAME, new String[] {YbkProvider._ID}, 
+        Cursor c = db.query(CHAPTER_TABLE_NAME, new String[] {_ID}, 
                 FILE_NAME + "=?" , new String[] {ORDER_CONFIG_FILENAME}, null, null, null);
         
         if (c.getCount() == 1) {
             c.moveToFirst();
+            try {
             fileText = readInternalFile(dataInput, bookId, c.getInt(0));
+            } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
+            }
         }
         
         return fileText;
@@ -863,4 +866,25 @@ public class YbkProvider extends ContentProvider {
         
         return pfd;
    }
+    
+   /**
+    * Save the order configuration into the database.
+    * 
+    * @param orderString A comma-delimited list of abbreviated chapter names.
+    */
+   private void populateOrder(final String orderString, long bookId) {
+       if (null != orderString) {
+            String[] orders = orderString.split(",");
+            
+            SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+            
+            ContentValues values = new ContentValues();
+            for(int i = 0, orderLen = orders.length; i < orderLen; i++) {
+                values.put(YbkProvider.FILE_NAME, orders[i]);
+                values.put(YbkProvider.BOOK_ID, bookId);
+                db.insert(ORDER_TABLE_NAME, FILE_NAME, values);
+                values.clear();
+            }
+        }
+    }
 }

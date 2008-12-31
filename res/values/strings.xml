@@ -13,4 +13,6 @@
 <string name="up_one_level">..</string>
 
 <string name="revel_ybk_view">Revel :: Read Book</string>
+<string name="reference_not_found">The referenced book cannot be found.</string>
+<string name="alert_dialog_ok">OK</string>
 </resources>

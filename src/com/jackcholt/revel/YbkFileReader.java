@@ -10,10 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import android.content.ContentUris;
-import android.content.Context;
-import android.database.Cursor;
-
 /**
  * A class to do all the work of reading and accessing YBK files.
  * 
@@ -50,7 +46,7 @@ public class YbkFileReader {
     private String mChapterHistoryTitle = "No Title";
     private int mChapterNavFile = CHAPTER_TYPE_SETTINGS;
     private int mChapterZoomPicture = CHAPTER_ZOOM_MENU_OFF;
-    private Context context = null;
+    //private Context context = null;
     /**
      * A class to act as a structure for holding information about the chapters 
      * held inside a YBK ebook.
@@ -502,18 +498,20 @@ public class YbkFileReader {
         
         // Update the current chapter information
         String indexName4Search = chapterName.substring(("\\" + bookShortTitle + "\\").length());
-        indexName4Search = indexName4Search.substring(0, indexName4Search.indexOf("."));
-        
-        ArrayList<String> orderList = mOrderList;
-        int orderListSize = orderList.size();
-        for (int i = 0; i < orderListSize; i++) {
-            if (orderList.get(i).toLowerCase().indexOf(indexName4Search.toLowerCase()) != -1 ) {
-                mCurrentChapterOrderNumber = i;
-                mCurrentChapterOrderName = orderList.get(i);
-                break;
+        int dotIndex = indexName4Search.indexOf(".");
+        if (dotIndex != -1) {
+            indexName4Search = indexName4Search.substring(0, dotIndex);
+            
+            ArrayList<String> orderList = mOrderList;
+            int orderListSize = orderList.size();
+            for (int i = 0; i < orderListSize; i++) {
+                if (orderList.get(i).toLowerCase().indexOf(indexName4Search.toLowerCase()) != -1 ) {
+                    mCurrentChapterOrderNumber = i;
+                    mCurrentChapterOrderName = orderList.get(i);
+                    break;
+                }
             }
         }
-        
         return text;
         
     }

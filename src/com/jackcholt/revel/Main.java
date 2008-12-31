@@ -2,7 +2,6 @@ package com.jackcholt.revel;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
 import java.util.Vector;
 
 import android.app.AlertDialog;
@@ -29,7 +28,7 @@ public class Main extends ListActivity {
     public final static int DISPLAYMODE_ABSOLUTE = 0;
     public final static int DISPLAYMODE_RELATIVE = 1;
     
-    private int mDisplayMode = DISPLAYMODE_RELATIVE;
+    //private int mDisplayMode = DISPLAYMODE_RELATIVE;
 
     private static final int HISTORY_ID = Menu.FIRST;
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
@@ -43,7 +42,7 @@ public class Main extends ListActivity {
     private String mLibraryDir;
     
     private File mCurrentDirectory = new File("/sdcard/"); 
-    private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
+    //private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
     private Cursor mListCursor; 
     
     /** Called when the activity is first created. */
@@ -130,7 +129,7 @@ public class Main extends ListActivity {
         stopManagingCursor(fileCursor);
         fileCursor.close();
         
-        Cursor mListCursor = contRes.query(bookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, null, null,
+        mListCursor = contRes.query(bookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, null, null,
                 " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
         
         startManagingCursor(mListCursor);
@@ -166,7 +165,7 @@ public class Main extends ListActivity {
         SharedPreferences sharedPref = mSharedPref;
         mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
         String libDir = mLibraryDir = sharedPref.getString("library_dir", "/sdcard/");
-        mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
+        //mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
         
         mCurrentDirectory = new File(libDir);
     }
@@ -363,14 +362,14 @@ public class Main extends ListActivity {
 
     /** Checks whether checkItsEnd ends with
      * one of the Strings from fileEndings */
-    private boolean checkEndsWithInStringArray(final String checkItsEnd,
+    /*private boolean checkEndsWithInStringArray(final String checkItsEnd,
                         final String[] fileEndings){
          for(String aEnd : fileEndings){
               if(checkItsEnd.endsWith(aEnd))
                    return true;
          }
          return false;
-    }
+    }*/
 
     @Override
     protected void onListItemClick(final ListView listView, final View view, 

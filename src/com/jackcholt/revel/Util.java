@@ -241,4 +241,13 @@ public class Util {
         
         return map;
     }
+    
+    public static boolean isInteger(final String num) {
+        try {
+            Integer.parseInt(num);
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+        return true;
+    }
 }
