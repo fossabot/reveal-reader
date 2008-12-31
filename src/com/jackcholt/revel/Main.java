@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Vector;
 
+
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentResolver;
@@ -34,6 +35,7 @@ public class Main extends ListActivity {
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
+    private static final int BROWSER_ID = Menu.FIRST + 4;
     
     private static final int ACTIVITY_SETTINGS = 0;
     
@@ -180,6 +182,7 @@ public class Main extends ListActivity {
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
             .setIcon(android.R.drawable.ic_menu_preferences);
         menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library);
+        menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser);
         
         return true;
     }
@@ -194,6 +197,10 @@ public class Main extends ListActivity {
             Intent intent = new Intent(this, Settings.class);
             startActivityForResult(intent, ACTIVITY_SETTINGS);
             return true;
+        case BROWSER_ID:
+        	Intent browserIntent = new Intent(this, TitleBrowser.class);
+        	startActivity(browserIntent);
+        	return true;
         }
        
         return super.onMenuItemSelected(featureId, item);
