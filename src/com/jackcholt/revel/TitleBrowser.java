@@ -1,209 +1,113 @@
 package com.jackcholt.revel;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Stack;
-
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
 
 import com.jackcholt.revel.R;
 
 import android.app.ListActivity;
+import android.content.ContentUris;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.SimpleCursorAdapter;
 
+/**
+ * List activity to show categories and titles under those categories
+ * 
+ * @author jwiggins
+ * 
+ */
 public class TitleBrowser extends ListActivity {
-	private static final String mSourceURL = "http://www.thecoffeys.net/ebooks/xmlbooks.asp";
 
-	private ArrayList<HashMap<String, Object>> mData;
-	private SimpleAdapter adapter;
-	private Stack<ArrayList<HashMap<String, Object>>> mBreadCrumb;
-	
-    /** Called when the activity is first created. */
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        //create array for the list
-        mData = new ArrayList<HashMap<String, Object>>();
-        mBreadCrumb = new Stack<ArrayList<HashMap<String, Object>>>();
-        loadList();
-        
-        //create adapters for view
-        mBreadCrumb.push(mData);
-        adapter = new SimpleAdapter(this, mData, R.layout.browser_list_item, new String[] { "BookName" }, new int[] { android.R.id.text1 });
-        
-        //bind array
-        setListAdapter(adapter);
-    }
-    
-	@SuppressWarnings("unchecked")
+	private SimpleCursorAdapter adapter;
+	private Stack<Uri> mBreadCrumb;
+	private Cursor mListCursor;
+
+	/** Called when the activity is first created. */
 	@Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-    	HashMap<String, Object> selected = (HashMap<String, Object>) l.getItemAtPosition(position);
-    	Object submenu = selected.get("children");
-    	
-    	if (submenu != null)
-    	{
-    		mBreadCrumb.push((ArrayList<HashMap<String, Object>>) submenu);
-    		adapter = new SimpleAdapter(this, (ArrayList<HashMap<String, Object>>) submenu, R.layout.browser_list_item, new String[] { "BookName" }, new int[] { android.R.id.text1 });
-    		setListAdapter(adapter);
-    	}
-    	else
-    	{
-    		//TODO: show a screen just for this title with more info with download button
-    		System.out.println("Download!");
-    	}
-    }
-    
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent msg) {
-    	if (keyCode == KeyEvent.KEYCODE_BACK)
-    	{
-	        if (mBreadCrumb.size() > 1)
-	        {
-	        	mBreadCrumb.pop();
-	        	adapter = new SimpleAdapter(this, mBreadCrumb.peek(), R.layout.browser_list_item, new String[] { "BookName" }, new int[] { android.R.id.text1 });
-	        	setListAdapter(adapter);
-	        }
-	        else
-	        {
-	        	finish();
-	        }
-    	}
-        
-        return false;
-    }
-    
-    private void loadList()
-    {
-    	try
-    	{
-    		URL bookUrl = new URL(mSourceURL);
-    		
-    		SAXParserFactory factory = SAXParserFactory.newInstance();
-    		SAXParser parser = factory.newSAXParser();
-    		
-    		XMLReader reader = parser.getXMLReader();
-    		
-    		reader.setContentHandler(new ParserHandler());
-    		
-    		reader.parse(new InputSource(bookUrl.openStream()));
-    	}
-    	catch (Exception e)
-    	{
-    		e.printStackTrace();
-    	}
-    }
-    
-    private class ParserHandler extends DefaultHandler {
-		private HashMap<String, Object> mCurrentHash;
-		private String mCurrentTag;
-		private int mCount;
-		private String mCategory;
-		
-		private static final String mRootTag = "YanCEyWareBooks";
-		private static final String mBookTag = "Book";
-		private static final String mBookNameTag = "BookName";
-		private static final String mChildrenTag = "children";
-		private static final String mCategoryTag = "Category";
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-		public void startElement(String namespaceURI, String tagName, String qName, Attributes attributes) throws SAXException 
-		{
-			if (tagName.equals(mBookTag))
-			{
-				mCurrentHash = new HashMap<String, Object>();
+		mBreadCrumb = new Stack<Uri>();
+
+		// setContentView(R.layout.browser_main);
+
+		// establish data connection
+		Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+				"categoryparent");
+		Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
+		mListCursor = managedQuery(rootCategories, new String[] {
+				TitleProvider.Categories.NAME, TitleProvider.Categories._ID },
+				null, null, null);
+
+		// create adapters for view
+		mBreadCrumb.push(rootCategories);
+		adapter = new SimpleCursorAdapter(this, R.layout.browser_list_item,
+				mListCursor, new String[] { TitleProvider.Categories.NAME },
+				new int[] { android.R.id.text1 });
+
+		setListAdapter(adapter);
+	}
+
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+
+		if (mBreadCrumb.size() < 3) {
+			Uri baseUri;
+			String[] projection;
+			String[] from;
+
+			if (mBreadCrumb.size() == 2) {
+				baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+						"titlecategory");
+				projection = new String[] { TitleProvider.Titles.BOOKNAME,
+						TitleProvider.Titles._ID };
+				from = new String[] { TitleProvider.Titles.BOOKNAME };
+			} else {
+				baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+						"categoryparent");
+				projection = new String[] { TitleProvider.Categories.NAME,
+						TitleProvider.Categories._ID };
+				from = new String[] { TitleProvider.Categories.NAME };
 			}
-			else if (!tagName.equals(mRootTag))
-			{
-				mCurrentTag = tagName;
+
+			Uri lookupUri = ContentUris.withAppendedId(baseUri, id);
+			mListCursor = managedQuery(lookupUri, projection, null, null, null);
+
+			adapter = new SimpleCursorAdapter(this, R.layout.browser_list_item,
+					mListCursor, from, new int[] { android.R.id.text1 });
+
+			setListAdapter(adapter);
+
+			mBreadCrumb.push(lookupUri);
+		} else {
+			Log.d(this.getPackageName(), "Load display for title " + id);
+		}
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent msg) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			if (mBreadCrumb.size() > 1) {
+				mBreadCrumb.pop();
+
+				mListCursor = managedQuery(mBreadCrumb.peek(), new String[] {
+						TitleProvider.Categories.NAME,
+						TitleProvider.Categories._ID }, null, null, null);
+				adapter = new SimpleCursorAdapter(this,
+						R.layout.browser_list_item, mListCursor,
+						new String[] { TitleProvider.Categories.NAME },
+						new int[] { android.R.id.text1 });
+				setListAdapter(adapter);
+			} else {
+				finish();
 			}
 		}
-		
-		public void endElement(String namespaceURI, String tagName, String qName) throws SAXException 
-		{
-			if (tagName.equals(mBookTag))
-			{
-				insertNode(mData);
-			}
-			else if (!tagName.equals(mRootTag))
-			{
-				mCurrentTag = null;
-			}
-		}
-		
-		public void characters(char inCharacters[], int start, int length)
-		{
-			if (mCurrentHash != null && mCurrentTag != null)
-			{
-				mCurrentHash.put(mCurrentTag, new String(inCharacters, start, length));
-			}
-		}
-		
-		@SuppressWarnings("unchecked")
-		private void insertNode(ArrayList<HashMap<String, Object>> list)
-		{
-			mCount = 1;
-			
-			mCategory = (String) mCurrentHash.get(mCategoryTag + mCount++);
-			HashMap<String, Object> currentNode = null;
-			
-			while (mCount < 4 && mCategory != null && !mCategory.equals(""))
-			{
-				currentNode = getNode(mCategory, list);
-				
-				if (currentNode != null)
-				{
-					list = (ArrayList<HashMap<String, Object>>) currentNode.get(mChildrenTag);
-				}
-				else
-				{
-					HashMap<String, Object> newCategory = new HashMap<String, Object>(2, 1);
-					{
-						newCategory.put(mBookNameTag, mCategory);
-						newCategory.put(mChildrenTag, new ArrayList<HashMap<String, Object>>());
-					}
-					
-					list.add(newCategory);
-					list = (ArrayList<HashMap<String, Object>>) newCategory.get(mChildrenTag);
-				}
-				
-				mCategory = (String) mCurrentHash.get(mCategoryTag + mCount++);
-			}
-			
-			list.add(mCurrentHash);
-			
-		}
-		
-		private HashMap<String, Object> getNode(String inName, ArrayList<HashMap<String, Object>> list)
-		{
-			HashMap<String, Object> node = null;
-			
-			for (HashMap<String, Object> current : list)
-			{
-				Object name = current.get(mBookNameTag);
-				if (name != null && name instanceof String)
-				{
-					if ( ((String) name).equals(inName) )
-					{
-						node = current;
-						break;
-					}
-				}
-			}
-			
-			return node;
-		}
+
+		return false;
 	}
 }

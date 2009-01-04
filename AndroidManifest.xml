@@ -22,7 +22,8 @@
         <activity android:name=".Settings" android:label="@string/settings_name"/>
         <activity android:name=".YbkViewActivity"  android:label="@string/revel_ybk_view"/>
 	    <provider android:multiprocess="true" android:authorities="com.jackcholt.revel" android:name=".YbkProvider"></provider>
-<activity android:name=".TitleBrowser" android:label="@string/title_browser_name"></activity>
+		<activity android:name=".TitleBrowser" android:label="@string/title_browser_name" />
+		<provider android:name=".TitleProvider" android:multiprocess="true" android:authorities="com.jackcholt.revel.titles"/>
 </application>
 
 </manifest> 
