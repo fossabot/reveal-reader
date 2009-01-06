@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-    <LinearLayout 
+    <LinearLayout android:id="@+id/breadCrumb"
        android:orientation="horizontal"
        android:layout_height="wrap_content"
        android:layout_width="fill_parent"
@@ -13,6 +13,14 @@
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/revel"/>
+        <Button android:id="@+id/bookButton"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:visibility="invisible"/>
+        <Button android:id="@+id/chapterButton"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:visibility="invisible"/>
     </LinearLayout>
     <WebView android:id="@+id/ybkView"
           android:layout_width="fill_parent"

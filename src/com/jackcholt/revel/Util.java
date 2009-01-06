@@ -250,4 +250,24 @@ public class Util {
         }
         return true;
     }
+
+    /** 
+     * Return the tail end of the text.
+     * 
+     * @param text The text to shorten.
+     * @param length The maximum length of the string to return.
+     * @return The tail end of the <code>text</code> passed in if it is longer 
+     * than <code>length</code>. The entire <code>text</code> passed if it is 
+     * shorter than <code>length</code>.
+     */
+    public static String tail(final String text, final int length) {
+        int start = 0;
+        int textLength = text.length();
+        
+        if (textLength > length) {
+            start = textLength - length;
+        }
+        
+        return text.substring(start);
+    }
 }

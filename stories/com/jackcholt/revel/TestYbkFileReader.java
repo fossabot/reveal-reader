@@ -138,8 +138,22 @@ public class TestYbkFileReader {
 
     @Test
     public void testGetInternalFile() throws IOException {
-        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\nt.ybk");
-        String contents = ybkRdr.readChapter("\\nt\\1thes\\4");
-        Log.d("testGetInternalFile", "1 Thes 4: " + contents);
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\sh.ybk");
+        String contents = ybkRdr.readChapter("\\sh\\tg\\f");
+        Log.d("testGetInternalFile", "Topical Guide F: " + contents);
+    }
+
+    @Test
+    public void testGetTG_F_() throws IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\sh.ybk");
+        String contents = ybkRdr.readChapter("\\sh\\tg\\f_");
+        Log.d("testGetInternalFile", "Topical Guide F notes: " + contents);
+    }
+
+    @Test
+    public void testGetTG_F() throws IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\sh.ybk");
+        String contents = ybkRdr.readChapter("\\sh\\tg\\f");
+        Log.d("testGetInternalFile", "Topical Guide F: " + contents);
     }
 }

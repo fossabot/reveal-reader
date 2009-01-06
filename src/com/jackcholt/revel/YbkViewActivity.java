@@ -14,11 +14,19 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
+    private ImageButton mMainBtn;
+    private Button mBookBtn;
+    private Button mChapBtn;
     private YbkFileReader mYbkReader;
     private String mLibraryDir;
     private SharedPreferences mSharedPref;
@@ -34,8 +42,21 @@ public class YbkViewActivity extends Activity {
 
         setContentView(R.layout.view_ybk);
         
-        WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
+        final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
+        final ImageButton mainBtn = mMainBtn = (ImageButton) findViewById(R.id.mainMenu);
+        final Button bookBtn = mBookBtn = (Button) findViewById(R.id.bookButton);
+        final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
+        //LinearLayout bcLayout = mBcLayout = (LinearLayout) findViewById(R.id.breadCrumb); 
         
+        mainBtn.setOnClickListener(new OnClickListener() {
+
+            public void onClick(final View view) {
+                //chapBtn.setVisibility(View.INVISIBLE);
+                //bookBtn.setVisibility(View.INVISIBLE);
+                finish();
+            }
+            
+        });
         
         Long bookId = savedInstanceState != null 
             ? (Long) savedInstanceState.get(YbkProvider._ID)
@@ -54,22 +75,26 @@ public class YbkViewActivity extends Activity {
             ContentResolver contRes = getContentResolver();
             Cursor bookCursor = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), bookId),
                     new String[] {YbkProvider.FILE_NAME}, null, null, null);
-            String filePath = "";
+            final String filePath;
             
             if (bookCursor.getCount() == 1) {
                 bookCursor.moveToFirst();
                 filePath = bookCursor.getString(0);
+            } else {
+                filePath = "";
             }
             
             try {
                 YbkFileReader ybkReader = mYbkReader = new YbkFileReader(filePath);
-                
-                String fileToOpen = "\\" + ybkReader.getBookShortTitle() + ".html.gz";
-                String content = ybkReader.readInternalFile(fileToOpen);
+                String shortTitle = ybkReader.getBookShortTitle();
+                String tryFileToOpen = "\\" + shortTitle + ".html.gz";
+                String content = ybkReader.readInternalFile(tryFileToOpen);
                 if (content == null) {
-                    fileToOpen = "\\" + ybkReader.getBookShortTitle() + ".html";
-                    content = ybkReader.readInternalFile(fileToOpen);
+                    tryFileToOpen = "\\" + shortTitle + ".html";
+                    content = ybkReader.readInternalFile(tryFileToOpen);
                 }
+                
+                final String fileToOpen = tryFileToOpen;
                 
                 if (content == null) {
                     ybkView.loadData("YBK file has no index page.",
@@ -80,15 +105,22 @@ public class YbkViewActivity extends Activity {
                 }
                 
                 loadChapter(filePath, fileToOpen);
+                bookBtn.setText(shortTitle);
+                bookBtn.setOnClickListener(new OnClickListener() {
+                    private String bookFilePath = filePath;
+                    private String bookFileToOpen = fileToOpen;
+                    
+                    public void onClick(final View v) {
+                        loadChapter(bookFilePath, bookFileToOpen);
+                        Log.d(TAG, "Book loaded");
+                    }
+                    
+                });
+                bookBtn.setVisibility(View.VISIBLE);
+                
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
             }
-            
-            
-            
-            
-            
-            //ybkView.loadUrl(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId).toString());
             
             ybkView.setWebViewClient(new WebViewClient() {
                 @Override
@@ -132,8 +164,10 @@ public class YbkViewActivity extends Activity {
     private void loadChapter(final String filePath, final String chapter) {
     
         WebView ybkView = mYbkView; 
+        ybkView.getSettings().setJavaScriptEnabled(true);
         String chap = chapter;
         String content = "";
+        String fragment = null;
         
         Log.d(TAG, "FilePath: " + filePath);
         
@@ -150,50 +184,70 @@ public class YbkViewActivity extends Activity {
         
             try {
                 int hashLoc = -1;
+                
+                // use the dreaded break <label> in order to simplify conditional nesting
+                label_get_content:
                 if ((hashLoc = chap.indexOf("#")) != -1) {
-                    String fragment = chap.substring(hashLoc + 1);
+                    fragment = chap.substring(hashLoc + 1);
                     
                     if (!Util.isInteger(fragment)) {
                         
-                        // to need read a special footnote chapter
-                        String footnotes = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-                        Log.d(TAG, "footnote file: " + footnotes);
+                        // need to read a special footnote chapter
+                        content = readConcatFile(chap, mYbkReader);
                         
-                        String verse = chap.substring(chap.lastIndexOf("\\") + 1, chap.lastIndexOf("."));
-                        Log.d(TAG, "verse: " + verse);
-                        
-                        content = mYbkReader.readInternalFile(footnotes);
-                        
-                        content = content.substring(content.indexOf('\002' + verse + '\002') + verse.length() + 2);
-                        
-                        if (content.indexOf('\002') != -1) {
-                            content = content.substring(0, content.indexOf('\002'));
+                        if (content != null) {
+                            break label_get_content;
                         }
                     } else {
                         chap = chap.substring(0, hashLoc);
                         content = mYbkReader.readInternalFile(chap);
-                        if (content == null) {
-                            content = mYbkReader.readInternalFile(chap + ".gz");
-                            if (content == null) {
-                                throw new IllegalStateException("Unable to read chapter '" + chap + ".gz'");                                
-                            }
+                        if (content != null) {
+                            break label_get_content;
+                        }
+                        
+                        content = mYbkReader.readInternalFile(chap + ".gz");
+                        if (content != null) {
+                            break label_get_content;
                         }
                     }
                 } else {
                     content = mYbkReader.readInternalFile(chap);
-                    if (content == null) {
-                        // Try it without the .gz 
-                        chap.substring(0, chap.length() - 3);
-                        content = mYbkReader.readInternalFile(chap);
-                        if (content == null) {
-                            throw new IllegalStateException("Unable to read chapter '" + chap + "'");
-                        }
+                    if (content != null) {
+                        break label_get_content;
                     }
-                }
+                    
+                    // Try it without the .gz 
+                    chap.substring(0, chap.length() - 3);
+                    content = mYbkReader.readInternalFile(chap);
+                    if (content != null) {
+                        break label_get_content;
+                    }
+                    
+                    // Need to read special concatenated file
+                    content = readConcatFile(chap, mYbkReader);
+                    if (content != null) {
+                        break label_get_content;
+                    }
+                    
+                    // if we haven't reached a break statement yet, we have a problem.
+                    throw new IllegalStateException("Unable to read chapter '" + chap + "'");
+                    
+                } // label_get_content:
                 
-                ybkView.loadDataWithBaseURL(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString(),
-                        Util.htmlize(content),
+                String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
+                /*if (fragment != null) {
+                    content += "<script language=\"javascript\">location.href=\"#" + fragment + "\";alert('running javascript')</script>";
+                    Log.d(TAG, "content: " + Util.tail(content, 200));
+                }*/
+                
+                ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
                         "text/html","utf-8","");
+                
+                // make it jump to the internal link
+                /*if (fragment != null) {
+                    ybkView.loadUrl("javascript:location.href=\"#" + fragment + "\"");
+                }*/
+                
             } catch (IOException e) {
                 ybkView.loadData("The chapter could not be opened.",
                         "text/plain","utf-8");
@@ -202,9 +256,13 @@ public class YbkViewActivity extends Activity {
                 
                 return;
             }
+            
         }
     }
     
+    /**
+     * Used to configure any dialog boxes created by this Activity
+     */
     @Override
     protected Dialog onCreateDialog(int id) {
         
@@ -223,4 +281,36 @@ public class YbkViewActivity extends Activity {
         }
         return null;
     }
+
+    /**
+     * Read a section of a special concatenated chapter;
+     * @param chap The chapter to read.
+     * @param ybkReader The YbkReader to use in order to access the chapter.
+     * @return The content of the section.
+     * @throws IOException If the Ybk file cannot be read.
+     */
+    private String readConcatFile(final String chap, final YbkFileReader ybkReader) 
+    throws IOException {
+     // need to read a special footnote chapter
+        String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
+        Log.d(TAG, "concat file: " + concatChap);
+        
+        String endString = ".";
+        if (chap.endsWith(".html.gz")) {
+            endString = ".html.gz";
+        }
+        String verse = chap.substring(chap.lastIndexOf("\\") + 1, chap.lastIndexOf(endString));
+        Log.d(TAG, "verse: " + verse);
+        
+        String content = ybkReader.readInternalFile(concatChap);
+        
+        content = content.substring(content.indexOf('\002' + verse + '\002') + verse.length() + 2);
+        
+        if (content.indexOf('\002') != -1) {
+            content = content.substring(0, content.indexOf('\002'));
+        }
+        
+        return content;
+    }
 }
+
