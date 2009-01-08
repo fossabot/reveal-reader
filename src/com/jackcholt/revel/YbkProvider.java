@@ -428,7 +428,7 @@ public class YbkProvider extends ContentProvider {
             } else {
                 orderBy = sortOrder;
             }
-            qb.appendWhere(selection);            
+            if (selection != null) qb.appendWhere(selection);            
             break;
         case BOOK:
             qb.setTables(BOOK_TABLE_NAME);
