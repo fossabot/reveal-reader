@@ -40,7 +40,7 @@ public class Main extends ListActivity {
     private static final int ACTIVITY_SETTINGS = 0;
     
     private SharedPreferences mSharedPref;
-    private boolean mShowSplashScreen;
+    //private boolean mShowSplashScreen;
     private String mLibraryDir;
     
     private File mCurrentDirectory = new File("/sdcard/"); 
@@ -165,7 +165,7 @@ public class Main extends ListActivity {
         // Set preferences from Setting screen
           
         SharedPreferences sharedPref = mSharedPref;
-        mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
+        //mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
         String libDir = mLibraryDir = sharedPref.getString("library_dir", "/sdcard/");
         //mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
         
