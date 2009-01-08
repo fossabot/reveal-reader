@@ -131,7 +131,8 @@ public class Main extends ListActivity {
         stopManagingCursor(fileCursor);
         fileCursor.close();
         
-        mListCursor = contRes.query(bookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, null, null,
+        mListCursor = contRes.query(bookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+                YbkProvider.BINDING_TEXT + " is not null", null,
                 " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
         
         startManagingCursor(mListCursor);

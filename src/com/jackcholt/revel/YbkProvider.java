@@ -428,7 +428,10 @@ public class YbkProvider extends ContentProvider {
             } else {
                 orderBy = sortOrder;
             }
-            if (selection != null) qb.appendWhere(selection);            
+            if (selection != null) { 
+                qb.appendWhere(selection);
+            }
+            
             break;
         case BOOK:
             qb.setTables(BOOK_TABLE_NAME);
@@ -442,7 +445,7 @@ public class YbkProvider extends ContentProvider {
         
         // Get the database and run the query
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-        Cursor c = qb.query(db, projection,  where, null, null, null, orderBy);
+        Cursor c = qb.query(db, projection,  where, selectionArgs, null, null, orderBy);
 
         // Tell the cursor what uri to watch, so it knows when its source data changes
         c.setNotificationUri(getContext().getContentResolver(), uri);

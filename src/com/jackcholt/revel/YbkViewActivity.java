@@ -240,6 +240,8 @@ public class YbkViewActivity extends Activity {
                     Log.d(TAG, "content: " + Util.tail(content, 200));
                 }*/
                 
+                content = processIfbook(content);
+                
                 ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
                         "text/html","utf-8","");
                 
@@ -311,6 +313,65 @@ public class YbkViewActivity extends Activity {
         }
         
         return content;
+    }
+
+    private String processIfbook(final String content) {
+        StringBuilder newContent = new StringBuilder();
+        StringBuilder oldContent = new StringBuilder(content);
+        ContentResolver contRes = getContentResolver();
+        int pos = 0;
+        
+        while ((pos = oldContent.indexOf("<ifbook=")) != -1) {
+            boolean fullIfBookFound = false;
+            
+            // copy text before <ifbook> tag to new content and remove from old
+            newContent.append(oldContent.substring(0, pos));
+            oldContent.delete(0, pos);
+            
+            int gtPos = oldContent.indexOf(">");
+            if (gtPos != -1) {
+                
+                // grab the bookname by skipping the beginning of the ifbook tag
+                String bookName = oldContent.substring(8, gtPos);
+                int elsePos = oldContent.indexOf("<elsebook=" + bookName + ">");
+                if (elsePos != -1 && elsePos > gtPos) {
+                
+                    int endPos = oldContent.indexOf("<endbook=" + bookName + ">");
+                    if (endPos != -1 && endPos > elsePos) {
+                        
+                        fullIfBookFound = true;
+                        
+                        Cursor c = contRes.query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
+                                new String[] {YbkProvider.FILE_NAME}, "lower(" + YbkProvider.FILE_NAME + ") = lower(?)", 
+                                new String[] {mLibraryDir + bookName + ".ybk"}, null);
+                        
+                        int count = c.getCount();
+                        if (count == 1) {
+                            newContent.append(oldContent.substring(gtPos + 1,elsePos));
+                            Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1,elsePos));
+                        } else if (count == 0) {
+                            newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
+                        } else {
+                            throw new IllegalStateException("More than one record for the same book");
+                        }
+                        
+                        // remove just-parsed <ifbook> tag structure so we can find the next
+                        oldContent.delete(0, endPos + bookName.length() + 10);
+                    }
+                }
+            } 
+            
+            // remove just-parsed <ifbook> tag so we can find the next
+            if (!fullIfBookFound) {
+                oldContent.delete(0,8);
+            }
+            
+        }
+        
+        // copy the remaining content over
+        newContent.append(oldContent);
+        
+        return newContent.toString();
     }
 }
 

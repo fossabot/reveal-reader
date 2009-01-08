@@ -156,4 +156,18 @@ public class TestYbkFileReader {
         String contents = ybkRdr.readChapter("\\sh\\tg\\f");
         Log.d("testGetInternalFile", "Topical Guide F: " + contents);
     }
+
+    @Test
+    public void testGetBM() throws IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\sh.ybk");
+        String contents = ybkRdr.readChapter("\\sh\\bm");
+        Log.d("testGetInternalFile", "Bible Maps: " + contents);
+    }
+
+    @Test
+    public void testGetSH() throws IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\sh.ybk");
+        String contents = ybkRdr.readChapter("\\sh.html.gz");
+        Log.d("testGetInternalFile", "Bible Maps: " + contents);
+    }
 }

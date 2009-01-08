@@ -16,6 +16,8 @@ import java.util.Scanner;
  * @author Jack C. Holt - jackcholt@gmail.com
  */
 public class YbkFileReader {
+    private static final String TAG = "YbkFileReader";
+    
     /** Non navigation chapter */
     public static final int CHAPTER_TYPE_NONNAV = 0; 
     /** Navigation chapter */
@@ -223,10 +225,12 @@ public class YbkFileReader {
         }
         
         mBindingText = readBindingFile();
-        mBookTitle = Util.getBookTitleFromBindingText(mBindingText);
-        mBookShortTitle = Util.getBookShortTitleFromBindingText(mBindingText);
-        mBookMetaData = readMetaData();
-        populateOrder(readOrderCfg());
+        if (mBindingText != null) {
+            mBookTitle = Util.getBookTitleFromBindingText(mBindingText);
+            mBookShortTitle = Util.getBookShortTitleFromBindingText(mBindingText);
+            mBookMetaData = readMetaData();
+            populateOrder(readOrderCfg());
+        }
     }
     
     private void populateOrder(final String orderString) {
@@ -254,7 +258,7 @@ public class YbkFileReader {
         String fileText = readInternalFile(BINDING_FILENAME);
         
         if (null == fileText) {
-            throw new InvalidFileFormatException("The YBK file contains no binding.html");
+            Log.w(TAG,"The YBK file contains no binding.html");
         }
         
         return fileText;

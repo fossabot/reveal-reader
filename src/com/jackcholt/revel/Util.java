@@ -220,7 +220,7 @@ public class Util {
         HashMap<String, String> map = new HashMap<String,String>();
         
         int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
-        String dataString = uri.substring(ContentUriLength + 1);
+        String dataString = uri.substring(ContentUriLength + 1).replace("%20", " ");
         
         String[] urlParts = dataString.split("/");
         
@@ -232,7 +232,7 @@ public class Util {
         for (int i = 0; i < urlParts.length; i++) {
            chapter += "\\" + urlParts[i];
         }
-        
+                
         if (isGzipped) {
             chapter += ".gz";
         }
