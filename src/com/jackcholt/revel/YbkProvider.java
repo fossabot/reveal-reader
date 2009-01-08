@@ -41,7 +41,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "revel_ybk.db";
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 3;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -118,7 +118,7 @@ public class YbkProvider extends ContentProvider {
         public void onCreate(final SQLiteDatabase db) {
             db.execSQL("CREATE TABLE " + BOOK_TABLE_NAME + " ("
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + FILE_NAME + " TEXT,"
+                    + FILE_NAME + " TEXT UNIQUE,"
                     + BINDING_TEXT + " TEXT,"
                     + BOOK_TITLE + " TEXT," 
                     + FORMATTED_TITLE + " TEXT,"
@@ -155,10 +155,11 @@ public class YbkProvider extends ContentProvider {
                 final int newVersion) {
             Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
-            db.execSQL("DROP TABLE IF EXISTS " + ORDER_TABLE_NAME + ";" +
-            		"DROP TABLE IF EXISTS " + CHAPTER_TABLE_NAME + ";" +
-                    "DROP TABLE IF EXISTS " + BOOK_TABLE_NAME + ";" 
-                    );
+            
+            db.execSQL("DROP TABLE IF EXISTS " + ORDER_TABLE_NAME);
+            db.execSQL("DROP TABLE IF EXISTS " + CHAPTER_TABLE_NAME);
+            db.execSQL("DROP TABLE IF EXISTS " + BOOK_TABLE_NAME);
+            
             onCreate(db);
         }
     }
@@ -427,6 +428,7 @@ public class YbkProvider extends ContentProvider {
             } else {
                 orderBy = sortOrder;
             }
+            qb.appendWhere(selection);            
             break;
         case BOOK:
             qb.setTables(BOOK_TABLE_NAME);
@@ -482,6 +484,11 @@ public class YbkProvider extends ContentProvider {
 
         long bookId = db.insert(BOOK_TABLE_NAME, METADATA, values);
         
+        if (bookId == -1) {
+            throw new IllegalStateException("Unable to insert book (" + 
+                    fileName + ") into the database.");
+        }
+        
         try {
             populateChapters(in, bookId);
         } catch (IOException ioe) {
@@ -491,16 +498,18 @@ public class YbkProvider extends ContentProvider {
         values.clear();
         try {
             String bindingText = readBindingFile(in, bookId);
-            values.put(BINDING_TEXT, bindingText);
-            String title = Util.getBookTitleFromBindingText(bindingText);
-            values.put(BOOK_TITLE, title);
-            values.put(SHORT_TITLE,Util.getBookShortTitleFromBindingText(bindingText));
-            values.put(FORMATTED_TITLE,Util.formatTitle(title));
+            if (bindingText != null) {
+                values.put(BINDING_TEXT, bindingText);
+                String title = Util.getBookTitleFromBindingText(bindingText);
+                values.put(BOOK_TITLE, title);
+                values.put(SHORT_TITLE,Util.getBookShortTitleFromBindingText(bindingText));
+                values.put(FORMATTED_TITLE,Util.formatTitle(title));
+            }
             values.put(METADATA, readMetaData(in, bookId));
             
             int count = db.update(BOOK_TABLE_NAME, values, _ID + "=" + bookId, null);
             if (count != 1) {
-                throw new IllegalStateException("Book was not updated");
+                throw new IllegalStateException("Book (" + fileName + ") was not updated. (bookId: " + bookId + ")");
             }
         } catch (IOException ioe) {
             throw new IllegalStateException("Could not update the book");
@@ -552,9 +561,9 @@ public class YbkProvider extends ContentProvider {
             fileText = readInternalFile(dataInput, bookId, c.getInt(0));
         }
         
-        if (null == fileText) {
+        /*if (null == fileText) {
             throw new InvalidFileFormatException("The YBK file contains no binding.html");
-        }
+        }*/
         
         return fileText;
     }
