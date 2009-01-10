@@ -42,6 +42,7 @@ public class TitleProvider extends ContentProvider {
 	public static final String TAG = "TitleProvider";
 	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
 			+ "/titles");
+	public static final String UPDATE_TYPE = "text/plain";
 
 	/**
 	 * Convenience object to encapsulate table information for a book title
@@ -98,6 +99,7 @@ public class TitleProvider extends ContentProvider {
 	public static final int TITLE = 3;
 	public static final int TITLES = 4;
 	public static final int TITLES_CATEGORY = 5;
+	public static final int UPDATE = 6;
 
 	private static final UriMatcher sUriMatcher;
 	static {
@@ -108,7 +110,9 @@ public class TitleProvider extends ContentProvider {
 				CATEGORIES_PARENT);
 		sUriMatcher.addURI(AUTHORITY, "titles/title/#", TITLE);
 		sUriMatcher.addURI(AUTHORITY, "titles/title", TITLES);
-		sUriMatcher.addURI(AUTHORITY, "titles/titlecategory/#", TITLES_CATEGORY);
+		sUriMatcher
+				.addURI(AUTHORITY, "titles/titlecategory/#", TITLES_CATEGORY);
+		sUriMatcher.addURI(AUTHORITY, "titles/update", UPDATE);
 	}
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
@@ -195,6 +199,9 @@ public class TitleProvider extends ContentProvider {
 
 		case TITLE:
 			return Titles.CONTENT_ITEM_TYPE;
+			
+		case UPDATE:
+			return UPDATE_TYPE;
 
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
@@ -240,7 +247,6 @@ public class TitleProvider extends ContentProvider {
 		case TITLES:
 			if (!values.containsKey(Titles.BOOKNAME)
 					|| !values.containsKey(Titles.CATEGORY_ID)
-					|| !values.containsKey(Titles.SIZE)
 					|| !values.containsKey(Titles.URL)) {
 				throw new IllegalArgumentException(
 						"Missing required information while adding new title: \n"
@@ -248,8 +254,6 @@ public class TitleProvider extends ContentProvider {
 								+ values.getAsString(Titles.BOOKNAME) + ", "
 								+ Titles.CATEGORY_ID + ": "
 								+ values.getAsString(Titles.CATEGORY_ID) + ", "
-								+ Titles.SIZE + ": "
-								+ values.getAsString(Titles.SIZE) + ", "
 								+ Titles.URL + ": "
 								+ values.getAsString(Titles.URL));
 			}
@@ -330,13 +334,14 @@ public class TitleProvider extends ContentProvider {
 		return c;
 	}
 
-	/**
-	 * @deprecated Updates are not allowed through this interface
-	 */
 	@Override
 	public int update(Uri uri, ContentValues values, String selection,
 			String[] selectionArgs) {
-		Log.i(TAG, "Updates are unsupported by this provider");
+		switch (sUriMatcher.match(uri)) {
+		case UPDATE:
+			populate(true);
+			break;
+		}
 		return 0;
 	}
 
@@ -409,12 +414,12 @@ public class TitleProvider extends ContentProvider {
 		private ContentValues mCurrentValues = new ContentValues();
 		private ContentValues mCategoryValues = new ContentValues();
 		/** Cache the categories with their IDS as we create them */
-		private HashMap<String, Long> mCategories = new HashMap<String, Long>();
+		private HashMap<String, Integer> mCategories = new HashMap<String, Integer>();
 		private String mCurrentTag;
 		private int mCount;
 		private String mCategory;
-		private Long mParentCategoryID;
-		private Long mCategoryID;
+		private Integer mParentCategoryID;
+		private Integer mCategoryID;
 		private Uri mInsertUri;
 
 		public void startElement(String namespaceURI, String tagName,
@@ -457,9 +462,14 @@ public class TitleProvider extends ContentProvider {
 							|| mCurrentTag.equals(Titles.SIZE)
 							|| mCurrentTag.equals(Titles.UPDATED)
 							|| mCurrentTag.equals(Titles.URL)
-							|| mCurrentTag.equals(mCategoryTag + "1") || mCurrentTag
-							.equals(mCategoryTag + "2"))) {
-				String content = new String(inCharacters, start, length);
+							|| mCurrentTag.equals(mCategoryTag + "1") 
+							|| mCurrentTag.equals(mCategoryTag + "2"))) {
+				String content = mCurrentValues.getAsString(mCurrentTag);
+				if (content == null) {
+					content = new String(inCharacters, start, length).trim();
+				} else {
+					content += new String(inCharacters, start, length).trim();
+				}
 				content.replace("&amp;", "&");
 				content.replace("&gt;", ">");
 				content.replace("&lt;", "<");
@@ -477,39 +487,61 @@ public class TitleProvider extends ContentProvider {
 			mCount = 1;
 			mCategoryValues.clear();
 
+			if ("on".equals(mCurrentValues.get(mCategoryTag + 2))) {
+				Log.e(TAG, mCurrentValues.valueSet().toString());
+			}
+
 			mCategory = (String) mCurrentValues.get(mCategoryTag + mCount);
 			mCurrentValues.remove(mCategoryTag + mCount);
 			mCount++;
 			/** Start at the root with id of 0 */
-			mParentCategoryID = new Long(0);
+			mParentCategoryID = 0;
 			mCategoryID = mParentCategoryID;
 
-			while (mCount < 4 && mCategory != null && !mCategory.equals("")) {
-				mCategoryValues.put(Categories.NAME, mCategory);
-				mCategoryValues.put(Categories.PARENT_ID, mParentCategoryID
-						.toString());
+			while (mCount < 4) {
+				if (mCategory != null && !mCategory.equals("")) {
+					mCategoryValues.put(Categories.NAME, mCategory);
+					mCategoryValues
+							.put(Categories.PARENT_ID, mParentCategoryID);
 
-				mCategoryID = mCategories.get(mCategory);
+					mCategoryID = mCategories
+							.get(mCategory + mParentCategoryID);
 
-				if (mCategoryID == null) {
-					mInsertUri = insert(Uri.withAppendedPath(CONTENT_URI,
-							"category"), mCategoryValues);
-					mCategoryID = new Long(mInsertUri.getPathSegments().get(1));
-					mCategories.put(mCategory, mCategoryID);
+					if (mCategoryID == null) {
+						mInsertUri = insert(Uri.withAppendedPath(CONTENT_URI,
+								"category"), mCategoryValues);
+						mCategoryID = new Integer(mInsertUri.getPathSegments()
+								.get(1));
+						mCategories.put(mCategory + mParentCategoryID,
+								mCategoryID);
+					}
+
+					mParentCategoryID = mCategoryID;
+				} else if (mCount == 3) { 
+					// we have some titles (standard works) that don't fit a 2
+					// category setup let's try to place them in an English
+					// category
+					mCategoryID = mCategories
+							.get("English" + mParentCategoryID);
+
+					if (mCategoryID == null) {
+						Log.w(TAG, "Found title without needed categories: "
+								+ mCurrentValues.getAsString(Titles.BOOKNAME));
+					}
 				}
 
-				mParentCategoryID = mCategoryID;
-
+				// We're just cleaning out any empty or extra categories before
+				// insert
 				mCategory = (String) mCurrentValues.get(mCategoryTag + mCount);
 				mCurrentValues.remove(mCategoryTag + mCount);
 				mCount++;
 			}
 
-			mCurrentValues.put(Titles.CATEGORY_ID, mCategoryID.toString());
+			mCurrentValues.put(Titles.CATEGORY_ID, mCategoryID);
 
 			mInsertUri = insert(Uri.withAppendedPath(CONTENT_URI, "title"),
 					mCurrentValues);
-			Log.d(TAG, "Inserted: " + mInsertUri.toString());
+//			Log.d(TAG, "Inserted: " + mInsertUri.toString());
 		}
 	}
 }

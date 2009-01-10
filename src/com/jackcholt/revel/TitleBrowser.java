@@ -5,11 +5,14 @@ import java.util.Stack;
 import com.jackcholt.revel.R;
 
 import android.app.ListActivity;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -22,6 +25,8 @@ import android.widget.SimpleCursorAdapter;
  */
 public class TitleBrowser extends ListActivity {
 
+	private static final int UPDATE_ID = Menu.FIRST;
+	
 	private SimpleCursorAdapter adapter;
 	private Stack<Uri> mBreadCrumb;
 	private Cursor mListCursor;
@@ -50,6 +55,28 @@ public class TitleBrowser extends ListActivity {
 				new int[] { android.R.id.text1 });
 
 		setListAdapter(adapter);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(final Menu menu) {
+		boolean success = super.onCreateOptionsMenu(menu);
+		
+		menu.add(Menu.NONE, UPDATE_ID, Menu.NONE, R.string.menu_update);
+		
+		return success;
+	}
+	
+	@Override
+	public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
+		switch(item.getItemId()) {
+		case UPDATE_ID:
+			getContentResolver().update(
+					Uri.withAppendedPath(TitleProvider.CONTENT_URI, "update"),
+					null, null, null);
+			return true;
+		}
+		
+		return super.onMenuItemSelected(featureId, item);
 	}
 
 	@Override
