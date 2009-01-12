@@ -27,6 +27,7 @@ import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 public class YbkProvider extends ContentProvider {
     public static final String KEY_MIMETYPE = "mimetype";
@@ -115,8 +116,9 @@ public class YbkProvider extends ContentProvider {
         }  
 
         @Override
+        
         public void onCreate(final SQLiteDatabase db) {
-            db.execSQL("CREATE TABLE " + BOOK_TABLE_NAME + " ("
+         	db.execSQL("CREATE TABLE " + BOOK_TABLE_NAME + " ("
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + FILE_NAME + " TEXT UNIQUE,"
                     + BINDING_TEXT + " TEXT,"
@@ -153,6 +155,7 @@ public class YbkProvider extends ContentProvider {
         @Override
         public void onUpgrade(final SQLiteDatabase db, final int oldVersion, 
                 final int newVersion) {
+
             Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
             
@@ -165,7 +168,7 @@ public class YbkProvider extends ContentProvider {
     }
 
     private DatabaseHelper mOpenHelper;
-    private String mLibraryDir = "/sdcard/";
+    private String mLibraryDir = "/sdcard/ebooks/";
     private SharedPreferences mSharedPref; 
     
     /**
@@ -398,7 +401,7 @@ public class YbkProvider extends ContentProvider {
         mOpenHelper = new DatabaseHelper(getContext());
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        mLibraryDir = mSharedPref.getString("library_dir", "/sdcard/");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
         return true;
     }
 
@@ -471,6 +474,7 @@ public class YbkProvider extends ContentProvider {
      * @return The id of the book that was saved into the database.
      */
     private long populateBook(final String fileName) {
+      
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         
         DataInputStream in = null;

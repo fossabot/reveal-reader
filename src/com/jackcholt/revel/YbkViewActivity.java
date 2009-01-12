@@ -21,6 +21,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
@@ -38,10 +39,10 @@ public class YbkViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("library_dir", "/sdcard/");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
 
         setContentView(R.layout.view_ybk);
-        
+
         final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
         final ImageButton mainBtn = mMainBtn = (ImageButton) findViewById(R.id.mainMenu);
         final Button bookBtn = mBookBtn = (Button) findViewById(R.id.bookButton);

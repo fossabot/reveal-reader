@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.jackcholt.revel" 
-    	android:versionName="0.0.$WCREV$"
-      	android:versionCode="1">
+    	android:versionCode="1">
     <!-- Required for positron to open it's server socket. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 

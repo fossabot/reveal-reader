@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import android.widget.Toast;
+
 
 /**
  * A class to do all the work of reading and accessing YBK files.
@@ -76,6 +78,8 @@ public class YbkTitleReader {
         DataInputStream dataInput = mDataInput;
         mIndexLength = Util.readVBInt(dataInput);
         int indexLength = mIndexLength;
+        //Creating eBook file data for re-use
+        //Toast.makeText(this, "Checking for new eBooks...", Toast.LENGTH_SHORT).show();
         Log.d("revel","Index Length: " + indexLength);
         
         byte[] indexArray = new byte[indexLength];

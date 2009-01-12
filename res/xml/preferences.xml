@@ -8,12 +8,17 @@
             android:title="@string/title_my_preference"
             android:summary="@string/summary_my_preference"
             android:defaultValue="100" />
-
     -->
+
     <CheckBoxPreference
             android:key="show_splash_screen"
             android:title="@string/label_splash_screen"
             android:summaryOn="@string/summary_on_show_splash_screen" 
             android:summaryOff="@string/summary_off_show_splash_screen" />
 
+    <StringEbookDir 
+    		android:title="@string/default_ebook_dir" 
+    		android:key="default_ebook_dir"
+    		android:summary="@string/summary_default_ebook_dir" />
+  
 </PreferenceScreen>

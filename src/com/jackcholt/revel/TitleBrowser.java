@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 /**
  * List activity to show categories and titles under those categories
@@ -39,7 +40,10 @@ public class TitleBrowser extends ListActivity {
 		mBreadCrumb = new Stack<Uri>();
 
 		// setContentView(R.layout.browser_main);
-
+		
+		//inform the users we are checking for new ebooks.  so we dont appear locked up
+		Toast.makeText(this, "Checking for new eBooks", Toast.LENGTH_SHORT).show();
+		
 		// establish data connection
 		Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
 				"categoryparent");

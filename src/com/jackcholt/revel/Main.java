@@ -23,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 
 public class Main extends ListActivity {
@@ -53,13 +54,18 @@ public class Main extends ListActivity {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.main);
-
+        
+        //Check here an XML file stored on our website for new version info
+        Toast.makeText(this, "Checking for new Version", Toast.LENGTH_SHORT).show();
+        
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String strLibDir = mLibraryDir = mSharedPref.getString("library_dir", "/sdcard/");
+        String strLibDir = mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
         ContentResolver contRes = getContentResolver();
         Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
         
         // get a list of files from the database
+        //Check here an XML file stored on our website for new version info
+        Toast.makeText(this, "Getting eBook list", Toast.LENGTH_SHORT).show();
         Cursor fileCursor = contRes.query(bookUri, 
                 new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
                 YbkProvider.FILE_NAME + " ASC");
@@ -67,7 +73,8 @@ public class Main extends ListActivity {
         startManagingCursor(fileCursor);
         
         if (fileCursor.getCount() == 0) {
-            Log.w(Global.TAG, "Database has no books");
+            Log.w(Global.TAG, "eBook directory has no valid YBK files");
+            Toast.makeText(this, "eBook directory has no valid YBK files", Toast.LENGTH_SHORT).show();
         }
         
         // get a list of files from the library directory
@@ -167,7 +174,7 @@ public class Main extends ListActivity {
           
         SharedPreferences sharedPref = mSharedPref;
         //mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
-        String libDir = mLibraryDir = sharedPref.getString("library_dir", "/sdcard/");
+        String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
         //mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
         
         mCurrentDirectory = new File(libDir);

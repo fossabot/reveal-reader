@@ -20,5 +20,12 @@
 	<string name="title_browser_name">Title Browser</string>
 	<string name="menu_update">Update</string>
 
-<string name="version">0.0.14</string>
+<string name="default_ebook_dir">/sdcard/ebooks/</string>
+<string name="default_temp_dir">/sdcard/revel/</string>
+<string name="midnightmode_off">MidNight Mode is OFF</string>
+<string name="default_fontsize">12</string>
+
+<string name="midnightmode_on">Midnight Mode is ON</string>
+<string name="summary_default_ebook_dir">Show Default eBook Location</string>
+<string name="summary_default_temp_dir">Default Directory for Application TEMP</string>
 </resources>
