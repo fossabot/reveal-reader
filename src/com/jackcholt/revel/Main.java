@@ -75,8 +75,7 @@ public class Main extends ListActivity {
         startManagingCursor(fileCursor);
         
         if (fileCursor.getCount() == 0) {
-            Log.w(Global.TAG, "eBook directory has no valid YBK files");
-            Toast.makeText(this, "eBook directory has no valid YBK files", Toast.LENGTH_SHORT).show();
+        	Toast.makeText(this, "eBook directory has no valid YBK files", Toast.LENGTH_SHORT).show();
         }
         
         // get a list of files from the library directory
@@ -92,6 +91,9 @@ public class Main extends ListActivity {
   
         for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
             String dirFilename = ybkFiles[i].getAbsolutePath();
+
+//DKP Look at this part.  in the emulator it gets and logs SOME of the ybk file but not all
+//DKP on the real G1 it dies
             Log.w(Global.TAG, "dirFilename" + dirFilename);
             boolean fileFoundInDb = false;
             
