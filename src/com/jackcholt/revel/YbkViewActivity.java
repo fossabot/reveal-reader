@@ -39,7 +39,7 @@ public class YbkViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
 
         setContentView(R.layout.view_ybk);
 

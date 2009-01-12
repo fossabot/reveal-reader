@@ -20,7 +20,7 @@
 	<string name="title_browser_name">Title Browser</string>
 	<string name="menu_update">Update</string>
 
-<string name="default_ebook_dir">/sdcard/ebooks/</string>
+<string name="default_ebook_dir">/sdcard/revel/ebooks/</string>
 <string name="default_temp_dir">/sdcard/revel/</string>
 <string name="midnightmode_off">MidNight Mode is OFF</string>
 <string name="default_fontsize">12</string>

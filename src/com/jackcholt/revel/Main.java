@@ -44,7 +44,7 @@ public class Main extends ListActivity {
     //private boolean mShowSplashScreen;
     private String mLibraryDir;
     
-    private File mCurrentDirectory = new File("/sdcard/"); 
+    private File mCurrentDirectory = new File("/sdcard/revel/ebooks/"); 
     //private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
     private Cursor mListCursor; 
     
@@ -58,8 +58,17 @@ public class Main extends ListActivity {
         //Check here an XML file stored on our website for new version info
         Toast.makeText(this, "Checking for new Version", Toast.LENGTH_SHORT).show();
         
+        
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String strLibDir = mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
+        String strLibDir = mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
+        
+        //create the default ebook library dir if it doesnt exist
+        File sddir = new File(mLibraryDir);
+        if (!sddir.mkdirs()) {
+             Log.w(Global.TAG, "Create dir in sdcard failed");
+             return;
+        }
+        
         ContentResolver contRes = getContentResolver();
         Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
         
@@ -174,7 +183,7 @@ public class Main extends ListActivity {
           
         SharedPreferences sharedPref = mSharedPref;
         //mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
-        String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
+        String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
         //mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
         
         mCurrentDirectory = new File(libDir);

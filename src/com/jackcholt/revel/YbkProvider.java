@@ -168,7 +168,7 @@ public class YbkProvider extends ContentProvider {
     }
 
     private DatabaseHelper mOpenHelper;
-    private String mLibraryDir = "/sdcard/ebooks/";
+    private String mLibraryDir = "/sdcard/revel/ebooks/";
     private SharedPreferences mSharedPref; 
     
     /**
@@ -401,7 +401,7 @@ public class YbkProvider extends ContentProvider {
         mOpenHelper = new DatabaseHelper(getContext());
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/ebooks/");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
         return true;
     }
 
