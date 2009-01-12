@@ -33,4 +33,6 @@
 <string name="summary_list_preference">An example that uses a list dialog</string>
 <string name="dialog_title_list_preference">Choose one</string>
 
+<string name="menu_previous">Previous Chapter</string>
+<string name="menu_next">Next Chapter</string>
 </resources>

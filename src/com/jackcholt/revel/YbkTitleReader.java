@@ -76,7 +76,7 @@ public class YbkTitleReader {
      */
     private void populateFileData() throws IOException {
         DataInputStream dataInput = mDataInput;
-        mIndexLength = Util.readVBInt(dataInput);
+        //mIndexLength = Util.readVBInt(dataInput);
         int indexLength = mIndexLength;
         //Creating eBook file data for re-use
         //Toast.makeText(this, "Checking for new eBooks...", Toast.LENGTH_SHORT).show();

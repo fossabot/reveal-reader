@@ -3,6 +3,7 @@ package com.jackcholt.revel;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
@@ -158,7 +159,7 @@ public class Util {
      * @throws IOException When the DataInputStream &quot;is&quot; cannot be read
      * from. 
      */
-    public static final int[] makeVBIntArray(DataInputStream is) throws IOException {
+    public static final int[] makeVBIntArray(final RandomAccessFile is) throws IOException {
         int[] iArray = new int[4];
         
         iArray[0] = (0x000000FF & (int)is.readByte());
@@ -178,7 +179,7 @@ public class Util {
      * @return The numeric value of the four bytes.
      * @throws IOException If the input stream is not readable.
      */
-    public static final int readVBInt(DataInputStream is) throws IOException {
+    public static final int readVBInt(RandomAccessFile is) throws IOException {
         return readVBInt(makeVBIntArray(is));
     }
     

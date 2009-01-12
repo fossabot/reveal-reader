@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashMap;
 
 import android.content.ContentProvider;
@@ -477,10 +478,10 @@ public class YbkProvider extends ContentProvider {
       
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         
-        DataInputStream in = null;
+        RandomAccessFile file = null;
         
         try {
-            in = initDataStream(new File(fileName));
+            file = new RandomAccessFile(fileName, "r");
         } catch (FileNotFoundException fnfe) {
             throw new IllegalStateException("Couldn't find the YBK file", fnfe);
         }
@@ -497,14 +498,14 @@ public class YbkProvider extends ContentProvider {
         }
         
         try {
-            populateChapters(in, bookId);
+            populateChapters(file, bookId);
         } catch (IOException ioe) {
             Log.e(TAG, fileName + "'s chapters could not be populated", ioe);
         }
         
         values.clear();
         try {
-            String bindingText = readBindingFile(in, bookId);
+            String bindingText = readBindingFile(file, bookId);
             if (bindingText != null) {
                 values.put(BINDING_TEXT, bindingText);
                 String title = Util.getBookTitleFromBindingText(bindingText);
@@ -512,7 +513,7 @@ public class YbkProvider extends ContentProvider {
                 values.put(SHORT_TITLE,Util.getBookShortTitleFromBindingText(bindingText));
                 values.put(FORMATTED_TITLE,Util.formatTitle(title));
             }
-            values.put(METADATA, readMetaData(in, bookId));
+            values.put(METADATA, readMetaData(file, bookId));
             
             int count = db.update(BOOK_TABLE_NAME, values, _ID + "=" + bookId, null);
             if (count != 1) {
@@ -522,7 +523,7 @@ public class YbkProvider extends ContentProvider {
             throw new IllegalStateException("Could not update the book");
         }
 
-        populateOrder(readOrderCfg(in, bookId), bookId);
+        populateOrder(readOrderCfg(file, bookId), bookId);
         
         return bookId;
     }
@@ -551,7 +552,7 @@ public class YbkProvider extends ContentProvider {
      * @throws InvalidFileFormatException if there is no Binding internal file 
      * found. 
      */
-    public String readBindingFile(final DataInputStream dataInput, final long bookId) 
+    public String readBindingFile(final RandomAccessFile file, final long bookId) 
     throws IOException, InvalidFileFormatException {
         String fileText = null;
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
@@ -565,7 +566,7 @@ public class YbkProvider extends ContentProvider {
         
         if (count == 1) {
             c.moveToFirst();
-            fileText = readInternalFile(dataInput, bookId, c.getInt(0));
+            fileText = readInternalFile(file, bookId, c.getInt(0));
         }
         
         /*if (null == fileText) {
@@ -575,7 +576,7 @@ public class YbkProvider extends ContentProvider {
         return fileText;
     }
     
-    public byte[] readInternalBinaryFile(final DataInputStream dataInput, 
+    public byte[] readInternalBinaryFile(final RandomAccessFile file, 
             final String bookFileName, final String chapterName) 
     throws IOException {
         
@@ -602,7 +603,7 @@ public class YbkProvider extends ContentProvider {
         }
         
         
-        try {
+        /*try {
             dataInput.reset();
         } catch (IOException ioe) {
             
@@ -612,11 +613,11 @@ public class YbkProvider extends ContentProvider {
             
             Log.w(TAG, "YBK file's DataInputStream had to be closed and reopened. " 
                     + ioe.getMessage());
-        }
+        }*/
      
         byte[] bytes = new byte[len];
-        dataInput.skipBytes(offset);
-        int amountRead = dataInput.read(bytes);
+        file.seek(offset);
+        int amountRead = file.read(bytes);
         if (amountRead < len) {
             throw new InvalidFileFormatException(
                     "Couldn't read all of " + bookFileName + ".");
@@ -634,13 +635,12 @@ public class YbkProvider extends ContentProvider {
      * @return The text of the chapter.
      * @throws IOException If the chapter cannot be read.
      */
-    public String readInternalFile(final DataInputStream dataInput, 
+    public String readInternalFile(final RandomAccessFile file, 
             final long bookId, final int chapterId) 
     throws IOException {
         String fileText = null;
         int offset = 0;
         int len = 0;
-            
         
         Cursor c = query(ContentUris.withAppendedId(Uri.withAppendedPath(CONTENT_URI, "chapter"), chapterId), 
                 new String[] {YbkProvider.CHAPTER_LENGTH, YbkProvider.CHAPTER_OFFSET, YbkProvider.FILE_NAME}, 
@@ -653,7 +653,7 @@ public class YbkProvider extends ContentProvider {
             len = c.getInt(c.getColumnIndexOrThrow(YbkProvider.CHAPTER_LENGTH));
             String iFilename = c.getString(c.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
             
-            try {
+/*            try {
                 dataInput.reset();
             } catch (IOException ioe) {
                 
@@ -672,10 +672,10 @@ public class YbkProvider extends ContentProvider {
                 Log.w(TAG, "YBK file's DataInputStream had to be closed and reopened. " 
                         + ioe.getMessage());
             }
-         
+*/         
             byte[] text = new byte[len];
-            dataInput.skipBytes(offset);
-            int amountRead = dataInput.read(text);
+            file.seek(offset);
+            int amountRead = file.read(text);
             if (amountRead < len) {
                 throw new InvalidFileFormatException(
                         "Couldn't read all of " + iFilename + ".");
@@ -701,7 +701,7 @@ public class YbkProvider extends ContentProvider {
      * @return The uncompressed contents of the Book Metadata file.
      * @throws IOException if there is a problem reading the Book Metadata file. 
      */
-    private String readMetaData(final DataInputStream dataInput, final long bookId) throws IOException {
+    private String readMetaData(final RandomAccessFile file, final long bookId) throws IOException {
         String fileText = null;
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         
@@ -710,7 +710,7 @@ public class YbkProvider extends ContentProvider {
         
         if (c.getCount() == 1) {
             c.moveToFirst();
-            fileText = readInternalFile(dataInput, bookId, c.getInt(0));
+            fileText = readInternalFile(file, bookId, c.getInt(0));
         }
         
         return fileText;
@@ -725,7 +725,7 @@ public class YbkProvider extends ContentProvider {
      * @return The text of the order config &quot;chapter&quot;.
      * @throws IOException If the YBK cannot be read.
      */
-    private String readOrderCfg(final DataInputStream dataInput, final long bookId) {
+    private String readOrderCfg(final RandomAccessFile file, final long bookId) {
         String fileText = null;
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         
@@ -735,7 +735,7 @@ public class YbkProvider extends ContentProvider {
         if (c.getCount() == 1) {
             c.moveToFirst();
             try {
-            fileText = readInternalFile(dataInput, bookId, c.getInt(0));
+            fileText = readInternalFile(file, bookId, c.getInt(0));
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
             }
@@ -748,18 +748,18 @@ public class YbkProvider extends ContentProvider {
      * Analyze the YBK file and save file contents data for later reference.
      * @throws IOException If the YBK file is not readable.
      */
-    private void populateChapters(final DataInputStream dataInput, final long bookId) 
+    private void populateChapters(final RandomAccessFile file, final long bookId) 
     throws IOException {
         String iFileName = "";
         int iBookOffset = 0;
         int iBookLength = 0;
         
-        int indexLength = Util.readVBInt(dataInput);
+        int indexLength = Util.readVBInt(file);
         Log.d(TAG,"Index Length: " + indexLength);
         
         byte[] indexArray = new byte[indexLength];
         
-        if (dataInput.read(indexArray) < indexLength) {
+        if (file.read(indexArray) < indexLength) {
             throw new IllegalStateException("Index Length is greater than length of file.");
         }
 
@@ -834,7 +834,7 @@ public class YbkProvider extends ContentProvider {
     @Override
     public ParcelFileDescriptor openFile(final Uri uri, final String mode) 
     throws FileNotFoundException {
-        
+        final int BUFFER_SIZE = 8096;
         Log.d(TAG,"In openFile. URI is: " + uri.toString());
         
         HashMap<Uri, File> tempImgFiles = mTempImgFiles;
@@ -857,11 +857,11 @@ public class YbkProvider extends ContentProvider {
                 HashMap<String,String> chapterMap = Util.getFileNameChapterFromUri(strUri, mLibraryDir, false);
                 String fileName = chapterMap.get("book");
                 String chapter = chapterMap.get("chapter");
-                DataInputStream in = initDataStream(new File(fileName));
+                RandomAccessFile file = new RandomAccessFile(fileName, "r");
                 
                 try {
-                    byte[] contents = readInternalBinaryFile(in, fileName, chapter);
-                    BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(f));
+                    byte[] contents = readInternalBinaryFile(file, fileName, chapter);
+                    BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(f),BUFFER_SIZE);
                     out.write(contents);
                 } catch (IOException e) {
                     throw new FileNotFoundException("Could not write internal file to temp file. " 

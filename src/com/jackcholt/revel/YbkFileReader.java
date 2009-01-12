@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -33,8 +34,8 @@ public class YbkFileReader {
     private static final String BINDING_FILENAME = "\\BINDING.HTML";
     private static final String BOOKMETADATA_FILENAME = "\\BOOKMETADATA.HTML.GZ"; 
     private static final String ORDER_CONFIG_FILENAME = "\\ORDER.CFG";
-    private File mFile;
-    private DataInputStream mDataInput;
+    private RandomAccessFile mFile;
+    //private DataInputStream mDataInput;
     private int mIndexLength;
     private ArrayList<InternalFile> mInternalFiles = new ArrayList<InternalFile>();
     private String mBindingText = "No Binding Text";
@@ -122,11 +123,11 @@ public class YbkFileReader {
      * @throws FileNotFoundException if the file cannot be opened for 
      * reading. 
      */
-    public YbkFileReader(final File file) 
+    public YbkFileReader(final RandomAccessFile file) 
     throws FileNotFoundException, IOException {
         mFile = file;
         
-        initDataStream();
+        //initDataStream();
         
         populateFileData();
     }
@@ -142,7 +143,7 @@ public class YbkFileReader {
      */
     public YbkFileReader(final String fileName) 
     throws FileNotFoundException, IOException {
-        this(new File(fileName));
+        this(new RandomAccessFile(fileName, "r"));
     }
     
 //    public YbkFileReader(Context ctx, final int id) {
@@ -174,22 +175,23 @@ public class YbkFileReader {
         return mBookMetaData;
     }
 
-    private void initDataStream() throws FileNotFoundException {
+    /*private void initDataStream() throws FileNotFoundException {
         mDataInput = new DataInputStream(new BufferedInputStream(new FileInputStream (mFile)));
         mDataInput.mark(Integer.MAX_VALUE);
-    }
+    }*/
     
     /**
      * Analyze the YBK file and save file contents data for later reference.
      * @throws IOException If the YBK file is not readable.
      */
     private void populateFileData() throws IOException {
-        mIndexLength = Util.readVBInt(mDataInput);
-        Log.d("revel","Index Length: " + mIndexLength);
+        RandomAccessFile file = mFile;
+        mIndexLength = Util.readVBInt(file);
+        Log.d(TAG,"Index Length: " + mIndexLength);
         
         byte[] indexArray = new byte[mIndexLength];
         
-        if (mDataInput.read(indexArray) < mIndexLength) {
+        if (file.read(indexArray) < mIndexLength) {
             throw new IllegalStateException("Index Length is greater than length of file.");
         }
         
@@ -269,7 +271,9 @@ public class YbkFileReader {
         int offset = 0;
         int len = 0;
         
-        DataInputStream dataInput = mDataInput;
+        RandomAccessFile file = mFile;
+        
+        //DataInputStream dataInput = mDataInput;
         
         ArrayList<InternalFile> internalFiles = mInternalFiles;
         
@@ -278,18 +282,18 @@ public class YbkFileReader {
                 offset = iFile.getYbkOffset();
                 len = iFile.getYbkLen();
         
-                try {
-                    dataInput.reset();
-                } catch (IOException ioe) {
-                    Log.w("YbkFileReader", "YBK file's DataInputStream had to be closed and reopened. " 
-                            + ioe.getMessage());
-                    dataInput.close();
-                    initDataStream();
-                }
+                //try {
+                    //file.seek(0);
+                //} catch (IOException ioe) {
+                    //Log.w("YbkFileReader", "YBK file's DataInputStream had to be closed and reopened. " 
+                    //        + ioe.getMessage());
+                    //dataInput.close();
+                    //initDataStream();
+                //}
              
                 byte[] text = new byte[len];
-                dataInput.skipBytes(offset);
-                int amountRead = dataInput.read(text);
+                file.seek(offset);
+                int amountRead = file.read(text);
                 if (amountRead < len) {
                     throw new InvalidFileFormatException(
                             "Couldn't read all of " + iFilename + ".");
@@ -445,8 +449,11 @@ public class YbkFileReader {
         byte[] image = null;
         int offset = 0;
         int len = 0;
+        RandomAccessFile file = mFile;
+        
         String fileName = "\\" + imageFileName;
         fileName = fileName.replace("/", "\\");
+        
         
         ArrayList<InternalFile> internalFiles = mInternalFiles;
         for(InternalFile iFile : internalFiles) {
@@ -454,19 +461,19 @@ public class YbkFileReader {
                 offset = iFile.getYbkOffset();
                 len = iFile.getYbkLen();
         
-                DataInputStream dataInput = mDataInput;
-                try {
+                //DataInputStream dataInput = mDataInput;
+                /*try {
                     dataInput.reset();
                 } catch (IOException ioe) {
                     Log.w("YbkFileReader", "YBK file's DataInputStream had to be closed and reopened. " 
                             + ioe.getMessage());
                     dataInput.close();
                     initDataStream();
-                }
+                }*/
              
                 image = new byte[len];
-                dataInput.skipBytes(offset);
-                int amountRead = dataInput.read(image);
+                file.seek(offset);
+                int amountRead = file.read(image);
                 if (amountRead < len) {
                     throw new InvalidFileFormatException(
                             "Couldn't read all of " + imageFileName + ".");

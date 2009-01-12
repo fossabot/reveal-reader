@@ -14,13 +14,15 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class YbkViewActivity extends Activity {
@@ -33,6 +35,8 @@ public class YbkViewActivity extends Activity {
     private SharedPreferences mSharedPref;
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
+    private static final int PREVIOUS_ID = Menu.FIRST;
+    private static final int NEXT_ID = Menu.FIRST + 1;
     
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -155,6 +159,30 @@ public class YbkViewActivity extends Activity {
         
     }
     
+    @Override
+    public boolean onCreateOptionsMenu(final Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous)
+            .setIcon(android.R.drawable.ic_media_previous);
+        menu.add(Menu.NONE, NEXT_ID, Menu.NONE,  R.string.menu_next)
+            .setIcon(android.R.drawable.ic_media_next);
+        
+        return true;
+    }
+    
+    @Override
+    public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
+        switch(item.getItemId()) {
+        case PREVIOUS_ID:
+            //browseToRoot(false);
+            return true;
+        case NEXT_ID:
+            return true;
+        }
+       
+        return super.onMenuItemSelected(featureId, item);
+    }
+
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the 
      * WebView.
@@ -348,13 +376,15 @@ public class YbkViewActivity extends Activity {
                         
                         int count = c.getCount();
                         if (count == 1) {
-                            newContent.append(oldContent.substring(gtPos + 1,elsePos));
-                            Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1,elsePos));
+                            newContent.append(oldContent.substring(gtPos + 1, elsePos));
+                            Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, elsePos));
                         } else if (count == 0) {
                             newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
                         } else {
                             throw new IllegalStateException("More than one record for the same book");
                         }
+                        
+                        //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
                         
                         // remove just-parsed <ifbook> tag structure so we can find the next
                         oldContent.delete(0, endPos + bookName.length() + 10);
@@ -373,6 +403,12 @@ public class YbkViewActivity extends Activity {
         newContent.append(oldContent);
         
         return newContent.toString();
+    }
+    
+    public boolean onTouchEvent(final MotionEvent ev) {
+        //ev.
+        
+        return true;
     }
 }
 
