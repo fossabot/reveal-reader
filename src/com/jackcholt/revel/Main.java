@@ -56,25 +56,18 @@ public class Main extends ListActivity {
         setContentView(R.layout.main);
         
         //Check here an XML file stored on our website for new version info
-        Toast.makeText(this, "Checking for new Version", Toast.LENGTH_SHORT).show();
-        
+        Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         String strLibDir = mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
-        
-        //create the default ebook library dir if it doesnt exist
-        File sddir = new File(mLibraryDir);
-        if (!sddir.mkdirs()) {
-             Log.w(Global.TAG, "Create dir in sdcard failed");
-             return;
-        }
-        
+	  
         ContentResolver contRes = getContentResolver();
         Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
         
         // get a list of files from the database
-        //Check here an XML file stored on our website for new version info
+        // Notify that we are getting current list of eBooks
         Toast.makeText(this, "Getting eBook list", Toast.LENGTH_SHORT).show();
+            
         Cursor fileCursor = contRes.query(bookUri, 
                 new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
                 YbkProvider.FILE_NAME + " ASC");
@@ -93,9 +86,13 @@ public class Main extends ListActivity {
         Vector<Integer> notFoundInDir = new Vector<Integer>();
         
         // add books that are not in the database
+        // Notify that we are getting NEW list of eBooks
+        Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
+        Log.w(Global.TAG, "Updating eBook List from" + libraryDir);
+  
         for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
             String dirFilename = ybkFiles[i].getAbsolutePath();
-            
+            Log.w(Global.TAG, "dirFilename" + dirFilename);
             boolean fileFoundInDb = false;
             
             fileCursor.moveToFirst();

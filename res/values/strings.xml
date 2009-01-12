@@ -28,4 +28,9 @@
 <string name="midnightmode_on">Midnight Mode is ON</string>
 <string name="summary_default_ebook_dir">Show Default eBook Location</string>
 <string name="summary_default_temp_dir">Default Directory for Application TEMP</string>
+
+<string name="title_list_preference">List preference</string>
+<string name="summary_list_preference">An example that uses a list dialog</string>
+<string name="dialog_title_list_preference">Choose one</string>
+
 </resources>

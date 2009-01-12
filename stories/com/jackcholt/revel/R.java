@@ -53,6 +53,7 @@ public final class R {
         public static final int default_ebook_dir=0x7f070011;
         public static final int default_fontsize=0x7f070014;
         public static final int default_temp_dir=0x7f070012;
+        public static final int dialog_title_list_preference=0x7f07001a;
         public static final int label_splash_screen=0x7f070006;
         public static final int menu_bookmark=0x7f070002;
         public static final int menu_browser=0x7f070007;
@@ -68,9 +69,11 @@ public final class R {
         public static final int settings_name=0x7f070008;
         public static final int summary_default_ebook_dir=0x7f070016;
         public static final int summary_default_temp_dir=0x7f070017;
+        public static final int summary_list_preference=0x7f070019;
         public static final int summary_off_show_splash_screen=0x7f07000a;
         public static final int summary_on_show_splash_screen=0x7f070009;
         public static final int title_browser_name=0x7f07000f;
+        public static final int title_list_preference=0x7f070018;
         public static final int up_one_level=0x7f07000b;
     }
     public static final class xml {
