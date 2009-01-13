@@ -6,6 +6,7 @@ import java.util.Vector;
 
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -30,8 +31,6 @@ public class Main extends ListActivity {
     public final static int DISPLAYMODE_ABSOLUTE = 0;
     public final static int DISPLAYMODE_RELATIVE = 1;
     
-    //private int mDisplayMode = DISPLAYMODE_RELATIVE;
-
     private static final int HISTORY_ID = Menu.FIRST;
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
@@ -39,14 +38,17 @@ public class Main extends ListActivity {
     private static final int BROWSER_ID = Menu.FIRST + 4;
     
     private static final int ACTIVITY_SETTINGS = 0;
+    private static final int LIBRARY_NOT_CREATED = 0;
     
     private SharedPreferences mSharedPref;
     //private boolean mShowSplashScreen;
     private String mLibraryDir;
-    
+    private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/revel/ebooks/"); 
     //private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
     private Cursor mListCursor; 
+    private ContentResolver mContRes; 
+
     
     /** Called when the activity is first created. */
     @Override
@@ -54,15 +56,27 @@ public class Main extends ListActivity {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.main);
+        mContRes = getContentResolver(); 
         
         //Check here an XML file stored on our website for new version info
         Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String strLibDir = mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
-	  
-        ContentResolver contRes = getContentResolver();
-        Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", 
+                "/sdcard/revel/ebooks/");
+	          
+        refreshLibrary();
+        
+        refreshBookList();
+    }
+    
+    /**
+     * Refresh the eBook directory.
+     */
+    private void refreshLibrary() {
+        ContentResolver contRes = mContRes;
+        Uri bookUri = mBookUri;
+        String strLibDir = mLibraryDir;
         
         // get a list of files from the database
         // Notify that we are getting current list of eBooks
@@ -75,78 +89,93 @@ public class Main extends ListActivity {
         startManagingCursor(fileCursor);
         
         if (fileCursor.getCount() == 0) {
-        	Toast.makeText(this, "eBook directory has no valid YBK files", Toast.LENGTH_SHORT).show();
+            Log.w(Global.TAG, "eBook database has no valid YBK files");
+            Toast.makeText(this, "eBook database has no valid YBK files", 
+                    Toast.LENGTH_SHORT).show();
         }
         
         // get a list of files from the library directory
         File libraryDir = new File(strLibDir);
+        if (!libraryDir.exists()) {
+            if (!libraryDir.mkdirs()) {
+                showDialog(LIBRARY_NOT_CREATED);
+            }
+        }
+        
         File[] ybkFiles = libraryDir.listFiles(new YbkFilter());
 
-        Vector<Integer> notFoundInDir = new Vector<Integer>();
-        
-        // add books that are not in the database
-        // Notify that we are getting NEW list of eBooks
-        Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
-        Log.w(Global.TAG, "Updating eBook List from" + libraryDir);
-  
-        for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
-            String dirFilename = ybkFiles[i].getAbsolutePath();
-
-//DKP Look at this part.  in the emulator it gets and logs SOME of the ybk file but not all
-//DKP on the real G1 it dies
-            Log.w(Global.TAG, "dirFilename" + dirFilename);
-            boolean fileFoundInDb = false;
+        if (ybkFiles != null) {
+            Vector<Integer> notFoundInDir = new Vector<Integer>();
             
+            // add books that are not in the database
+            // Notify that we are getting NEW list of eBooks
+            Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
+            Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
+      
+            for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
+                String dirFilename = ybkFiles[i].getAbsolutePath();
+                Log.d(Global.TAG, "dirFilename: " + dirFilename);
+                
+                boolean fileFoundInDb = false;
+                
+                fileCursor.moveToFirst();
+                while(!fileCursor.isAfterLast()) {
+                    String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
+                    if (dirFilename.equalsIgnoreCase(dbFilename)) {
+                        fileFoundInDb = true;
+                        break;
+                    } 
+                    
+                    fileCursor.moveToNext();
+                }
+                
+                if (!fileFoundInDb) {
+                    ContentValues values = new ContentValues();
+                    values.put(YbkProvider.FILE_NAME, dirFilename);
+                    contRes.insert(bookUri, values);
+                }
+            }
+            
+            // remove the books from the database if they are not in the directory
             fileCursor.moveToFirst();
             while(!fileCursor.isAfterLast()) {
                 String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
-                if (dirFilename.equalsIgnoreCase(dbFilename)) {
-                    fileFoundInDb = true;
-                    break;
-                } 
+                
+                boolean fileFoundInDir = false;
+                for(int i = 0, dirListLen = ybkFiles.length; i < dirListLen; i++) {
+                    String dirFilename = ybkFiles[i].getAbsolutePath();
+                    if (dirFilename.equalsIgnoreCase(dbFilename)) {
+                        fileFoundInDir = true;
+                        break;
+                    } 
+                }
+                
+                if (!fileFoundInDir) {
+                    String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
+                    contRes.delete(bookUri, YbkProvider._ID + "=?" , new String[] {bookId});
+                }
                 
                 fileCursor.moveToNext();
             }
-            
-            if (!fileFoundInDb) {
-                ContentValues values = new ContentValues();
-                values.put(YbkProvider.FILE_NAME, dirFilename);
-                contRes.insert(bookUri, values);
+    
+    
+            for(Integer id : notFoundInDir) {
+                contRes.delete(ContentUris.withAppendedId(bookUri, id), null, null);
             }
-        }
-        
-        // remove the books from the database if they are not in the directory
-        fileCursor.moveToFirst();
-        while(!fileCursor.isAfterLast()) {
-            String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
-            
-            boolean fileFoundInDir = false;
-            for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
-                String dirFilename = ybkFiles[i].getAbsolutePath();
-                if (dirFilename.equalsIgnoreCase(dbFilename)) {
-                    fileFoundInDir = true;
-                    break;
-                } 
-            }
-            
-            if (!fileFoundInDir) {
-                String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
-                contRes.delete(bookUri, YbkProvider._ID + "=?" , new String[] {bookId});
-            }
-            
-            fileCursor.moveToNext();
-        }
 
-
-        for(Integer id : notFoundInDir) {
-            contRes.delete(ContentUris.withAppendedId(bookUri, id), null, null);
         }
-        
+            
         // no longer need the fileCursor
         stopManagingCursor(fileCursor);
         fileCursor.close();
         
-        mListCursor = contRes.query(bookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+    }
+    
+    /**
+     * Refresh the list of books in the main list.
+     */
+    private void refreshBookList() {
+        mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
                 YbkProvider.BINDING_TEXT + " is not null", null,
                 " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
         
@@ -163,6 +192,7 @@ public class Main extends ListActivity {
                 new SimpleCursorAdapter(this, R.layout.book_list_row, mListCursor, from, to);
         
         setListAdapter(bookAdapter);
+        
     }
     
     /**
@@ -207,7 +237,8 @@ public class Main extends ListActivity {
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         switch(item.getItemId()) {
         case REFRESH_LIB_ID:
-            browseToRoot(false);
+            refreshLibrary();
+            refreshBookList();
             return true;
         case SETTINGS_ID:
             Intent intent = new Intent(this, Settings.class);
@@ -396,6 +427,7 @@ public class Main extends ListActivity {
 
     @Override
     protected void onListItemClick(final ListView listView, final View view, 
+            
             final int selectionRowId, final long id) {
         
         Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
@@ -403,5 +435,27 @@ public class Main extends ListActivity {
         Intent intent = new Intent(this, YbkViewActivity.class);
         intent.putExtra(YbkProvider._ID, id);
         startActivity(intent);
+    }
+    
+    /**
+     * Used to configure any dialog boxes created by this Activity
+     */
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        
+        switch (id) {
+        case LIBRARY_NOT_CREATED:
+            return new AlertDialog.Builder(this)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setTitle(R.string.library_not_created)
+            .setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+
+                    /* User clicked OK so do some stuff */
+                }
+            })
+            .create();
+        }
+        return null;
     }
 }
