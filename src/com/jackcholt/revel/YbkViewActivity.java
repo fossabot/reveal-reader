@@ -13,6 +13,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +34,7 @@ public class YbkViewActivity extends Activity {
     private YbkFileReader mYbkReader;
     private String mLibraryDir;
     private SharedPreferences mSharedPref;
+    private String mFragment;
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int PREVIOUS_ID = Menu.FIRST;
@@ -128,10 +130,11 @@ public class YbkViewActivity extends Activity {
             }
             
             ybkView.setWebViewClient(new WebViewClient() {
+                
                 @Override
                 public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                     Log.d(TAG, "WebView URL: " + url);
-
+                    
                     int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
                     String dataString = url.substring(ContentUriLength + 1);
                     
@@ -151,7 +154,19 @@ public class YbkViewActivity extends Activity {
                     Log.i(TAG, "Loading chapter '" + chapter + "'");
                     
                     loadChapter(book, chapter);
+                    
                     return true;
+                }
+                
+                public void onPageFinished(final WebView view, final String url) {
+                    // make it jump to the internal link
+                    if (mFragment != null) {
+                        Log.d(TAG, "In onPageFinished(). Jumping to #" + mFragment);
+                        view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
+                        mFragment = null;
+                    }
+                    
+                    
                 }
              });
 
@@ -196,7 +211,7 @@ public class YbkViewActivity extends Activity {
         ybkView.getSettings().setJavaScriptEnabled(true);
         String chap = chapter;
         String content = "";
-        String fragment = null;
+        String fragment = mFragment = null;
         
         Log.d(TAG, "FilePath: " + filePath);
         
@@ -217,7 +232,7 @@ public class YbkViewActivity extends Activity {
                 // use the dreaded break <label> in order to simplify conditional nesting
                 label_get_content:
                 if ((hashLoc = chap.indexOf("#")) != -1) {
-                    fragment = chap.substring(hashLoc + 1);
+                    mFragment = fragment = chap.substring(hashLoc + 1);
                     
                     if (!Util.isInteger(fragment)) {
                         
@@ -264,21 +279,12 @@ public class YbkViewActivity extends Activity {
                 } // label_get_content:
                 
                 String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
-                /*if (fragment != null) {
-                    content += "<script language=\"javascript\">location.href=\"#" + fragment + "\";alert('running javascript')</script>";
-                    Log.d(TAG, "content: " + Util.tail(content, 200));
-                }*/
                 
                 content = processIfbook(content);
                 
                 ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
                         "text/html","utf-8","");
-                
-                // make it jump to the internal link
-                /*if (fragment != null) {
-                    ybkView.loadUrl("javascript:location.href=\"#" + fragment + "\"");
-                }*/
-                
+                                
             } catch (IOException e) {
                 ybkView.loadData("The chapter could not be opened.",
                         "text/plain","utf-8");

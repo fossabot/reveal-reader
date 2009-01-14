@@ -170,4 +170,11 @@ public class TestYbkFileReader {
         String contents = ybkRdr.readChapter("\\sh.html.gz");
         Log.d("testGetInternalFile", "Bible Maps: " + contents);
     }
+
+    @Test
+    public void testGetTotPotCJS() throws IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\js.ybk");
+        String contents = ybkRdr.readChapter("\\js\\5");
+        Log.d("testGetTotPotCJS", "JS Repentance: " + contents);
+    }
 }
