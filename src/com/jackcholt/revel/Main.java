@@ -64,10 +64,26 @@ public class Main extends ListActivity {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", 
                 "/sdcard/revel/ebooks/");
-	          
+	     
+        createDefaultDirs();
+        
         refreshLibrary();
         
         refreshBookList();
+    }
+    
+    private void createDefaultDirs() {
+        // Create the /sdcard/revel and eBooks dir if they don't exist
+        // Notify of creation and maybe put people directly into the TitleBrowser if they don't have ANY ybk's
+         File reveldir = new File("/sdcard/revel");
+        if (!reveldir.mkdirs()) {
+             Log.e(Global.TAG, "Create dir in sdcard failed");
+        }
+        File ebooksdir = new File(mLibraryDir);
+        if (!ebooksdir.mkdirs()) {
+             Log.e(Global.TAG, "Create dir in sdcard failed");
+             //Jump to TTitleBrowser and download files
+        }
     }
     
     /**
