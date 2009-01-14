@@ -2,6 +2,7 @@ package com.jackcholt.revel;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -13,8 +14,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Message;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -24,7 +25,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
@@ -35,6 +35,7 @@ public class YbkViewActivity extends Activity {
     private String mLibraryDir;
     private SharedPreferences mSharedPref;
     private String mFragment;
+    private String mDialogFilename = "Never set";
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int PREVIOUS_ID = Menu.FIRST;
@@ -58,8 +59,7 @@ public class YbkViewActivity extends Activity {
         mainBtn.setOnClickListener(new OnClickListener() {
 
             public void onClick(final View view) {
-                //chapBtn.setVisibility(View.INVISIBLE);
-                //bookBtn.setVisibility(View.INVISIBLE);
+                
                 finish();
             }
             
@@ -112,18 +112,7 @@ public class YbkViewActivity extends Activity {
                 }
                 
                 loadChapter(filePath, fileToOpen);
-                bookBtn.setText(shortTitle);
-                bookBtn.setOnClickListener(new OnClickListener() {
-                    private String bookFilePath = filePath;
-                    private String bookFileToOpen = fileToOpen;
-                    
-                    public void onClick(final View v) {
-                        loadChapter(bookFilePath, bookFileToOpen);
-                        Log.d(TAG, "Book loaded");
-                    }
-                    
-                });
-                bookBtn.setVisibility(View.VISIBLE);
+                setBookBtn(shortTitle, filePath, fileToOpen);
                 
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
@@ -140,7 +129,14 @@ public class YbkViewActivity extends Activity {
                     
                     String[] urlParts = dataString.split("/");
                     
-                    String book = mLibraryDir + urlParts[0] + ".ybk";
+                    
+                    // get rid of the book indicator since it is only used in some cases.
+                    String book = urlParts[0];
+                    if (book.indexOf("!") == 0) {
+                        urlParts[0] = book.substring(1);
+                    }
+                    
+                    book = mLibraryDir + urlParts[0] + ".ybk";
                     
                     String chapter = "";
                     for (int i = 0; i < urlParts.length; i++) {
@@ -153,7 +149,10 @@ public class YbkViewActivity extends Activity {
                     
                     Log.i(TAG, "Loading chapter '" + chapter + "'");
                     
-                    loadChapter(book, chapter);
+                    if (loadChapter(book, chapter)) {
+                    
+                        setBookBtn(urlParts[0],book,chapter);
+                    }
                     
                     return true;
                 }
@@ -172,6 +171,24 @@ public class YbkViewActivity extends Activity {
 
         }
         
+    }
+    
+    public void setBookBtn(final String shortTitle, final String filePath, 
+            final String fileToOpen) {
+        Button bookBtn = mBookBtn;
+        bookBtn.setText(shortTitle);
+        bookBtn.setOnClickListener(new OnClickListener() {
+            private String bookFilePath = filePath;
+            private String bookFileToOpen = fileToOpen;
+            
+            public void onClick(final View v) {
+                loadChapter(bookFilePath, bookFileToOpen);
+                Log.d(TAG, "Book loaded");
+            }
+            
+        });
+        
+        bookBtn.setVisibility(View.VISIBLE);
     }
     
     @Override
@@ -205,8 +222,8 @@ public class YbkViewActivity extends Activity {
      * @param filePath The path to the YBK file from which to read the chapter. 
      * @param chapter The "filename" of the chapter to load.
      */
-    private void loadChapter(final String filePath, final String chapter) {
-    
+    private boolean loadChapter(final String filePath, final String chapter) {
+        boolean bookLoaded = false;
         WebView ybkView = mYbkView; 
         ybkView.getSettings().setJavaScriptEnabled(true);
         String chap = chapter;
@@ -217,6 +234,15 @@ public class YbkViewActivity extends Activity {
         
         File testFile = new File(filePath);
         if (!testFile.exists()) {
+            // set the member property that holds the name of the book file we
+            // couldn't find
+            if (TextUtils.isEmpty(filePath)) {
+                mDialogFilename = "No file";
+            } else {
+                String[] pathParts = filePath.split("/"); 
+                mDialogFilename = pathParts[pathParts.length-1];
+            }
+            
             showDialog(FILE_NONEXIST);
         } else {
         
@@ -284,6 +310,8 @@ public class YbkViewActivity extends Activity {
                 
                 ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
                         "text/html","utf-8","");
+                
+                bookLoaded = true;
                                 
             } catch (IOException e) {
                 ybkView.loadData("The chapter could not be opened.",
@@ -291,10 +319,11 @@ public class YbkViewActivity extends Activity {
                 
                 Log.e(TAG, "A chapter in " + filePath + " could not be opened. " + e.getMessage());
                 
-                return;
             }
             
         }
+        
+        return bookLoaded;
     }
     
     /**
@@ -305,9 +334,10 @@ public class YbkViewActivity extends Activity {
         
         switch (id) {
         case FILE_NONEXIST :
+            
             return new AlertDialog.Builder(this)
             .setIcon(android.R.drawable.ic_dialog_alert)
-            .setTitle(R.string.reference_not_found)
+            .setTitle("Not Set")
             .setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
 
@@ -319,6 +349,17 @@ public class YbkViewActivity extends Activity {
         return null;
     }
 
+    @Override
+    protected void onPrepareDialog(int id, Dialog dialog) {
+        switch(id) {
+        case FILE_NONEXIST :
+            // replace the replaceable parameters
+            String title = getResources().getString(R.string.reference_not_found);
+            title = MessageFormat.format(title, mDialogFilename);
+            dialog.setTitle(title);
+        }
+    }
+    
     /**
      * Read a section of a special concatenated chapter;
      * @param chap The chapter to read.

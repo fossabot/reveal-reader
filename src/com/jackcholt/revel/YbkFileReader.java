@@ -273,24 +273,13 @@ public class YbkFileReader {
         
         RandomAccessFile file = mFile;
         
-        //DataInputStream dataInput = mDataInput;
-        
         ArrayList<InternalFile> internalFiles = mInternalFiles;
         
         for(InternalFile iFile : internalFiles) {
             if (iFile.getFileName().equalsIgnoreCase(iFilename)) {
                 offset = iFile.getYbkOffset();
                 len = iFile.getYbkLen();
-        
-                //try {
-                    //file.seek(0);
-                //} catch (IOException ioe) {
-                    //Log.w("YbkFileReader", "YBK file's DataInputStream had to be closed and reopened. " 
-                    //        + ioe.getMessage());
-                    //dataInput.close();
-                    //initDataStream();
-                //}
-             
+                     
                 byte[] text = new byte[len];
                 file.seek(offset);
                 int amountRead = file.read(text);
