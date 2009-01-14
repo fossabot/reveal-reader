@@ -36,6 +36,7 @@ public class Main extends ListActivity {
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
     private static final int BROWSER_ID = Menu.FIRST + 4;
+    private static final int UPDATE_ID = Menu.FIRST + 5;
     
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
@@ -60,7 +61,7 @@ public class Main extends ListActivity {
         
         //Check here an XML file stored on our website for new version info
         Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
-        
+
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", 
                 "/sdcard/revel/ebooks/");
@@ -245,6 +246,7 @@ public class Main extends ListActivity {
             .setIcon(android.R.drawable.ic_menu_preferences);
         menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library);
         menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser);
+        menu.add(Menu.NONE, UPDATE_ID, Menu.NONE,  R.string.menu_update);
         
         return true;
     }
@@ -263,6 +265,9 @@ public class Main extends ListActivity {
         case BROWSER_ID:
         	Intent browserIntent = new Intent(this, TitleBrowser.class);
         	startActivity(browserIntent);
+        	return true;
+        case UPDATE_ID:
+        	Util.updateRevel();
         	return true;
         }
        

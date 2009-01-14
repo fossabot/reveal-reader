@@ -358,6 +358,7 @@ public class TitleProvider extends ContentProvider {
 		InputSource source;
 
 		Log.d(TAG, "Populating database from " + (fromWeb ? "web" : "file"));
+		
 		// clear the database first
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 		{
