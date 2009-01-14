@@ -36,7 +36,7 @@ public class Main extends ListActivity {
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
     private static final int BROWSER_ID = Menu.FIRST + 4;
-    private static final int UPDATE_ID = Menu.FIRST + 5;
+    private static final int REVELUPDATE_ID = Menu.FIRST + 5;
     
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
@@ -244,9 +244,12 @@ public class Main extends ListActivity {
             .setIcon(android.R.drawable.ic_menu_compass);
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
             .setIcon(android.R.drawable.ic_menu_preferences);
-        menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library);
-        menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser);
-        menu.add(Menu.NONE, UPDATE_ID, Menu.NONE,  R.string.menu_update);
+        menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library)
+        	.setIcon(android.R.drawable.ic_menu_rotate);        
+        menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser)
+        	.setIcon(android.R.drawable.ic_menu_set_as);        
+        menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE,  R.string.menu_update)
+        	.setIcon(android.R.drawable.ic_menu_share);       
         
         return true;
     }
@@ -266,7 +269,7 @@ public class Main extends ListActivity {
         	Intent browserIntent = new Intent(this, TitleBrowser.class);
         	startActivity(browserIntent);
         	return true;
-        case UPDATE_ID:
+        case REVELUPDATE_ID:
         	Util.updateRevel();
         	return true;
         }

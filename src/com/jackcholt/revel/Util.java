@@ -283,14 +283,16 @@ public class Util {
         
         return text.substring(start);
     }
+ 
     
+	/**
+	 * Provider to access title and category information.
+	 * @author dpackham
+	 * this is my first shot at downloading a file.
+	 * thanks to jwiggins for the code snips  :)
+	 */
     public static void updateRevel() {
-    	/**
-    	 * Provider to access title and category information.
-    	 * @author dpackham
-    	 * this is my first shot at downloading a file.
-    	 * thanks to jwiggins for the code snips  :)
-    	 */
+
     	
         try {
             /* Create a URL we want to load some xml-data from. */

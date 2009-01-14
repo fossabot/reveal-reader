@@ -37,4 +37,8 @@
 <string name="menu_next">Next Chapter</string>
 <string name="library_not_created">Could not create the library folder.</string>
 <string name="update_browser">Online Update</string>
+<string name="update_url">http://photos.thepackhams.com/revelVersion.xml</string>
+
+<dimen name="font_size">15sp</dimen>
+<dimen name="large_font_size">25sp</dimen>
 </resources>

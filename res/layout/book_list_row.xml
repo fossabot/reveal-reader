@@ -2,4 +2,5 @@
 <TextView android:id="@+id/bookText" xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:textSize="25sp"/>
+    android:textSize="@dimen/font_size"
+    android:padding="5dip"/>
