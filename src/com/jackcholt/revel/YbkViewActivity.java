@@ -28,7 +28,7 @@ import android.widget.ImageButton;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
-    private ImageButton mMainBtn;
+    //private ImageButton mMainBtn;
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
@@ -36,7 +36,6 @@ public class YbkViewActivity extends Activity {
     private SharedPreferences mSharedPref;
     private String mFragment;
     private String mDialogFilename = "Never set";
-    private String mIndexChapter;
     private String mChapBtnText = "Not Set";
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
@@ -54,10 +53,15 @@ public class YbkViewActivity extends Activity {
 
         final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
         ybkView.getSettings().setJavaScriptEnabled(true);
-        final ImageButton mainBtn = mMainBtn = (ImageButton) findViewById(R.id.mainMenu);
-        final Button bookBtn = mBookBtn = (Button) findViewById(R.id.bookButton);
+        final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
+        mBookBtn = (Button) findViewById(R.id.bookButton);
         final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
-        //LinearLayout bcLayout = mBcLayout = (LinearLayout) findViewById(R.id.breadCrumb); 
+        chapBtn.setOnClickListener(new OnClickListener() {
+            /** set the chapter button so it scrolls the window to the top */
+            public void onClick(final View v) {
+                mYbkView.loadUrl("javascript:location.href=\"#top\";");
+            }
+        });
         
         mainBtn.setOnClickListener(new OnClickListener() {
 
@@ -104,7 +108,7 @@ public class YbkViewActivity extends Activity {
                     content = ybkReader.readInternalFile(tryFileToOpen);
                 }
                 
-                final String fileToOpen = mIndexChapter = tryFileToOpen;
+                final String fileToOpen = tryFileToOpen;
                 
                 if (content == null) {
                     ybkView.loadData("YBK file has no index page.",
@@ -176,6 +180,14 @@ public class YbkViewActivity extends Activity {
         
     }
     
+    /**
+     * Set the book and chapter buttons.
+     * 
+     * @param shortTitle The text to be used on the Book Button.
+     * @param filePath The path to the YBK file that contains the chapter to 
+     * load. 
+     * @param fileToOpen The internal path to the chapter to load. 
+     */
     public void setBookBtn(final String shortTitle, final String filePath, 
             final String fileToOpen) {
         Button bookBtn = mBookBtn;
@@ -183,12 +195,12 @@ public class YbkViewActivity extends Activity {
         
         bookBtn.setText(shortTitle);
         bookBtn.setOnClickListener(new OnClickListener() {
-            //private String bookFilePath = filePath;
             
             public void onClick(final View v) {
-                loadChapter(filePath, "index");
-                Log.d(TAG, "Book loaded");
-                setBookBtn(shortTitle, filePath, fileToOpen);
+                if (loadChapter(filePath, "index") ) {
+                    setBookBtn(shortTitle, filePath, fileToOpen);
+                    Log.d(TAG, "Book loaded");
+                } 
             }
             
         });
@@ -196,14 +208,6 @@ public class YbkViewActivity extends Activity {
         bookBtn.setVisibility(View.VISIBLE);
 
         chapBtn.setText(mChapBtnText);
-        chapBtn.setOnClickListener(new OnClickListener() {
-            private String bookFilePath = filePath;
-            private String bookFileToOpen = fileToOpen;
-            
-            public void onClick(final View v) {
-                loadChapter(bookFilePath, bookFileToOpen);
-            }
-        });
         
         chapBtn.setVisibility(View.VISIBLE);
         
@@ -507,12 +511,12 @@ public class YbkViewActivity extends Activity {
      */
     private void setChapBtnText(final String content) {
         int endPos = content.indexOf("<end>");
-        if (endPos == -1) {
+        if (-1 == endPos) {
             throw new IllegalStateException("Chapter has no header");
         }
         String header = content.substring(0, endPos);
         int startFN = header.toLowerCase().indexOf("<fn>");
-        if (startFN == -1) {
+        if (-1 == startFN) {
             throw new IllegalStateException("Chapter has no full name");
         }
         

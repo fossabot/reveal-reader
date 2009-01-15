@@ -38,8 +38,8 @@ public class TitleBrowser extends ListActivity {
 
 		// setContentView(R.layout.browser_main);
 		
-		//inform the users we are checking for new ebooks.  so we dont appear locked up
-		Toast.makeText(this, "Checking for new eBooks", Toast.LENGTH_SHORT).show();
+		//inform the users we are checking for new ebooks.  so we don't appear locked up
+		Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
 		
 		// establish data connection
 		Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,

@@ -281,9 +281,9 @@ public class Main extends ListActivity {
      * This function browses to the
      * root-directory of the file-system.
      */
-    private void browseToRoot(final boolean showFolders) {
+    /*private void browseToRoot(final boolean showFolders) {
          browseTo(new File(mLibraryDir), showFolders);
-    }
+    }*/
     
     /**
      * This function browses up one level
