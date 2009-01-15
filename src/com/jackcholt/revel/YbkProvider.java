@@ -1,10 +1,7 @@
 package com.jackcholt.revel;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -534,14 +531,14 @@ public class YbkProvider extends ContentProvider {
      * @return The input stream
      * @throws FileNotFoundException if there is no such file.
      */
-    private DataInputStream initDataStream(final File file) 
+    /*private DataInputStream initDataStream(final File file) 
     throws FileNotFoundException {
         DataInputStream dataInput = new DataInputStream(
                 new BufferedInputStream(new FileInputStream (file)));
         dataInput.mark(Integer.MAX_VALUE);
         
         return dataInput;
-    }
+    }*/
     
     /**
      * Return the contents of BINDING.HTML internal file as a String.

@@ -2,10 +2,7 @@ package com.jackcholt.revel;
 
 import java.util.Stack;
 
-import com.jackcholt.revel.R;
-
 import android.app.ListActivity;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;

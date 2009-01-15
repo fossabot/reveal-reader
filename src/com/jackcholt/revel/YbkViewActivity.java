@@ -36,6 +36,8 @@ public class YbkViewActivity extends Activity {
     private SharedPreferences mSharedPref;
     private String mFragment;
     private String mDialogFilename = "Never set";
+    private String mIndexChapter;
+    private String mChapBtnText = "Not Set";
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int PREVIOUS_ID = Menu.FIRST;
@@ -51,6 +53,7 @@ public class YbkViewActivity extends Activity {
         setContentView(R.layout.view_ybk);
 
         final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
+        ybkView.getSettings().setJavaScriptEnabled(true);
         final ImageButton mainBtn = mMainBtn = (ImageButton) findViewById(R.id.mainMenu);
         final Button bookBtn = mBookBtn = (Button) findViewById(R.id.bookButton);
         final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
@@ -101,13 +104,13 @@ public class YbkViewActivity extends Activity {
                     content = ybkReader.readInternalFile(tryFileToOpen);
                 }
                 
-                final String fileToOpen = tryFileToOpen;
+                final String fileToOpen = mIndexChapter = tryFileToOpen;
                 
                 if (content == null) {
                     ybkView.loadData("YBK file has no index page.",
                             "text/plain","utf-8");
                     
-                    Log.e("revel", "YBK file has no index page.");
+                    Log.e(TAG, "YBK file has no index page.");
                     return;
                 }
                 
@@ -176,19 +179,34 @@ public class YbkViewActivity extends Activity {
     public void setBookBtn(final String shortTitle, final String filePath, 
             final String fileToOpen) {
         Button bookBtn = mBookBtn;
+        Button chapBtn = mChapBtn;
+        
         bookBtn.setText(shortTitle);
         bookBtn.setOnClickListener(new OnClickListener() {
-            private String bookFilePath = filePath;
-            private String bookFileToOpen = fileToOpen;
+            //private String bookFilePath = filePath;
             
             public void onClick(final View v) {
-                loadChapter(bookFilePath, bookFileToOpen);
+                loadChapter(filePath, "index");
                 Log.d(TAG, "Book loaded");
+                setBookBtn(shortTitle, filePath, fileToOpen);
             }
             
         });
         
         bookBtn.setVisibility(View.VISIBLE);
+
+        chapBtn.setText(mChapBtnText);
+        chapBtn.setOnClickListener(new OnClickListener() {
+            private String bookFilePath = filePath;
+            private String bookFileToOpen = fileToOpen;
+            
+            public void onClick(final View v) {
+                loadChapter(bookFilePath, bookFileToOpen);
+            }
+        });
+        
+        chapBtn.setVisibility(View.VISIBLE);
+        
     }
     
     @Override
@@ -225,7 +243,8 @@ public class YbkViewActivity extends Activity {
     private boolean loadChapter(final String filePath, final String chapter) {
         boolean bookLoaded = false;
         WebView ybkView = mYbkView; 
-        ybkView.getSettings().setJavaScriptEnabled(true);
+        YbkFileReader ybkReader = mYbkReader;
+        
         String chap = chapter;
         String content = "";
         String fragment = mFragment = null;
@@ -245,67 +264,90 @@ public class YbkViewActivity extends Activity {
             
             showDialog(FILE_NONEXIST);
         } else {
-        
-            try {
-                mYbkReader = new YbkFileReader(filePath);
-            } catch (IOException ioe) {
-                throw new RuntimeException(ioe);
-            }
-        
-            try {
-                int hashLoc = -1;
-                
-                // use the dreaded break <label> in order to simplify conditional nesting
-                label_get_content:
-                if ((hashLoc = chap.indexOf("#")) != -1) {
-                    mFragment = fragment = chap.substring(hashLoc + 1);
+            // Only create a new YbkFileReader if we're opening a different book
+            if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
+                try {
+                    ybkReader = mYbkReader = new YbkFileReader(filePath);
                     
-                    if (!Util.isInteger(fragment)) {
+                } catch (IOException ioe) {
+                    throw new RuntimeException(ioe);
+                }
+            }
+            try {
+                if (chap.equals("index")) {
+                    String shortTitle = ybkReader.getBookShortTitle();
+                    String tryFileToOpen = "\\" + shortTitle + ".html.gz";
+                    content = ybkReader.readInternalFile(tryFileToOpen);
+                    if (content == null) {
+                        tryFileToOpen = "\\" + shortTitle + ".html";
+                        content = ybkReader.readInternalFile(tryFileToOpen);
+                    }
+                    
+                    if (content == null) {
+                        ybkView.loadData("YBK file has no index page.",
+                                "text/plain","utf-8");
                         
-                        // need to read a special footnote chapter
-                        content = readConcatFile(chap, mYbkReader);
+                        Log.e(TAG, "YBK file has no index page.");
+                    }
+                } else {
+                
+                    int hashLoc = -1;
+                    
+                    // use the dreaded break <label> in order to simplify conditional nesting
+                    label_get_content:
+                    if ((hashLoc = chap.indexOf("#")) != -1) {
+                        mFragment = fragment = chap.substring(hashLoc + 1);
                         
-                        if (content != null) {
-                            break label_get_content;
+                        if (!Util.isInteger(fragment)) {
+                            
+                            // need to read a special footnote chapter
+                            content = readConcatFile(chap, mYbkReader);
+                            
+                            if (content != null) {
+                                break label_get_content;
+                            }
+                        } else {
+                            chap = chap.substring(0, hashLoc);
+                            content = mYbkReader.readInternalFile(chap);
+                            if (content != null) {
+                                break label_get_content;
+                            }
+                            
+                            content = mYbkReader.readInternalFile(chap + ".gz");
+                            if (content != null) {
+                                break label_get_content;
+                            }
                         }
                     } else {
-                        chap = chap.substring(0, hashLoc);
                         content = mYbkReader.readInternalFile(chap);
                         if (content != null) {
                             break label_get_content;
                         }
                         
-                        content = mYbkReader.readInternalFile(chap + ".gz");
+                        // Try it without the .gz 
+                        chap.substring(0, chap.length() - 3);
+                        content = mYbkReader.readInternalFile(chap);
                         if (content != null) {
                             break label_get_content;
                         }
-                    }
-                } else {
-                    content = mYbkReader.readInternalFile(chap);
-                    if (content != null) {
-                        break label_get_content;
-                    }
+                        
+                        // Need to read special concatenated file
+                        content = readConcatFile(chap, mYbkReader);
+                        if (content != null) {
+                            break label_get_content;
+                        }
+                        
+                        // if we haven't reached a break statement yet, we have a problem.
+                        throw new IllegalStateException("Unable to read chapter '" + chap + "'");
+                        
+                    } // label_get_content:
                     
-                    // Try it without the .gz 
-                    chap.substring(0, chap.length() - 3);
-                    content = mYbkReader.readInternalFile(chap);
-                    if (content != null) {
-                        break label_get_content;
-                    }
-                    
-                    // Need to read special concatenated file
-                    content = readConcatFile(chap, mYbkReader);
-                    if (content != null) {
-                        break label_get_content;
-                    }
-                    
-                    // if we haven't reached a break statement yet, we have a problem.
-                    throw new IllegalStateException("Unable to read chapter '" + chap + "'");
-                    
-                } // label_get_content:
-                
+                }
+
                 String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
                 
+                setChapBtnText(content);
+
                 content = processIfbook(content);
                 
                 ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
@@ -456,6 +498,37 @@ public class YbkViewActivity extends Activity {
         //ev.
         
         return true;
+    }
+
+    /**
+     * Set the chapter button text from the content.
+     * 
+     * @param content The content of the chapter.
+     */
+    private void setChapBtnText(final String content) {
+        int endPos = content.indexOf("<end>");
+        if (endPos == -1) {
+            throw new IllegalStateException("Chapter has no header");
+        }
+        String header = content.substring(0, endPos);
+        int startFN = header.toLowerCase().indexOf("<fn>");
+        if (startFN == -1) {
+            throw new IllegalStateException("Chapter has no full name");
+        }
+        
+        //get past the <fn> tag
+        startFN += 4;
+        
+        int endFN = header.substring(startFN).indexOf("<");
+        if (-1 == endFN) {
+            throw new IllegalStateException("full name does not end properly");
+        }
+        
+        // Set endFN to the position in the header;
+        endFN += startFN;
+        
+        mChapBtnText = header.substring(startFN, endFN);
+        
     }
 }
 

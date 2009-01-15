@@ -1,9 +1,5 @@
 package com.jackcholt.revel;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -35,6 +31,7 @@ public class YbkFileReader {
     private static final String BOOKMETADATA_FILENAME = "\\BOOKMETADATA.HTML.GZ"; 
     private static final String ORDER_CONFIG_FILENAME = "\\ORDER.CFG";
     private RandomAccessFile mFile;
+    private String mFilename;
     //private DataInputStream mDataInput;
     private int mIndexLength;
     private ArrayList<InternalFile> mInternalFiles = new ArrayList<InternalFile>();
@@ -126,9 +123,6 @@ public class YbkFileReader {
     public YbkFileReader(final RandomAccessFile file) 
     throws FileNotFoundException, IOException {
         mFile = file;
-        
-        //initDataStream();
-        
         populateFileData();
     }
 
@@ -144,20 +138,8 @@ public class YbkFileReader {
     public YbkFileReader(final String fileName) 
     throws FileNotFoundException, IOException {
         this(new RandomAccessFile(fileName, "r"));
+        mFilename = fileName;
     }
-    
-//    public YbkFileReader(Context ctx, final int id) {
-//        
-//        Cursor c = ctx.getContentResolver().query(
-//                ContentUris.withAppendedId(YbkProvider.BOOK_CONTENT_URI, id), 
-//                new String[] {YbkProvider.FILE_NAME}, null, null, null);
-//        
-//        c.moveToFirst();
-//        String fileName = c.getString(0);
-//        
-//        this(fileName);
-//        
-//    }
     
     /**
      * Return the title of the book.
@@ -631,5 +613,13 @@ public class YbkFileReader {
      */
     public final String getBookShortTitle() {
         return mBookShortTitle;
+    }
+
+    
+    /**
+     * @return the filename
+     */
+    public final String getFilename() {
+        return mFilename;
     }
 }
