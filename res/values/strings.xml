@@ -41,5 +41,6 @@
 
 <dimen name="font_size">15sp</dimen>
 <dimen name="large_font_size">25sp</dimen>
-<string name="checking_ebooks">Checking for new eBooks</string>
+<string name="checking_ebooks">Updating eBooks... This may take a while.</string>
+<string name="ebook_update_complete">Finished updating eBooks</string>
 </resources>

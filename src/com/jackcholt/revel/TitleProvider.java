@@ -100,6 +100,7 @@ public class TitleProvider extends ContentProvider {
 	public static final int TITLES = 4;
 	public static final int TITLES_CATEGORY = 5;
 	public static final int UPDATE = 6;
+	public static final int UPDATE_FILE = 7;
 
 	private static final UriMatcher sUriMatcher;
 	static {
@@ -113,6 +114,7 @@ public class TitleProvider extends ContentProvider {
 		sUriMatcher
 				.addURI(AUTHORITY, "titles/titlecategory/#", TITLES_CATEGORY);
 		sUriMatcher.addURI(AUTHORITY, "titles/update", UPDATE);
+		sUriMatcher.addURI(AUTHORITY, "titles/updatefile", UPDATE_FILE);
 	}
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
@@ -169,17 +171,6 @@ public class TitleProvider extends ContentProvider {
 	public boolean onCreate() {
 		mOpenHelper = new DatabaseHelper(getContext());
 
-		// If this database doesn't have anything to display, let's load it from
-		// the embedded file
-		Cursor results = query(Uri.withAppendedPath(CONTENT_URI, "category"),
-				new String[] { Categories._ID }, null, null, null);
-
-		if (results.getCount() < 5) {
-			populate(false);
-		}
-
-		results.close();
-
 		return true;
 	}
 
@@ -201,6 +192,9 @@ public class TitleProvider extends ContentProvider {
 			return Titles.CONTENT_ITEM_TYPE;
 			
 		case UPDATE:
+			return UPDATE_TYPE;
+
+		case UPDATE_FILE:
 			return UPDATE_TYPE;
 
 		default:
@@ -340,6 +334,9 @@ public class TitleProvider extends ContentProvider {
 		switch (sUriMatcher.match(uri)) {
 		case UPDATE:
 			populate(true);
+			break;
+		case UPDATE_FILE:
+			populate(false);
 			break;
 		}
 		return 0;

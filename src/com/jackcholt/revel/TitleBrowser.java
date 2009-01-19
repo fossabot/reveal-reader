@@ -3,7 +3,9 @@ package com.jackcholt.revel;
 import java.util.Stack;
 
 import android.app.ListActivity;
+import android.content.AsyncQueryHandler;
 import android.content.ContentUris;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,10 +26,12 @@ import android.widget.Toast;
 public class TitleBrowser extends ListActivity {
 
 	private static final int UPDATE_ID = Menu.FIRST;
+	private static final int UPDATE_TOKEN = 12; //random number
 	
 	private SimpleCursorAdapter adapter;
 	private Stack<Uri> mBreadCrumb;
 	private Cursor mListCursor;
+	private QueryHandler mQueryHandler;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -38,8 +42,23 @@ public class TitleBrowser extends ListActivity {
 
 		// setContentView(R.layout.browser_main);
 		
-		//inform the users we are checking for new ebooks.  so we don't appear locked up
-		Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
+		mQueryHandler = new QueryHandler(this);
+		
+		// If this database doesn't have anything to display, let's load it from
+		// the embedded file
+		mListCursor = getContentResolver().query(
+					Uri.withAppendedPath(TitleProvider.CONTENT_URI,	"category"),
+					new String[] { TitleProvider.Categories._ID }, null, null, null);
+
+		if (mListCursor.getCount() == 0) {
+			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
+			
+			mQueryHandler.startUpdate(UPDATE_TOKEN, null,
+					Uri.withAppendedPath(TitleProvider.CONTENT_URI, "updatefile"),
+					null, null, null);
+		}
+
+		mListCursor.close();
 		
 		// establish data connection
 		Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
@@ -62,7 +81,8 @@ public class TitleBrowser extends ListActivity {
 	public boolean onCreateOptionsMenu(final Menu menu) {
 		boolean success = super.onCreateOptionsMenu(menu);
 		
-		menu.add(Menu.NONE, UPDATE_ID, Menu.NONE, R.string.menu_update);
+		menu.add(Menu.NONE, UPDATE_ID, Menu.NONE, R.string.menu_update)
+				.setIcon(android.R.drawable.ic_menu_share);
 		
 		return success;
 	}
@@ -71,7 +91,9 @@ public class TitleBrowser extends ListActivity {
 	public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
 		switch(item.getItemId()) {
 		case UPDATE_ID:
-			getContentResolver().update(
+			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
+			
+			mQueryHandler.startUpdate(UPDATE_TOKEN, null,
 					Uri.withAppendedPath(TitleProvider.CONTENT_URI, "update"),
 					null, null, null);
 			return true;
@@ -137,5 +159,21 @@ public class TitleBrowser extends ListActivity {
 		}
 
 		return false;
+	}
+	
+	private final class QueryHandler extends AsyncQueryHandler {
+		private Context mContext;
+		
+		public QueryHandler(Context context) {
+            super(context.getContentResolver());
+            mContext = context;
+        }
+
+		@Override
+		protected void onUpdateComplete(int token, Object cookie, int result) {
+			super.onUpdateComplete(token, cookie, result);
+			
+			Toast.makeText(mContext, R.string.ebook_update_complete, Toast.LENGTH_SHORT).show();
+		}
 	}
 }
