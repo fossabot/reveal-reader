@@ -295,7 +295,7 @@ public class Util {
     	
         try {
             /* Create a URL we want to load some xml-data from. */
-            URL url = new URL("http://photos.thepackhams.com/revelVersion.xml");
+            URL url = new URL("http://androidstuff.thepackhams.com/revelVersion.xml");
 
             /* Get a SAXParser from the SAXPArserFactory. */
             SAXParserFactory spf = SAXParserFactory.newInstance();
