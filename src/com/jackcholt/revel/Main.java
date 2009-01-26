@@ -61,12 +61,13 @@ public class Main extends ListActivity {
         mContRes = getContentResolver(); 
         
         //Check here an XML file stored on our website for new version info
-        Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
+        //int currentVersion = 40;
+        //UpdateChecker.checkForNewerVersion(currentVersion);
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", 
-                "/sdcard/revel/ebooks/");
-	     
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
+        
         createDefaultDirs();
         
         refreshLibrary();
@@ -272,7 +273,7 @@ public class Main extends ListActivity {
         	startActivity(browserIntent);
         	return true;
         case REVELUPDATE_ID:
-        	Util.updateRevel();
+        	UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
         	return true;
         case ABOUT_ID:
         	AboutDialog.create(this);

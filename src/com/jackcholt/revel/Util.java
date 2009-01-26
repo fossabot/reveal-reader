@@ -3,21 +3,9 @@ package com.jackcholt.revel;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
-
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
-
-import android.util.Log;
 
 public class Util {
     
@@ -282,149 +270,7 @@ public class Util {
         
         return text.substring(start);
     }
- 
-    
-	/**
-	 * Provider to access title and category information.
-	 * @author dpackham
-	 * this is my first shot at downloading a file.
-	 * thanks to jwiggins for the code snips  :)
-	 */
-    public static void updateRevel() {
+ 	
 
-    	
-        try {
-            /* Create a URL we want to load some xml-data from. */
-            URL url = new URL("http://androidstuff.thepackhams.com/revelVersion.xml");
-
-            /* Get a SAXParser from the SAXPArserFactory. */
-            SAXParserFactory spf = SAXParserFactory.newInstance();
-            SAXParser sp = spf.newSAXParser();
-
-            /* Get the XMLReader of the SAXParser we created. */
-            XMLReader xr = sp.getXMLReader();
-            /* Create a new ContentHandler and apply it to the XML-Reader*/
-            //UpdateHandler myUpdateHandler = new UpdateHandler();
-            //xr.setContentHandler((ContentHandler) myUpdateHandler);
-            
-            /* Parse the xml-data from our URL. */
-            xr.parse(new InputSource(url.openStream()));
-            /* Parsing has finished. */
-
-            /* Our ExampleHandler now provides the parsed data to us. */
-            //ParsedUpdateDataSet parsedUpdateDataSet = myUpdateHandler.getParsedData();
-           
-       } catch (Exception e) {
-            /* Display any Error to the GUI. */
-            Log.e(Global.TAG, "Update Parse Error = ", e);
-       }
-       /* Display the TextView. */
-       //Toast.makeText(this, "XML Printout" + parsedUpdateDataSet.toString(), Toast.LENGTH_SHORT).show();
-       Log.e(Global.TAG, "Update Parse Error = ");
-} 
-
-  public class ParsedUpdateDataSet {
-      private String extractedString = null;
-      private int extractedInt = 0;
-
-      public String getExtractedString() {
-           return extractedString;
-      }
-      public void setExtractedString(String extractedString) {
-           this.extractedString = extractedString;
-      }
-
-      public int getExtractedInt() {
-           return extractedInt;
-      }
-      public void setExtractedInt(int extractedInt) {
-           this.extractedInt = extractedInt;
-      }
-      
-      public String toString(){
-           return "ExtractedString = " + this.extractedString
-                     + "\nExtractedInt = " + this.extractedInt;
-      }
- }
-  
-  public class UpdateHandler extends DefaultHandler{
-
-      // ===========================================================
-      // Fields
-      // ===========================================================
-      
-      private boolean in_outertag = false;
-      private boolean in_innertag = false;
-      private boolean in_mytag = false;
-      
-      private ParsedUpdateDataSet myParsedUpdateDataSet = new ParsedUpdateDataSet();
-
-      // ===========================================================
-      // Getter & Setter
-      // ===========================================================
-
-      public ParsedUpdateDataSet getParsedData() {
-           return this.myParsedUpdateDataSet;
-      }
-
-      // ===========================================================
-      // Methods
-      // ===========================================================
-      @Override
-      public void startDocument() throws SAXException {
-           this.myParsedUpdateDataSet = new ParsedUpdateDataSet();
-      }
-
-      @Override
-      public void endDocument() throws SAXException {
-           // Nothing to do
-      }
-
-      /** Gets be called on opening tags like:
-       * <tag>
-       * Can provide attribute(s), when xml was like:
-       * <tag attribute="attributeValue">*/
-      @Override
-      public void startElement(String namespaceURI, String localName,
-                String qName, Attributes atts) throws SAXException {
-           if (localName.equals("outertag")) {
-                this.in_outertag = true;
-           }else if (localName.equals("innertag")) {
-                this.in_innertag = true;
-           }else if (localName.equals("mytag")) {
-                this.in_mytag = true;
-           }else if (localName.equals("tagwithnumber")) {
-                // Extract an Attribute
-                String attrValue = atts.getValue("thenumber");
-                int i = Integer.parseInt(attrValue);
-                myParsedUpdateDataSet.setExtractedInt(i);
-           }
-      }
-      
-      /** Gets be called on closing tags like:
-       * </tag> */
-      @Override
-      public void endElement(String namespaceURI, String localName, String qName)
-                throws SAXException {
-           if (localName.equals("outertag")) {
-                this.in_outertag = false;
-           }else if (localName.equals("innertag")) {
-                this.in_innertag = false;
-           }else if (localName.equals("mytag")) {
-                this.in_mytag = false;
-           }else if (localName.equals("tagwithnumber")) {
-                // Nothing to do here
-           }
-      }
-      
-      /** Gets be called on the following structure:
-       * <tag>characters</tag> */
-      @Override
-      public void characters(char ch[], int start, int length) {
-           if(this.in_mytag){
-           myParsedUpdateDataSet.setExtractedString(new String(ch, start, length));
-      }
-   }
-  }
 }
 
