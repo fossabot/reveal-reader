@@ -4,6 +4,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import android.widget.Toast;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -28,7 +30,7 @@ public class UpdateChecker {
       URLConnection cn;
       URL url =
           new URL(
-              "http://androidstuff.thepackhams.com/AndroidManifest.xml");
+              "http://androidstuff.thepackhams.com/revelVersion.xml");
       cn = url.openConnection();
       cn.connect();
       InputStream stream = cn.getInputStream();
@@ -55,15 +57,18 @@ public class UpdateChecker {
       e.printStackTrace();
     } finally {
       return version;
+      
     }
   }
 
-  public static void checkForNewerVersion(int currentVersion) {
-    int latestVersion = getLatestVersionCode();
-    if (latestVersion > currentVersion) {
-//Download a new REV of this cool CODE
+  public static  void checkForNewerVersion(int currentVersion) {
+	  Global.NEW_VERSION = getLatestVersionCode();
+    if (Global.NEW_VERSION > currentVersion) {
+    	//Download a new REV of this cool CODE
+    	
     }
   }
+
 
 
 
