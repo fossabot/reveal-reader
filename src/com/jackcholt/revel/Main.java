@@ -65,9 +65,11 @@ public class Main extends ListActivity {
         //more like debugging.  
         Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
         Toast.makeText(this, "Version you are running SVN rev " + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
-        Toast.makeText(this, "Version available online rev " + Global.NEW_VERSION, Toast.LENGTH_SHORT).show();
-        
+       
+        //Actually go ONLINE and check...  duhhhh
         UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+        Toast.makeText(this, "Version available online rev " + Global.NEW_VERSION, Toast.LENGTH_SHORT).show();
+
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
