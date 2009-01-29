@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -28,7 +28,7 @@ import android.util.Log;
 
 public class YbkProvider extends ContentProvider {
     public static final String KEY_MIMETYPE = "mimetype";
-    public static final String AUTHORITY = "com.jackcholt.revel";
+    public static final String AUTHORITY = "com.jackcholt.reveal";
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/ybk");
     public static final int BOOK = 0;
     public static final int BOOKS = 1;
@@ -38,7 +38,7 @@ public class YbkProvider extends ContentProvider {
     public static final int ORDERS = 5;
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
-    public static final String DATABASE_NAME = "revel_ybk.db";
+    public static final String DATABASE_NAME = "reveal_ybk.db";
     public static final int DATABASE_VERSION = 4;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
@@ -71,12 +71,12 @@ public class YbkProvider extends ContentProvider {
     public static final String ORDER_TABLE_NAME = "orders";
     /** Foreign key to the chapters table. Data type: INTEGER */
     public static final String CHAPTER_ID = "chapter_id";
-    public static final String BOOK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.revel.ybk.book";
-    public static final String BOOK_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.revel.ybk.book";
-    public static final String CHAPTER_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.revel.ybk.chapter";
-    public static final String CHAPTER_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.revel.ybk.chapter";
-    public static final String ORDER_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.revel.ybk.order";
-    public static final String ORDER_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.revel.ybk.order";
+    public static final String BOOK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.book";
+    public static final String BOOK_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.book";
+    public static final String CHAPTER_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.chapter";
+    public static final String CHAPTER_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.chapter";
+    public static final String ORDER_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.order";
+    public static final String ORDER_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.order";
     /** Non navigation chapter */
     public static final int CHAPTER_TYPE_NONNAV = 0; 
     /** Navigation chapter */
@@ -165,7 +165,7 @@ public class YbkProvider extends ContentProvider {
     }
 
     private DatabaseHelper mOpenHelper;
-    private String mLibraryDir = "/sdcard/revel/ebooks/";
+    private String mLibraryDir = "/sdcard/reveal/ebooks/";
     private SharedPreferences mSharedPref; 
     
     /**
@@ -398,7 +398,7 @@ public class YbkProvider extends ContentProvider {
         mOpenHelper = new DatabaseHelper(getContext());
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         return true;
     }
 
@@ -844,7 +844,7 @@ public class YbkProvider extends ContentProvider {
                 f = tempImgFiles.get(uri);
             } else {
                 try {
-                    f = File.createTempFile("revel_img", fileExt, null);
+                    f = File.createTempFile("reveal_img", fileExt, null);
                 } catch (IOException ioe) {
                     throw new FileNotFoundException("Could not create a temporary file. " 
                             + ioe.getMessage() + " " + ioe.getCause());

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.jackcholt.revel" 
+    package="com.jackcholt.reveal" 
     	android:versionCode="46" android:versionName="1">
     <!-- Required for positron to open it's server socket. -->
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -10,7 +10,7 @@
 
     <instrumentation android:label="Positron"
         android:name="com.googlecode.autoandroid.positron.Positron"
-        android:targetPackage="com.jackcholt.revel">
+        android:targetPackage="com.jackcholt.reveal">
         
 </instrumentation>
      
@@ -22,10 +22,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".Settings" android:label="@string/settings_name"/>
-        <activity android:name=".YbkViewActivity"  android:label="@string/revel_ybk_view"/>
-	    <provider android:multiprocess="true" android:authorities="com.jackcholt.revel" android:name=".YbkProvider"></provider>
+        <activity android:name=".YbkViewActivity"  android:label="@string/reveal_ybk_view"/>
+	    <provider android:multiprocess="true" android:authorities="com.jackcholt.reveal" android:name=".YbkProvider"></provider>
 		<activity android:name=".TitleBrowser" android:label="@string/title_browser_name" />
-		<provider android:name=".TitleProvider" android:multiprocess="true" android:authorities="com.jackcholt.revel.titles"/>
+		<provider android:name=".TitleProvider" android:multiprocess="true" android:authorities="com.jackcholt.reveal.titles"/>
 </application>
 
 </manifest> 

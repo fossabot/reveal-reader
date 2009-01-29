@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;

@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import static org.junit.Assert.*;
 
@@ -9,7 +9,7 @@ import com.googlecode.autoandroid.positron.junit4.TestCase;
 
 public class BasicUsageStories extends TestCase {
 
-    private final String PKG = "com.jackcholt.revel";
+    private final String PKG = "com.jackcholt.reveal";
     
     @Test
     public void shouldSeeMain() {

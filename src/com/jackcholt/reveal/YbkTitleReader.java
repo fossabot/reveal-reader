@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -78,7 +78,7 @@ public class YbkTitleReader {
         int indexLength = mIndexLength;
         //Creating eBook file data for re-use
         //Toast.makeText(this, "Checking for new eBooks...", Toast.LENGTH_SHORT).show();
-        Log.d("revel","Index Length: " + indexLength);
+        Log.d("reveal","Index Length: " + indexLength);
         
         byte[] indexArray = new byte[indexLength];
         

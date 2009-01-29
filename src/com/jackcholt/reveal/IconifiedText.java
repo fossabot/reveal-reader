@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import android.graphics.drawable.Drawable;
 

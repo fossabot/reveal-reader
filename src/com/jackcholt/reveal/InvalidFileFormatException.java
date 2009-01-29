@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 public class InvalidFileFormatException extends RuntimeException {
 

@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +47,7 @@ public class YbkViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
 
         setContentView(R.layout.view_ybk);
 

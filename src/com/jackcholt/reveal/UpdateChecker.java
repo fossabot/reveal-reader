@@ -1,10 +1,8 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +28,7 @@ public class UpdateChecker {
       URLConnection cn;
       URL url =
           new URL(
-              "http://androidstuff.thepackhams.com/revelVersion.xml");
+              "http://androidstuff.thepackhams.com/revealVersion.xml");
       cn = url.openConnection();
       cn.connect();
       InputStream stream = cn.getInputStream();

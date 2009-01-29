@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -46,7 +46,7 @@ public class Main extends ListActivity {
     //private boolean mShowSplashScreen;
     private String mLibraryDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
-    private File mCurrentDirectory = new File("/sdcard/revel/ebooks/"); 
+    private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
     //private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
     private Cursor mListCursor; 
     private ContentResolver mContRes; 
@@ -63,16 +63,15 @@ public class Main extends ListActivity {
         //Check here an XML file stored on our website for new version info
         //Just some info for online update.  its not really going to toast us to death..  :)
         //more like debugging.  
-        Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
-        Toast.makeText(this, "Version you are running SVN rev " + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Version you are running SVN rev " + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
        
         //Actually go ONLINE and check...  duhhhh
-        UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
-        Toast.makeText(this, "Version available online rev " + Global.NEW_VERSION, Toast.LENGTH_SHORT).show();
-
+        //UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+        //Toast.makeText(this, "Version available online rev " + Global.NEW_VERSION, Toast.LENGTH_SHORT).show();
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         
         createDefaultDirs();
         
@@ -82,10 +81,10 @@ public class Main extends ListActivity {
     }
     
     private void createDefaultDirs() {
-        // Create the /sdcard/revel and eBooks dir if they don't exist
+        // Create the /sdcard/reveal and eBooks dir if they don't exist
         // Notify of creation and maybe put people directly into the TitleBrowser if they don't have ANY ybk's
-         File reveldir = new File("/sdcard/revel");
-        if (!reveldir.mkdirs()) {
+         File revealdir = new File("/sdcard/reveal");
+        if (!revealdir.mkdirs()) {
              Log.e(Global.TAG, "Create dir in sdcard failed");
         }
         File ebooksdir = new File(mLibraryDir);
@@ -237,7 +236,7 @@ public class Main extends ListActivity {
           
         SharedPreferences sharedPref = mSharedPref;
         //mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
-        String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/revel/ebooks/");
+        String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         //mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
         
         mCurrentDirectory = new File(libDir);
@@ -389,7 +388,7 @@ public class Main extends ListActivity {
                          filePath = mCurrentDirectory + "/" + fileName;
                          //ybk = new YbkFileReader(filePath);
                      } catch (IOException ioe) {
-                         Log.w("revel", "Could not create a file reader for '" + fileName + "'.");
+                         Log.w("reveal", "Could not create a file reader for '" + fileName + "'.");
                          continue;
                      }
                      

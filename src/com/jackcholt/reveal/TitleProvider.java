@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -38,7 +38,7 @@ import android.util.Log;
 public class TitleProvider extends ContentProvider {
 
 	private static final String mSourceURL = "http://www.thecoffeys.net/ebooks/xmlbooks.asp";
-	public static final String AUTHORITY = "com.jackcholt.revel.titles";
+	public static final String AUTHORITY = "com.jackcholt.reveal.titles";
 	public static final String TAG = "TitleProvider";
 	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
 			+ "/titles");
@@ -55,8 +55,8 @@ public class TitleProvider extends ContentProvider {
 		}
 
 		public static final String TABLE_NAME = "titles";
-		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.revel.titles.title";
-		public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.revel.titles.title";
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.titles.title";
+		public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.titles.title";
 		public static final String DEFAULT_SORT_ORDER = "bookname";
 
 		public static final String _ID = "_id";
@@ -80,8 +80,8 @@ public class TitleProvider extends ContentProvider {
 		}
 
 		public static final String TABLE_NAME = "categories";
-		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.revel.titles.category";
-		public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.revel.titles.category";
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.titles.category";
+		public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.titles.category";
 		public static final String DEFAULT_SORT_ORDER = "name";
 
 		public static final String _ID = "_id";
@@ -90,7 +90,7 @@ public class TitleProvider extends ContentProvider {
 	}
 
 	/* Provider constants */
-	private static final String DATABASE_NAME = "revel_titles.db";
+	private static final String DATABASE_NAME = "reveal_titles.db";
 	private static final int DATABASE_VERSION = 1;
 	/* URI constants */
 	public static final int CATEGORY = 0;

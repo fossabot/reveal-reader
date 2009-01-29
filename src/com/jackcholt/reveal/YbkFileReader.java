@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -340,7 +340,7 @@ public class YbkFileReader {
                 try {
                     chapter = readInternalFile(chapterName);
                 } catch (IOException ioe) {
-                    Log.e("revel", "Chapter " + chapterName + " could not be read. " 
+                    Log.e("reveal", "Chapter " + chapterName + " could not be read. " 
                             + ioe.getMessage());
                 }
                 
@@ -379,7 +379,7 @@ public class YbkFileReader {
                 try {
                     chapter = readInternalFile(chapterName);
                 } catch (IOException ioe) {
-                    Log.e("revel", "Chapter " + chapterName + " could not be read. " 
+                    Log.e("reveal", "Chapter " + chapterName + " could not be read. " 
                             + ioe.getMessage());
                 }
             } 
@@ -474,7 +474,7 @@ public class YbkFileReader {
         try {
             text = readInternalFile(pChapterName + ".gz");
         } catch (IOException ioe) {
-            Log.e("revel", "Chapter " + chapterName + " could not be read. " 
+            Log.e("reveal", "Chapter " + chapterName + " could not be read. " 
                     + ioe.getMessage());
         }
         

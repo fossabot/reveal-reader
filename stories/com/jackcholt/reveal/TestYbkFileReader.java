@@ -1,4 +1,4 @@
-package com.jackcholt.revel;
+package com.jackcholt.reveal;
 
 import static org.junit.Assert.*;
 
@@ -9,6 +9,10 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.jackcholt.reveal.Log;
+import com.jackcholt.reveal.Util;
+import com.jackcholt.reveal.YbkFileReader;
 
 public class TestYbkFileReader {
     YbkFileReader ybkRdr;
@@ -45,7 +49,7 @@ public class TestYbkFileReader {
         String text = ybkRdr.readBindingFile();
         
         assertTrue(text.startsWith("<a href=\"PoGP.html\">"));
-        Log.d("revel", text);
+        Log.d("reveal", text);
     }
 
     @Test
