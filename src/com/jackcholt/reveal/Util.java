@@ -7,7 +7,12 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.net.Uri;
+
 public class Util {
+    private static final String TAG = "Util"; 
     
     /**
      * Remove HTML and Titlecase a book title.
@@ -271,6 +276,75 @@ public class Util {
         return text.substring(start);
     }
  	
+    public static String processIfbook(final String content, 
+            final ContentResolver contRes, final String libDir) {
+        StringBuilder newContent = new StringBuilder();
 
+        // Use this to get the actual content
+        StringBuilder oldContent = new StringBuilder(content);
+        
+        // Use this for case-insensitive comparison
+        StringBuilder oldLowerContent = new StringBuilder(content.toLowerCase());
+        int pos = 0;
+        
+        while ((pos = oldLowerContent.indexOf("<ifbook=")) != -1) {
+            boolean fullIfBookFound = false;
+            
+            // copy text before <ifbook> tag to new content and remove from old
+            newContent.append(oldContent.substring(0, pos));
+            oldContent.delete(0, pos);
+            oldLowerContent.delete(0, pos);
+            
+            int gtPos = oldContent.indexOf(">");
+            if (gtPos != -1) {
+                
+                // grab the bookname by skipping the beginning of the ifbook tag
+                String bookName = oldContent.substring(8, gtPos);
+                String lowerBookName = bookName.toLowerCase();
+                
+                int elsePos = oldLowerContent.indexOf("<elsebook=" + lowerBookName + ">");
+                if (elsePos != -1 && elsePos > gtPos) {
+                
+                    int endPos = oldLowerContent.indexOf("<endbook=" + lowerBookName + ">");
+                    if (endPos != -1 && endPos > elsePos) {
+                        
+                        fullIfBookFound = true;
+                        
+                        Cursor c = contRes.query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
+                                new String[] {YbkProvider.FILE_NAME}, "lower(" + YbkProvider.FILE_NAME + ") = lower(?)", 
+                                new String[] {libDir + bookName + ".ybk"}, null);
+                        
+                        int count = c.getCount();
+                        if (count == 1) {
+                            newContent.append(oldContent.substring(gtPos + 1, elsePos));
+                            Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, elsePos));
+                        } else if (count == 0) {
+                            newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
+                        } else {
+                            throw new IllegalStateException("More than one record for the same book");
+                        }
+                        
+                        //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
+                        
+                        // remove just-parsed <ifbook> tag structure so we can find the next
+                        oldContent.delete(0, endPos + bookName.length() + 10);
+                        oldLowerContent.delete(0, endPos + bookName.length() + 10);
+                    }
+                }
+            } 
+            
+            // remove just-parsed <ifbook> tag so we can find the next
+            if (!fullIfBookFound) {
+                oldContent.delete(0,8);
+                oldLowerContent.delete(0,8);
+            }
+            
+        }
+        
+        // copy the remaining content over
+        newContent.append(oldContent);
+        
+        return newContent.toString();
+    }
 }
 

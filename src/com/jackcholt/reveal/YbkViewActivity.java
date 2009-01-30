@@ -352,7 +352,7 @@ public class YbkViewActivity extends Activity {
                 
                 setChapBtnText(content);
 
-                content = processIfbook(content);
+                content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
                 
                 ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
                         "text/html","utf-8","");
@@ -437,7 +437,7 @@ public class YbkViewActivity extends Activity {
         return content;
     }
 
-    private String processIfbook(final String content) {
+    /*private String processIfbook(final String content) {
         StringBuilder newContent = new StringBuilder();
         StringBuilder oldContent = new StringBuilder(content);
         ContentResolver contRes = getContentResolver();
@@ -496,7 +496,7 @@ public class YbkViewActivity extends Activity {
         newContent.append(oldContent);
         
         return newContent.toString();
-    }
+    }*/
     
     public boolean onTouchEvent(final MotionEvent ev) {
         //ev.
