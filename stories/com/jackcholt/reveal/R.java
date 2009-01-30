@@ -34,18 +34,15 @@ public final class R {
         public static final int ywd=0x7f020008;
     }
     public static final class id {
-        public static final int bookButton=0x7f090009;
+        public static final int bookButton=0x7f090006;
         public static final int bookText=0x7f090002;
-        public static final int breadCrumb=0x7f090007;
-        public static final int button1=0x7f090005;
-        public static final int chapterButton=0x7f09000a;
+        public static final int breadCrumb=0x7f090004;
+        public static final int chapterButton=0x7f090007;
         public static final int close_about_btn=0x7f090001;
         public static final int help_container=0x7f090000;
-        public static final int historylist=0x7f090004;
-        public static final int mainMenu=0x7f090008;
-        public static final int selection=0x7f090006;
-        public static final int widget0=0x7f090003;
-        public static final int ybkView=0x7f09000b;
+        public static final int mainMenu=0x7f090005;
+        public static final int selection=0x7f090003;
+        public static final int ybkView=0x7f090008;
     }
     public static final class layout {
         public static final int about=0x7f030000;
