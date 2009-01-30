@@ -44,7 +44,7 @@
 <dimen name="large_font_size">25sp</dimen>
 <string name="checking_ebooks">Updating eBooks... This may take a while.</string>
 <string name="ebook_update_complete">Finished updating eBooks</string>
-<string name="author">Jack Holt, Dave Packham, The Wiggins</string>
+<string name="author">Jack Holt, Dave Packham, The Wiggins, Alan and Adam Gessel</string>
 <string name="contact">jackcholt@gmail.com dave@thepackahms.com</string>
 <string name="website">http://androidstuff.thepackhams.com</string>
 <string name="close">close</string>
