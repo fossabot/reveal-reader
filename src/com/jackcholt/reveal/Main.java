@@ -31,7 +31,7 @@ public class Main extends ListActivity {
     public final static int DISPLAYMODE_ABSOLUTE = 0;
     public final static int DISPLAYMODE_RELATIVE = 1;
     
-    //private static final int HISTORY_ID = Menu.FIRST;
+    private static final int HISTORY_ID = Menu.FIRST;
     //private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
@@ -245,8 +245,8 @@ public class Main extends ListActivity {
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         super.onCreateOptionsMenu(menu);
-        //menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
-        //    .setIcon(android.R.drawable.ic_menu_recent_history);
+        menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
+            .setIcon(android.R.drawable.ic_menu_recent_history);
         //menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
         //    .setIcon(android.R.drawable.ic_menu_compass);
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
@@ -282,6 +282,9 @@ public class Main extends ListActivity {
         	return true;
         case ABOUT_ID:
         	AboutDialog.create(this);
+        	return true;
+        case HISTORY_ID:
+        	HistoryDialog.create(this);
         	return true;
 
         }
