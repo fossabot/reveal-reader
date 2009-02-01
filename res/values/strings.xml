@@ -43,10 +43,14 @@
 <dimen name="font_size">15sp</dimen>
 <dimen name="large_font_size">25sp</dimen>
 <string name="checking_ebooks">Updating eBooks... This may take a while.</string>
-<string name="ebook_update_complete">Finished updating eBooks</string>
-<string name="author">Jack Holt, Dave Packham, The Wiggins, Alan and Adam Gessel</string>
+<string name="ebook_update_complete">Finished updating eBooks.</string>
+<string name="ebook_download_complete">Finished downloading new title.</string>
+<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Alan and Adam Gessel</string>
 <string name="contact">jackcholt@gmail.com dave@thepackahms.com</string>
 <string name="website">http://androidstuff.thepackhams.com</string>
 <string name="close">close</string>
+<string name="download">Download</string>
+<string name="size_metric">KB</string>
+<string name="cancel">Cancel</string>
 <string name="title_download_url">http://androidstuff.thepackhams.com/revelVersion.xml</string>
 </resources>
