@@ -27,8 +27,7 @@ public class UpdateChecker {
     try {
       URLConnection cn;
       URL url =
-          new URL(
-              "http://androidstuff.thepackhams.com/revealVersion.xml");
+          new URL("http://androidstuff.thepackhams.com/revealVersion.xml");
       cn = url.openConnection();
       cn.connect();
       InputStream stream = cn.getInputStream();

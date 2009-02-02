@@ -20,7 +20,9 @@ public class AboutDialog extends Dialog {
                 });
                 String title;
                 try {
-                        title = getContext().getString(R.string.app_name) + " : " + getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), PackageManager.GET_ACTIVITIES).versionName;
+                        title = getContext().getString(R.string.app_name) + 
+                        " : " + getContext().getPackageManager().getPackageInfo
+                        (getContext().getPackageName(), PackageManager.GET_ACTIVITIES).versionName;
                 } catch (NameNotFoundException e) {
                         title = "Unknown version";
                 }

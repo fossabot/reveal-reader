@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 public class HistoryDialog extends ListActivity
 {
-	TextView selection;
+	//TextView selection;
 	String[] items={"Test", "mytest"};
 	public void onCreate(Bundle icicle) {
 	super.onCreate(icicle);
@@ -17,11 +17,11 @@ public class HistoryDialog extends ListActivity
 	setListAdapter(new ArrayAdapter<String>(this,
 	android.R.layout.simple_list_item_1,
 	items));
-	selection=(TextView)findViewById(R.id.selection);
+	//selection=(TextView)findViewById(R.id.selection);
 	}
 	public void onListItemClick(ListView parent, View v, int position,
 	long id) {
-	selection.setText(items[position]);
+	//selection.setText(items[position]);
 	}	
 		
 
