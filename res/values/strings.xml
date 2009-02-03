@@ -50,4 +50,6 @@
 <string name="close">close</string>
 <string name="title_download_url">http://androidstuff.thepackhams.com/revealVersion.xml</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderfull resources, YBK's, Format and other eBook tools</string>
+<string name="download">Download</string>
+<string name="cancel">Cancel</string>
 </resources>

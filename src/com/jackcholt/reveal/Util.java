@@ -276,6 +276,15 @@ public class Util {
         return text.substring(start);
     }
  	
+    /**
+     * Process ifbook tags to not show links to books that don't exist in the ebook 
+     * directory.  Remove ifbook tags to clean up the HTML.
+     *  
+     * @param content HTML to process.
+     * @param contRes Reference to the environment in which we are working.
+     * @param libDir The directory which contains our ebooks.
+     * @return The processed content.
+     */
     public static String processIfbook(final String content, 
             final ContentResolver contRes, final String libDir) {
         StringBuilder newContent = new StringBuilder();
