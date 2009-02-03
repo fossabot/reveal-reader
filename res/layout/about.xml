@@ -21,25 +21,24 @@
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
                                 android:text="@string/author"
-                        />
+                        android:layout_margin="5sp"/>
                         <TextView
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
                                 android:autoLink="all"
                                 android:text="@string/contact"
-                        />
+                        android:layout_margin="5sp"/>
                         <TextView
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
                                 android:autoLink="all"
                                 android:text="@string/website"
-                        />
+                        android:layout_margin="5sp"/>
                         <TextView
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
                                 android:autoLink="all"
-                                android:text="@string/credit_to_others"
-                        />
+                                android:text="@string/credit_to_others" android:layout_margin="5sp"/>
                         
                 </LinearLayout>
         </ScrollView>
@@ -48,5 +47,5 @@
                 android:text="@string/close"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-        />
+        android:padding="5sp"/>
 </LinearLayout>
