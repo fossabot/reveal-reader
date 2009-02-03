@@ -52,4 +52,5 @@
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderfull resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
 <string name="cancel">Cancel</string>
+<string name="ebook_download_complete">Ebook Download Complete</string>
 </resources>

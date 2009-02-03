@@ -353,6 +353,7 @@ public class YbkViewActivity extends Activity {
                 setChapBtnText(content);
 
                 content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
+                content = Util.convertAhtag(content);
                 
                 ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
                         "text/html","utf-8","");

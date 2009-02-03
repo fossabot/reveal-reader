@@ -355,5 +355,69 @@ public class Util {
         
         return newContent.toString();
     }
+    
+    /**
+     * Convert ahtags into span tags using &quot;ah&quot; as the class and making
+     * the id &quot;ah&quot; appended by the number of the ahtag.
+     * 
+     * @param content The content containing the ahtags to convert.
+     * @return The converted content.
+     */
+    public static String convertAhtag(final String content) {
+        StringBuilder newContent = new StringBuilder();
+
+        // Use this to get the actual content
+        StringBuilder oldContent = new StringBuilder(content);
+        
+        // Use this for case-insensitive comparison
+        StringBuilder oldLowerContent = new StringBuilder(content.toLowerCase());
+        int pos = 0;
+        
+        while ((pos = oldLowerContent.indexOf("<ahtag num=")) != -1) {
+            boolean fullAhtagFound = false;
+            
+            // copy text before <ahtag> tag to new content and remove from old
+            newContent.append(oldContent.substring(0, pos));
+            oldContent.delete(0, pos);
+            oldLowerContent.delete(0, pos);
+            
+            int gtPos = oldContent.indexOf(">");
+            if (gtPos != -1) {
+                
+                // grab the number by skipping the beginning of the ahtag tag
+                String number = oldContent.substring(11, gtPos);
+                
+                int endPos = oldLowerContent.indexOf("</ahtag>");
+                if (endPos != -1 && endPos > gtPos) {
+                    
+                    fullAhtagFound = true;
+                    
+                    newContent.append("<span class=\"ah\" id=\"ah").append(number).append("\">");
+                    newContent.append(oldContent.substring(gtPos + 1, endPos));
+                    Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, endPos));
+                    newContent.append("</span>");
+                    
+                    //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
+                    
+                    // remove just-parsed <ahtag> tag structure so we can find the next
+                    oldContent.delete(0, endPos + 8);
+                    oldLowerContent.delete(0, endPos + 8);
+                }
+            } 
+            
+            // remove just-parsed <ahtag> tag so we can find the next
+            if (!fullAhtagFound) {
+                oldContent.delete(0,11);
+                oldLowerContent.delete(0,11);
+            }
+            
+        }
+        
+        // copy the remaining content over
+        newContent.append(oldContent);
+        
+        return newContent.toString();
+
+    }
 }
 
