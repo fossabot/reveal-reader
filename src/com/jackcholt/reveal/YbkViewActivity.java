@@ -359,7 +359,7 @@ public class YbkViewActivity extends Activity {
                 content = Util.convertIfvar(content);
                 
                 
-                ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content,mShowPictures),
+                ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
                         "text/html","utf-8","");
                 
                 bookLoaded = true;

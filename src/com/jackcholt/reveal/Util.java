@@ -8,6 +8,7 @@ import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 
 import android.content.ContentResolver;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 
@@ -206,10 +207,13 @@ public class Util {
     }
     
 
-    public static final String htmlize(final String text, final boolean showPicture) {
+    public static final String htmlize(final String text, final SharedPreferences sharedPref) {
         if (text == null) {
             throw new IllegalStateException("No text was passed.");
         }
+        
+        boolean showPicture = sharedPref.getBoolean("show_pictures", true);
+        boolean showAH = sharedPref.getBoolean("show_ah", false);
         
         String content = text;
         int pos = content.indexOf("<end>");
@@ -224,7 +228,7 @@ public class Util {
             "._hidepicture {"+ (showPicture ? "display:none;" : "display:inline") + "}" +
             "._showtoc {display:inline}" +
             "._hidetoc {display:none}" +
-            ".ah {display:none}" +
+            ".ah {" + (showAH ? "display:inline;" : "display:none") + "}" +
             "</style>";
         
         Log.d(TAG, "style: " + style);
