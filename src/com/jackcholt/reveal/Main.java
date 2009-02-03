@@ -284,8 +284,7 @@ public class Main extends ListActivity {
         	AboutDialog.create(this);
         	return true;
         case HISTORY_ID:
-        	Intent historyDialog = new Intent(this, HistoryDialog.class);
-            startActivity(historyDialog);
+        	startActivity(new Intent(this, HistoryDialog.class));
         	return true;
 
         }

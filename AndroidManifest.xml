@@ -15,17 +15,19 @@
 </instrumentation>
      
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
-        <activity android:label="@string/app_name" android:name=".Main">
+        <activity android:label="@string/app_name" android:name=".Main" android:screenOrientation="sensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Settings" android:label="@string/settings_name"/>
+        <activity android:name=".Settings" android:label="@string/settings_name" android:screenOrientation="sensor"/>
         <activity android:name=".YbkViewActivity"  android:label="@string/reveal_ybk_view"/>
-	    <provider android:multiprocess="true" android:authorities="com.jackcholt.reveal" android:name=".YbkProvider"></provider>
-		<activity android:name=".TitleBrowser" android:label="@string/title_browser_name" />
-		<provider android:name=".TitleProvider" android:multiprocess="true" android:authorities="com.jackcholt.reveal.titles"/>
+	    <provider android:multiprocess="true" android:authorities="com.jackcholt.reveal" android:name=".YbkProvider" android:screenOrientation="sensor"></provider>
+		<activity android:name=".TitleBrowser" android:label="@string/title_browser_name"  android:screenOrientation="sensor"/>
+		<provider android:name=".TitleProvider" android:multiprocess="true" android:authorities="com.jackcholt.reveal.titles" android:screenOrientation="sensor"/>
+
+<activity android:multiprocess="true" android:name=".HistoryDialog" android:label="@string/app_name" android:screenOrientation="sensor"></activity>
 </application>
 
 </manifest> 
