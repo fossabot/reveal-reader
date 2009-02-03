@@ -189,4 +189,12 @@ public class TestYbkFileReader {
         contents = Util.convertAhtag(contents);
         Log.d("testConvertAhTag", "JS Repentance: " + contents);
     }
+
+    @Test
+    public void testConvertIfvar() throws IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\js.ybk");
+        String contents = ybkRdr.readChapter("\\js\\5");
+        contents = Util.convertIfvar(contents);
+        Log.d("testConvertIfvar", "JS Repentance: " + contents);
+    }
 }

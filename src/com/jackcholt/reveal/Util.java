@@ -206,17 +206,30 @@ public class Util {
     }
     
 
-    public static final String htmlize(final String text) {
+    public static final String htmlize(final String text, final boolean showPicture) {
         if (text == null) {
             throw new IllegalStateException("No text was passed.");
         }
+        
         String content = text;
         int pos = content.indexOf("<end>");
         
         if (pos != -1) {
             content = content.substring(pos + 5);
         }
-        return "<html><body>" + content + "</body></html>";
+        
+        String style = 
+            "<style>" +
+            "._showpicture {" + (showPicture ? "display:inline;" : "display:none") + "}" +
+            "._hidepicture {"+ (showPicture ? "display:none;" : "display:inline") + "}" +
+            "._showtoc {display:inline}" +
+            "._hidetoc {display:none}" +
+            ".ah {display:none}" +
+            "</style>";
+        
+        Log.d(TAG, "style: " + style);
+        
+        return "<html><head>" + style + "</head><body>" + content + "</body></html>";
     }
 
     public static final HashMap<String,String> getFileNameChapterFromUri(final String uri, 
@@ -419,5 +432,149 @@ public class Util {
         return newContent.toString();
 
     }
+
+    /**
+     * Convert ifvar tags into span tags using &quot;ah&quot; as the class and making
+     * the id &quot;ah&quot; appended by the number of the ahtag.
+     * 
+     * @param content The content containing the ahtags to convert.
+     * @return The converted content.
+     */
+    public static String convertIfvar(final String content) {
+        StringBuilder newContent = new StringBuilder();
+
+        // Use this to get the actual content
+        StringBuilder oldContent = new StringBuilder(content);
+        
+        // Use this for case-insensitive comparison
+        StringBuilder oldLowerContent = new StringBuilder(content.toLowerCase());
+        int pos = 0;
+        
+        while ((pos = oldLowerContent.indexOf("<ifvar=")) != -1) {
+            boolean fullIfvarFound = false;
+            
+            // copy text before <ifvar> tag to new content and remove from old
+            newContent.append(oldContent.substring(0, pos));
+            oldContent.delete(0, pos);
+            oldLowerContent.delete(0, pos);
+            
+            int gtPos = oldContent.indexOf(">");
+            if (gtPos != -1) {
+                
+                // grab the variable by skipping the beginning of the ifvar tag
+                String variable = oldContent.substring(7, gtPos);
+                String lowerVariable = variable.toLowerCase();
+                
+                int elsePos = oldLowerContent.indexOf("<elsevar=" + lowerVariable + ">");
+                if (elsePos != -1 && elsePos > gtPos) {
+                
+                    int endPos = oldLowerContent.indexOf("<endvar=" + lowerVariable + ">");
+                    if (endPos != -1 && endPos > elsePos) {
+                        
+                        fullIfvarFound = true;
+                        
+                        newContent.append("<span class=\"_show").append(variable).append("\">");
+
+                        StringBuilder showText = new StringBuilder(oldContent.substring(gtPos + 1, elsePos));
+                        StringBuilder showLowerText = new StringBuilder(oldContent.substring(gtPos + 1, elsePos).toLowerCase());
+                        StringBuilder newShowText = new StringBuilder();
+                            
+                        int varPos = showLowerText.indexOf("+" + variable);
+                        if (varPos != -1) {
+                            int anchorPos = showLowerText.substring(0, varPos).lastIndexOf("<a");
+                            if (anchorPos != -1) {
+                                newShowText.append(showText.substring(0, anchorPos));
+                                
+                                showText.delete(0, anchorPos);
+                                showLowerText.delete(0, anchorPos);
+
+                                int closeAnchorPos = showLowerText.indexOf(">");
+                                int endAnchorPos = 0;
+                                if (closeAnchorPos != -1) {
+                                    endAnchorPos = showLowerText.substring(closeAnchorPos).indexOf("</a>");
+                                    if (endAnchorPos == -1) {
+                                        throw new InvalidFileFormatException("Show anchor tag is not properly closed");
+                                    }
+                                }
+                                
+                                newShowText.append("<a href=\"javascript:hideSpan('").append(variable).append("')\">");
+                                newShowText.append(showText.substring(closeAnchorPos + 1, closeAnchorPos + endAnchorPos)).append("</a>");
+                                
+                                showText.delete(0, closeAnchorPos + endAnchorPos + 4);
+                                showLowerText.delete(0, closeAnchorPos + endAnchorPos + 4);
+                                
+                                newShowText.append(showText);
+                            }
+                        }
+                        
+                        newContent.append(newShowText);
+                        Log.d(TAG, "Appending: " + newShowText);
+                        
+                        oldContent.delete(0, elsePos + variable.length() + 10);
+                        oldLowerContent.delete(0, elsePos + variable.length() + 10);
+                        
+                        newContent.append("</span><span class=\"_hide").append(variable).append("\">");
+                        
+                        endPos = oldLowerContent.indexOf("<endvar=" + lowerVariable + ">");
+                        if (endPos == -1) {
+                            throw new InvalidFileFormatException("Endvar tag now missing");
+                        }
+                            
+                        StringBuilder hideText = new StringBuilder(oldContent.substring(0, endPos));
+                        StringBuilder hideLowerText = new StringBuilder(oldContent.substring(0, endPos).toLowerCase());
+                        StringBuilder newHideText = new StringBuilder();
+                            
+                        varPos = hideLowerText.indexOf("+" + variable);
+                        if (varPos != -1) {
+                            int anchorPos = hideLowerText.substring(0, varPos).lastIndexOf("<a");
+                            if (anchorPos != -1) {
+                                newHideText.append(hideText.substring(0, anchorPos));
+                                
+                                hideText.delete(0, anchorPos);
+                                hideLowerText.delete(0, anchorPos);
+
+                                int closeAnchorPos = hideLowerText.indexOf(">");
+                                int endAnchorPos = 0;
+                                if (closeAnchorPos != -1) {
+                                    endAnchorPos = hideLowerText.substring(closeAnchorPos).indexOf("</a>");
+                                    if (endAnchorPos == -1) {
+                                        throw new InvalidFileFormatException("Hide anchor tag is not properly closed");
+                                    }
+                                }
+                                
+                                newHideText.append("<a href=\"javascript:showSpan('").append(variable).append("')\">");
+                                newHideText.append(hideText.substring(closeAnchorPos + 1, closeAnchorPos + endAnchorPos)).append("</a>");
+                                
+                                hideText.delete(0, closeAnchorPos + endAnchorPos + 4);
+                                hideLowerText.delete(0,closeAnchorPos +  endAnchorPos + 4);
+                                
+                                newHideText.append(hideText);
+                            }
+                        }
+                        
+                        newContent.append(newHideText);
+                        newContent.append("</span>");
+                        
+                        // remove just-parsed <ifvar> tag structure so we can find the next
+                        oldContent.delete(0, endPos + variable.length() + 9);
+                        oldLowerContent.delete(0, endPos + variable.length() + 9);
+                    }
+                }
+            } 
+            
+            // remove just-parsed <ifvar> tag so we can find the next
+            if (!fullIfvarFound) {
+                oldContent.delete(0,7);
+                oldLowerContent.delete(0,7);
+            }
+            
+        }
+        
+        // copy the remaining content over
+        newContent.append(oldContent);
+        
+        return newContent.toString();
+    }
+
 }
 

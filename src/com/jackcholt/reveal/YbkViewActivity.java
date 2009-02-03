@@ -34,6 +34,7 @@ public class YbkViewActivity extends Activity {
     private YbkFileReader mYbkReader;
     private String mLibraryDir;
     private SharedPreferences mSharedPref;
+    private boolean mShowPictures;
     private String mFragment;
     private String mDialogFilename = "Never set";
     private String mChapBtnText = "Not Set";
@@ -48,7 +49,8 @@ public class YbkViewActivity extends Activity {
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-
+        mShowPictures = mSharedPref.getBoolean("show_pictures", true);
+        
         setContentView(R.layout.view_ybk);
 
         final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
@@ -354,8 +356,10 @@ public class YbkViewActivity extends Activity {
 
                 content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
                 content = Util.convertAhtag(content);
+                content = Util.convertIfvar(content);
                 
-                ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content),
+                
+                ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content,mShowPictures),
                         "text/html","utf-8","");
                 
                 bookLoaded = true;
