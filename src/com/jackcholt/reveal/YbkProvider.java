@@ -845,6 +845,7 @@ public class YbkProvider extends ContentProvider {
             } else {
                 try {
                     f = File.createTempFile("reveal_img", fileExt, null);
+                    f.deleteOnExit();
                 } catch (IOException ioe) {
                     throw new FileNotFoundException("Could not create a temporary file. " 
                             + ioe.getMessage() + " " + ioe.getCause());
@@ -859,6 +860,7 @@ public class YbkProvider extends ContentProvider {
                     byte[] contents = readInternalBinaryFile(file, fileName, chapter);
                     BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(f),BUFFER_SIZE);
                     out.write(contents);
+                    out.flush();
                 } catch (IOException e) {
                     throw new FileNotFoundException("Could not write internal file to temp file. " 
                             + e.getMessage() + " " + e.getCause());

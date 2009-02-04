@@ -1,6 +1,8 @@
 package com.jackcholt.reveal;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -10,9 +12,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.jackcholt.reveal.Log;
-import com.jackcholt.reveal.Util;
-import com.jackcholt.reveal.YbkFileReader;
+import android.preference.PreferenceManager;
+import android.test.mock.MockContext;
 
 public class TestYbkFileReader {
     YbkFileReader ybkRdr;
@@ -196,5 +197,16 @@ public class TestYbkFileReader {
         String contents = ybkRdr.readChapter("\\js\\5");
         contents = Util.convertIfvar(contents);
         Log.d("testConvertIfvar", "JS Repentance: " + contents);
+    }
+    
+    @Test
+    public void testJS() throws FileNotFoundException, IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\js.ybk");
+        String content = ybkRdr.readChapter("\\js.html");
+        content = Util.convertAhtag(content);
+        content = Util.convertIfvar(content);
+        //content = Util.htmlize(content, PreferenceManager.getDefaultSharedPreferences(new MockContext()));
+        
+        Log.d("testJS", "JS: " + content);
     }
 }
