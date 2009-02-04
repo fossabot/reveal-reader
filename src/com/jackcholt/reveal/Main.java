@@ -64,21 +64,26 @@ public class Main extends ListActivity {
         //Check here an XML file stored on our website for new version info
         //Just some info for online update.  its not really going to toast us to death..  :)
         //more like debugging.  
-        //Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
-        //Toast.makeText(this, "Version you are running SVN rev " + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Version you are running SVN rev " + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
        
         //Actually go ONLINE and check...  duhhhh
-        //UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
-        //Toast.makeText(this, "Version available online rev " + Global.NEW_VERSION, Toast.LENGTH_SHORT).show();
+        UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+        Toast.makeText(this, "Version available online rev " + Global.NEW_VERSION, Toast.LENGTH_SHORT).show();
 
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
+        //Check for SDcard presence
+        //if we have one create the dirs and look fer ebooks
+    	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    	mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         
-        createDefaultDirs();
-        
-        refreshLibrary();
-        
-        refreshBookList();
+        if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
+        	Log.e(Global.TAG, "sdcard not installed");
+        	Toast.makeText(this, "You must have a SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
+        } else {
+        	createDefaultDirs();
+            refreshLibrary();
+            refreshBookList();
+        }
     }
     
     private void createDefaultDirs() {
