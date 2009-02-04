@@ -148,6 +148,7 @@ public class YbkFileReader {
      */
     public String getBookTitle() {
         return mBookTitle;
+    
     }
     
     /**
