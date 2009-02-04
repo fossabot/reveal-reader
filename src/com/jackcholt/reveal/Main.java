@@ -28,6 +28,7 @@ import android.widget.Toast;
 
 
 public class Main extends ListActivity {
+	
     public final static int DISPLAYMODE_ABSOLUTE = 0;
     public final static int DISPLAYMODE_RELATIVE = 1;
     
@@ -50,7 +51,7 @@ public class Main extends ListActivity {
     //private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
     private Cursor mListCursor; 
     private ContentResolver mContRes; 
-
+    public String[] openBooks = {"Book of Mormon", "Doctrine and Covenants 130", "Other Book"};
     
     /** Called when the activity is first created. */
     @Override
