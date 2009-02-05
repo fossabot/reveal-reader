@@ -1,7 +1,5 @@
 package com.jackcholt.reveal;
 
-import com.jackcholt.reveal.Main;
-
 import android.test.ActivityUnitTestCase;
 
 public class TestMain extends ActivityUnitTestCase<Main> {

@@ -12,9 +12,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import android.preference.PreferenceManager;
-import android.test.mock.MockContext;
-
 public class TestYbkFileReader {
     YbkFileReader ybkRdr;
     

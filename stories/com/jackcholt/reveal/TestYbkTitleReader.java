@@ -6,9 +6,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.jackcholt.reveal.Util;
-import com.jackcholt.reveal.YbkTitleReader;
-
 public class TestYbkTitleReader {
     YbkTitleReader YbkRdr;
     

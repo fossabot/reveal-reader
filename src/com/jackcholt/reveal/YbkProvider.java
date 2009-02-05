@@ -39,7 +39,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 7;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -141,8 +141,9 @@ public class YbkProvider extends ContentProvider {
             
            db.execSQL("CREATE TABLE " + ORDER_TABLE_NAME + " ("
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + BOOK_ID + " INTEGER,"
-                    + CHAPTER_ID + " INTEGER,"
+                    + BOOK_ID + " INTEGER, "
+                    + CHAPTER_ID + " INTEGER, "
+                    + CHAPTER_ORDER_NUMBER + " INTEGER,"
                     + FILE_NAME + " TEXT"
                     + "); "
                     
@@ -342,24 +343,7 @@ public class YbkProvider extends ContentProvider {
             }
 
             rowId = populateBook(values.getAsString(FILE_NAME));
-            /*if (values.containsKey(YbkProvider.BOOK_TITLE) == false) {
-                values.put(YbkProvider.BOOK_TITLE, (String)null);
-            }
             
-            if (values.containsKey(YbkProvider.METADATA) == false) {
-                values.put(YbkProvider.METADATA, (String)null);
-            }
-
-            if (values.containsKey(YbkProvider.SHORT_TITLE) == false) {
-                values.put(YbkProvider.SHORT_TITLE, "");
-            }
-            
-            if (values.containsKey(YbkProvider.BINDING_TEXT) == false) {
-                values.put(YbkProvider.BINDING_TEXT, "");
-            }
-            
-            rowId = db.insert(BOOK_TABLE_NAME, YbkProvider.METADATA, values);
-            */
             if (rowId > 0) {
                 Uri bookUri = ContentUris.withAppendedId(
                         Uri.withAppendedPath(CONTENT_URI, "book"), rowId);
@@ -726,12 +710,13 @@ public class YbkProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         
         Cursor c = db.query(CHAPTER_TABLE_NAME, new String[] {_ID}, 
-                FILE_NAME + "=?" , new String[] {ORDER_CONFIG_FILENAME}, null, null, null);
+                FILE_NAME + "=? AND " + BOOK_ID + "=?" , 
+                new String[] {ORDER_CONFIG_FILENAME, Long.toString(bookId)}, null, null, null);
         
         if (c.getCount() == 1) {
             c.moveToFirst();
             try {
-            fileText = readInternalFile(file, bookId, c.getInt(0));
+                fileText = readInternalFile(file, bookId, c.getInt(0));
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
             }
@@ -896,6 +881,7 @@ public class YbkProvider extends ContentProvider {
             for(int i = 0, orderLen = orders.length; i < orderLen; i++) {
                 values.put(YbkProvider.FILE_NAME, orders[i]);
                 values.put(YbkProvider.BOOK_ID, bookId);
+                values.put(YbkProvider.CHAPTER_ORDER_NUMBER, i);
                 db.insert(ORDER_TABLE_NAME, FILE_NAME, values);
                 values.clear();
             }

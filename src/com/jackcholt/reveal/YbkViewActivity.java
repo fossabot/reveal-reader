@@ -28,7 +28,6 @@ import android.widget.ImageButton;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
-    //private ImageButton mMainBtn;
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Vector;
 
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -243,7 +242,6 @@ public class Main extends ListActivity {
         SharedPreferences sharedPref = mSharedPref;
         //mShowSplashScreen = sharedPref.getBoolean("show_splash_screen", true);
         String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-        //mDisplayMode = sharedPref.getInt("filebrowser_display_mode", DISPLAYMODE_RELATIVE);
         
         mCurrentDirectory = new File(libDir);
     }
@@ -349,126 +347,6 @@ public class Main extends ListActivity {
              builder.show();
         }
     }
-    
-    /**
-     * 
-     * @param files
-     */
-    /*private void fill(final File[] files, final boolean showFolders) {
-        mDirectoryEntries.clear();
-        
-        // create the book uri
-        Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
-        int recordsDeleted = getContentResolver().delete(bookUri, null, null);
-        Log.i(Global.TAG, recordsDeleted + " books cleaned out of the " 
-                + YbkProvider.BOOK_TABLE_NAME + " table.");
-        
-        // add the ".." == 'Up one level'
-              
-        if(showFolders && !mCurrentDirectory.getParent().equalsIgnoreCase(mLibraryDir)) {
-             mDirectoryEntries.add(new IconifiedText(getString(R.string.up_one_level),
-                     getResources().getDrawable(R.drawable.uponelevel),null));
-        }
-        
-        Drawable currentIcon = null;
-        for (int i=0; i < files.length; i++) {
-            File currentFile = files[i];
-            String bookTitle = null;
-            //YbkFileReader ybk = null;
-            String filePath = "";
-            
-            if (showFolders && currentFile.isDirectory()) {
-                  currentIcon = getResources().getDrawable(R.drawable.folder);
-             } else { 
-                 String fileName = currentFile.getName();
-                 currentIcon = null;
-                 
-                 
-                 Determine the Icon to be used,
-                 * depending on the FileEndings defined in:
-                 * res/values/fileendings.xml. 
-                if(checkEndsWithInStringArray(fileName, getResources().
-                                    getStringArray(R.array.fileEndingWebText))) {
-                     currentIcon = getResources().getDrawable(R.drawable.webtext);
-                } else if(checkEndsWithInStringArray(fileName, getResources().
-                                    getStringArray(R.array.fileEndingYbk))) {
-                     currentIcon = getResources().getDrawable(R.drawable.ywd);
-                     //try {
-                         filePath = mCurrentDirectory + "/" + fileName;
-                         //ybk = new YbkFileReader(filePath);
-                     } catch (IOException ioe) {
-                         Log.w("reveal", "Could not create a file reader for '" + fileName + "'.");
-                         continue;
-                     }
-                     
-                     Cursor c = getContentResolver().query(bookUri, 
-                             new String[] {YbkProvider.BOOK_TITLE}, 
-                             YbkProvider.FILE_NAME + "='" + filePath + "'", null, null);
-                     
-                     // Try getting it from the database
-                     if (c.getCount() > 0) {
-                         c.moveToFirst();        
-                         bookTitle = Util.formatTitle(c.getString(
-                                 c.getColumnIndexOrThrow(YbkProvider.BOOK_TITLE)));
-                     } else {
-                         throw new IllegalStateException("Book exists in the library but couldn't get book title");
-                     }
-                             
-                } else if(checkEndsWithInStringArray(fileName, getResources().
-                        getStringArray(R.array.fileEndingText))){
-                     currentIcon = getResources().getDrawable(R.drawable.text);
-                }
-            }
-        
-             
-            if (null != currentIcon) { // only include the non-filtered files
-                switch(mDisplayMode){
-                case DISPLAYMODE_ABSOLUTE:
-                    mDirectoryEntries.add(new IconifiedText(currentFile.getPath(), 
-                                  currentIcon, filePath)); 
-                    break;
-                case DISPLAYMODE_RELATIVE: // On relative Mode, we have to add the current-path to the beginning
-                    if (bookTitle == null) {
-                        int currentPathStringLength = this.mCurrentDirectory.getAbsolutePath().length();
-                        bookTitle = currentFile.getAbsolutePath()
-                                   .substring(currentPathStringLength);
-                    } else {
-                        ContentValues values = new ContentValues();
-                        values.put(YbkProvider.FILE_NAME, filePath);
-                        values.put(YbkProvider.BOOK_TITLE, bookTitle);
-                        //values.put(YbkProvider.SHORT_TITLE, ybk.getBookShortTitle());
-                        //values.put(YbkProvider.METADATA, ybk.getBookMetaData());
-                        //values.put(YbkProvider.BINDING_TEXT, ybk.getBindingText());                        
-                        Uri uri = getContentResolver().insert(
-                                bookUri, values);
-                    }
-                    
-                    mDirectoryEntries.add(new IconifiedText(bookTitle, currentIcon, filePath));
-                    
-                    break;
-                }
-            }
-        }
-        
-        Collections.sort(this.mDirectoryEntries);
-        
-        IconifiedTextListAdapter itla = new IconifiedTextListAdapter(this);
-        itla.setListItems(mDirectoryEntries);   
-
-        this.setListAdapter(itla); 
-        
-    }*/
-
-    /** Checks whether checkItsEnd ends with
-     * one of the Strings from fileEndings */
-    /*private boolean checkEndsWithInStringArray(final String checkItsEnd,
-                        final String[] fileEndings){
-         for(String aEnd : fileEndings){
-              if(checkItsEnd.endsWith(aEnd))
-                   return true;
-         }
-         return false;
-    }*/
 
     @Override
     protected void onListItemClick(final ListView listView, final View view, 
