@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import android.content.ContentProvider;
@@ -39,7 +41,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 7;
+    public static final int DATABASE_VERSION = 8;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -139,7 +141,7 @@ public class YbkProvider extends ContentProvider {
                     + CHAPTER_ZOOM_PICTURE + " INTEGER"
                     + "); ");
             
-           db.execSQL("CREATE TABLE " + ORDER_TABLE_NAME + " ("
+           /*db.execSQL("CREATE TABLE " + ORDER_TABLE_NAME + " ("
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + BOOK_ID + " INTEGER, "
                     + CHAPTER_ID + " INTEGER, "
@@ -147,7 +149,7 @@ public class YbkProvider extends ContentProvider {
                     + FILE_NAME + " TEXT"
                     + "); "
                     
-            );
+            );*/
         }
 
         @Override
@@ -507,23 +509,7 @@ public class YbkProvider extends ContentProvider {
         
         return bookId;
     }
-    
-    /**
-     * Create a data stream for reading a YBK file.
-     * 
-     * @param file File to create the data stream for.
-     * @return The input stream
-     * @throws FileNotFoundException if there is no such file.
-     */
-    /*private DataInputStream initDataStream(final File file) 
-    throws FileNotFoundException {
-        DataInputStream dataInput = new DataInputStream(
-                new BufferedInputStream(new FileInputStream (file)));
-        dataInput.mark(Integer.MAX_VALUE);
         
-        return dataInput;
-    }*/
-    
     /**
      * Return the contents of BINDING.HTML internal file as a String.
      * 
@@ -702,7 +688,8 @@ public class YbkProvider extends ContentProvider {
      * 
      * @param dataInput The input stream that is the YanceyBook.
      * @param bookId The id of the book record in the database.
-     * @return The text of the order config &quot;chapter&quot;.
+     * @return The text of the order config &quot;chapter&quot;. Returns null if 
+     * there is no Order Config chapter in the file.
      * @throws IOException If the YBK cannot be read.
      */
     private String readOrderCfg(final RandomAccessFile file, final long bookId) {
@@ -735,6 +722,12 @@ public class YbkProvider extends ContentProvider {
         int iBookOffset = 0;
         int iBookLength = 0;
         
+        String orderString = readOrderCfg(file, bookId);
+        String[] orders = null;
+        if (orderString != null) {
+            orders = orderString.split(",");
+        }
+
         int indexLength = Util.readVBInt(file);
         Log.d(TAG,"Index Length: " + indexLength);
         
@@ -746,7 +739,7 @@ public class YbkProvider extends ContentProvider {
 
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         try {
-        db.delete(CHAPTER_TABLE_NAME, BOOK_ID + "=" + bookId, null);
+            db.delete(CHAPTER_TABLE_NAME, BOOK_ID + "=" + bookId, null);
         } catch (SQLiteException sqle) {
             Log.i(TAG,"There might not be a table named " + CHAPTER_TABLE_NAME, sqle);
         }
@@ -779,13 +772,26 @@ public class YbkProvider extends ContentProvider {
             pos += 4;
             
             values.clear();
+            
+            if (orders != null) {
+                int orderNumber = Arrays.binarySearch(orders, iFileName, new Comparator<String>() {
+    
+                    public int compare(String arg0, String arg1) {
+                        return arg0.compareToIgnoreCase(arg1);
+                    }
+                    
+                });
+                
+                if (orderNumber >= 0) {
+                    values.put(YbkProvider.CHAPTER_ORDER_NUMBER, orderNumber);            
+                }
+            }
             values.put(YbkProvider.FILE_NAME, iFileName);
             values.put(YbkProvider.CHAPTER_OFFSET, iBookOffset);
             values.put(YbkProvider.CHAPTER_LENGTH, iBookLength);
             values.put(YbkProvider.BOOK_ID, bookId);
             
             db.insert(YbkProvider.CHAPTER_TABLE_NAME, YbkProvider.FILE_NAME, values);
-                        
             
         }
         
@@ -879,10 +885,20 @@ public class YbkProvider extends ContentProvider {
             
             ContentValues values = new ContentValues();
             for(int i = 0, orderLen = orders.length; i < orderLen; i++) {
-                values.put(YbkProvider.FILE_NAME, orders[i]);
-                values.put(YbkProvider.BOOK_ID, bookId);
-                values.put(YbkProvider.CHAPTER_ORDER_NUMBER, i);
-                db.insert(ORDER_TABLE_NAME, FILE_NAME, values);
+                values.put(CHAPTER_ORDER_NUMBER, i);
+                
+                String chapter = orders[i].toLowerCase();
+                if (chapter.indexOf(".html") == -1) {
+                    chapter += ".html";
+                }
+                int recUpdated = db.update(CHAPTER_TABLE_NAME, values, 
+                        BOOK_ID + "=? AND lower(" + FILE_NAME + ") like '%\\" + chapter + "%'",
+                        new String[] {Long.toString(bookId)});
+                
+                if (recUpdated != 1) {
+                    throw new IllegalStateException("Records updated for " + chapter + " should be 1, Is: " + recUpdated);
+                }
+                
                 values.clear();
             }
         }
