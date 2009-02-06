@@ -59,16 +59,9 @@ public class Main extends ListActivity {
         
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
-        
-        //Check here an XML file stored on our website for new version info
-        //Just some info for online update.  its not really going to toast us to death..  :)
-        //more like debugging.  
-        Toast.makeText(this, "Checking for new Version Online", Toast.LENGTH_SHORT).show();
-        Toast.makeText(this, "Version you are running SVN rev " + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
        
         //Actually go ONLINE and check...  duhhhh
-        UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
-        Toast.makeText(this, "Version available online rev " + Global.NEW_VERSION, Toast.LENGTH_SHORT).show();
+        UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
 
         //Check for SDcard presence
         //if we have one create the dirs and look fer ebooks
@@ -282,7 +275,7 @@ public class Main extends ListActivity {
         	startActivity(browserIntent);
         	return true;
         case REVELUPDATE_ID:
-        	UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+        	UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
         	return true;
         case ABOUT_ID:
         	AboutDialog.create(this);

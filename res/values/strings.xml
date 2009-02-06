@@ -53,4 +53,7 @@
 <string name="download">Download</string>
 <string name="cancel">Cancel</string>
 <string name="ebook_download_complete">Ebook Download Complete</string>
+<string name="update_available"><b>Update Available</b>, Please check the App Market</string>
+<string name="checking_for_new_version_online">Checking for new Version Online</string>
+<string name="version_you_are_running">Version you are running SVN rev </string>
 </resources>

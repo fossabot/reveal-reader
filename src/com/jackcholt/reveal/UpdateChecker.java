@@ -14,12 +14,16 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import android.content.Context;
+import android.widget.Toast;
+
 /**
  * Checks for updates to the game.
  */
 
 public class UpdateChecker {
   public static String marketId;
+  
 
   @SuppressWarnings("finally")
   public static int getLatestVersionCode() {
@@ -54,15 +58,17 @@ public class UpdateChecker {
       e.printStackTrace();
     } finally {
       return version;
-      
     }
   }
 
-  public static  void checkForNewerVersion(int currentVersion) {
+  public static  void checkForNewerVersion(int currentVersion, Context _this) {
+	  //Check here an XML file stored on our website for new version info
+      Toast.makeText(_this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
+      //Toast.makeText(_this, R.string.version_you_are_running + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
 	  Global.NEW_VERSION = getLatestVersionCode();
     if (Global.NEW_VERSION > currentVersion) {
     	//Download a new REV of this cool CODE
-    	
+        Toast.makeText(_this, R.string.update_available, Toast.LENGTH_LONG).show();
     }
   }
 
