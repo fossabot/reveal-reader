@@ -28,6 +28,7 @@ import android.widget.ImageButton;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
+    private long mBookId;
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
@@ -37,6 +38,7 @@ public class YbkViewActivity extends Activity {
     private String mFragment;
     private String mDialogFilename = "Never set";
     private String mChapBtnText = "Not Set";
+    private int mChapOrderNbr = -1;
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int PREVIOUS_ID = Menu.FIRST;
@@ -87,8 +89,12 @@ public class YbkViewActivity extends Activity {
         if (null == bookId) {
             throw new IllegalStateException("A YBK bookId was not passed in the intent.");
         } else {
+            mBookId = bookId;
+            
             ContentResolver contRes = getContentResolver();
-            Cursor bookCursor = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), bookId),
+            Cursor bookCursor = contRes.query(
+                    ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
+                            bookId),
                     new String[] {YbkProvider.FILE_NAME}, null, null, null);
             final String filePath;
             
@@ -229,15 +235,112 @@ public class YbkViewActivity extends Activity {
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         switch(item.getItemId()) {
         case PREVIOUS_ID:
-            //browseToRoot(false);
+            if (mChapOrderNbr > 0) {
+                loadChapterByOrderId(mBookId, --mChapOrderNbr);
+            }
             return true;
         case NEXT_ID:
+            
+            Cursor c = getContentResolver()
+                .query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), 
+                    new String[] {"max(" + YbkProvider.CHAPTER_ORDER_NUMBER + ")"}, 
+                    YbkProvider.BOOK_ID + "=?", new String[] {Long.toString(mBookId)}, 
+                    null);
+            
+            int maxOrder = -1;
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                maxOrder = c.getInt(0);
+            }
+            
+            if (maxOrder > mChapOrderNbr) {
+                loadChapterByOrderId(mBookId, ++mChapOrderNbr);
+            }
             return true;
         }
        
         return super.onMenuItemSelected(featureId, item);
     }
 
+    /**
+     * Load a chapter as identified by the id field of the chapters table.
+     * 
+     * @param chapterId The record id of the chapter to load.
+     * @return Did the chapter load?
+     */
+    private boolean loadChapterByOrderId(final long bookId, final int orderId) {
+        ContentResolver contRes = getContentResolver();
+        
+        Cursor c = contRes.query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), 
+                new String[] {YbkProvider._ID}, YbkProvider.CHAPTER_ORDER_NUMBER + "=? AND " + YbkProvider.BOOK_ID + "=?", 
+                new String[] {Integer.toString(orderId), Long.toString(bookId)}, null);
+        
+        if (c.getCount() == 1) {
+            c.moveToFirst();
+            int chapterId = c.getInt(0);
+                
+            return loadChapter(chapterId);
+            
+        } else if (c.getCount() == 0) {    
+            throw new IllegalStateException("No chapters found for order_number: " + orderId);
+        } else {
+            throw new IllegalStateException(
+                    "Too many rows returned from a query for one chapter (order_number: " + orderId + ")");
+        }
+            
+    }
+
+    /**
+     * Load a chapter as identified by the id field of the chapters table.
+     * 
+     * @param chapterId The record id of the chapter to load.
+     * @return Did the chapter load?
+     */
+    private boolean loadChapter(final int chapterId) {
+        boolean bookLoaded = false;
+        
+        ContentResolver contRes = getContentResolver();
+        
+        Cursor c = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), chapterId), 
+                new String[] {YbkProvider.FILE_NAME, YbkProvider.BOOK_ID}, null, null, null);
+        
+        if (c.getCount() == 1) {
+            c.moveToFirst();
+            String chapter = c.getString(0);
+            int bookId = c.getInt(1);
+            
+            c = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId), 
+                new String[] {YbkProvider.FILE_NAME}, null, null, null);
+            
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                String bookFileName = c.getString(0);
+                
+                String[] pathParts = bookFileName.split("/");
+                String[] fileNameParts = pathParts[pathParts.length - 1].split("\\.");
+                String shortTitle = fileNameParts[0];
+                
+                if (bookLoaded = loadChapter(bookFileName, chapter)) {
+                    setBookBtn(shortTitle, bookFileName, chapter);
+                }
+            
+            
+            } else if (c.getCount() == 0) {    
+                throw new IllegalStateException("No books found for id: " + bookId);
+            } else {
+                throw new IllegalStateException(
+                        "Too many rows returned from a query for one book (id: " + bookId + ")");
+            }
+        } else if (c.getCount() == 0) {    
+            throw new IllegalStateException("No chapters found for id: " + chapterId);
+        } else {
+            throw new IllegalStateException(
+                    "Too many rows returned from a query for one chapter (id: " + chapterId + ")");
+        }
+        
+        return bookLoaded;    
+    }
+    
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the 
      * WebView.
@@ -276,6 +379,17 @@ public class YbkViewActivity extends Activity {
                     
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
+                }
+                
+                Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
+                        new String[] {YbkProvider._ID}, YbkProvider.FILE_NAME + "=?", 
+                        new String[] {filePath}, null);
+                
+                if (c.getCount() == 1) {
+                    c.moveToFirst();
+                    mBookId = c.getLong(0);
+                } else {
+                    throw new IllegalStateException("More than one or no books found");
                 }
             }
             try {
@@ -349,6 +463,22 @@ public class YbkViewActivity extends Activity {
                     
                 }
 
+                Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"chapter"), 
+                        new String[] {YbkProvider.CHAPTER_ORDER_NUMBER}, 
+                        "lower(" + YbkProvider.FILE_NAME + ")=?", 
+                        new String[] {chap.toLowerCase()}, null);
+                
+                if (c.getCount() == 1) {
+                    c.moveToFirst();
+                    mChapOrderNbr = c.getInt(0);
+                } else if (c.getCount() == 0){
+                    mChapOrderNbr = -1;
+                } else {
+                    throw new IllegalStateException(
+                            "More than one chapter returned when attempting to get order number for: " 
+                            + chap);
+                }
+                
                 String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
                 
                 setChapBtnText(content);

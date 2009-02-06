@@ -400,6 +400,10 @@ public class YbkProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)) {
         case CHAPTERS:
             qb.setTables(CHAPTER_TABLE_NAME);
+            if (selection != null && selectionArgs != null) { 
+                qb.appendWhere(selection);
+            }
+
             break;
         case CHAPTER:
             qb.setTables(CHAPTER_TABLE_NAME);
