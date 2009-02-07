@@ -72,7 +72,8 @@ public class Main extends ListActivity {
         	Toast.makeText(this, "You must have a SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
         } else {
         	createDefaultDirs();
-            refreshLibrary();
+            //since eBooks get refreshed when downloaded skipping this for now when starting up
+        	//refreshLibrary();
             refreshBookList();
         }
     }
