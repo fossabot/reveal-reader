@@ -2,7 +2,6 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Vector;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -127,8 +126,6 @@ public class Main extends ListActivity {
         File[] ybkFiles = libraryDir.listFiles(new YbkFilter());
 
         if (ybkFiles != null) {
-            Vector<Integer> notFoundInDir = new Vector<Integer>();
-            
             // add books that are not in the database
             // Notify that we are getting NEW list of eBooks
             Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
@@ -174,17 +171,12 @@ public class Main extends ListActivity {
                 
                 if (!fileFoundInDir) {
                     String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
-                    contRes.delete(bookUri, YbkProvider._ID + "=?" , new String[] {bookId});
+                    Uri deleteUri = ContentUris.withAppendedId(bookUri, Long.parseLong(bookId));
+                    contRes.delete(deleteUri, null , null);
                 }
                 
                 fileCursor.moveToNext();
             }
-    
-    
-            for(Integer id : notFoundInDir) {
-                contRes.delete(ContentUris.withAppendedId(bookUri, id), null, null);
-            }
-
         }
             
         // no longer need the fileCursor

@@ -197,10 +197,10 @@ public class YbkProvider extends ContentProvider {
             db.beginTransaction();
             try {
                 // remove all records related to the book
-                try {db.delete(YbkProvider.ORDER_TABLE_NAME, BOOK_ID + "=" + bookId, null);} 
-                catch (SQLiteException sqle) {
-                    Log.i(TAG,YbkProvider.ORDER_TABLE_NAME + " probably doesn't exist.", sqle);
-                } 
+//                try {db.delete(YbkProvider.ORDER_TABLE_NAME, BOOK_ID + "=" + bookId, null);} 
+//                catch (SQLiteException sqle) {
+//                    Log.i(TAG,YbkProvider.ORDER_TABLE_NAME + " probably doesn't exist.", sqle);
+//                } 
                 try {db.delete(YbkProvider.CHAPTER_TABLE_NAME, BOOK_ID + "=" + bookId, null);}
                 catch (SQLiteException sqle) {
                     Log.i(TAG,YbkProvider.CHAPTER_TABLE_NAME + " probably doesn't exist.", sqle);
@@ -230,10 +230,10 @@ public class YbkProvider extends ContentProvider {
             db.beginTransaction();
             try {
                 // remove all records in the book related tables
-                try {db.delete(YbkProvider.ORDER_TABLE_NAME, selectionString, null);} 
-                catch (SQLiteException sqle) {
-                    Log.i(TAG,YbkProvider.ORDER_TABLE_NAME + " probably doesn't exist.", sqle);
-                } 
+//                try {db.delete(YbkProvider.ORDER_TABLE_NAME, selectionString, null);} 
+//                catch (SQLiteException sqle) {
+//                    Log.i(TAG,YbkProvider.ORDER_TABLE_NAME + " probably doesn't exist.", sqle);
+//                } 
                 try {db.delete(YbkProvider.CHAPTER_TABLE_NAME, selectionString, null);}
                 catch (SQLiteException sqle) {
                     Log.i(TAG,YbkProvider.CHAPTER_TABLE_NAME + " probably doesn't exist.", sqle);
