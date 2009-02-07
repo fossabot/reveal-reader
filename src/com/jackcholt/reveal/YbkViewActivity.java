@@ -29,6 +29,8 @@ import android.widget.ImageButton;
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
     private long mBookId;
+    private String mBookFileName;
+    private String mChapFileName;
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
@@ -137,36 +139,43 @@ public class YbkViewActivity extends Activity {
                 @Override
                 public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                     Log.d(TAG, "WebView URL: " + url);
-                    
-                    int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
-                    String dataString = url.substring(ContentUriLength + 1);
-                    
-                    String[] urlParts = dataString.split("/");
-                    
-                    
-                    // get rid of the book indicator since it is only used in some cases.
-                    String book = urlParts[0];
-                    if (book.indexOf("!") == 0) {
-                        urlParts[0] = book.substring(1);
-                    }
-                    
-                    book = mLibraryDir + urlParts[0] + ".ybk";
-                    
+                    String book;
                     String chapter = "";
-                    for (int i = 0; i < urlParts.length; i++) {
-                       chapter += "\\" + urlParts[i];
-                    }
+                    String shortTitle = null;
                     
-                    if (!chapter.contains("#")) {
-                        chapter += ".gz";                        
-                    }
+                    if (url.indexOf('@') != -1) {
+                        book = mBookFileName;
+                        chapter = mChapFileName;
+                    } else {
                     
+                        int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
+                        String dataString = url.substring(ContentUriLength + 1);
+                        
+                        String[] urlParts = dataString.split("/");
+                        
+                        
+                        // get rid of the book indicator since it is only used in some cases.
+                        book = shortTitle = urlParts[0];
+                        if (book.charAt(0) == '!') {
+                            urlParts[0] = book.substring(1);
+                        }
+                        
+                        book = mLibraryDir + urlParts[0] + ".ybk";
+                        
+                        for (int i = 0; i < urlParts.length; i++) {
+                           chapter += "\\" + urlParts[i];
+                        }
+                        
+                        if (!chapter.contains("#")) {
+                            chapter += ".gz";                        
+                        }
+                    }
                     Log.i(TAG, "Loading chapter '" + chapter + "'");
                     
-                    if (loadChapter(book, chapter)) {
-                    
-                        setBookBtn(urlParts[0],book,chapter);
+                    if (loadChapter(book, chapter)) {                    
+                        setBookBtn(shortTitle,book,chapter);
                     }
+                    
                     
                     return true;
                 }
@@ -177,6 +186,8 @@ public class YbkViewActivity extends Activity {
                         Log.d(TAG, "In onPageFinished(). Jumping to #" + mFragment);
                         view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
                         mFragment = null;
+                    } else if (url.indexOf('@') != -1) {
+                        view.loadUrl("javascript:location.href=\"#top\"");
                     }
                     
                     
@@ -200,7 +211,10 @@ public class YbkViewActivity extends Activity {
         Button bookBtn = mBookBtn;
         Button chapBtn = mChapBtn;
         
-        bookBtn.setText(shortTitle);
+        if (shortTitle != null) {
+            bookBtn.setText(shortTitle);
+        }
+        
         bookBtn.setOnClickListener(new OnClickListener() {
             
             public void onClick(final View v) {
@@ -492,7 +506,9 @@ public class YbkViewActivity extends Activity {
                         "text/html","utf-8","");
                 
                 bookLoaded = true;
-                                
+                mChapFileName = chap;
+                mBookFileName = filePath;
+                
             } catch (IOException e) {
                 ybkView.loadData("The chapter could not be opened.",
                         "text/plain","utf-8");
