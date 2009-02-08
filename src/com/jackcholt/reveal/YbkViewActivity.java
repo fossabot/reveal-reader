@@ -156,8 +156,8 @@ public class YbkViewActivity extends Activity {
                         
                         // get rid of the book indicator since it is only used in some cases.
                         book = shortTitle = urlParts[0];
-                        if (book.charAt(0) == '!') {
-                            urlParts[0] = book.substring(1);
+                        if (book.charAt(0) == '!' || book.charAt(0) == '^') {
+                            shortTitle = urlParts[0] = book.substring(1);
                         }
                         
                         book = mLibraryDir + urlParts[0] + ".ybk";
