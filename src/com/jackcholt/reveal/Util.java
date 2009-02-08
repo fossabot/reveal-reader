@@ -233,7 +233,8 @@ public class Util {
         
         Log.d(TAG, "style: " + style);
         
-        return "<html><head>" + style + "</head><body>" + content + "</body></html>";
+        return "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">" 
+        + style + "</head><body>" + content + "</body></html>";
     }
 
     public static final HashMap<String,String> getFileNameChapterFromUri(final String uri, 

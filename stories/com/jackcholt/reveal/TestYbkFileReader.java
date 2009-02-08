@@ -206,4 +206,14 @@ public class TestYbkFileReader {
         
         Log.d("testJS", "JS: " + content);
     }
+
+    @Test
+    public void testNTSG() throws FileNotFoundException, IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\nt study guide.ybk");
+        String content = ybkRdr.readChapter("\\nt study guide.html").replace('“', '"').replace('”', '"');
+        assertNotNull(content);
+        
+        Log.d("testNTSG", "NTSG: " + content);
+    }
+
 }

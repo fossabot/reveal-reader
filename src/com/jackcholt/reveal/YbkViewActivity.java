@@ -456,6 +456,7 @@ public class YbkViewActivity extends Activity {
                     } else {
                         content = mYbkReader.readInternalFile(chap);
                         if (content != null) {
+                            //Log.d(TAG, "readInternalFile with gz" + content);
                             break label_get_content;
                         }
                         
@@ -495,14 +496,15 @@ public class YbkViewActivity extends Activity {
                             + chap);
                 }
                 
-                String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
+                // replace MS-Word "smartquotes" and other extended characters with spaces
+                content = content.replace('\ufffd', ' ');
                 
+                String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
                 setChapBtnText(content);
 
                 content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
                 content = Util.convertAhtag(content);
                 content = Util.convertIfvar(content);
-                
                 
                 ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
                         "text/html","utf-8","");
@@ -683,8 +685,14 @@ public class YbkViewActivity extends Activity {
         // Set endFN to the position in the header;
         endFN += startFN;
         
-        mChapBtnText = header.substring(startFN, endFN);
+        String chapBtnText = mChapBtnText = header.substring(startFN, endFN);
         
+        int colonPos;
+        if ((colonPos = chapBtnText.indexOf(":")) != -1) {
+            String[] textParts = chapBtnText.split(":");
+            mChapBtnText = textParts[1].trim();
+        }
+            
     }
 }
 
