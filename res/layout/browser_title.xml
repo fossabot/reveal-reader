@@ -1,23 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:orientation="vertical" android:layout_width="fill_parent"
-	android:layout_height="wrap_content" android:layout_gravity="center">
-	<ScrollView android:layout_width="fill_parent"
-		android:layout_height="wrap_content">
-		<LinearLayout android:layout_width="fill_parent"
-			android:layout_height="fill_parent" android:paddingLeft="5dip"
-			android:paddingRight="5dip" android:orientation="vertical">
-			<TextView android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:autoLink="all"
-				android:id="@+id/title_information" />
-		</LinearLayout>
-	</ScrollView>
+	android:layout_height="wrap_content" android:layout_gravity="center" android:padding="5dip">
+	<TextView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:autoLink="all"
+		android:id="@+id/title_information" />
 	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		android:orientation="horizontal" android:layout_height="wrap_content"
-		android:layout_gravity="center" android:layout_width="wrap_content">
+		android:layout_gravity="center" android:layout_width="fill_parent" android:gravity="center_horizontal">
 		<Button android:layout_height="wrap_content" android:id="@+id/title_download_button"
-			android:text="@string/download" android:layout_width="wrap_content" android:padding="5dip"/>
+			android:text="@string/download" android:layout_width="wrap_content" android:padding="10dip"/>
 		<Button android:layout_height="wrap_content" android:id="@+id/title_cancel_button"
-			android:text="@string/cancel" android:layout_width="wrap_content" android:padding="5dip"/>
+			android:text="@string/cancel" android:layout_width="wrap_content" android:padding="10dip"/>
 	</LinearLayout>
 </LinearLayout>
