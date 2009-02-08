@@ -155,7 +155,7 @@ public class YbkViewActivity extends Activity {
                         
                         
                         // get rid of the book indicator since it is only used in some cases.
-                        book = shortTitle = urlParts[0];
+                        book = shortTitle = urlParts[0].replace("%20", " ");
                         if (book.charAt(0) == '!' || book.charAt(0) == '^') {
                             shortTitle = urlParts[0] = book.substring(1);
                         }
@@ -362,12 +362,14 @@ public class YbkViewActivity extends Activity {
      * @param filePath The path to the YBK file from which to read the chapter. 
      * @param chapter The "filename" of the chapter to load.
      */
-    private boolean loadChapter(final String filePath, final String chapter) {
+    private boolean loadChapter(String filePath, final String chapter) {
         boolean bookLoaded = false;
         WebView ybkView = mYbkView; 
         YbkFileReader ybkReader = mYbkReader;
         
-        String chap = chapter;
+        filePath = filePath.replace("%20", " ");
+        
+        String chap = chapter.replace("%20", " ");
         String content = "";
         String fragment = mFragment = null;
         
