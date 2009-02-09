@@ -16,17 +16,13 @@ import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
-import android.widget.ImageView;
 
 public class Main extends ListActivity {
 	
@@ -43,6 +39,8 @@ public class Main extends ListActivity {
     
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
+    private static final boolean DONT_ADD_BOOKS = false;
+    private static final boolean ADD_BOOKS = true;
     
     private SharedPreferences mSharedPref;
     //private boolean mShowSplashScreen;
@@ -54,14 +52,13 @@ public class Main extends ListActivity {
     private ContentResolver mContRes; 
     public String[] openBooks = {"No book open", "No book open", "No book open", "No book open", "No book open","No book open","No book open","No book open","No book open","No book open","No book open","No book open"};
     public int i = -1;
- 
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.main);
-      
         mContRes = getContentResolver(); 
        
         //Actually go ONLINE and check...  duhhhh
@@ -77,8 +74,9 @@ public class Main extends ListActivity {
         	Toast.makeText(this, "You must have a SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
         } else {
         	createDefaultDirs();
-            //since eBooks get refreshed when downloaded skipping this for now when starting up
-        	//refreshLibrary();
+            //since eBooks get refreshed when downloaded, only delete removed books
+        	//from the database
+        	refreshLibrary(DONT_ADD_BOOKS);
             refreshBookList();
         }
     }
@@ -98,18 +96,31 @@ public class Main extends ListActivity {
     }
     
     /**
-     * Refresh the eBook directory.
+     * Convenience method to make calling refreshLibrary() without any 
+     * parameters retain its original behavior. 
      */
     private void refreshLibrary() {
+        refreshLibrary(ADD_BOOKS);
+    }
+    
+    /**
+     * Refresh the eBook directory.
+     * 
+     * @param addNewBooks If true, run the code that will add new books to the
+     * database as well as the code that removes missing books from the database 
+     * (which runs regardless).
+     */
+    private void refreshLibrary(final boolean addNewBooks) {
         ContentResolver contRes = mContRes;
         Uri bookUri = mBookUri;
         String strLibDir = mLibraryDir;
+        Cursor fileCursor = null;
         
         // get a list of files from the database
         // Notify that we are getting current list of eBooks
         Toast.makeText(this, "Getting eBook list", Toast.LENGTH_SHORT).show();
             
-        Cursor fileCursor = contRes.query(bookUri, 
+        fileCursor = contRes.query(bookUri, 
                 new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
                 YbkProvider.FILE_NAME + " ASC");
         
@@ -131,7 +142,7 @@ public class Main extends ListActivity {
         
         File[] ybkFiles = libraryDir.listFiles(new YbkFilter());
 
-        if (ybkFiles != null) {
+        if (ybkFiles != null && addNewBooks) {
             // add books that are not in the database
             // Notify that we are getting NEW list of eBooks
             Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
@@ -160,29 +171,29 @@ public class Main extends ListActivity {
                     contRes.insert(bookUri, values);
                 }
             }
+        }
+        
+        // remove the books from the database if they are not in the directory
+        fileCursor.moveToFirst();
+        while(!fileCursor.isAfterLast()) {
+            String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
             
-            // remove the books from the database if they are not in the directory
-            fileCursor.moveToFirst();
-            while(!fileCursor.isAfterLast()) {
-                String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
-                
-                boolean fileFoundInDir = false;
-                for(int i = 0, dirListLen = ybkFiles.length; i < dirListLen; i++) {
-                    String dirFilename = ybkFiles[i].getAbsolutePath();
-                    if (dirFilename.equalsIgnoreCase(dbFilename)) {
-                        fileFoundInDir = true;
-                        break;
-                    } 
-                }
-                
-                if (!fileFoundInDir) {
-                    String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
-                    Uri deleteUri = ContentUris.withAppendedId(bookUri, Long.parseLong(bookId));
-                    contRes.delete(deleteUri, null , null);
-                }
-                
-                fileCursor.moveToNext();
+            boolean fileFoundInDir = false;
+            for(int i = 0, dirListLen = ybkFiles.length; i < dirListLen; i++) {
+                String dirFilename = ybkFiles[i].getAbsolutePath();
+                if (dirFilename.equalsIgnoreCase(dbFilename)) {
+                    fileFoundInDir = true;
+                    break;
+                } 
             }
+            
+            if (!fileFoundInDir) {
+                String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
+                Uri deleteUri = ContentUris.withAppendedId(bookUri, Long.parseLong(bookId));
+                contRes.delete(deleteUri, null , null);
+            }
+            
+            fileCursor.moveToNext();
         }
             
         // no longer need the fileCursor
@@ -372,5 +383,4 @@ public class Main extends ListActivity {
         }
         return null;
     }
-     
 }
