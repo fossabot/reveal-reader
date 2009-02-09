@@ -60,6 +60,7 @@ public class TitleProvider extends ContentProvider {
 		public static final String DEFAULT_SORT_ORDER = "bookname";
 
 		public static final String _ID = "_id";
+		public static final String SOURCE_ID = "id";
 		public static final String FILENAME = "filename";
 		public static final String BOOKNAME = "bookname";
 		public static final String URL = "url";
@@ -91,7 +92,7 @@ public class TitleProvider extends ContentProvider {
 
 	/* Provider constants */
 	private static final String DATABASE_NAME = "reveal_titles.db";
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 2;
 	/* URI constants */
 	public static final int CATEGORY = 0;
 	public static final int CATEGORIES = 1;
@@ -128,7 +129,8 @@ public class TitleProvider extends ContentProvider {
 			Log.i(TAG, "Creating database " + DATABASE_NAME);
 
 			db.execSQL("CREATE TABLE " + Titles.TABLE_NAME + " (" + Titles._ID
-					+ " INTEGER PRIMARY KEY, " + Titles.FILENAME
+					+ " INTEGER PRIMARY KEY, " + Titles.SOURCE_ID
+					+ " INTEGER, " + Titles.FILENAME
 					+ " TEXT DEFAULT NULL, " + Titles.BOOKNAME + " TEXT, "
 					+ Titles.URL + " TEXT, " + Titles.UPDATED + " TEXT, "
 					+ Titles.SIZE + " INTEGER, " + Titles.DESCRIPTION
@@ -155,8 +157,10 @@ public class TitleProvider extends ContentProvider {
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
 					+ newVersion + ", which will destroy all old data");
-			db.execSQL("DROP TABLE IF EXISTS " + Titles.TABLE_NAME + ";"
-					+ "DROP TABLE IF EXISTS " + Categories.TABLE_NAME + ";");
+			
+			db.execSQL("DROP TABLE IF EXISTS " + Titles.TABLE_NAME);
+			db.execSQL("DROP TABLE IF EXISTS " + Categories.TABLE_NAME);
+			
 			onCreate(db);
 		}
 	}
@@ -241,13 +245,16 @@ public class TitleProvider extends ContentProvider {
 		case TITLES:
 			if (!values.containsKey(Titles.BOOKNAME)
 					|| !values.containsKey(Titles.CATEGORY_ID)
-					|| !values.containsKey(Titles.URL)) {
+					|| !values.containsKey(Titles.URL)
+					|| !values.containsKey(Titles.SOURCE_ID)) {
 				throw new IllegalArgumentException(
 						"Missing required information while adding new title: \n"
 								+ Titles.BOOKNAME + ": "
 								+ values.getAsString(Titles.BOOKNAME) + ", "
 								+ Titles.CATEGORY_ID + ": "
 								+ values.getAsString(Titles.CATEGORY_ID) + ", "
+								+ Titles.SOURCE_ID + ": "
+								+ values.getAsString(Titles.SOURCE_ID) + ", "
 								+ Titles.URL + ": "
 								+ values.getAsString(Titles.URL));
 			}
@@ -460,6 +467,7 @@ public class TitleProvider extends ContentProvider {
 							|| mCurrentTag.equals(Titles.SIZE)
 							|| mCurrentTag.equals(Titles.UPDATED)
 							|| mCurrentTag.equals(Titles.URL)
+							|| mCurrentTag.equals(Titles.SOURCE_ID)
 							|| mCurrentTag.equals(mCategoryTag + "1") 
 							|| mCurrentTag.equals(mCategoryTag + "2"))) {
 				String content = mCurrentValues.getAsString(mCurrentTag);
@@ -484,10 +492,6 @@ public class TitleProvider extends ContentProvider {
 		private void insertNode() {
 			mCount = 1;
 			mCategoryValues.clear();
-
-			if ("on".equals(mCurrentValues.get(mCategoryTag + 2))) {
-				Log.e(TAG, mCurrentValues.valueSet().toString());
-			}
 
 			mCategory = (String) mCurrentValues.get(mCategoryTag + mCount);
 			mCurrentValues.remove(mCategoryTag + mCount);

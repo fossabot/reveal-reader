@@ -1,13 +1,19 @@
 package com.jackcholt.reveal;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -581,5 +587,76 @@ public class Util {
         return newContent.toString();
     }
 
+    /**
+	 * Download and install title into library. Used by the title browser
+	 * thread.
+	 * 
+	 * @param downloadUrl
+	 *            Url from which we are downloading
+	 * @return
+	 */
+	public static boolean fetchAndLoadTitle(URL fileLocation, URL downloadUrl,
+			String libDir, ContentResolver resolver) {
+		boolean success = false;
+
+		final byte[] buffer = new byte[255];
+
+		String filePath = null;
+
+		try {
+			FileOutputStream out = null;
+
+			if (fileLocation.getFile().endsWith("zip")
+					|| fileLocation.getFile().contains("?")) {
+				ZipInputStream zip = new ZipInputStream(downloadUrl
+						.openStream());
+				ZipEntry entry = zip.getNextEntry();
+
+				filePath = libDir + entry.getName();
+
+				out = new FileOutputStream(filePath);
+
+				int bytesRead = 0;
+				while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+					out.write(buffer, 0, bytesRead);
+				}
+
+				zip.close();
+			} else if (fileLocation.getFile().endsWith("ybk")) {
+				BufferedInputStream in = new BufferedInputStream(downloadUrl
+						.openStream());
+
+				filePath = libDir + fileLocation.getFile();
+
+				out = new FileOutputStream(filePath);
+
+				int bytesRead = 0;
+				while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
+					out.write(buffer, 0, bytesRead);
+				}
+
+				in.close();
+			} else {
+				Log.w(resolver.getClass().getName(), "Unable to process file "
+						+ fileLocation.getFile());
+			}
+
+			if (out != null) {
+				out.flush();
+				out.close();
+			}
+		} catch (IOException e) {
+			Log.w(resolver.getClass().getName(), e.getMessage());
+		}
+
+		// add this book to the list
+		Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
+		ContentValues values = new ContentValues();
+		values.put(YbkProvider.FILE_NAME, filePath);
+		resolver.insert(bookUri, values);
+		success = true;
+
+		return success;
+	}
 }
 

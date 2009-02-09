@@ -52,6 +52,10 @@
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderfull resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
 <string name="cancel">Cancel</string>
+<string name="ebook_download_started">Ebook Download Started</string>
+<string name="ebook_download_failed_type">Unable to download Ebook type</string>
+<string name="ebook_download_failed">Unable to download Ebook</string>
+<string name="ebook_download_failed_url">Unable to download Ebook at given location.</string>
 <string name="ebook_download_complete">Ebook Download Complete</string>
 <string name="update_available"><b>Update Available</b>, Please check the App Market</string>
 <string name="checking_for_new_version_online">Checking for new Version Online</string>
