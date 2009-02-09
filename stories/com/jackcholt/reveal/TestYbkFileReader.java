@@ -216,4 +216,14 @@ public class TestYbkFileReader {
         Log.d("testNTSG", "NTSG: " + content);
     }
 
+    @Test
+    public void testHymnsAlt314() throws FileNotFoundException, IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\Hymns_alt.ybk");
+        String content = ybkRdr.readChapter("\\Hymns\\For Women.html");
+        assertNotNull(content);
+        
+        Log.d("testHymnsAlt314", "314: " + content);
+    }
+
+
 }

@@ -42,6 +42,7 @@ public class YbkViewActivity extends Activity {
     private int mChapOrderNbr = -1;
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
+    private static final int INVALID_CHAPTER = 2;
     private static final int PREVIOUS_ID = Menu.FIRST;
     private static final int NEXT_ID = Menu.FIRST + 1;
     
@@ -378,169 +379,185 @@ public class YbkViewActivity extends Activity {
         WebView ybkView = mYbkView; 
         YbkFileReader ybkReader = mYbkReader;
         
-        filePath = filePath.replace("%20", " ");
-        
-        String chap = chapter.replace("%20", " ");
-        String content = "";
-        String fragment = mFragment = null;
-        
-        Log.d(TAG, "FilePath: " + filePath);
-        
-        File testFile = new File(filePath);
-        if (!testFile.exists()) {
-            // set the member property that holds the name of the book file we
-            // couldn't find
-            if (TextUtils.isEmpty(filePath)) {
-                mDialogFilename = "No file";
-            } else {
-                String[] pathParts = filePath.split("/"); 
-                mDialogFilename = pathParts[pathParts.length-1];
-            }
-            
-            showDialog(FILE_NONEXIST);
+        // check the format of the internal file name
+        if (chapter.toLowerCase().indexOf(".html") == -1) {
+            showDialog(INVALID_CHAPTER);
+            Log.e(TAG, "The chapter is invalid: " + chapter);
         } else {
-            // Only create a new YbkFileReader if we're opening a different book
-            if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
-                try {
-                    ybkReader = mYbkReader = new YbkFileReader(filePath);
-                    
-                } catch (IOException ioe) {
-                    throw new RuntimeException(ioe);
-                }
-                
-                Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
-                        new String[] {YbkProvider._ID}, YbkProvider.FILE_NAME + "=?", 
-                        new String[] {filePath}, null);
-                
-                try {
-                    if (c.getCount() == 1) {
-                        c.moveToFirst();
-                        mBookId = c.getLong(0);
-                    } else {
-                        throw new IllegalStateException("More than one or no books found");
-                    }
-                } finally {
-                    c.close();
-                }
-            }
             
-            try {
-                if (chap.equals("index")) {
-                    String shortTitle = ybkReader.getBookShortTitle();
-                    String tryFileToOpen = "\\" + shortTitle + ".html.gz";
-                    content = ybkReader.readInternalFile(tryFileToOpen);
-                    if (content == null) {
-                        tryFileToOpen = "\\" + shortTitle + ".html";
-                        content = ybkReader.readInternalFile(tryFileToOpen);
-                    }
-                    
-                    if (content == null) {
-                        ybkView.loadData("YBK file has no index page.",
-                                "text/plain","utf-8");
-                        
-                        Log.e(TAG, "YBK file has no index page.");
-                    }
+            // get rid of any urlencoded spaces
+            filePath = filePath.replace("%20", " ");
+            String chap = chapter.replace("%20", " ");
+            
+            String content = "";
+            String fragment = mFragment = null;
+            
+            Log.d(TAG, "FilePath: " + filePath);
+            
+            File testFile = new File(filePath);
+            if (!testFile.exists()) {
+                // set the member property that holds the name of the book file we
+                // couldn't find
+                if (TextUtils.isEmpty(filePath)) {
+                    mDialogFilename = "No file";
                 } else {
+                    String[] pathParts = filePath.split("/"); 
+                    mDialogFilename = pathParts[pathParts.length-1];
+                }
                 
-                    int hashLoc = -1;
-                    
-                    // use the dreaded break <label> in order to simplify conditional nesting
-                    label_get_content:
-                    if ((hashLoc = chap.indexOf("#")) != -1) {
-                        mFragment = fragment = chap.substring(hashLoc + 1);
+                showDialog(FILE_NONEXIST);
+            } else {
+                // Only create a new YbkFileReader if we're opening a different book
+                if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
+                    try {
+                        ybkReader = mYbkReader = new YbkFileReader(filePath);
                         
-                        if (!Util.isInteger(fragment)) {
+                    } catch (IOException ioe) {
+                        throw new RuntimeException(ioe);
+                    }
+                    
+                    Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
+                            new String[] {YbkProvider._ID}, YbkProvider.FILE_NAME + "=?", 
+                            new String[] {filePath}, null);
+                    
+                    try {
+                        if (c.getCount() == 1) {
+                            c.moveToFirst();
+                            mBookId = c.getLong(0);
+                        } else {
+                            throw new IllegalStateException("More than one or no books found");
+                        }
+                    } finally {
+                        c.close();
+                    }
+                }
+                
+                try {
+                    if (chap.equals("index")) {
+                        String shortTitle = ybkReader.getBookShortTitle();
+                        String tryFileToOpen = "\\" + shortTitle + ".html.gz";
+                        content = ybkReader.readInternalFile(tryFileToOpen);
+                        if (content == null) {
+                            tryFileToOpen = "\\" + shortTitle + ".html";
+                            content = ybkReader.readInternalFile(tryFileToOpen);
+                        }
+                        
+                        if (content == null) {
+                            ybkView.loadData("YBK file has no index page.",
+                                    "text/plain","utf-8");
                             
-                            // need to read a special footnote chapter
-                            content = readConcatFile(chap, mYbkReader);
+                            Log.e(TAG, "YBK file has no index page.");
+                        }
+                    } else {
+                    
+                        int hashLoc = -1;
+                        
+                        // use the dreaded break <label> in order to simplify conditional nesting
+                        label_get_content:
+                        if ((hashLoc = chap.indexOf("#")) != -1) {
+                            mFragment = fragment = chap.substring(hashLoc + 1);
                             
-                            if (content != null) {
-                                break label_get_content;
+                            if (!Util.isInteger(fragment)) {
+                                
+                                // need to read a special footnote chapter
+                                content = readConcatFile(chap, mYbkReader);
+                                
+                                if (content != null) {
+                                    break label_get_content;
+                                }
+                            } else {
+                                chap = chap.substring(0, hashLoc);
+                                content = mYbkReader.readInternalFile(chap);
+                                if (content != null) {
+                                    break label_get_content;
+                                }
+                                
+                                content = mYbkReader.readInternalFile(chap + ".gz");
+                                if (content != null) {
+                                    break label_get_content;
+                                }
                             }
                         } else {
-                            chap = chap.substring(0, hashLoc);
                             content = mYbkReader.readInternalFile(chap);
                             if (content != null) {
                                 break label_get_content;
                             }
                             
-                            content = mYbkReader.readInternalFile(chap + ".gz");
+                            if (chap.toLowerCase().endsWith(".gz")) {
+                                
+                                // Try it without the .gz 
+                                chap.substring(0, chap.length() - 3);
+                                content = mYbkReader.readInternalFile(chap);
+                                if (content != null) {
+                                    break label_get_content;
+                                }
+                            } else {
+                                // try it with .gz
+                                chap += ".gz";
+                                content = mYbkReader.readInternalFile(chap);
+                                if (content != null) {
+                                    break label_get_content;
+                                }
+                            }
+                            
+                            // Need to read special concatenated file
+                            content = readConcatFile(chap, mYbkReader);
                             if (content != null) {
                                 break label_get_content;
                             }
-                        }
-                    } else {
-                        content = mYbkReader.readInternalFile(chap);
-                        if (content != null) {
-                            //Log.d(TAG, "readInternalFile with gz" + content);
-                            break label_get_content;
-                        }
+                            
+                            // if we haven't reached a break statement yet, we have a problem.
+                            throw new IllegalStateException("Unable to read chapter '" + chap + "'");
+                            
+                        } // label_get_content:
                         
-                        // Try it without the .gz 
-                        chap.substring(0, chap.length() - 3);
-                        content = mYbkReader.readInternalFile(chap);
-                        if (content != null) {
-                            break label_get_content;
+                    }
+    
+                    Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"chapter"), 
+                            new String[] {YbkProvider.CHAPTER_ORDER_NUMBER}, 
+                            "lower(" + YbkProvider.FILE_NAME + ")=?", 
+                            new String[] {chap.toLowerCase()}, null);
+                    
+                    try {
+                        if (c.getCount() == 1) {
+                            c.moveToFirst();
+                            mChapOrderNbr = c.getInt(0);
+                        } else if (c.getCount() == 0){
+                            mChapOrderNbr = -1;
+                        } else {
+                            throw new IllegalStateException(
+                                    "More than one chapter returned when attempting to get order number for: " 
+                                    + chap);
                         }
-                        
-                        // Need to read special concatenated file
-                        content = readConcatFile(chap, mYbkReader);
-                        if (content != null) {
-                            break label_get_content;
-                        }
-                        
-                        // if we haven't reached a break statement yet, we have a problem.
-                        throw new IllegalStateException("Unable to read chapter '" + chap + "'");
-                        
-                    } // label_get_content:
+                    } finally {
+                        c.close();
+                    }
+                    
+                    // replace MS-Word "smartquotes" and other extended characters with spaces
+                    content = content.replace('\ufffd', ' ');
+                    
+                    String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
+                    setChapBtnText(content);
+    
+                    content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
+                    content = Util.convertAhtag(content);
+                    content = Util.convertIfvar(content);
+                    
+                    ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
+                            "text/html","utf-8","");
+                    
+                    bookLoaded = true;
+                    mChapFileName = chap;
+                    mBookFileName = filePath;
+                    
+                } catch (IOException e) {
+                    ybkView.loadData("The chapter could not be opened.",
+                            "text/plain","utf-8");
+                    
+                    Log.e(TAG, "A chapter in " + filePath + " could not be opened. " + e.getMessage());
                     
                 }
-
-                Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"chapter"), 
-                        new String[] {YbkProvider.CHAPTER_ORDER_NUMBER}, 
-                        "lower(" + YbkProvider.FILE_NAME + ")=?", 
-                        new String[] {chap.toLowerCase()}, null);
-                
-                try {
-                    if (c.getCount() == 1) {
-                        c.moveToFirst();
-                        mChapOrderNbr = c.getInt(0);
-                    } else if (c.getCount() == 0){
-                        mChapOrderNbr = -1;
-                    } else {
-                        throw new IllegalStateException(
-                                "More than one chapter returned when attempting to get order number for: " 
-                                + chap);
-                    }
-                } finally {
-                    c.close();
-                }
-                
-                // replace MS-Word "smartquotes" and other extended characters with spaces
-                content = content.replace('\ufffd', ' ');
-                
-                String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
-                setChapBtnText(content);
-
-                content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
-                content = Util.convertAhtag(content);
-                content = Util.convertIfvar(content);
-                
-                ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
-                        "text/html","utf-8","");
-                
-                bookLoaded = true;
-                mChapFileName = chap;
-                mBookFileName = filePath;
-                
-            } catch (IOException e) {
-                ybkView.loadData("The chapter could not be opened.",
-                        "text/plain","utf-8");
-                
-                Log.e(TAG, "A chapter in " + filePath + " could not be opened. " + e.getMessage());
-                
             }
-            
         }
         
         return bookLoaded;
@@ -565,18 +582,38 @@ public class YbkViewActivity extends Activity {
                 }
             })
             .create();
+        case INVALID_CHAPTER :
+            
+            return new AlertDialog.Builder(this)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setTitle("Not Set")
+            .setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+
+                    /* User clicked OK so do some stuff */
+                }
+            })
+            .create();
         }
         return null;
     }
 
     @Override
     protected void onPrepareDialog(int id, Dialog dialog) {
+        String title;
         switch(id) {
         case FILE_NONEXIST :
             // replace the replaceable parameters
-            String title = getResources().getString(R.string.reference_not_found);
+            title = getResources().getString(R.string.reference_not_found);
             title = MessageFormat.format(title, mDialogFilename);
             dialog.setTitle(title);
+            break;
+        case INVALID_CHAPTER :
+            // replace the replaceable parameters
+            title = getResources().getString(R.string.invalid_chapter);
+            title = MessageFormat.format(title, mDialogFilename);
+            dialog.setTitle(title);
+            break;
         }
     }
     
