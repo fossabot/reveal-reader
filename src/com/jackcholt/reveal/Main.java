@@ -16,13 +16,17 @@ import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
+import android.widget.ImageView;
 
 public class Main extends ListActivity {
 	
@@ -50,13 +54,14 @@ public class Main extends ListActivity {
     private ContentResolver mContRes; 
     public String[] openBooks = {"No book open", "No book open", "No book open", "No book open", "No book open","No book open","No book open","No book open","No book open","No book open","No book open","No book open"};
     public int i = -1;
-    
+ 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.main);
+      
         mContRes = getContentResolver(); 
        
         //Actually go ONLINE and check...  duhhhh
@@ -367,4 +372,5 @@ public class Main extends ListActivity {
         }
         return null;
     }
+     
 }
