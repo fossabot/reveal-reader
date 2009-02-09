@@ -30,8 +30,7 @@ public class UpdateChecker {
     int version = 0;
     try {
       URLConnection cn;
-      URL url =
-          new URL("http://androidstuff.thepackhams.com/revealVersion.xml");
+      URL url = new URL("http://androidstuff.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
       cn = url.openConnection();
       cn.connect();
       InputStream stream = cn.getInputStream();
@@ -57,6 +56,7 @@ public class UpdateChecker {
       // TODO Auto-generated catch block
       e.printStackTrace();
     } finally {
+    	Global.NEW_VERSION = version;
       return version;
     }
   }
