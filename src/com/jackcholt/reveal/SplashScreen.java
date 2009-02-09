@@ -8,7 +8,7 @@ import android.view.Menu;
 
 public class SplashScreen extends Activity {
 
-     private final int SPLASH_DISPLAY_LENGHT = 1000;
+     private final int SPLASH_DISPLAY_LENGTH = 1000;
      /** Called when the activity is first created. */
      @Override
      public void onCreate(final Bundle savedInstanceState) {
@@ -18,13 +18,13 @@ public class SplashScreen extends Activity {
           /* New Handler to start the Menu-Activity
            * and close this Splash-Screen after some seconds.*/
           new Handler().postDelayed(new Runnable(){
-               @Override
+               //@Override
                public void run() {
                     /* Create an Intent that will start the Menu-Activity. */
                     Intent mainIntent = new Intent(SplashScreen.this,Menu.class);
                     SplashScreen.this.startActivity(mainIntent);
                     SplashScreen.this.finish();
                }
-          }, SPLASH_DISPLAY_LENGHT);
+          }, SPLASH_DISPLAY_LENGTH);
      }
 }

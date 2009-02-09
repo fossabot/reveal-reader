@@ -349,6 +349,8 @@ public class Util {
                                 new String[] {libDir + bookName + ".ybk"}, null);
                         
                         int count = c.getCount();
+                        c.close();
+                        
                         if (count == 1) {
                             newContent.append(oldContent.substring(gtPos + 1, elsePos));
                             Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, elsePos));

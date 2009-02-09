@@ -18,7 +18,6 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
@@ -106,6 +105,8 @@ public class YbkViewActivity extends Activity {
             } else {
                 filePath = "";
             }
+            
+            bookCursor.close();
             
             try {
                 YbkFileReader ybkReader = mYbkReader = new YbkFileReader(filePath);
@@ -267,6 +268,8 @@ public class YbkViewActivity extends Activity {
                 maxOrder = c.getInt(0);
             }
             
+            c.close();
+            
             if (maxOrder > mChapOrderNbr) {
                 loadChapterByOrderId(mBookId, ++mChapOrderNbr);
             }
@@ -289,17 +292,21 @@ public class YbkViewActivity extends Activity {
                 new String[] {YbkProvider._ID}, YbkProvider.CHAPTER_ORDER_NUMBER + "=? AND " + YbkProvider.BOOK_ID + "=?", 
                 new String[] {Integer.toString(orderId), Long.toString(bookId)}, null);
         
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            int chapterId = c.getInt(0);
+        try {
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                int chapterId = c.getInt(0);
+                    
+                return loadChapter(chapterId);
                 
-            return loadChapter(chapterId);
-            
-        } else if (c.getCount() == 0) {    
-            throw new IllegalStateException("No chapters found for order_number: " + orderId);
-        } else {
-            throw new IllegalStateException(
-                    "Too many rows returned from a query for one chapter (order_number: " + orderId + ")");
+            } else if (c.getCount() == 0) {    
+                throw new IllegalStateException("No chapters found for order_number: " + orderId);
+            } else {
+                throw new IllegalStateException(
+                        "Too many rows returned from a query for one chapter (order_number: " + orderId + ")");
+            }
+        } finally {
+            c.close();
         }
             
     }
@@ -318,38 +325,42 @@ public class YbkViewActivity extends Activity {
         Cursor c = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), chapterId), 
                 new String[] {YbkProvider.FILE_NAME, YbkProvider.BOOK_ID}, null, null, null);
         
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            String chapter = c.getString(0);
-            int bookId = c.getInt(1);
-            
-            c = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId), 
-                new String[] {YbkProvider.FILE_NAME}, null, null, null);
-            
+        try {
             if (c.getCount() == 1) {
                 c.moveToFirst();
-                String bookFileName = c.getString(0);
+                String chapter = c.getString(0);
+                int bookId = c.getInt(1);
                 
-                String[] pathParts = bookFileName.split("/");
-                String[] fileNameParts = pathParts[pathParts.length - 1].split("\\.");
-                String shortTitle = fileNameParts[0];
+                c = contRes.query(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId), 
+                    new String[] {YbkProvider.FILE_NAME}, null, null, null);
                 
-                if (bookLoaded = loadChapter(bookFileName, chapter)) {
-                    setBookBtn(shortTitle, bookFileName, chapter);
+                if (c.getCount() == 1) {
+                    c.moveToFirst();
+                    String bookFileName = c.getString(0);
+                    
+                    String[] pathParts = bookFileName.split("/");
+                    String[] fileNameParts = pathParts[pathParts.length - 1].split("\\.");
+                    String shortTitle = fileNameParts[0];
+                    
+                    if (bookLoaded = loadChapter(bookFileName, chapter)) {
+                        setBookBtn(shortTitle, bookFileName, chapter);
+                    }
+                
+                
+                } else if (c.getCount() == 0) {    
+                    throw new IllegalStateException("No books found for id: " + bookId);
+                } else {
+                    throw new IllegalStateException(
+                            "Too many rows returned from a query for one book (id: " + bookId + ")");
                 }
-            
-            
             } else if (c.getCount() == 0) {    
-                throw new IllegalStateException("No books found for id: " + bookId);
+                throw new IllegalStateException("No chapters found for id: " + chapterId);
             } else {
                 throw new IllegalStateException(
-                        "Too many rows returned from a query for one book (id: " + bookId + ")");
+                        "Too many rows returned from a query for one chapter (id: " + chapterId + ")");
             }
-        } else if (c.getCount() == 0) {    
-            throw new IllegalStateException("No chapters found for id: " + chapterId);
-        } else {
-            throw new IllegalStateException(
-                    "Too many rows returned from a query for one chapter (id: " + chapterId + ")");
+        } finally {
+            c.close();
         }
         
         return bookLoaded;    
@@ -401,13 +412,18 @@ public class YbkViewActivity extends Activity {
                         new String[] {YbkProvider._ID}, YbkProvider.FILE_NAME + "=?", 
                         new String[] {filePath}, null);
                 
-                if (c.getCount() == 1) {
-                    c.moveToFirst();
-                    mBookId = c.getLong(0);
-                } else {
-                    throw new IllegalStateException("More than one or no books found");
+                try {
+                    if (c.getCount() == 1) {
+                        c.moveToFirst();
+                        mBookId = c.getLong(0);
+                    } else {
+                        throw new IllegalStateException("More than one or no books found");
+                    }
+                } finally {
+                    c.close();
                 }
             }
+            
             try {
                 if (chap.equals("index")) {
                     String shortTitle = ybkReader.getBookShortTitle();
@@ -485,15 +501,19 @@ public class YbkViewActivity extends Activity {
                         "lower(" + YbkProvider.FILE_NAME + ")=?", 
                         new String[] {chap.toLowerCase()}, null);
                 
-                if (c.getCount() == 1) {
-                    c.moveToFirst();
-                    mChapOrderNbr = c.getInt(0);
-                } else if (c.getCount() == 0){
-                    mChapOrderNbr = -1;
-                } else {
-                    throw new IllegalStateException(
-                            "More than one chapter returned when attempting to get order number for: " 
-                            + chap);
+                try {
+                    if (c.getCount() == 1) {
+                        c.moveToFirst();
+                        mChapOrderNbr = c.getInt(0);
+                    } else if (c.getCount() == 0){
+                        mChapOrderNbr = -1;
+                    } else {
+                        throw new IllegalStateException(
+                                "More than one chapter returned when attempting to get order number for: " 
+                                + chap);
+                    }
+                } finally {
+                    c.close();
                 }
                 
                 // replace MS-Word "smartquotes" and other extended characters with spaces
@@ -591,72 +611,6 @@ public class YbkViewActivity extends Activity {
         return content;
     }
 
-    /*private String processIfbook(final String content) {
-        StringBuilder newContent = new StringBuilder();
-        StringBuilder oldContent = new StringBuilder(content);
-        ContentResolver contRes = getContentResolver();
-        int pos = 0;
-        
-        while ((pos = oldContent.indexOf("<ifbook=")) != -1) {
-            boolean fullIfBookFound = false;
-            
-            // copy text before <ifbook> tag to new content and remove from old
-            newContent.append(oldContent.substring(0, pos));
-            oldContent.delete(0, pos);
-            
-            int gtPos = oldContent.indexOf(">");
-            if (gtPos != -1) {
-                
-                // grab the bookname by skipping the beginning of the ifbook tag
-                String bookName = oldContent.substring(8, gtPos);
-                int elsePos = oldContent.indexOf("<elsebook=" + bookName + ">");
-                if (elsePos != -1 && elsePos > gtPos) {
-                
-                    int endPos = oldContent.indexOf("<endbook=" + bookName + ">");
-                    if (endPos != -1 && endPos > elsePos) {
-                        
-                        fullIfBookFound = true;
-                        
-                        Cursor c = contRes.query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
-                                new String[] {YbkProvider.FILE_NAME}, "lower(" + YbkProvider.FILE_NAME + ") = lower(?)", 
-                                new String[] {mLibraryDir + bookName + ".ybk"}, null);
-                        
-                        int count = c.getCount();
-                        if (count == 1) {
-                            newContent.append(oldContent.substring(gtPos + 1, elsePos));
-                            Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, elsePos));
-                        } else if (count == 0) {
-                            newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
-                        } else {
-                            throw new IllegalStateException("More than one record for the same book");
-                        }
-                        
-                        //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
-                        
-                        // remove just-parsed <ifbook> tag structure so we can find the next
-                        oldContent.delete(0, endPos + bookName.length() + 10);
-                    }
-                }
-            } 
-            
-            // remove just-parsed <ifbook> tag so we can find the next
-            if (!fullIfBookFound) {
-                oldContent.delete(0,8);
-            }
-            
-        }
-        
-        // copy the remaining content over
-        newContent.append(oldContent);
-        
-        return newContent.toString();
-    }*/
-    
-    public boolean onTouchEvent(final MotionEvent ev) {
-        //ev.
-        
-        return true;
-    }
 
     /**
      * Set the chapter button text from the content.
