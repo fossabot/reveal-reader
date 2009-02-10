@@ -226,7 +226,8 @@ public class YbkProvider extends ContentProvider {
             Cursor c = db.rawQuery("SELECT count(*) FROM " + BOOK_TABLE_NAME, null);
             c.moveToFirst();
             int bookRows = c.getInt(0);
-
+            c.close();
+            
             db.beginTransaction();
             try {
                 // remove all records in the book related tables
@@ -531,21 +532,29 @@ public class YbkProvider extends ContentProvider {
                 FILE_NAME + "=? AND " + BOOK_ID + "=?" , 
                 new String[] {BINDING_FILENAME, Long.toString(bookId)}, null, null, null);
         
-        int count = c.getCount();
-        Log.d(TAG, "Cursor record count is: " + count);
-        
-        if (count == 1) {
-            c.moveToFirst();
-            fileText = readInternalFile(file, bookId, c.getInt(0));
+        try {
+            int count = c.getCount();
+            Log.d(TAG, "Cursor record count is: " + count);
+            
+            if (count == 1) {
+                c.moveToFirst();
+                fileText = readInternalFile(file, bookId, c.getInt(0));
+            }
+        } finally {
+            c.close();
         }
-        
-        /*if (null == fileText) {
-            throw new InvalidFileFormatException("The YBK file contains no binding.html");
-        }*/
         
         return fileText;
     }
     
+    /**
+     * 
+     * @param file
+     * @param bookFileName
+     * @param chapterName
+     * @return
+     * @throws IOException
+     */
     public byte[] readInternalBinaryFile(final RandomAccessFile file, 
             final String bookFileName, final String chapterName) 
     throws IOException {
@@ -558,33 +567,25 @@ public class YbkProvider extends ContentProvider {
         Cursor c = db.query(BOOK_TABLE_NAME, new String[] {_ID}, "lower(" + FILE_NAME + ")=?", 
                 new String[] {bookFileName.toLowerCase()}, null, null, null);
         
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            bookId = c.getString(0);
+        try {
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                bookId = c.getString(0);
+            }
+            
+            c = db.query(CHAPTER_TABLE_NAME, new String[] {CHAPTER_OFFSET, CHAPTER_LENGTH}, 
+                    "lower(" + FILE_NAME + ")=? AND BOOK_ID =?", 
+                    new String[] {chapterName.toLowerCase(), bookId}, null, null, null);
+            
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                offset = c.getInt(c.getColumnIndexOrThrow(CHAPTER_OFFSET));
+                len = c.getInt(c.getColumnIndexOrThrow(CHAPTER_LENGTH));
+            }
+        } finally {
+            c.close();
         }
         
-        c = db.query(CHAPTER_TABLE_NAME, new String[] {CHAPTER_OFFSET, CHAPTER_LENGTH}, "lower(" + FILE_NAME + ")=? AND BOOK_ID =?", 
-                new String[] {chapterName.toLowerCase(), bookId}, null, null, null);
-        
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            offset = c.getInt(c.getColumnIndexOrThrow(CHAPTER_OFFSET));
-            len = c.getInt(c.getColumnIndexOrThrow(CHAPTER_LENGTH));
-        }
-        
-        
-        /*try {
-            dataInput.reset();
-        } catch (IOException ioe) {
-            
-            dataInput.close();
-            
-            initDataStream(new File(bookFileName));                
-            
-            Log.w(TAG, "YBK file's DataInputStream had to be closed and reopened. " 
-                    + ioe.getMessage());
-        }*/
-     
         byte[] bytes = new byte[len];
         file.seek(offset);
         int amountRead = file.read(bytes);
@@ -616,49 +617,34 @@ public class YbkProvider extends ContentProvider {
                 new String[] {YbkProvider.CHAPTER_LENGTH, YbkProvider.CHAPTER_OFFSET, YbkProvider.FILE_NAME}, 
                 YbkProvider.BOOK_ID + "=" + bookId, null, null);
         
-        if ( c.getCount() > 0) {
-            c.moveToFirst();
-            
-            offset = c.getInt(c.getColumnIndexOrThrow(YbkProvider.CHAPTER_OFFSET));
-            len = c.getInt(c.getColumnIndexOrThrow(YbkProvider.CHAPTER_LENGTH));
-            String iFilename = c.getString(c.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
-            
-/*            try {
-                dataInput.reset();
-            } catch (IOException ioe) {
+        try {
+            if ( c.getCount() > 0) {
+                c.moveToFirst();
                 
-                dataInput.close();
+                offset = c.getInt(c.getColumnIndexOrThrow(YbkProvider.CHAPTER_OFFSET));
+                len = c.getInt(c.getColumnIndexOrThrow(YbkProvider.CHAPTER_LENGTH));
+                String iFilename = c.getString(c.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
                 
-                Cursor bookCursor = query(ContentUris.withAppendedId(Uri.withAppendedPath(CONTENT_URI, "book"), bookId), 
-                        new String[] {YbkProvider.FILE_NAME}, null, null, null);
-                
-                if (bookCursor.getCount() > 0) {
-                    bookCursor.moveToFirst();
-                    initDataStream(new File(bookCursor.getString(0)));                
-                } else {
-                    throw new IllegalStateException("Could not reopen the YBK file.");
+             
+                byte[] text = new byte[len];
+                file.seek(offset);
+                int amountRead = file.read(text);
+                if (amountRead < len) {
+                    throw new InvalidFileFormatException(
+                            "Couldn't read all of " + iFilename + ".");
                 }
                 
-                Log.w(TAG, "YBK file's DataInputStream had to be closed and reopened. " 
-                        + ioe.getMessage());
-            }
-*/         
-            byte[] text = new byte[len];
-            file.seek(offset);
-            int amountRead = file.read(text);
-            if (amountRead < len) {
-                throw new InvalidFileFormatException(
-                        "Couldn't read all of " + iFilename + ".");
-            }
-            
-            if (iFilename.toLowerCase().endsWith(".gz")) {
-                fileText = Util.decompressGzip(text);
+                if (iFilename.toLowerCase().endsWith(".gz")) {
+                    fileText = Util.decompressGzip(text);
+                } else {
+                    fileText = new String(text);
+                }
+                        
             } else {
-                fileText = new String(text);
+                throw new IllegalStateException("The chapter could not be found.");
             }
-                    
-        } else {
-            throw new IllegalStateException("The chapter could not be found.");
+        } finally {
+            c.close();
         }
         
         return fileText;
@@ -678,9 +664,13 @@ public class YbkProvider extends ContentProvider {
         Cursor c = db.query(CHAPTER_TABLE_NAME, new String[] {YbkProvider._ID}, 
                 FILE_NAME + "=?" , new String[] {BOOKMETADATA_FILENAME}, null, null, null);
         
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            fileText = readInternalFile(file, bookId, c.getInt(0));
+        try {
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                fileText = readInternalFile(file, bookId, c.getInt(0));
+            }
+        } finally {
+            c.close();
         }
         
         return fileText;
@@ -704,13 +694,17 @@ public class YbkProvider extends ContentProvider {
                 FILE_NAME + "=? AND " + BOOK_ID + "=?" , 
                 new String[] {ORDER_CONFIG_FILENAME, Long.toString(bookId)}, null, null, null);
         
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            try {
-                fileText = readInternalFile(file, bookId, c.getInt(0));
-            } catch (IOException ioe) {
-                throw new RuntimeException(ioe);
+        try {
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                try {
+                    fileText = readInternalFile(file, bookId, c.getInt(0));
+                } catch (IOException ioe) {
+                    throw new RuntimeException(ioe);
+                }
             }
+        } finally {
+            c.close();
         }
         
         return fileText;
@@ -896,7 +890,7 @@ public class YbkProvider extends ContentProvider {
                     chapter += ".html";
                 }
                 int recUpdated = db.update(CHAPTER_TABLE_NAME, values, 
-                        BOOK_ID + "=? AND lower(" + FILE_NAME + ") like '%\\" + chapter + "%'",
+                        BOOK_ID + "=? AND lower(" + FILE_NAME + ") like '%\\" + chapter.replace("'", "''") + "%'",
                         new String[] {Long.toString(bookId)});
                 
                 if (recUpdated != 1) {
