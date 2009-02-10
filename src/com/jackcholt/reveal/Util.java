@@ -360,8 +360,6 @@ public class Util {
                             throw new IllegalStateException("More than one record for the same book");
                         }
                         
-                        //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
-                        
                         // remove just-parsed <ifbook> tag structure so we can find the next
                         oldContent.delete(0, endPos + bookName.length() + 10);
                         oldLowerContent.delete(0, endPos + bookName.length() + 10);

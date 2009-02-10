@@ -98,16 +98,19 @@ public class YbkViewActivity extends Activity {
                     ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
                             bookId),
                     new String[] {YbkProvider.FILE_NAME}, null, null, null);
+            
             final String filePath;
             
-            if (bookCursor.getCount() == 1) {
-                bookCursor.moveToFirst();
-                filePath = bookCursor.getString(0);
-            } else {
-                filePath = "";
+            try {
+                if (bookCursor.getCount() == 1) {
+                    bookCursor.moveToFirst();
+                    filePath = bookCursor.getString(0);
+                } else {
+                    filePath = "";
+                }
+            } finally {
+                bookCursor.close();
             }
-            
-            bookCursor.close();
             
             try {
                 YbkFileReader ybkReader = mYbkReader = new YbkFileReader(filePath);
@@ -264,12 +267,14 @@ public class YbkViewActivity extends Activity {
                     null);
             
             int maxOrder = -1;
-            if (c.getCount() == 1) {
-                c.moveToFirst();
-                maxOrder = c.getInt(0);
+            try {
+                if (c.getCount() == 1) {
+                    c.moveToFirst();
+                    maxOrder = c.getInt(0);
+                }
+            } finally {
+                c.close();
             }
-            
-            c.close();
             
             if (maxOrder > mChapOrderNbr) {
                 loadChapterByOrderId(mBookId, ++mChapOrderNbr);
@@ -380,7 +385,8 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         
         // check the format of the internal file name
-        if (chapter.toLowerCase().indexOf(".html") == -1) {
+        if (!chapter.equals("index") 
+                && chapter.toLowerCase().indexOf(".html") == -1) {
             showDialog(INVALID_CHAPTER);
             Log.e(TAG, "The chapter is invalid: " + chapter);
         } else {
