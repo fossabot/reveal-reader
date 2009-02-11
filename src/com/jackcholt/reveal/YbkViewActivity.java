@@ -423,15 +423,18 @@ public class YbkViewActivity extends Activity {
                     }
                     
                     Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
-                            new String[] {YbkProvider._ID}, YbkProvider.FILE_NAME + "=?", 
-                            new String[] {filePath}, null);
+                            new String[] {YbkProvider._ID}, "lower(" + YbkProvider.FILE_NAME + ")=?", 
+                            new String[] {filePath.toLowerCase()}, null);
                     
                     try {
-                        if (c.getCount() == 1) {
+                        int count = c.getCount();
+                        if (count == 1) {
                             c.moveToFirst();
                             mBookId = c.getLong(0);
+                        } else if (count == 0){
+                            throw new IllegalStateException("No books found for '" + filePath);
                         } else {
-                            throw new IllegalStateException("More than one or no books found");
+                            throw new IllegalStateException("More than one book found for '" + filePath);
                         }
                     } finally {
                         c.close();

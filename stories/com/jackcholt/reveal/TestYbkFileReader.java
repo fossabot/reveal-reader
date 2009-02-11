@@ -225,5 +225,14 @@ public class TestYbkFileReader {
         Log.d("testHymnsAlt314", "314: " + content);
     }
 
+    @Test
+    public void testGAPK_JS() throws FileNotFoundException, IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\gapk.ybk");
+        String content = ybkRdr.readChapter("\\gapk\\400.html");
+        assertNotNull(content);
+        
+        Log.d("testGAPK_JS", "JS: " + content);
+    }
+
 
 }
