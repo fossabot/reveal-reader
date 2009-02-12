@@ -529,7 +529,7 @@ public class YbkProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         
         Cursor c = db.query(CHAPTER_TABLE_NAME, new String[] {YbkProvider._ID}, 
-                FILE_NAME + "=? AND " + BOOK_ID + "=?" , 
+                "lower(" + FILE_NAME + ")=lower(?) AND " + BOOK_ID + "=?" , 
                 new String[] {BINDING_FILENAME, Long.toString(bookId)}, null, null, null);
         
         try {
@@ -662,7 +662,7 @@ public class YbkProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         
         Cursor c = db.query(CHAPTER_TABLE_NAME, new String[] {YbkProvider._ID}, 
-                FILE_NAME + "=?" , new String[] {BOOKMETADATA_FILENAME}, null, null, null);
+                "lower(" + FILE_NAME + ")=lower(?)" , new String[] {BOOKMETADATA_FILENAME}, null, null, null);
         
         try {
             if (c.getCount() == 1) {
@@ -691,7 +691,7 @@ public class YbkProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         
         Cursor c = db.query(CHAPTER_TABLE_NAME, new String[] {_ID}, 
-                FILE_NAME + "=? AND " + BOOK_ID + "=?" , 
+                "lower(" + FILE_NAME + ")=lower(?) AND " + BOOK_ID + "=?" , 
                 new String[] {ORDER_CONFIG_FILENAME, Long.toString(bookId)}, null, null, null);
         
         try {
