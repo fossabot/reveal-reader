@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import android.util.Log;
 
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
     
@@ -18,9 +19,9 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
         addPreferencesFromResource(R.xml.preferences);
         
         // Restore preferences
-        // SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        //boolean showSplashScreen = settings.getBoolean("showSplashScreen", true);
-        //setShowSplashScreen(showSplashScreen);
+        SharedPreferences settings = getSharedPreferences("PREFS_NAME", MODE_PRIVATE);
+        boolean showSplashScreen = settings.getBoolean("showSplashScreen", true);
+        
     }
     
     @Override
@@ -35,7 +36,8 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
     @Override
     protected void onResume() {
         super.onResume();
-   
+        
+        readPrefs();
         // Set up a listener whenever a key changes
         getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
@@ -43,7 +45,8 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
     @Override
     protected void onPause() {
         super.onPause();
-
+        
+        revertPrefs();
         // Unregister the listener whenever a key changes
         getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
         
@@ -57,5 +60,24 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
                     + sharedPreferences.getInt(key, 0), Toast.LENGTH_SHORT).show();
         }*/
     }
+	
+    private void readPrefs() {
+		Log.d(Global.TAG, "Settings prefs controls");
+		//mShowSplashScreen.setChecked(mDisplayIcon);
+	}
+	
+	private void revertPrefs() {
+		Log.d(Global.TAG, "Reverting prefs");
+		//SharedPreferences.Editor ed = Settings.getEditor(this);
+		//ed.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreen);
+		//ed.commit();
+	}
+	
+	private void savePrefs() {
+		Log.d(Global.TAG, "Saving prefs");
+		//SharedPreferences.Editor ed = Settings.getEditor(this);
+		//ed.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreenCheckbox.isChecked());
+		//ed.commit();
+	}
 
 }
