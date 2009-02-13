@@ -594,10 +594,10 @@ public class Util {
 	 * 
 	 * @param downloadUrl
 	 *            Url from which we are downloading
-	 * @return
+	 * @return true if the file was downloaded.
 	 */
-	public static boolean fetchAndLoadTitle(URL fileLocation, URL downloadUrl,
-			String libDir, ContentResolver resolver) {
+	public static boolean fetchAndLoadTitle(final URL fileLocation, final URL downloadUrl,
+			final String libDir, final ContentResolver resolver) {
 		boolean success = false;
 
 		final byte[] buffer = new byte[255];
@@ -611,17 +611,19 @@ public class Util {
 					|| fileLocation.getFile().contains("?")) {
 				ZipInputStream zip = new ZipInputStream(downloadUrl
 						.openStream());
-				ZipEntry entry = zip.getNextEntry();
 
-				filePath = libDir + entry.getName();
-
-				out = new FileOutputStream(filePath);
-
-				int bytesRead = 0;
-				while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-					out.write(buffer, 0, bytesRead);
+				ZipEntry entry;
+				while ((entry = zip.getNextEntry()) != null) {
+				    // unpack all the files
+    				filePath = libDir + entry.getName();
+    
+    				out = new FileOutputStream(filePath);
+    
+    				int bytesRead = 0;
+    				while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+    					out.write(buffer, 0, bytesRead);
+    				}
 				}
-
 				zip.close();
 			} else if (fileLocation.getFile().endsWith("ybk")) {
 				BufferedInputStream in = new BufferedInputStream(downloadUrl
@@ -646,16 +648,20 @@ public class Util {
 				out.flush();
 				out.close();
 			}
+			
+			success = true;
 		} catch (IOException e) {
-			Log.w(resolver.getClass().getName(), e.getMessage());
+			Log.w(TAG, e.getMessage());
 		}
 
 		// add this book to the list
-		Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
-		ContentValues values = new ContentValues();
-		values.put(YbkProvider.FILE_NAME, filePath);
-		resolver.insert(bookUri, values);
-		success = true;
+		if (success && filePath != null) {
+    		//The file was properly downloaded
+		    Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
+    		ContentValues values = new ContentValues();
+    		values.put(YbkProvider.FILE_NAME, filePath);
+    		resolver.insert(bookUri, values);
+		} 
 
 		return success;
 	}
