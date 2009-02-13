@@ -4,8 +4,8 @@
     
 	<string name="no_books">No eBooks!</string>
 	<string name="menu_bookmark">Quickmark</string>
-	<string name="menu_history">History</string>
-	<string name="menu_settings">Settings</string><string name="menu_refresh_library">Refresh eBook Library</string><string name="label_splash_screen">Show Splash Screen</string>
+	<string name="menu_history">eBook History</string>
+	<string name="menu_settings">Program Settings</string><string name="menu_refresh_library">Refresh eBook Library</string><string name="label_splash_screen">Show Splash Screen</string>
 	<string name="menu_browser">Online eBook Download</string>
 	
 	<string name="settings_name">Reveal Settings</string>

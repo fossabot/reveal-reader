@@ -22,16 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
- 
 
-       <activity android:label="@string/app_name" android:name=".SplashScreen">
-            <intent-filter>
-                <action android:name="android.intent.action.DEFAULT" />
-                <category android:name="android.intent.category.VIEW" />
-            </intent-filter>
-        </activity>
-        
-             
         <activity android:name=".Settings" android:label="@string/settings_name" android:screenOrientation="sensor"/>
         <activity android:name=".YbkViewActivity"  android:label="@string/reveal_ybk_view"/>
 	    <provider android:multiprocess="true" android:authorities="com.jackcholt.reveal" android:name=".YbkProvider" android:screenOrientation="sensor"></provider>

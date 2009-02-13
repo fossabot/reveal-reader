@@ -20,6 +20,8 @@ import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
@@ -61,6 +63,19 @@ public class Main extends ListActivity {
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
        
+        //Toast Splash with image  :)
+        //if (how do I get to a settings??? = "true") {
+	        Toast toast = new Toast(this);
+	        LinearLayout lay = new LinearLayout(this);
+	        lay.setOrientation(LinearLayout.HORIZONTAL);
+	        ImageView view = new ImageView(this);
+	        view.setImageResource(R.drawable.splash);
+	        lay.addView(view);
+	        toast.setView(lay);
+	        toast.setDuration(Toast.LENGTH_LONG); 
+	        toast.show();
+        //}
+        
         //Actually go ONLINE and check...  duhhhh
         UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
 

@@ -18,19 +18,19 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
         addPreferencesFromResource(R.xml.preferences);
         
         // Restore preferences
-        /*SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        boolean showSplashScreen = settings.getBoolean("showSplashScreen", true);
-        setShowSplashScreen(showSplashScreen);*/
+        // SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        //boolean showSplashScreen = settings.getBoolean("showSplashScreen", true);
+        //setShowSplashScreen(showSplashScreen);
     }
     
-    /*@Override
+    @Override
     protected void onStop() {
         super.onStop();
         
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean("showSplashScreen", isShowSplashScreen());
-    }*/
+        //SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        //SharedPreferences.Editor editor = settings.edit();
+        //editor.putBoolean("showSplashScreen", isShowSplashScreen());
+    }
         
     @Override
     protected void onResume() {

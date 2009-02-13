@@ -3,13 +3,6 @@
 <PreferenceScreen
         xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--<com.example.android.apis.app.MyPreference
-            android:key="my_preference"
-            android:title="@string/title_my_preference"
-            android:summary="@string/summary_my_preference"
-            android:defaultValue="100" />
-    -->
-
     <CheckBoxPreference
             android:key="show_splash_screen"
             android:title="@string/label_splash_screen"
@@ -21,7 +14,4 @@
     		android:key="default_ebook_dir"
     		android:summary="@string/summary_default_ebook_dir" />
   
-
-
-
 </PreferenceScreen>
