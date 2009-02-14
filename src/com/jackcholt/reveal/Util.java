@@ -14,9 +14,13 @@ import java.util.zip.ZipInputStream;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 
 public class Util {
@@ -665,5 +669,22 @@ public class Util {
 
 		return success;
 	}
+	
+	public static  void showSplashScreen(Context _this) {
+		boolean mShowSplashScreen;
+    //Toast Splash with image  :)
+	    if (mShowSplashScreen = true) {
+		   Toast toast = new Toast(_this);
+		   LinearLayout lay = new LinearLayout(_this);
+		   lay.setOrientation(LinearLayout.HORIZONTAL);
+		   ImageView view = new ImageView(_this);
+		   view.setImageResource(R.drawable.splash);
+		   lay.addView(view);
+		   toast.setView(lay);
+		   toast.setDuration(Toast.LENGTH_LONG); 
+		   toast.show();
+	   }
+	}	
+	
 }
 

@@ -45,7 +45,6 @@ public class Main extends ListActivity {
     private static final boolean ADD_BOOKS = true;
     
     private SharedPreferences mSharedPref;
-    private boolean mShowSplashScreen;
     private String mLibraryDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
@@ -63,18 +62,8 @@ public class Main extends ListActivity {
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
        
-        //Toast Splash with image  :)
-         if (mShowSplashScreen = true) {
-	        Toast toast = new Toast(this);
-	        LinearLayout lay = new LinearLayout(this);
-	        lay.setOrientation(LinearLayout.HORIZONTAL);
-	        ImageView view = new ImageView(this);
-	        view.setImageResource(R.drawable.splash);
-	        lay.addView(view);
-	        toast.setView(lay);
-	        toast.setDuration(Toast.LENGTH_LONG); 
-	        toast.show();
-        }
+        //Show splashscreen or not
+        Util.showSplashScreen(this);
         
         //Actually go ONLINE and check...  duhhhh
         UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
