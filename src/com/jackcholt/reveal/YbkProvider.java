@@ -41,7 +41,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 8;
+    public static final int DATABASE_VERSION = 9;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -138,8 +138,19 @@ public class YbkProvider extends ContentProvider {
                     + CHAPTER_NAVBAR_TITLE + " TEXT," 
                     + CHAPTER_HISTORY_TITLE + " TEXT," 
                     + CHAPTER_NAV_FILE + " INTEGER,"
-                    + CHAPTER_ZOOM_PICTURE + " INTEGER"
+                    + CHAPTER_ZOOM_PICTURE + " INTEGER,"
+                    + " FOREIGN KEY (" + BOOK_ID + ") REFERENCES "
+                    + BOOK_TABLE_NAME + " (" + _ID + ")"
+                    + " ON DELETE CASCADE"
                     + "); ");
+            
+            //turns out they allow the cascade and foreign keys, but don't
+            // enforce them!
+            db.execSQL("CREATE TRIGGER fkd_chapters_books_id \n"
+            		+ "BEFORE DELETE ON " + BOOK_TABLE_NAME
+            		+ " FOR EACH ROW BEGIN DELETE FROM "
+            		+ CHAPTER_TABLE_NAME + " WHERE "
+            		+ BOOK_ID + " = OLD." + _ID + "; END;");
             
            /*db.execSQL("CREATE TABLE " + ORDER_TABLE_NAME + " ("
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -196,15 +207,6 @@ public class YbkProvider extends ContentProvider {
            
             db.beginTransaction();
             try {
-                // remove all records related to the book
-//                try {db.delete(YbkProvider.ORDER_TABLE_NAME, BOOK_ID + "=" + bookId, null);} 
-//                catch (SQLiteException sqle) {
-//                    Log.i(TAG,YbkProvider.ORDER_TABLE_NAME + " probably doesn't exist.", sqle);
-//                } 
-                try {db.delete(YbkProvider.CHAPTER_TABLE_NAME, BOOK_ID + "=" + bookId, null);}
-                catch (SQLiteException sqle) {
-                    Log.i(TAG,YbkProvider.CHAPTER_TABLE_NAME + " probably doesn't exist.", sqle);
-                } 
                 try {recordsAffected = db.delete(YbkProvider.BOOK_TABLE_NAME, YbkProvider._ID + "=" + bookId
                         + (!TextUtils.isEmpty(selection) ? " AND (" + selection + ')' : ""), null);
                 }
@@ -230,15 +232,6 @@ public class YbkProvider extends ContentProvider {
             
             db.beginTransaction();
             try {
-                // remove all records in the book related tables
-//                try {db.delete(YbkProvider.ORDER_TABLE_NAME, selectionString, null);} 
-//                catch (SQLiteException sqle) {
-//                    Log.i(TAG,YbkProvider.ORDER_TABLE_NAME + " probably doesn't exist.", sqle);
-//                } 
-                try {db.delete(YbkProvider.CHAPTER_TABLE_NAME, selectionString, null);}
-                catch (SQLiteException sqle) {
-                    Log.i(TAG,YbkProvider.CHAPTER_TABLE_NAME + " probably doesn't exist.", sqle);
-                } 
                 try {recordsAffected = db.delete(YbkProvider.BOOK_TABLE_NAME, selectionString, null);}
                 catch (SQLiteException sqle) {
                     Log.i(TAG,YbkProvider.BOOK_TABLE_NAME + " probably doesn't exist.", sqle);

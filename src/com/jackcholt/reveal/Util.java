@@ -2,6 +2,7 @@ package com.jackcholt.reveal;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -12,12 +13,15 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Looper;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -600,13 +604,15 @@ public class Util {
 	 *            Url from which we are downloading
 	 * @return true if the file was downloaded.
 	 */
-	public static boolean fetchAndLoadTitle(final URL fileLocation, final URL downloadUrl,
-			final String libDir, final ContentResolver resolver) {
+	public static boolean fetchAndLoadTitle(final URL fileLocation,
+			final URL downloadUrl, final String libDir, final Context context) {
+		
 		boolean success = false;
+		final ContentResolver resolver = context.getContentResolver();
 
 		final byte[] buffer = new byte[255];
 
-		String filePath = null;
+		File file = null;
 
 		try {
 			FileOutputStream out = null;
@@ -618,24 +624,46 @@ public class Util {
 
 				ZipEntry entry;
 				while ((entry = zip.getNextEntry()) != null) {
-				    // unpack all the files
-    				filePath = libDir + entry.getName();
-    
-    				out = new FileOutputStream(filePath);
-    
-    				int bytesRead = 0;
-    				while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-    					out.write(buffer, 0, bytesRead);
-    				}
+					// unpack all the files
+					file = new File(libDir + entry.getName());
+
+					// check to see if they already have this title
+					// if (file.exists() && !shouldDownload(context, file)) {
+					if (file.exists()) {
+						file.delete();
+						Uri bookUri = Uri.withAppendedPath(
+								YbkProvider.CONTENT_URI, "book");
+						context.getContentResolver().delete(
+								bookUri,
+								YbkProvider.FILE_NAME + " = '"
+										+ file.getAbsolutePath() + "'", null);
+					}
+
+					out = new FileOutputStream(file);
+
+					int bytesRead = 0;
+					while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+						out.write(buffer, 0, bytesRead);
+					}
 				}
 				zip.close();
 			} else if (fileLocation.getFile().endsWith("ybk")) {
 				BufferedInputStream in = new BufferedInputStream(downloadUrl
 						.openStream());
 
-				filePath = libDir + fileLocation.getFile();
+				file = new File(libDir + fileLocation.getFile());
 
-				out = new FileOutputStream(filePath);
+				// if (file.exists() && !shouldDownload(context, file)) {
+				if (file.exists()) {
+					file.delete();
+					Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI,
+							"book");
+					context.getContentResolver().delete(
+							bookUri,
+							YbkProvider.FILE_NAME + " = '"
+									+ file.getAbsolutePath() + "'", null);
+				}
+				out = new FileOutputStream(file);
 
 				int bytesRead = 0;
 				while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
@@ -659,15 +687,48 @@ public class Util {
 		}
 
 		// add this book to the list
-		if (success && filePath != null) {
+		if (success && file.exists()) {
     		//The file was properly downloaded
 		    Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     		ContentValues values = new ContentValues();
-    		values.put(YbkProvider.FILE_NAME, filePath);
+    		values.put(YbkProvider.FILE_NAME, file.getAbsolutePath());
     		resolver.insert(bookUri, values);
 		} 
 
 		return success;
+	}
+	
+	/**
+	 * This should ask the user whether they want to overwrite the title in
+	 * question... It's causing crashes because it is called from a new thread.
+	 * This may be fixed or we may just scrap it.
+	 * 
+	 * @param context
+	 * @param file
+	 * @return
+	 */
+	private static boolean shouldDownload(final Context context, final File file) {
+		new AlertDialog.Builder(context).setTitle(
+				R.string.ebook_exists_still_download).setPositiveButton(
+				R.string.alert_dialog_ok,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						file.delete();
+						Uri bookUri = Uri.withAppendedPath(
+								YbkProvider.CONTENT_URI, "book");
+						context.getContentResolver().delete(
+								bookUri,
+								YbkProvider.FILE_NAME + " = "
+										+ file.getAbsolutePath(), null);
+					}
+				}).setNegativeButton(R.string.cancel,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						/* Do absolutely nothing */
+					}
+				}).create();
+
+		return !file.exists();
 	}
 	
 	public static  void showSplashScreen(Context _this) {

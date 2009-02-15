@@ -308,7 +308,7 @@ public class TitleBrowser extends ListActivity {
 
 								mDownloadSuccess = Util.fetchAndLoadTitle(
 										mFileLocation, mDownloadUrl, libDir,
-										context.getContentResolver());
+										context);
 
 								mHandler.post(mUpdateResults);
 							}
