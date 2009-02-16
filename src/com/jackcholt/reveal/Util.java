@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
@@ -612,7 +613,7 @@ public class Util {
 
 		final byte[] buffer = new byte[255];
 
-		File file = null;
+		ArrayList<File> files = new ArrayList<File>();
 
 		try {
 			FileOutputStream out = null;
@@ -625,7 +626,7 @@ public class Util {
 				ZipEntry entry;
 				while ((entry = zip.getNextEntry()) != null) {
 					// unpack all the files
-					file = new File(libDir + entry.getName());
+					File file = new File(libDir + entry.getName());
 
 					// check to see if they already have this title
 					// if (file.exists() && !shouldDownload(context, file)) {
@@ -645,13 +646,15 @@ public class Util {
 					while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
 						out.write(buffer, 0, bytesRead);
 					}
+					
+					files.add(file);
 				}
 				zip.close();
 			} else if (fileLocation.getFile().endsWith("ybk")) {
 				BufferedInputStream in = new BufferedInputStream(downloadUrl
 						.openStream());
 
-				file = new File(libDir + fileLocation.getFile());
+				File file = new File(libDir + fileLocation.getFile());
 
 				// if (file.exists() && !shouldDownload(context, file)) {
 				if (file.exists()) {
@@ -669,6 +672,8 @@ public class Util {
 				while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
 					out.write(buffer, 0, bytesRead);
 				}
+				
+				files.add(file);
 
 				in.close();
 			} else {
@@ -687,12 +692,15 @@ public class Util {
 		}
 
 		// add this book to the list
-		if (success && file.exists()) {
-    		//The file was properly downloaded
-		    Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
-    		ContentValues values = new ContentValues();
-    		values.put(YbkProvider.FILE_NAME, file.getAbsolutePath());
-    		resolver.insert(bookUri, values);
+		if (success) {
+			for (File file : files) {
+				// The file was properly downloaded
+				Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI,
+						"book");
+				ContentValues values = new ContentValues();
+				values.put(YbkProvider.FILE_NAME, file.getAbsolutePath());
+				resolver.insert(bookUri, values);
+			}
 		} 
 
 		return success;
