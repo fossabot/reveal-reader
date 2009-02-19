@@ -6,6 +6,7 @@ import java.io.FileFilter;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -20,6 +21,7 @@ import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -58,6 +60,8 @@ public class Main extends ListActivity {
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        requestWindowFeature(Window.FEATURE_PROGRESS);
         
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
@@ -101,7 +105,7 @@ public class Main extends ListActivity {
     
     /**
      * Convenience method to make calling refreshLibrary() without any 
-     * parameters retain its original behavior. 
+     * parameters retaining its original behavior. 
      */
     private void refreshLibrary() {
         refreshLibrary(ADD_BOOKS);
@@ -151,8 +155,10 @@ public class Main extends ListActivity {
             // Notify that we are getting NEW list of eBooks
             Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
             Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
-      
+            
             for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
+                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * i / dirListLen);
+                
                 String dirFilename = ybkFiles[i].getAbsolutePath();
                 Log.d(Global.TAG, "dirFilename: " + dirFilename);
                 
@@ -160,6 +166,7 @@ public class Main extends ListActivity {
                 
                 fileCursor.moveToFirst();
                 while(!fileCursor.isAfterLast()) {
+                    
                     String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
                     if (dirFilename.equalsIgnoreCase(dbFilename)) {
                         fileFoundInDb = true;
@@ -175,11 +182,18 @@ public class Main extends ListActivity {
                     contRes.insert(bookUri, values);
                 }
             }
+            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000);
+            
+            
         }
         
         // remove the books from the database if they are not in the directory
+        int cursSize = fileCursor.getCount();
+        int fileIndex = 0;
         fileCursor.moveToFirst();
         while(!fileCursor.isAfterLast()) {
+            fileIndex++;
+            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * fileIndex / cursSize);
             String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
             
             boolean fileFoundInDir = false;
