@@ -887,7 +887,8 @@ public class YbkProvider extends ContentProvider {
                         new String[] {Long.toString(bookId)});
                 
                 if (recUpdated != 1) {
-                    throw new IllegalStateException("Records updated for " + chapter + " should be 1, Is: " + recUpdated);
+                    Log.e(TAG, "Order.cfg appears to contain a reference to a non-existant chapter.\n" +
+                    		"Records updated for " + chapter + " should be 1, Is: " + recUpdated);
                 }
                 
                 values.clear();
