@@ -53,6 +53,7 @@
 <string name="download">Download</string>
 <string name="cancel">Cancel</string>
 <string name="ebook_download_started">eBook Download Started</string>
+<string name="ebook_download_busy">Please wait for the directory to be updated before attempting to download more titles.</string>
 <string name="ebook_download_failed_type">Unable to download eBook type</string>
 <string name="ebook_download_failed">Unable to download eBook</string>
 <string name="ebook_download_failed_url">Unable to download eBook at given location.</string>

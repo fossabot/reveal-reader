@@ -22,7 +22,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Looper;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;

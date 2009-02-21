@@ -37,6 +37,7 @@ public class TitleBrowser extends ListActivity {
 	private static final int UPDATE_TOKEN = 12; // random number
 	private static String mDownloadServer = "http://www.thecoffeys.net/ebooks/default.asp?action=download&ID=";
 
+	private static final String TAG = "Reveal TitleBrowser";
 	private SimpleCursorAdapter mAdapter;
 	private Stack<Uri> mBreadCrumb;
 	private Cursor mListCursor;
@@ -45,6 +46,7 @@ public class TitleBrowser extends ListActivity {
 	private URL mDownloadUrl = null;
 	private URL mFileLocation = null;
 	SharedPreferences mSharedPref;
+	private boolean mBusy = false;
 
 	final Handler mHandler = new Handler();
 
@@ -81,6 +83,7 @@ public class TitleBrowser extends ListActivity {
 			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
 					.show();
 
+			mBusy = true;
 			mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
 					TitleProvider.CONTENT_URI, "updatefile"), null, null, null);
 		}
@@ -151,6 +154,7 @@ public class TitleBrowser extends ListActivity {
 			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
 					.show();
 
+			mBusy = true;
 			mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
 					TitleProvider.CONTENT_URI, "update"), null, null, null);
 			return true;
@@ -179,8 +183,13 @@ public class TitleBrowser extends ListActivity {
 			
 			updateScreen();
 		} else {
-			TitleDialog dialog = new TitleDialog(this, id);
-			dialog.show();
+			if (mBusy) {
+				Toast.makeText(this, R.string.ebook_download_busy,
+						Toast.LENGTH_LONG).show();
+			} else {
+				TitleDialog dialog = new TitleDialog(this, id);
+				dialog.show();
+			}
 		}
 	}
 
@@ -221,6 +230,8 @@ public class TitleBrowser extends ListActivity {
 			mBreadCrumb.push(rootCategories);
 			
 			updateScreen();
+			
+			mBusy = false;
 
 			Toast.makeText(mContext, R.string.ebook_update_complete,
 					Toast.LENGTH_SHORT).show();
@@ -306,10 +317,17 @@ public class TitleBrowser extends ListActivity {
 										"default_ebook_dir",
 										"/sdcard/reveal/ebooks/");
 
-								mDownloadSuccess = Util.fetchAndLoadTitle(
-										mFileLocation, mDownloadUrl, libDir,
-										context);
-
+								try {
+									mDownloadSuccess = Util.fetchAndLoadTitle(
+											mFileLocation, mDownloadUrl, libDir,
+											context);
+								} catch (IllegalStateException e) {
+									mDownloadSuccess = false;
+									Log.e(TAG, e.getMessage());
+									e.printStackTrace();
+								}
+								
+								
 								mHandler.post(mUpdateResults);
 							}
 						};
@@ -337,5 +355,6 @@ public class TitleBrowser extends ListActivity {
 			Toast.makeText(this, R.string.ebook_download_failed,
 					Toast.LENGTH_SHORT).show();
 		}
+		mBusy = false;
 	}
 }
