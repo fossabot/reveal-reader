@@ -156,7 +156,6 @@ public class Main extends ListActivity {
         
         // get a list of files from the database
         // Notify that we are getting current list of eBooks
-        // TODO convert to notification. Toast.makeText(this, , Toast.LENGTH_SHORT).show();
         Log.i(Global.TAG,"Getting the list of books in the database");
    
         fileCursor = contRes.query(bookUri, 
@@ -173,7 +172,22 @@ public class Main extends ListActivity {
         File libraryDir = new File(strLibDir);
         if (!libraryDir.exists()) {
             if (!libraryDir.mkdirs()) {
-                // TODO convert to notification showDialog(LIBRARY_NOT_CREATED);
+                
+                PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+                        new Intent(this, Main.class), 0);
+
+
+                CharSequence notifText = getResources().getText(LIBRARY_NOT_CREATED);
+                
+                Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
+                        notifText,
+                        System.currentTimeMillis());
+                
+                notif.setLatestEventInfo(this, "eBook Library Refresh", 
+                        notifText, 
+                        contentIntent);
+                
+                mNotifMgr.notify(mNotifId++, notif);
             }
         }
         
@@ -247,7 +261,6 @@ public class Main extends ListActivity {
         fileCursor.moveToFirst();
         while(!fileCursor.isAfterLast()) {
             fileIndex++;
-            //getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * fileIndex / cursSize);
             String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
             
             boolean fileFoundInDir = false;
@@ -276,15 +289,11 @@ public class Main extends ListActivity {
         fileCursor.close();
         
         if (neededRefreshing) {
-            mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
-                    YbkProvider.BINDING_TEXT + " is not null", null,
-                    " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
-            
             PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                     new Intent(this, Main.class), 0);
 
 
-            CharSequence notifText = "Refreshing of the book menu complete";
+            CharSequence notifText = "Refreshing of eBook menu complete.";
             Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
                     notifText,
                     System.currentTimeMillis());
