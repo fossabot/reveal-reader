@@ -32,6 +32,8 @@ public class UpdateChecker {
       URLConnection cn;
       URL url = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
       cn = url.openConnection();
+      cn.setReadTimeout(10000);
+      cn.setConnectTimeout(10000);
       cn.connect();
       InputStream stream = cn.getInputStream();
       DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();
