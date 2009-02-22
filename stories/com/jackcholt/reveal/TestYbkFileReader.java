@@ -17,7 +17,7 @@ public class TestYbkFileReader {
     
     @Before
     public void setUp() throws Exception {
-        ybkRdr = new YbkFileReader("c:\\pogp.ybk");
+        //ybkRdr = new YbkFileReader("c:\\pogp.ybk");
     }
 
     @After
@@ -232,6 +232,15 @@ public class TestYbkFileReader {
         assertNotNull(content);
         
         Log.d("testGAPK_JS", "JS: " + content);
+    }
+
+    @Test
+    public void testDaCSG_8_DC13() throws FileNotFoundException, IOException {
+        ybkRdr = new YbkFileReader("c:\\documents and settings\\holtja\\my documents\\my ebooks\\DaCSG.ybk");
+        String content = ybkRdr.readChapter("\\dacsg\\10.html");
+        assertNotNull(content);
+        
+        Log.d("testDaCSG_8_DC13", "DaCSG: " + content);
     }
 
 

@@ -458,12 +458,19 @@ public class YbkViewActivity extends Activity {
                             Log.e(TAG, "YBK file has no index page.");
                         }
                     } else {
-                    
+                     
                         int hashLoc = -1;
+                        
+                        hashLoc = chap.indexOf("#");
+                        if (hashLoc + 1 == chap.length()) {
+                            // if # is the last character get rid of it.
+                            hashLoc = -1;
+                            chap = chap.substring(0, chap.length() - 1);
+                        }
                         
                         // use the dreaded break <label> in order to simplify conditional nesting
                         label_get_content:
-                        if ((hashLoc = chap.indexOf("#")) != -1) {
+                        if (hashLoc != -1) {
                             mFragment = fragment = chap.substring(hashLoc + 1);
                             
                             if (!Util.isInteger(fragment)) {

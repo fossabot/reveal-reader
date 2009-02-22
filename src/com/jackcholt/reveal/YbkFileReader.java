@@ -158,10 +158,6 @@ public class YbkFileReader {
         return mBookMetaData;
     }
 
-    /*private void initDataStream() throws FileNotFoundException {
-        mDataInput = new DataInputStream(new BufferedInputStream(new FileInputStream (mFile)));
-        mDataInput.mark(Integer.MAX_VALUE);
-    }*/
     
     /**
      * Analyze the YBK file and save file contents data for later reference.
