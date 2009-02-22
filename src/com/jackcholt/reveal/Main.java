@@ -6,7 +6,9 @@ import java.io.FileFilter;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
-import android.app.ProgressDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -17,13 +19,11 @@ import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
@@ -40,29 +40,56 @@ public class Main extends ListActivity {
     private static final int BROWSER_ID = Menu.FIRST + 4;
     private static final int REVELUPDATE_ID = Menu.FIRST + 5;
     private static final int ABOUT_ID = Menu.FIRST + 6;
+    private int mNotifId = 0;
     
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
     private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
     
+    private NotificationManager mNotifMgr;
+
     private SharedPreferences mSharedPref;
     private String mLibraryDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
-    //private ArrayList<IconifiedText> mDirectoryEntries = new ArrayList<IconifiedText>();
+    private final Handler mUpdateLibHandler = new Handler();
     private Cursor mListCursor; 
     private ContentResolver mContRes; 
     public String[] openBooks = {"No book open", "No book open", "No book open", "No book open", "No book open","No book open","No book open","No book open","No book open","No book open","No book open","No book open"};
     public int i = -1;
+    
+    private final Runnable mUpdateBookList = new Runnable() {
+        public void run() {
+            refreshBookList();
+        }
+    };
+    
+    
+    /**
+     * Updating the book list can be very time-consuming.  To preserve snappiness
+     * we're putting it in its own thread.
+     */
+    protected void updateBookList() {
+        // Fire off the thread to update the book database and populate the Book
+        // Menu
+        Thread t = new Thread() {
+            public void run() {
+                refreshLibrary();
+                mUpdateLibHandler.post(mUpdateBookList);
+            }
+        };
+        
+        t.start();
+    }
     
     /** Called when the activity is first created. */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        requestWindowFeature(Window.FEATURE_PROGRESS);
-        
+        mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
+
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
        
@@ -82,10 +109,12 @@ public class Main extends ListActivity {
         	Toast.makeText(this, "You must have a SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
         } else {
         	createDefaultDirs();
-            //since eBooks get refreshed when downloaded, only delete removed books
-        	//from the database
-        	refreshLibrary(DONT_ADD_BOOKS);
-            refreshBookList();
+        	
+        	refreshBookList();
+        	
+        	updateBookList();
+        	
+            
         }
     }
     
@@ -119,6 +148,7 @@ public class Main extends ListActivity {
      * (which runs regardless).
      */
     private void refreshLibrary(final boolean addNewBooks) {
+        boolean neededRefreshing = false;
         ContentResolver contRes = mContRes;
         Uri bookUri = mBookUri;
         String strLibDir = mLibraryDir;
@@ -126,8 +156,9 @@ public class Main extends ListActivity {
         
         // get a list of files from the database
         // Notify that we are getting current list of eBooks
-        Toast.makeText(this, "Getting eBook list", Toast.LENGTH_SHORT).show();
-            
+        // TODO convert to notification. Toast.makeText(this, , Toast.LENGTH_SHORT).show();
+        Log.i(Global.TAG,"Getting the list of books in the database");
+   
         fileCursor = contRes.query(bookUri, 
                 new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
                 YbkProvider.FILE_NAME + " ASC");
@@ -136,15 +167,13 @@ public class Main extends ListActivity {
         
         if (fileCursor.getCount() == 0) {
             Log.w(Global.TAG, "eBook database has no valid YBK files");
-            Toast.makeText(this, "eBook database has no valid YBK files", 
-                    Toast.LENGTH_SHORT).show();
         }
         
         // get a list of files from the library directory
         File libraryDir = new File(strLibDir);
         if (!libraryDir.exists()) {
             if (!libraryDir.mkdirs()) {
-                showDialog(LIBRARY_NOT_CREATED);
+                // TODO convert to notification showDialog(LIBRARY_NOT_CREATED);
             }
         }
         
@@ -153,12 +182,11 @@ public class Main extends ListActivity {
         if (ybkFiles != null && addNewBooks) {
             // add books that are not in the database
             // Notify that we are getting NEW list of eBooks
-            Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
             Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
             
             for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
-                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * i / dirListLen);
-                
+                //getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * i / dirListLen);
                 String dirFilename = ybkFiles[i].getAbsolutePath();
                 Log.d(Global.TAG, "dirFilename: " + dirFilename);
                 
@@ -177,15 +205,41 @@ public class Main extends ListActivity {
                 }
                 
                 if (!fileFoundInDb) {
+                    neededRefreshing = true;
                     ContentValues values = new ContentValues();
                     values.put(YbkProvider.FILE_NAME, dirFilename);
                     contRes.insert(bookUri, values);
+                
+                    mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+                            YbkProvider.BINDING_TEXT + " is not null", null,
+                            " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
+                    
+                    PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+                            new Intent(this, Main.class), 0);
+
+                    int lastSlashPos = dirFilename.lastIndexOf('/');
+                    int lastDotPos = dirFilename.lastIndexOf('.');
+                    CharSequence bookName = dirFilename;
+                    if (lastSlashPos != -1 && lastDotPos != -1) {
+                        bookName = dirFilename.subSequence(lastSlashPos + 1, lastDotPos);
+                    }
+
+                    CharSequence notifText = "Added '" + bookName + "' to the book menu";
+                    Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
+                            notifText,
+                            System.currentTimeMillis());
+                    
+                    notif.setLatestEventInfo(this, "eBook Library Refresh", 
+                            notifText, 
+                            contentIntent);
+                    
+                    mNotifMgr.notify(mNotifId++, notif);
                 }
-            }
-            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000);
-            
+            }            
             
         }
+        
+        Log.i(Global.TAG, "Removing Books from the database which are not in directory");
         
         // remove the books from the database if they are not in the directory
         int cursSize = fileCursor.getCount();
@@ -193,7 +247,7 @@ public class Main extends ListActivity {
         fileCursor.moveToFirst();
         while(!fileCursor.isAfterLast()) {
             fileIndex++;
-            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * fileIndex / cursSize);
+            //getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * fileIndex / cursSize);
             String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
             
             boolean fileFoundInDir = false;
@@ -206,9 +260,12 @@ public class Main extends ListActivity {
             }
             
             if (!fileFoundInDir) {
+                neededRefreshing = true;
                 String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
                 Uri deleteUri = ContentUris.withAppendedId(bookUri, Long.parseLong(bookId));
                 contRes.delete(deleteUri, null , null);
+                
+                
             }
             
             fileCursor.moveToNext();
@@ -217,6 +274,27 @@ public class Main extends ListActivity {
         // no longer need the fileCursor
         stopManagingCursor(fileCursor);
         fileCursor.close();
+        
+        if (neededRefreshing) {
+            mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+                    YbkProvider.BINDING_TEXT + " is not null", null,
+                    " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
+            
+            PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+                    new Intent(this, Main.class), 0);
+
+
+            CharSequence notifText = "Refreshing of the book menu complete";
+            Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
+                    notifText,
+                    System.currentTimeMillis());
+            
+            notif.setLatestEventInfo(this, "eBook Library Refresh", 
+                    notifText, 
+                    contentIntent);
+            
+            mNotifMgr.notify(mNotifId++, notif);
+        }
         
     }
     
@@ -290,8 +368,7 @@ public class Main extends ListActivity {
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         switch(item.getItemId()) {
         case REFRESH_LIB_ID:
-            refreshLibrary();
-            refreshBookList();
+            updateBookList();
             return true;
         case SETTINGS_ID:
             Intent intent = new Intent(this, Settings.class);
