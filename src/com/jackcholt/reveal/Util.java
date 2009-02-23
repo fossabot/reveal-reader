@@ -14,14 +14,20 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import android.app.AlertDialog.Builder;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
 import android.net.Uri;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -29,6 +35,9 @@ import android.widget.Toast;
 
 public class Util {
     private static final String TAG = "Util"; 
+	private static final int DIALOG_DELETE = 1;
+	private static final int DIALOG_RENAME = 2;
+	private File mContextFile = new File("");
     
     /**
      * Remove HTML, surrounding quotes and Titlecase a book title.
@@ -762,5 +771,43 @@ public class Util {
 	   }
 	}	
 	
+	private void deleteFileOrFolder(File file, Context _this) {
+		
+		if (file.delete()) {
+			// Delete was successful.
+			//refreshList();
+				Toast.makeText(_this, R.string.file_deleted, Toast.LENGTH_SHORT).show();
+		}
+		else {
+				Toast.makeText(_this, R.string.error_deleting_file, Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	
+	/*	protected Dialog onCreateDialog(int id, Context _this) {
+
+		switch (id) {
+		case DIALOG_DELETE:
+			return new AlertDialog.Builder(_this).setTitle(getString(R.string.really_delete, mContextText))
+            	.setIcon(android.R.drawable.ic_dialog_alert).setPositiveButton(
+					android.R.string.ok, new OnClickListener() {
+						
+						public void onClick(DialogInterface dialog, int which) {
+							deleteFileOrFolder(mContextFile, _this);
+						}
+						
+					}).setNegativeButton(android.R.string.cancel, new OnClickListener() {
+						
+						public void onClick(DialogInterface dialog, int which) {
+							// Cancel should not do anything.
+						}
+						
+					}).create();
+		}
+		return null;
+	}
+*/
+
+		
 }
 

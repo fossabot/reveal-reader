@@ -133,13 +133,14 @@ public class Main extends ListActivity {
         // Create the /sdcard/reveal and eBooks dir if they don't exist
         // Notify of creation and maybe put people directly into the TitleBrowser if they don't have ANY ybk's
          File revealdir = new File("/sdcard/reveal");
-        if (!revealdir.mkdirs()) {
-             Log.e(Global.TAG, "Create dir in sdcard failed");
+        if (!revealdir.exists()) {
+        	 revealdir.mkdirs();
+             Log.i(Global.TAG, "Create reveal dir on sdcard ok");
         }
         File ebooksdir = new File(mLibraryDir);
-        if (!ebooksdir.mkdirs()) {
-             Log.e(Global.TAG, "Create dir in sdcard failed");
-             //Jump to TTitleBrowser and download files
+        if (!ebooksdir.exists()) {
+        	 ebooksdir.mkdirs();
+             Log.i(Global.TAG, "Create ebooks dir on sdcard ok");
         }
     }
     

@@ -64,4 +64,9 @@
 <string name="version_you_are_running">Version you are running SVN rev </string>
 <string name="splash">Splash Screen Here</string>
 <string name="invalid_chapter">There is a problem showing that.</string>
+<string name="file_deleted">eBook Deleted</string>
+<string name="error_deleting_file">Error Deleting eBook</string>
+<string name="really_delete">Really Delete eBook?</string>
+<string name="create_sd_card_reveal_dir">Create reveal dir on sdcard ok</string>
+<string name="create_sd_card_ebook_dir">Create ebooks dir on sdcard ok</string>
 </resources>
