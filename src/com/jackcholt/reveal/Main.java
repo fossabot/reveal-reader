@@ -93,25 +93,40 @@ public class Main extends ListActivity {
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
        
-        //Show splashscreen or not
-        Util.showSplashScreen(this);
         
-        //Actually go ONLINE and check...  duhhhh
-        UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
-
+        boolean configChanged = (getLastNonConfigurationInstance() != null);
+        
+        if (!configChanged) {
+            //Show splashscreen or not
+            Util.showSplashScreen(this);
+            //Actually go ONLINE and check...  duhhhh
+            UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
+        }
+        
         //Check for SDcard presence
         //if we have one create the dirs and look fer ebooks
     	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     	mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-        
-        if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
-        	Log.e(Global.TAG, "sdcard not installed");
-        	Toast.makeText(this, "You must have a SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
-        } else {
-        	createDefaultDirs();
-        	refreshBookList();
-        	updateBookList();
-        	Toast.makeText(this, "Checking to see if the eBook library needs to be refreshed.",         	        Toast.LENGTH_LONG).show();        	                    }
+
+        refreshBookList();
+
+        if (!configChanged) {
+        	if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
+            	Log.e(Global.TAG, "sdcard not installed");
+            	Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
+            } else {
+            	createDefaultDirs();
+            	updateBookList();
+            	
+            	Toast.makeText(this, "Checking to see if the eBook library needs to be refreshed.", 
+            	        Toast.LENGTH_LONG).show();        	                    
+            }
+        }
+    }
+    
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        return "configuration changed";
     }
     
     private void createDefaultDirs() {
