@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Reveal</string>
     
-	<string name="no_books">No eBooks!</string>
+	<string name="no_books">No eBooks!  Your library may need to be refreshed.</string>
 	<string name="menu_bookmark">Quickmark</string>
 	<string name="menu_history">eBook History</string>
 	<string name="menu_settings">Program Settings</string><string name="menu_refresh_library">Refresh eBook Library</string><string name="label_splash_screen">Show Splash Screen</string>

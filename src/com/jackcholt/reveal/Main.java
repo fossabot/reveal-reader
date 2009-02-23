@@ -111,7 +111,7 @@ public class Main extends ListActivity {
         	createDefaultDirs();
         	refreshBookList();
         	updateBookList();
-        }
+        	Toast.makeText(this, "Checking to see if the eBook library needs to be refreshed.",         	        Toast.LENGTH_LONG).show();        	                    }
     }
     
     private void createDefaultDirs() {
@@ -252,7 +252,6 @@ public class Main extends ListActivity {
         Log.i(Global.TAG, "Removing Books from the database which are not in directory");
         
         // remove the books from the database if they are not in the directory
-        int cursSize = fileCursor.getCount();
         int fileIndex = 0;
         fileCursor.moveToFirst();
         while(!fileCursor.isAfterLast()) {

@@ -3,12 +3,14 @@ package com.jackcholt.reveal;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.HashMap;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -16,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -39,13 +42,16 @@ public class YbkViewActivity extends Activity {
     private String mFragment;
     private String mDialogFilename = "Never set";
     private String mChapBtnText = "Not Set";
+    private String mHistTitle = "";
     private int mChapOrderNbr = -1;
+    private boolean mBackButtonPressed = false;
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
     private static final int PREVIOUS_ID = Menu.FIRST;
     private static final int NEXT_ID = Menu.FIRST + 1;
     
+    @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,15 +78,32 @@ public class YbkViewActivity extends Activity {
 
             public void onClick(final View view) {
                 
+                if (mChapFileName != null) {
+                    // Save the previous book and chapter to history if there
+                    // is one
+                    ContentValues values = new ContentValues();
+                    values.put(YbkProvider.BOOK_ID, mBookId);
+                    values.put(YbkProvider.HISTORY_TITLE, mHistTitle);
+                    values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
+                    // TODO Temporarily using 0 until we figure out how to get the actual value
+                    values.put(YbkProvider.SCROLL_POS, 0);
+                    
+                    Log.d(TAG, "Saving history for: " + values);
+                    
+                    getContentResolver().insert(
+                            Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
+                            values);
+                }
+                
                 finish();
             }
             
         });
         
         Long bookId = savedInstanceState != null 
-            ? (Long) savedInstanceState.get(YbkProvider._ID)
-            : null;
-            
+        ? (Long) savedInstanceState.get(YbkProvider._ID)
+        : null;
+        
         if (null == bookId) {
             Bundle extras = getIntent().getExtras();
             bookId = extras != null
@@ -88,33 +111,47 @@ public class YbkViewActivity extends Activity {
                 : null;
         }
         
-        if (null == bookId) {
-            throw new IllegalStateException("A YBK bookId was not passed in the intent.");
-        } else {
-            mBookId = bookId;
+        
+        HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
+        if (statusMap != null) {
+            mBookId = bookId = (Long) statusMap.get("bookId");
+            mBookFileName = (String) statusMap.get("bookFileName");
+            mChapFileName = (String) statusMap.get("chapFileName");
+            mHistTitle = (String) statusMap.get("histTitle");
             
+            
+        } else {
+
+            if (null == bookId) {
+                throw new IllegalStateException("A YBK bookId was not passed in the intent.");
+            } 
+    
+            mBookId = bookId;
+                
             ContentResolver contRes = getContentResolver();
             Cursor bookCursor = contRes.query(
                     ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
                             bookId),
                     new String[] {YbkProvider.FILE_NAME}, null, null, null);
             
-            final String filePath;
+            //final String filePath;
             
             try {
                 if (bookCursor.getCount() == 1) {
                     bookCursor.moveToFirst();
-                    filePath = bookCursor.getString(0);
+                    mBookFileName = bookCursor.getString(0);
                 } else {
-                    filePath = "";
+                    mBookFileName = "";
                 }
             } finally {
                 bookCursor.close();
             }
-            
-            try {
-                YbkFileReader ybkReader = mYbkReader = new YbkFileReader(filePath);
-                String shortTitle = ybkReader.getBookShortTitle();
+        }
+        
+        try {
+            YbkFileReader ybkReader = mYbkReader = new YbkFileReader(mBookFileName);
+            String shortTitle = ybkReader.getBookShortTitle();
+            if (mChapFileName == null) {
                 String tryFileToOpen = "\\" + shortTitle + ".html.gz";
                 String content = ybkReader.readInternalFile(tryFileToOpen);
                 if (content == null) {
@@ -122,7 +159,6 @@ public class YbkViewActivity extends Activity {
                     content = ybkReader.readInternalFile(tryFileToOpen);
                 }
                 
-                final String fileToOpen = tryFileToOpen;
                 
                 if (content == null) {
                     ybkView.loadData("YBK file has no index page.",
@@ -131,75 +167,78 @@ public class YbkViewActivity extends Activity {
                     Log.e(TAG, "YBK file has no index page.");
                     return;
                 }
-                
-                loadChapter(filePath, fileToOpen);
-                setBookBtn(shortTitle, filePath, fileToOpen);
-                
-            } catch (IOException ioe) {
-                throw new RuntimeException(ioe);
+                mChapFileName = tryFileToOpen;
             }
             
-            ybkView.setWebViewClient(new WebViewClient() {
-                
-                @Override
-                public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
-                    Log.d(TAG, "WebView URL: " + url);
-                    String book;
-                    String chapter = "";
-                    String shortTitle = null;
-                    
-                    if (url.indexOf('@') != -1) {
-                        book = mBookFileName;
-                        chapter = mChapFileName;
-                    } else {
-                    
-                        int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
-                        String dataString = url.substring(ContentUriLength + 1);
-                        
-                        String[] urlParts = dataString.split("/");
-                        
-                        
-                        // get rid of the book indicator since it is only used in some cases.
-                        book = shortTitle = urlParts[0].replace("%20", " ");
-                        if (book.charAt(0) == '!' || book.charAt(0) == '^') {
-                            shortTitle = urlParts[0] = book.substring(1);
-                        }
-                        
-                        book = mLibraryDir + urlParts[0] + ".ybk";
-                        
-                        for (int i = 0; i < urlParts.length; i++) {
-                           chapter += "\\" + urlParts[i];
-                        }
-                        
-                        if (!chapter.contains("#")) {
-                            chapter += ".gz";                        
-                        }
-                    }
-                    Log.i(TAG, "Loading chapter '" + chapter + "'");
-                    
-                    if (loadChapter(book, chapter)) {                    
-                        setBookBtn(shortTitle,book,chapter);
-                    }
-                    
-                    
-                    return true;
-                }
-                
-                public void onPageFinished(final WebView view, final String url) {
-                    // make it jump to the internal link
-                    if (mFragment != null) {
-                        Log.d(TAG, "In onPageFinished(). Jumping to #" + mFragment);
-                        view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
-                        mFragment = null;
-                    } else if (url.indexOf('@') != -1) {
-                        view.loadUrl("javascript:location.href=\"#top\"");
-                    }
-                    
-                    
-                }
-             });
-
+            loadChapter(mBookFileName, mChapFileName);
+            setBookBtn(shortTitle, mBookFileName, mChapFileName);
+            
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
         }
+               
+    
+        ybkView.setWebViewClient(new WebViewClient() {
+            
+            @Override
+            public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
+                Log.d(TAG, "WebView URL: " + url);
+                String book;
+                String chapter = "";
+                String shortTitle = null;
+                
+                if (url.indexOf('@') != -1) {
+                    book = mBookFileName;
+                    chapter = mChapFileName;
+                } else {
+                
+                    int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
+                    String dataString = url.substring(ContentUriLength + 1);
+                    
+                    String[] urlParts = dataString.split("/");
+                    
+                    
+                    // get rid of the book indicator since it is only used in some cases.
+                    book = shortTitle = urlParts[0].replace("%20", " ");
+                    if (book.charAt(0) == '!' || book.charAt(0) == '^') {
+                        shortTitle = urlParts[0] = book.substring(1);
+                    }
+                    
+                    book = mLibraryDir + urlParts[0] + ".ybk";
+                    
+                    for (int i = 0; i < urlParts.length; i++) {
+                       chapter += "\\" + urlParts[i];
+                    }
+                    
+                    if (!chapter.contains("#")) {
+                        chapter += ".gz";                        
+                    }
+                }
+                Log.i(TAG, "Loading chapter '" + chapter + "'");
+                
+                if (loadChapter(book, chapter)) {                    
+                    setBookBtn(shortTitle,book,chapter);
+                }
+                
+                
+                return true;
+            }
+            
+            public void onPageFinished(final WebView view, final String url) {
+                // make it jump to the internal link
+                if (mFragment != null) {
+                    Log.d(TAG, "In onPageFinished(). Jumping to #" + mFragment);
+                    view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
+                    mFragment = null;
+                } else if (url.indexOf('@') != -1) {
+                    view.loadUrl("javascript:location.href=\"#top\"");
+                }
+                
+                
+            }
+        });
+
+        
         
     }
     
@@ -383,6 +422,7 @@ public class YbkViewActivity extends Activity {
         boolean bookLoaded = false;
         WebView ybkView = mYbkView; 
         YbkFileReader ybkReader = mYbkReader;
+        long bookId = -1L;
         
         // check the format of the internal file name
         if (!chapter.equals("index") 
@@ -421,25 +461,26 @@ public class YbkViewActivity extends Activity {
                     } catch (IOException ioe) {
                         throw new RuntimeException(ioe);
                     }
-                    
-                    Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
-                            new String[] {YbkProvider._ID}, "lower(" + YbkProvider.FILE_NAME + ")=?", 
-                            new String[] {filePath.toLowerCase()}, null);
-                    
-                    try {
-                        int count = c.getCount();
-                        if (count == 1) {
-                            c.moveToFirst();
-                            mBookId = c.getLong(0);
-                        } else if (count == 0){
-                            throw new IllegalStateException("No books found for '" + filePath);
-                        } else {
-                            throw new IllegalStateException("More than one book found for '" + filePath);
-                        }
-                    } finally {
-                        c.close();
+                }    
+             
+                Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
+                        new String[] {YbkProvider._ID}, "lower(" + YbkProvider.FILE_NAME + ")=?", 
+                        new String[] {filePath.toLowerCase()}, null);
+                
+                try {
+                    int count = c.getCount();
+                    if (count == 1) {
+                        c.moveToFirst();
+                        bookId = c.getLong(0);
+                    } else if (count == 0){
+                        throw new IllegalStateException("No books found for '" + filePath);
+                    } else {
+                        throw new IllegalStateException("More than one book found for '" + filePath);
                     }
+                } finally {
+                    c.close();
                 }
+                
                 
                 try {
                     if (chap.equals("index")) {
@@ -529,16 +570,16 @@ public class YbkViewActivity extends Activity {
                         
                     }
     
-                    Cursor c = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"chapter"), 
+                    Cursor chapCurs = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"chapter"), 
                             new String[] {YbkProvider.CHAPTER_ORDER_NUMBER}, 
                             "lower(" + YbkProvider.FILE_NAME + ")=?", 
                             new String[] {chap.toLowerCase()}, null);
                     
                     try {
-                        if (c.getCount() == 1) {
-                            c.moveToFirst();
-                            mChapOrderNbr = c.getInt(0);
-                        } else if (c.getCount() == 0){
+                        if (chapCurs.getCount() == 1) {
+                            chapCurs.moveToFirst();
+                            mChapOrderNbr = chapCurs.getInt(0);
+                        } else if (chapCurs.getCount() == 0){
                             mChapOrderNbr = -1;
                         } else {
                             throw new IllegalStateException(
@@ -546,7 +587,7 @@ public class YbkViewActivity extends Activity {
                                     + chap);
                         }
                     } finally {
-                        c.close();
+                        chapCurs.close();
                     }
                     
                     // replace MS-Word "smartquotes" and other extended characters with spaces
@@ -563,9 +604,30 @@ public class YbkViewActivity extends Activity {
                             "text/html","utf-8","");
                     
                     bookLoaded = true;
-                    mChapFileName = chap;
-                    mBookFileName = filePath;
                     
+                    if (!mBackButtonPressed) {
+                        if (mChapFileName != null) {
+                            // Save the previous book and chapter to history if there
+                            // is one
+                            ContentValues values = new ContentValues();
+                            values.put(YbkProvider.BOOK_ID, mBookId);
+                            values.put(YbkProvider.HISTORY_TITLE, mHistTitle);
+                            values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
+                            // TODO Temporarily using 0 until we figure out how to get the actual value
+                            values.put(YbkProvider.SCROLL_POS, 0);
+                            
+                            Log.d(TAG, "Saving history for: " + values);
+                            
+                            getContentResolver().insert(
+                                    Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
+                                    values);
+                        }
+                        
+                        mChapFileName = chap;
+                        mBookFileName = filePath;
+                        mBookId = bookId;
+                        mHistTitle = mChapBtnText;
+                    }
                 } catch (IOException e) {
                     ybkView.loadData("The chapter could not be opened.",
                             "text/plain","utf-8");
@@ -694,12 +756,62 @@ public class YbkViewActivity extends Activity {
         
         String chapBtnText = mChapBtnText = header.substring(startFN, endFN);
         
-        int colonPos;
-        if ((colonPos = chapBtnText.indexOf(":")) != -1) {
+        if ((chapBtnText.indexOf(":")) != -1) {
             String[] textParts = chapBtnText.split(":");
             mChapBtnText = textParts[1].trim();
         }
             
+    }
+    
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent msg) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            ContentResolver contRes = getContentResolver(); 
+            
+            Uri lastHistUri = ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
+                    YbkProvider.GET_LAST_HISTORY);
+            
+            Cursor c = contRes.query(lastHistUri,null, null, null, null);
+            
+            try {
+                int count = c.getCount();
+                if (count == 1) {
+                    c.moveToFirst();
+                    String bookFileName = c.getString(0);
+                    String chapFileName = c.getString(1);
+                    int scrollPos = c.getInt(2);
+                    
+                    mBackButtonPressed = true;
+                    if (loadChapter(bookFileName, chapFileName)) {
+                        int slashPos = bookFileName.lastIndexOf("/");
+                        int dotPos = bookFileName.indexOf(".");
+                        
+                        setBookBtn(bookFileName.substring(slashPos + 1, dotPos),bookFileName,chapFileName);
+                        
+                        contRes.delete(lastHistUri, null, null);
+                    }
+                    mBackButtonPressed = false;
+                    
+                }
+            } finally {
+                c.close();
+            }
+        }
+
+        return false;
+    }
+    
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        HashMap<String, Comparable> stateMap = new HashMap<String, Comparable>();
+        
+        stateMap.put("bookFileName", mBookFileName);
+        stateMap.put("chapFileName", mChapFileName);
+        stateMap.put("bookId", mBookId);
+        stateMap.put("histTitle", mHistTitle);
+        
+        return stateMap;
+        
     }
 }
 
