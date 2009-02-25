@@ -6,8 +6,8 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.util.Log;
 
-public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
-    
+public class Settings extends PreferenceActivity 
+implements OnSharedPreferenceChangeListener {
     
     @Override
     protected void onCreate(final Bundle savedInstanceState) {

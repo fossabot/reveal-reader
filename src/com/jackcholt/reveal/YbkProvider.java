@@ -705,8 +705,9 @@ public class YbkProvider extends ContentProvider {
         long bookId = db.insert(BOOK_TABLE_NAME, METADATA, values);
         
         if (bookId == -1) {
-            throw new IllegalStateException("Unable to insert book (" + 
-                    fileName + ") into the database.");
+            // we'll assume the fileName is already in the db and continue
+            Log.w(TAG, "Unable to insert book (" + 
+                    fileName + ") into the database.  Must already be in the database.");
         }
         
         try {

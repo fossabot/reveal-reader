@@ -30,8 +30,8 @@ import android.widget.Toast;
 
 public class Main extends ListActivity {
 	
-    public final static int DISPLAYMODE_ABSOLUTE = 0;
-    public final static int DISPLAYMODE_RELATIVE = 1;
+    //public final static int DISPLAYMODE_ABSOLUTE = 0;
+    //public final static int DISPLAYMODE_RELATIVE = 1;
     
     //private static final int HISTORY_ID = Menu.FIRST;
     //private static final int BOOKMARK_ID = Menu.FIRST + 1;
@@ -44,7 +44,7 @@ public class Main extends ListActivity {
     
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
-    private static final boolean DONT_ADD_BOOKS = false;
+    //private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
     
     private NotificationManager mNotifMgr;
@@ -56,7 +56,6 @@ public class Main extends ListActivity {
     private final Handler mUpdateLibHandler = new Handler();
     private Cursor mListCursor; 
     private ContentResolver mContRes; 
-    public String[] openBooks = {"No book open", "No book open", "No book open", "No book open", "No book open","No book open","No book open","No book open","No book open","No book open","No book open","No book open"};
     public int i = -1;
     private boolean mUpdating = false;
     
@@ -101,24 +100,26 @@ public class Main extends ListActivity {
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
        
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
+        //boolean showSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
         
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
         if (!configChanged) {
             //Show splashscreen or not
-            Util.showSplashScreen(this);
+            //if (showSplashScreen) { 
+                Util.showSplashScreen(this);
+            //}
             //Actually go ONLINE and check...  duhhhh
             UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
         }
         
-        //Check for SDcard presence
-        //if we have one create the dirs and look fer ebooks
-    	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    	mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-
         refreshBookList();
 
         if (!configChanged) {
+            //Check for SDcard presence
+            //if we have one create the dirs and look fer ebooks
         	if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
             	Log.e(Global.TAG, "sdcard not installed");
             	Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
@@ -203,6 +204,8 @@ public class Main extends ListActivity {
                         notifText,
                         System.currentTimeMillis());
                 
+                notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
+                
                 notif.setLatestEventInfo(this, "eBook Library Refresh", 
                         notifText, 
                         contentIntent);
@@ -263,6 +266,8 @@ public class Main extends ListActivity {
                             notifText,
                             System.currentTimeMillis());
                     
+                    notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
+                    
                     notif.setLatestEventInfo(this, "eBook Library Refresh", 
                             notifText, 
                             contentIntent);
@@ -316,6 +321,8 @@ public class Main extends ListActivity {
             Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
                     notifText,
                     System.currentTimeMillis());
+            
+            notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
             
             notif.setLatestEventInfo(this, "eBook Library Refresh", 
                     notifText, 
