@@ -52,15 +52,18 @@ public class Util {
         while(scan.hasNext()) {
             String word = scan.next();
             if(!"of and on about above over under ".contains(word + " ")) {
-                
-                int capLength = 1;
-                
-                if ("abcdefghijklmnopqrstuvwxyz".indexOf(word.charAt(0)) == -1) {
-                    // if the word starts with a special character, capitalize the 
-                    // actual first letter
-                    capLength = 2;
+                if (word.length() == 1) {
+                	word = word.toUpperCase();
+                } else {
+	                int capLength = 1;
+	                
+	                if ("abcdefghijklmnopqrstuvwxyz".indexOf(word.charAt(0)) == -1) {
+	                    // if the word starts with a special character, capitalize the 
+	                    // actual first letter
+	                    capLength = 2;
+	                }
+	                word = word.substring(0,capLength).toUpperCase() + word.substring(capLength,word.length());
                 }
-                word = word.substring(0,capLength).toUpperCase() + word.substring(capLength,word.length());
             }
             
             sb.append(word + " ");
