@@ -61,7 +61,7 @@
 <string name="ebook_download_failed_url">Unable to download eBook at given location.</string>
 <string name="ebook_download_complete">eBook Download Complete</string>
 <string name="ebook_exists_still_download">This eBook already exists in your library.  Would you like to replace it with a new copy?</string>
-<string name="update_available"><b>Update Available</b>, Please check the App Market</string>
+<string name="update_available"><b>Update Available</b>Reveal update available, Please check the Google App Market</string>
 <string name="checking_for_new_version_online">Checking for new Version Online</string>
 <string name="version_you_are_running">Version you are running SVN rev </string>
 <string name="splash">Splash Screen Here</string>

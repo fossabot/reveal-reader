@@ -29,15 +29,25 @@ public class UpdateChecker {
   public static int getLatestVersionCode() {
     int version = 0;
     try {
-      URLConnection cn;
-      URL url = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
-      cn = url.openConnection();
-      cn.setReadTimeout(10000);
-      cn.setConnectTimeout(10000);
-      cn.connect();
-      InputStream stream = cn.getInputStream();
+      //Get the XML update Version to prompt user to get a new Update From the market
+      URLConnection cnVersion;
+      URL urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
+      cnVersion = urlVersion.openConnection();
+      cnVersion.setReadTimeout(10000);
+      cnVersion.setConnectTimeout(10000);
+      cnVersion.connect();
+      InputStream streamVersion = cnVersion.getInputStream();
+  	  //Get the Update location URL
+      URLConnection cnUpdate;
+      URL urlUpdate = new URL("http://revealreader.thepackhams.com/revealUpdate.html");
+      cnUpdate = urlUpdate.openConnection();
+      cnUpdate.setReadTimeout(10000);
+      cnUpdate.setConnectTimeout(10000);
+      cnUpdate.connect();
+      InputStream streamUpdate = cnUpdate.getInputStream();
+      //Proceed parsing the info
       DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-      Document manifestDoc = docBuild.parse(stream);
+      Document manifestDoc = docBuild.parse(streamVersion);
       NodeList manifestNodeList = manifestDoc.getElementsByTagName("manifest");
       String versionStr =
           manifestNodeList.item(0).getAttributes().getNamedItem("android:versionCode")
@@ -45,6 +55,7 @@ public class UpdateChecker {
       version = Integer.parseInt(versionStr);
       NodeList clcNodeList = manifestDoc.getElementsByTagName("clc");
       marketId = clcNodeList.item(0).getAttributes().getNamedItem("marketId").getNodeValue();
+      
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -66,10 +77,9 @@ public class UpdateChecker {
   public static  void checkForNewerVersion(int currentVersion, Context _this) {
 	  //Check here an XML file stored on our website for new version info
       Toast.makeText(_this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
-      //Toast.makeText(_this, R.string.version_you_are_running + Global.SVN_VERSION, Toast.LENGTH_SHORT).show();
-	  Global.NEW_VERSION = getLatestVersionCode();
+  	  Global.NEW_VERSION = getLatestVersionCode();
     if (Global.NEW_VERSION > currentVersion) {
-    	//Download a new REV of this cool CODE
+    	//Tell user to Download a new REV of this cool CODE from the Market
         Toast.makeText(_this, R.string.update_available, Toast.LENGTH_LONG).show();
     }
   }
