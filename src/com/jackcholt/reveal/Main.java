@@ -58,10 +58,13 @@ public class Main extends ListActivity {
     private ContentResolver mContRes; 
     public String[] openBooks = {"No book open", "No book open", "No book open", "No book open", "No book open","No book open","No book open","No book open","No book open","No book open","No book open","No book open"};
     public int i = -1;
+    private boolean mUpdating = false;
     
     private final Runnable mUpdateBookList = new Runnable() {
         public void run() {
             refreshBookList();
+            
+            mUpdating = false;
         }
     };
     
@@ -73,14 +76,19 @@ public class Main extends ListActivity {
     protected void updateBookList() {
         // Fire off the thread to update the book database and populate the Book
         // Menu
-        Thread t = new Thread() {
-            public void run() {
-                refreshLibrary();
-                mUpdateLibHandler.post(mUpdateBookList);
-            }
-        };
-        
-        t.start();
+    	if (mUpdating) {
+    		Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_SHORT).show();
+    	} else {
+    		mUpdating = true;
+	        Thread t = new Thread() {
+	            public void run() {
+	                refreshLibrary();
+	                mUpdateLibHandler.post(mUpdateBookList);
+	            }
+	        };
+	        
+	        t.start();
+    	}
     }
     
     /** Called when the activity is first created. */
