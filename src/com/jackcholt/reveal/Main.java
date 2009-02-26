@@ -21,14 +21,17 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.GestureDetector.OnGestureListener;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
-public class Main extends ListActivity {
+public class Main extends ListActivity implements OnGestureListener {
 	
     //public final static int DISPLAYMODE_ABSOLUTE = 0;
     //public final static int DISPLAYMODE_RELATIVE = 1;
@@ -41,6 +44,8 @@ public class Main extends ListActivity {
     private static final int REVELUPDATE_ID = Menu.FIRST + 5;
     private static final int ABOUT_ID = Menu.FIRST + 6;
     private int mNotifId = 0;
+    private int activeId; 
+    private int id; 
     
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
@@ -48,6 +53,7 @@ public class Main extends ListActivity {
     private static final boolean ADD_BOOKS = true;
     
     private NotificationManager mNotifMgr;
+    private GestureDetector gestureScanner; 
 
     private SharedPreferences mSharedPref;
     private String mLibraryDir;
@@ -103,6 +109,10 @@ public class Main extends ListActivity {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         //boolean showSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
+
+        //To capture LONG_PRESS gestures
+        gestureScanner = new GestureDetector(this); 
+        
         
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
@@ -366,6 +376,20 @@ public class Main extends ListActivity {
         }
     }
     
+    //do stuff with the Gestures we capture.
+    @Override
+    public boolean onTouchEvent(MotionEvent me)
+    {
+        activeId = this.id;
+        return gestureScanner.onTouchEvent(me);
+    }
+
+    public void onLongPress(MotionEvent e)
+    {
+    	Toast.makeText(this, "LONGPRESS = " + activeId, Toast.LENGTH_LONG).show();
+    } 
+    
+    
     @Override
     public void onResume() {
         super.onResume();
@@ -513,4 +537,36 @@ public class Main extends ListActivity {
         }
         return null;
     }
+
+	@Override
+	public boolean onDown(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean onFling(MotionEvent arg0, MotionEvent arg1, float arg2,
+			float arg3) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean onScroll(MotionEvent arg0, MotionEvent arg1, float arg2,
+			float arg3) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onShowPress(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onSingleTapUp(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }
