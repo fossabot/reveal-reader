@@ -386,7 +386,7 @@ public class Main extends ListActivity implements OnGestureListener {
         case DELETE_ID:
             AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
             //Write Delete from DB Helper
-            //mDbHelper.deleteNote(info.id);
+            //DeleteFileHere(info.id);
             refreshBookList();
             return true;
         }
