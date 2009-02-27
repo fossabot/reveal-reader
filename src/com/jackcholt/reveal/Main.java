@@ -21,15 +21,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector.OnGestureListener;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class Main extends ListActivity implements OnGestureListener {
 	
@@ -44,16 +47,17 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int REVELUPDATE_ID = Menu.FIRST + 5;
     private static final int ABOUT_ID = Menu.FIRST + 6;
     private int mNotifId = 0;
-    private int activeId; 
-    private int id; 
-    
+
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
     //private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
     
+    //Gestures Stuff
     private NotificationManager mNotifMgr;
     private GestureDetector gestureScanner; 
+    private static final int INSERT_ID = Menu.FIRST;
+    private static final int DELETE_ID = Menu.FIRST + 1;
 
     private SharedPreferences mSharedPref;
     private String mLibraryDir;
@@ -112,8 +116,8 @@ public class Main extends ListActivity implements OnGestureListener {
 
         //To capture LONG_PRESS gestures
         gestureScanner = new GestureDetector(this); 
-        
-        
+        registerForContextMenu(getListView());
+                
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
         if (!configChanged) {
@@ -377,25 +381,29 @@ public class Main extends ListActivity implements OnGestureListener {
     }
     
     //do stuff with the Gestures we capture.
-    @Override
-    public boolean onTouchEvent(MotionEvent me)
-    {
-        activeId = this.id;
-        return gestureScanner.onTouchEvent(me);
+    public boolean onContextItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+        case DELETE_ID:
+            AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+            //Write Delete from DB Helper
+            //mDbHelper.deleteNote(info.id);
+            refreshBookList();
+            return true;
+        }
+        return super.onContextItemSelected(item);
     }
-
-    public void onLongPress(MotionEvent e)
-    {
-    	Toast.makeText(this, "LONGPRESS = " + activeId, Toast.LENGTH_LONG).show();
-    } 
     
+    @Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+        menu.add(0, DELETE_ID, 0, R.string.really_delete);
+	}
     
     @Override
     public void onResume() {
         super.onResume();
         
         // Set preferences from Setting screen
-          
         SharedPreferences sharedPref = mSharedPref;
         
         String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
@@ -568,5 +576,11 @@ public class Main extends ListActivity implements OnGestureListener {
 	public boolean onSingleTapUp(MotionEvent arg0) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public void onLongPress(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }

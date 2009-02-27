@@ -1,53 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Reveal</string>
-    
-	<string name="no_books">No eBooks!  Your library may need to be refreshed.</string>
-	<string name="menu_bookmark">Quickmark</string>
-	<string name="menu_history">eBook History</string>
-	<string name="menu_settings">Program Settings</string><string name="menu_refresh_library">Refresh eBook Library</string><string name="label_splash_screen">Show Splash Screen</string>
-	<string name="menu_browser">Online eBook Download</string>
-	
-	<string name="settings_name">Reveal Settings</string>
-	<string name="summary_on_show_splash_screen">Splash Screen shows</string>
-	<string name="summary_off_show_splash_screen">Splash Screen does not show</string>
-	<string name="up_one_level">..</string>
-	
-	<string name="reveal_ybk_view">Reveal :: Read eBook</string>
-	<string name="reference_not_found">The referenced eBook ({0}) cannot be found.</string>
-	<string name="alert_dialog_ok">OK</string>
-	
-	<string name="title_browser_name">Reveal :: Online eBook Browser</string>
-	<string name="menu_update">Check For Update</string>
-	<string name="menu_about">About</string>
-	
-	<string name="update_in_progress">Update in progress</string>
-
+<string name="app_name">Reveal</string>
+<string name="no_books">No eBooks Available!  Please hit 'MENU' then 'Online eBook Download' to get new eBooks.</string>
+<string name="no_books_xml">No eBook Information Downloaded. Please wait while we go online and refresh the eBook catalog...  eBook categories will appear on this screen once they are downloaded</string>
+<string name="menu_bookmark">Quickmark</string>
+<string name="menu_history">eBook History</string>
+<string name="menu_settings">Program Settings</string><string name="menu_refresh_library">Refresh eBook Library</string><string name="label_splash_screen">Show Splash Screen</string>
+<string name="menu_browser">Online eBook Download</string>
+<string name="settings_name">Reveal Settings</string>
+<string name="summary_on_show_splash_screen">Splash Screen shows</string>
+<string name="summary_off_show_splash_screen">Splash Screen does not show</string>
+<string name="up_one_level">..</string>
+<string name="reveal_ybk_view">Reveal :: Read eBook</string>
+<string name="reference_not_found">The referenced eBook ({0}) cannot be found.</string>
+<string name="alert_dialog_ok">OK</string>
+<string name="title_browser_name">Reveal :: Online eBook Browser</string>
+<string name="menu_update">Check For Update</string>
+<string name="menu_about">About</string>
+<string name="update_in_progress">Update in progress</string>
 <string name="default_ebook_dir">/sdcard/reveal/ebooks/</string>
 <string name="default_temp_dir">/sdcard/reveal/</string>
 <string name="midnightmode_off">MidNight Mode is OFF</string>
 <string name="default_fontsize">12</string>
-
 <string name="midnightmode_on">Midnight Mode is ON</string>
 <string name="summary_default_ebook_dir">Show Default eBook Location</string>
 <string name="summary_default_temp_dir">Default Directory for Application TEMP</string>
-
 <string name="title_list_preference">List preference</string>
 <string name="summary_list_preference">An example that uses a list dialog</string>
 <string name="dialog_title_list_preference">Choose one</string>
-
 <string name="menu_previous">Previous Chapter</string>
 <string name="menu_next">Next Chapter</string>
 <string name="library_not_created">Could not create the default eBook folder.</string>
 <string name="update_browser">Online Update</string>
 <string name="update_url">http://androidstuff.thepackhams.com/revealVersion.xml?ClientVer=</string>
-
-<dimen name="font_size">15sp</dimen>
+<dimen name="font_size">18sp</dimen>
 <dimen name="large_font_size">25sp</dimen>
-<string name="checking_ebooks">Updating eBook Catalog... This may take a while.</string>
+<string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
 <string name="ebook_update_complete">Finished Updating eBook Catalog</string>
 <string name="author">Jack Holt, Dave Packham, Joe Wiggins, Adam Gessel</string>
-<string name="contact">jackcholt@gmail.com, dave@thepackhams.com</string>
+<string name="contact">If you would like to donate via PayPal to our developers use the below addresses.  jackcholt@gmail.com, dave@thepackhams.com</string>
 <string name="website">http://revealreader.thepackhams.com</string>
 <string name="close">Close</string>
 <string name="title_download_url">http://revealreader.thepackhams.com/revealVersion.xml</string>
