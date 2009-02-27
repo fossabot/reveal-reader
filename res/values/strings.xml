@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="app_name">Reveal</string>
-<string name="no_books">No eBooks Available!  Please hit 'MENU' then 'Online eBook Download' to get new eBooks.</string>
+<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks.</string>
 <string name="no_books_xml">No eBook Information Downloaded. Please wait while we go online and refresh the eBook catalog...  eBook categories will appear on this screen once they are downloaded</string>
 <string name="menu_bookmark">Quickmark</string>
 <string name="menu_history">eBook History</string>
@@ -62,4 +62,7 @@
 <string name="really_delete">Really Delete eBook?</string>
 <string name="create_sd_card_reveal_dir">Create reveal dir on sdcard ok</string>
 <string name="create_sd_card_ebook_dir">Create ebooks dir on sdcard ok</string>
+<color name="opaque_red">#f00</color>
+<color name="translucent_red">#80ff0000</color>
+<string name="build_number">%1$d results for &lt;b>&amp;quot;%2$s&amp;quot;&lt;/b></string>
 </resources>
