@@ -209,7 +209,7 @@ public class YbkViewActivity extends Activity {
                     
                     String dataString; 
                     try {
-                        dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "ISO-8859-1");
+                        dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
                     } catch (UnsupportedEncodingException uee) {
                         dataString = url.substring(ContentUriLength + 1);
                     }
@@ -614,7 +614,7 @@ public class YbkViewActivity extends Activity {
                     }
                     
                     // replace MS-Word "smartquotes" and other extended characters with spaces
-                    //content = content.replace('\ufffd', ' ');
+                    content = content.replace('\u0093', '"').replace('\u0094','"');
                     
                     String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
                     setChapBtnText(content);
@@ -777,13 +777,18 @@ public class YbkViewActivity extends Activity {
         // Set endFN to the position in the header;
         endFN += startFN;
         
-        String chapBtnText = mChapBtnText = header.substring(startFN, endFN);
+        String chapBtnText = header.substring(startFN, endFN);
         
         if ((chapBtnText.indexOf(":")) != -1) {
             String[] textParts = chapBtnText.split(":");
-            mChapBtnText = textParts[1].trim();
+            chapBtnText = textParts[1].trim();
         }
-            
+        
+        if (chapBtnText.length() > 30) {
+            chapBtnText = chapBtnText.substring(0, 30);
+        }
+        
+        mChapBtnText = chapBtnText;    
     }
     
     @Override
