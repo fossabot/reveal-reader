@@ -65,4 +65,5 @@
 <color name="opaque_red">#f00</color>
 <color name="translucent_red">#80ff0000</color>
 <string name="build_number">%1$d results for &lt;b>&amp;quot;%2$s&amp;quot;&lt;/b></string>
+<dimen name="button_font_size">12sp</dimen>
 </resources>
