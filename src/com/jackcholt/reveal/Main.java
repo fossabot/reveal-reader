@@ -237,7 +237,6 @@ public class Main extends ListActivity implements OnGestureListener {
             Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
             
             for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
-                //getWindow().setFeatureInt(Window.FEATURE_PROGRESS, 10000 * i / dirListLen);
                 String dirFilename = ybkFiles[i].getAbsolutePath();
                 Log.d(Global.TAG, "dirFilename: " + dirFilename);
                 
@@ -270,9 +269,9 @@ public class Main extends ListActivity implements OnGestureListener {
 
                     int lastSlashPos = dirFilename.lastIndexOf('/');
                     int lastDotPos = dirFilename.lastIndexOf('.');
-                    CharSequence bookName = dirFilename;
+                    String bookName = dirFilename;
                     if (lastSlashPos != -1 && lastDotPos != -1) {
-                        bookName = dirFilename.subSequence(lastSlashPos + 1, lastDotPos);
+                        bookName = dirFilename.substring(lastSlashPos + 1, lastDotPos);
                     }
 
                     CharSequence notifText = "Added '" + bookName + "' to the book menu";

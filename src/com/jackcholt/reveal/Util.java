@@ -152,12 +152,12 @@ public class Util {
         ByteArrayInputStream bis = new ByteArrayInputStream(buf);
         GZIPInputStream zip = new GZIPInputStream(bis);
         final int BUF_SIZE = 255;
-        StringBuffer decomp = new StringBuffer();
+        StringBuilder decomp = new StringBuilder(BUF_SIZE);
         byte[] newBuf = new byte[BUF_SIZE];
         
         int bytesRead = 0;
         while (-1 != (bytesRead = zip.read(newBuf, 0, BUF_SIZE))) { 
-            decomp.append(new String(newBuf).substring(0, bytesRead));
+            decomp.append(new String(newBuf, "ISO_8859-1").substring(0, bytesRead));
         }
     
         return decomp.toString();

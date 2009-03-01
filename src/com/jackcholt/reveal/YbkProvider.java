@@ -43,7 +43,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 10;
+    public static final int DATABASE_VERSION = 11;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -863,7 +863,7 @@ public class YbkProvider extends ContentProvider {
                 if (iFilename.toLowerCase().endsWith(".gz")) {
                     fileText = Util.decompressGzip(text);
                 } else {
-                    fileText = new String(text);
+                    fileText = new String(text, "ISO_8859-1");
                 }
                         
             } else {

@@ -2,6 +2,8 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 
@@ -22,6 +24,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -56,6 +59,11 @@ public class YbkViewActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        if (!requestWindowFeature(Window.FEATURE_PROGRESS)) {
+            Log.w(TAG, "Progress bar is not supported");
+        }
+        getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
+
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         mShowPictures = mSharedPref.getBoolean("show_pictures", true);
@@ -162,7 +170,7 @@ public class YbkViewActivity extends Activity {
                 
                 if (content == null) {
                     ybkView.loadData("YBK file has no index page.",
-                            "text/plain","utf-8");
+                            "text/plain","ISO_8859-1");
                     
                     Log.e(TAG, "YBK file has no index page.");
                     return;
@@ -170,8 +178,11 @@ public class YbkViewActivity extends Activity {
                 mChapFileName = tryFileToOpen;
             }
             
-            loadChapter(mBookFileName, mChapFileName);
-            setBookBtn(shortTitle, mBookFileName, mChapFileName);
+            if (loadChapter(mBookFileName, mChapFileName)) {
+                setBookBtn(shortTitle, mBookFileName, mChapFileName);
+            }
+            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
+            
             
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
@@ -182,6 +193,8 @@ public class YbkViewActivity extends Activity {
             
             @Override
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
+                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
+                
                 Log.d(TAG, "WebView URL: " + url);
                 String book;
                 String chapter = "";
@@ -193,13 +206,20 @@ public class YbkViewActivity extends Activity {
                 } else {
                 
                     int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
-                    String dataString = url.substring(ContentUriLength + 1);
+                    
+                    String dataString; 
+                    try {
+                        dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "ISO-8859-1");
+                    } catch (UnsupportedEncodingException uee) {
+                        dataString = url.substring(ContentUriLength + 1);
+                    }
+                    
                     
                     String[] urlParts = dataString.split("/");
                     
                     
                     // get rid of the book indicator since it is only used in some cases.
-                    book = shortTitle = urlParts[0].replace("%20", " ");
+                    book = shortTitle = urlParts[0];
                     if (book.charAt(0) == '!' || book.charAt(0) == '^') {
                         shortTitle = urlParts[0] = book.substring(1);
                     }
@@ -219,6 +239,7 @@ public class YbkViewActivity extends Activity {
                 if (loadChapter(book, chapter)) {                    
                     setBookBtn(shortTitle,book,chapter);
                 }
+                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
                 
                 
                 return true;
@@ -262,10 +283,12 @@ public class YbkViewActivity extends Activity {
         bookBtn.setOnClickListener(new OnClickListener() {
             
             public void onClick(final View v) {
+                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
                 if (loadChapter(filePath, "index") ) {
                     setBookBtn(shortTitle, filePath, fileToOpen);
                     Log.d(TAG, "Book loaded");
                 } 
+                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
             }
             
         });
@@ -591,7 +614,7 @@ public class YbkViewActivity extends Activity {
                     }
                     
                     // replace MS-Word "smartquotes" and other extended characters with spaces
-                    content = content.replace('\ufffd', ' ');
+                    //content = content.replace('\ufffd', ' ');
                     
                     String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
                     setChapBtnText(content);
@@ -766,6 +789,7 @@ public class YbkViewActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent msg) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
+            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
             ContentResolver contRes = getContentResolver(); 
             
             Uri lastHistUri = ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
@@ -790,10 +814,12 @@ public class YbkViewActivity extends Activity {
                         
                         contRes.delete(lastHistUri, null, null);
                     }
+                    
                     mBackButtonPressed = false;
                     
                 }
             } finally {
+                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
                 c.close();
             }
         }

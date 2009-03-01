@@ -254,7 +254,9 @@ public class YbkFileReader {
         
         ArrayList<InternalFile> internalFiles = mInternalFiles;
         
-        for(InternalFile iFile : internalFiles) {
+        int ifLength = internalFiles.size();
+        for(int i=0; i < ifLength; i++) {
+            InternalFile iFile = internalFiles.get(i);
             if (iFile.getFileName().equalsIgnoreCase(iFilename)) {
                 offset = iFile.getYbkOffset();
                 len = iFile.getYbkLen();
@@ -270,7 +272,7 @@ public class YbkFileReader {
                 if (iFilename.toLowerCase().endsWith(".gz")) {
                     fileText = Util.decompressGzip(text);
                 } else {
-                    fileText = new String(text);
+                    fileText = new String(text, "ISO_8859-1");
                 }
                 
                 break;
