@@ -294,9 +294,26 @@ public class YbkViewActivity extends Activity {
         });
         
         bookBtn.setVisibility(View.VISIBLE);
-
-        chapBtn.setText(mChapBtnText);
         
+        /*	
+            Checks to see if the title is too long for the button.
+        	This prevents the buttons becoming too large and the
+        	view window being smaller. - Adam Gessel 
+         */
+        
+        if ( mChapBtnText.length() > 20 )
+        {
+        	
+        	String mChapBtnTextSmall = mChapBtnText.substring(0, 20) + "...";
+        	chapBtn.setText(mChapBtnTextSmall);
+        	
+        }
+        else
+        {
+        	
+        	chapBtn.setText(mChapBtnText);
+        
+        }
         chapBtn.setVisibility(View.VISIBLE);
         
     }
