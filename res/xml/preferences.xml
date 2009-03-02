@@ -11,6 +11,7 @@
 
     <EditTextPreference
     		android:key="default_ebook_dir"
-    		android:title="@string/title_default_ebook_dir"  />
+    		android:title="@string/title_default_ebook_dir" 
+    		android:summary="@string/summary_default_ebook_dir" />
  
 </PreferenceScreen>

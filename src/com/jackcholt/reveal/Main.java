@@ -123,8 +123,8 @@ public class Main extends ListActivity implements OnGestureListener {
         if (!configChanged) {
         	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         	showSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
-       
-        	if (showSplashScreen) { 
+            
+          	if (showSplashScreen) { 
                 Util.showSplashScreen(this);
             }
             //Actually go ONLINE and check...  duhhhh
