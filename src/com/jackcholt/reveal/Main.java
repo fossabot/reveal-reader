@@ -60,7 +60,7 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int DELETE_ID = Menu.FIRST + 1;
 
     private SharedPreferences mSharedPref;
-    private boolean showSplashScreen;
+    private boolean BOOLshowSplashScreen;
     private String mLibraryDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
@@ -122,9 +122,9 @@ public class Main extends ListActivity implements OnGestureListener {
         
         if (!configChanged) {
         	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        	showSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
+        	BOOLshowSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
             
-          	if (showSplashScreen) { 
+          	if (BOOLshowSplashScreen) { 
                 Util.showSplashScreen(this);
             }
             //Actually go ONLINE and check...  duhhhh
