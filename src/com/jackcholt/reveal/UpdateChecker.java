@@ -76,10 +76,12 @@ public class UpdateChecker {
 
   public static  void checkForNewerVersion(int currentVersion, Context _this) {
 	  //Check here an XML file stored on our website for new version info
-      Toast.makeText(_this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
+	  //Comment this out due to feedback fromusers that it checks too much.  at least that it notifies too much
+      //Toast.makeText(_this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
   	  Global.NEW_VERSION = getLatestVersionCode();
     if (Global.NEW_VERSION > currentVersion) {
     	//Tell user to Download a new REV of this cool CODE from the Market
+    	//Only Toast if there IS and update
         Toast.makeText(_this, R.string.update_available, Toast.LENGTH_LONG).show();
     }
   }

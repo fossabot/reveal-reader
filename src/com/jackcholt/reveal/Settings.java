@@ -1,36 +1,66 @@
 package com.jackcholt.reveal;
 
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
-import android.util.Log;
+import android.preference.PreferenceManager;
 
-public class Settings extends PreferenceActivity 
-implements OnSharedPreferenceChangeListener {
-    
+
+public class Settings extends PreferenceActivity { 
+
+	public static final String PREFS_NAME = "com.jackcholt.reveal_preferences";
+	
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        //setContentView(R.layout.settings);
-        
         // Load the XML preferences file
         addPreferencesFromResource(R.xml.preferences);
         
-        // Restore preferences
-        SharedPreferences settings = getSharedPreferences("PREFS_NAME", MODE_PRIVATE);
-        boolean showSplashScreen = settings.getBoolean("showSplashScreen", true);
-        
-    }
-    
+  }
+
     @Override
+	public void onResume() {
+		super.onResume();
+		
+		SharedPreferences prefs=PreferenceManager.getDefaultSharedPreferences(this);
+
+	}
+
+    
+private void readPrefs() {
+	Log.d(Global.TAG, "Settings prefs controls");
+	//mShowSplashScreen.setChecked(mDisplayIcon);
+}
+
+private void revertPrefs() {
+	Log.d(Global.TAG, "Reverting prefs");
+	//SharedPreferences.Editor ed = Settings.getEditor(this);
+	//ed.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreen);
+	//ed.commit();
+}
+
+private void savePrefs() {
+	Log.d(Global.TAG, "Saving prefs");
+	//SharedPreferences.Editor editor = Settings.getEditor(this);
+	//editor.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreenCheckbox.isChecked());
+	//editor.commit();
+}
+
+/*
+	@Override
     protected void onStop() {
         super.onStop();
-        
-        //SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        //SharedPreferences.Editor editor = settings.edit();
-        //editor.putBoolean("showSplashScreen", isShowSplashScreen());
+   
+        // Save user preferences. We need an Editor object to
+        // make changes. All objects are from android.context.Context
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        //editor.putBoolean("showSplashScreen", showSplashScreen);
+
+        // Don't forget to commit your edits!!!
+        editor.commit();
+
     }
         
     @Override
@@ -59,25 +89,8 @@ implements OnSharedPreferenceChangeListener {
             Toast.makeText(this, "Thanks! You increased my count to "
                     + sharedPreferences.getInt(key, 0), Toast.LENGTH_SHORT).show();
         }*/
-    }
-	
-    private void readPrefs() {
-		Log.d(Global.TAG, "Settings prefs controls");
-		//mShowSplashScreen.setChecked(mDisplayIcon);
-	}
-	
-	private void revertPrefs() {
-		Log.d(Global.TAG, "Reverting prefs");
-		//SharedPreferences.Editor ed = Settings.getEditor(this);
-		//ed.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreen);
-		//ed.commit();
-	}
-	
-	private void savePrefs() {
-		Log.d(Global.TAG, "Saving prefs");
-		//SharedPreferences.Editor ed = Settings.getEditor(this);
-		//ed.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreenCheckbox.isChecked());
-		//ed.commit();
-	}
+//    }
+//
+
 
 }

@@ -60,6 +60,7 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int DELETE_ID = Menu.FIRST + 1;
 
     private SharedPreferences mSharedPref;
+    private boolean showSplashScreen;
     private String mLibraryDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
@@ -86,7 +87,7 @@ public class Main extends ListActivity implements OnGestureListener {
         // Fire off the thread to update the book database and populate the Book
         // Menu
     	if (mUpdating) {
-    		Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_SHORT).show();
+    		Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_LONG).show();
     	} else {
     		mUpdating = true;
 	        Thread t = new Thread() {
@@ -112,8 +113,7 @@ public class Main extends ListActivity implements OnGestureListener {
        
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-        //boolean showSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
-
+  
         //To capture LONG_PRESS gestures
         gestureScanner = new GestureDetector(this); 
         registerForContextMenu(getListView());
@@ -121,10 +121,12 @@ public class Main extends ListActivity implements OnGestureListener {
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
         if (!configChanged) {
-            //Show splashscreen or not
-            //if (showSplashScreen) { 
+        	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        	showSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
+       
+        	if (showSplashScreen) { 
                 Util.showSplashScreen(this);
-            //}
+            }
             //Actually go ONLINE and check...  duhhhh
             UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
         }
@@ -140,10 +142,7 @@ public class Main extends ListActivity implements OnGestureListener {
             } else {
             	createDefaultDirs();
             	updateBookList();
-            	
-            	Toast.makeText(this, "Checking to see if the eBook library needs to be refreshed.", 
-            	        Toast.LENGTH_LONG).show();        	                    
-            }
+             }
         }
     }
     
