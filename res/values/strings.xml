@@ -21,7 +21,7 @@
 <string name="menu_about">About</string>
 <string name="update_in_progress">eBook Listing Update in progress</string>
 <string name="default_ebook_dir">/sdcard/reveal/ebooks/</string>
-<string name="summary_default_ebook_dir">Must be located on /sdcard</string>
+<string name="summary_default_ebook_dir">Default is /sdcard/reveal/ebooks/</string>
 <string name="default_temp_dir">/sdcard/reveal/</string>
 <string name="midnightmode_off">MidNight Mode is OFF</string>
 <string name="default_fontsize">12</string>
@@ -35,7 +35,7 @@
 <string name="menu_next">Next Chapter</string>
 <string name="library_not_created">Could not create the default eBook folder.</string>
 <string name="update_browser">Online Update</string>
-<string name="update_url">http://androidstuff.thepackhams.com/revealVersion.xml?ClientVer=</string>
+<string name="update_url">http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=</string>
 <dimen name="font_size">18sp</dimen>
 <dimen name="large_font_size">25sp</dimen>
 <string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
@@ -45,7 +45,7 @@
 <string name="website">http://revealreader.thepackhams.com</string>
 <string name="donate">If you would like to donate via PayPal to our developers use the below addresses.  jackcholt@gmail.com, dave@thepackhams.com</string>
 <string name="close">Close</string>
-<string name="title_download_url">http://revealreader.thepackhams.com/revealVersion.xml</string>
+<string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
 <string name="cancel">Cancel</string>

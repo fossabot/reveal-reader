@@ -1,12 +1,14 @@
 package com.jackcholt.reveal;
 
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
 
-public class Settings extends PreferenceActivity { 
+public class Settings extends PreferenceActivity 
+		implements OnSharedPreferenceChangeListener { 
 
 	public static final String PREFS_NAME = "com.jackcholt.reveal_preferences";
 	
@@ -16,7 +18,6 @@ public class Settings extends PreferenceActivity {
         
         // Load the XML preferences file
         addPreferencesFromResource(R.xml.preferences);
-        
   }
 
     @Override
@@ -26,7 +27,6 @@ public class Settings extends PreferenceActivity {
 		SharedPreferences prefs=PreferenceManager.getDefaultSharedPreferences(this);
 
 	}
-
     
 private void readPrefs() {
 	Log.d(Global.TAG, "Settings prefs controls");
@@ -47,7 +47,7 @@ private void savePrefs() {
 	//editor.commit();
 }
 
-/*
+
 	@Override
     protected void onStop() {
         super.onStop();
@@ -63,16 +63,7 @@ private void savePrefs() {
 
     }
         
-    @Override
-    protected void onResume() {
-        super.onResume();
-        
-        readPrefs();
-        // Set up a listener whenever a key changes
-        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-    }
-    
-    @Override
+  @Override
     protected void onPause() {
         super.onPause();
         
@@ -82,15 +73,14 @@ private void savePrefs() {
         
     }
 
-    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, 
-            final String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
         // Let's do something when my counter preference value changes
         /*if (key.equals(KEY_MY_PREFERENCE)) {
             Toast.makeText(this, "Thanks! You increased my count to "
                     + sharedPreferences.getInt(key, 0), Toast.LENGTH_SHORT).show();
         }*/
-//    }
-//
+    }
+
 
 
 }

@@ -18,7 +18,9 @@ import android.content.Context;
 import android.widget.Toast;
 
 /**
- * Checks for updates to the game.
+ * Checks for updates to the program
+ * 
+ * by Dave Packham
  */
 
 public class UpdateChecker {
