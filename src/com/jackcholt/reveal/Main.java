@@ -122,7 +122,7 @@ public class Main extends ListActivity implements OnGestureListener {
         
         if (!configChanged) {
         	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        	BOOLshowSplashScreen = mSharedPref.getBoolean("showSplashScreen", true);
+        	BOOLshowSplashScreen = mSharedPref.getBoolean("show_splash_screen", true);
             
           	if (BOOLshowSplashScreen) { 
                 Util.showSplashScreen(this);

@@ -32,6 +32,7 @@ public class AboutDialog extends Dialog {
                 } catch (NameNotFoundException e) {
                         title = "Unknown version";
                 }
+                String.format("This is a string %s, this is a decimal %d", R.string.helpdialog_no_ebooks, Global.SVN_VERSION);
                 setTitle(title);
         }
 
