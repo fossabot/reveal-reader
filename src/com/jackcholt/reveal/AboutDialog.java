@@ -29,11 +29,15 @@ public class AboutDialog extends Dialog {
                         title = getContext().getString(R.string.app_name) + 
                         " : " + getContext().getPackageManager().getPackageInfo
                         (getContext().getPackageName(), PackageManager.GET_ACTIVITIES).versionName;
+                                 
+                        //String.format("This is a string %s, this is a decimal %d", R.string.helpdialog_no_ebooks, Global.SVN_VERSION);
+                        
+                        setTitle(title);
+         
                 } catch (NameNotFoundException e) {
                         title = "Unknown version";
                 }
-                String.format("This is a string %s, this is a decimal %d", R.string.helpdialog_no_ebooks, Global.SVN_VERSION);
-                setTitle(title);
+                
         }
 
         public static AboutDialog create(Context context) {
