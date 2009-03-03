@@ -14,20 +14,18 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import android.app.AlertDialog.Builder;
 import android.app.AlertDialog;
-import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
 import android.net.Uri;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -810,7 +808,49 @@ public class Util {
 		return null;
 	}
 */
-
-		
+	
+	/**
+	 * Convenience method to send a notification that autocancels.
+	 * @see sendNotification(Context,String,int,String,int,NotificationManager,Class,boolean)
+	 */
+	public static void sendNotification(final Context ctx, final String text, 
+	        final int iconId, final String title, NotificationManager notifMgr, 
+	        final int notifId, final Class classToStart) {
+	    
+	    sendNotification(ctx, text, iconId, title, notifId, notifMgr, classToStart, 
+	            true);
+	}
+	
+	/**
+	 * Encapsulation of the code needed to send a notification.  
+	 * @param ctx The context in which this notification is being sent.  Usually 
+	 * the Activity.
+	 * @param text The text of the notification.
+	 * @param iconId The id of icon to use in the notification.
+	 * @param title The header title of the notification.
+	 * @param notifId The number you would like to use to identify this notification.
+	 * @param notifMgr The NotificationManager to send the notification through.
+	 * @param classToStart The class to start when the notification is tapped on.
+	 * @param autoCancel True if the notification should automatically disappear 
+	 * from the queue when tapped on.
+	 */
+	public static void sendNotification(final Context ctx, final String text, 
+	        final int iconId, final String title, final int notifId, 
+	        final NotificationManager notifMgr, final Class classToStart, 
+	        final boolean autoCancel) {
+	    PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0,
+                new Intent(ctx, classToStart), 0);
+	    
+        Notification notif = new Notification(iconId, text,
+                System.currentTimeMillis());
+        
+        if (autoCancel) {
+            notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
+        }
+        
+        notif.setLatestEventInfo(ctx, title, text, contentIntent);
+        
+        notifMgr.notify(notifId, notif);
+	}
 }
 

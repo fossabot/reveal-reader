@@ -207,6 +207,7 @@ public class YbkProvider extends ContentProvider {
 
     private DatabaseHelper mOpenHelper;
     private String mLibraryDir = "/sdcard/reveal/ebooks/";
+    private File mImagesDir;
     private SharedPreferences mSharedPref;
     private String mHistoryEntryAmount; 
     
@@ -524,6 +525,7 @@ public class YbkProvider extends ContentProvider {
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
+        mImagesDir = new File(mLibraryDir + "images/");
         mHistoryEntryAmount = mSharedPref.getString("default_history_entry_amount", "30");
         return true;
     }
@@ -733,7 +735,7 @@ public class YbkProvider extends ContentProvider {
                 throw new IllegalStateException("Book (" + fileName + ") was not updated. (bookId: " + bookId + ")");
             }
         } catch (IOException ioe) {
-            throw new IllegalStateException("Could not update the book");
+            throw new IllegalStateException("Could not update the book. " + ioe.getMessage());
         }
 
         populateOrder(readOrderCfg(file, bookId), bookId);
@@ -1037,39 +1039,47 @@ public class YbkProvider extends ContentProvider {
         Log.d(TAG,"In openFile. URI is: " + uri.toString());
         
         HashMap<Uri, File> tempImgFiles = mTempImgFiles;
-        File f = null;
+        File outFile = null;
         
         String strUri = uri.toString();
         String fileExt = strUri.substring(strUri.lastIndexOf("."));
         
         if (".jpg .gif".contains(fileExt)) {
             if (tempImgFiles.containsKey(uri)) {
-                f = tempImgFiles.get(uri);
+                outFile = tempImgFiles.get(uri);
             } else {
-                try {
-                    f = File.createTempFile("reveal_img", fileExt, null);
-                    f.deleteOnExit();
-                } catch (IOException ioe) {
-                    throw new FileNotFoundException("Could not create a temporary file. " 
-                            + ioe.getMessage() + " " + ioe.getCause());
+                String strCUri = CONTENT_URI.toString();
+                int cUriLength = strCUri.length();
+                String uriFileName = strUri.substring(cUriLength);
+                
+                String[] fileParts = uriFileName.split("/");
+                String tempFileName = "";
+                for(int i=1; i < fileParts.length; i++) {
+                    tempFileName += fileParts[i] + "_";
                 }
+                tempFileName = tempFileName.substring(0, tempFileName.length()-1);
                 
-                HashMap<String,String> chapterMap = Util.getFileNameChapterFromUri(strUri, mLibraryDir, false);
-                String fileName = chapterMap.get("book");
-                String chapter = chapterMap.get("chapter");
-                RandomAccessFile file = new RandomAccessFile(fileName, "r");
-                
-                try {
-                    byte[] contents = readInternalBinaryFile(file, fileName, chapter);
-                    BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(f),BUFFER_SIZE);
-                    out.write(contents);
-                    out.flush();
-                } catch (IOException e) {
-                    throw new FileNotFoundException("Could not write internal file to temp file. " 
-                            + e.getMessage() + " " + e.getCause());
+                outFile = new File(mImagesDir, tempFileName);
+                outFile.deleteOnExit();
+                     
+                if (!outFile.exists()) {
+                    HashMap<String,String> chapterMap = Util.getFileNameChapterFromUri(strUri, mLibraryDir, false);
+                    String fileName = chapterMap.get("book");
+                    String chapter = chapterMap.get("chapter");
+                    RandomAccessFile file = new RandomAccessFile(fileName, "r");
+                    
+                    try {
+                        byte[] contents = readInternalBinaryFile(file, fileName, chapter);
+                        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),BUFFER_SIZE);
+                        out.write(contents);
+                        out.flush();
+                    } catch (IOException e) {
+                        throw new FileNotFoundException("Could not write internal file to temp file. " 
+                                + e.getMessage() + " " + e.getCause());
+                    }
                 }
+                tempImgFiles.put(uri, outFile);
                 
-                tempImgFiles.put(uri, f);
             }
         } else {
             Log.i(TAG, "openFile was called for non-image URI: " + uri);
@@ -1079,7 +1089,7 @@ public class YbkProvider extends ContentProvider {
         if (mode.equalsIgnoreCase("rw"))
             m = ParcelFileDescriptor.MODE_READ_WRITE;
         
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(f,m);
+        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(outFile,m);
         
         return pfd;
    }

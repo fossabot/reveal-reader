@@ -65,6 +65,7 @@ public class Main extends ListActivity implements OnGestureListener {
     private boolean BOOLshowSplashScreen;
     private boolean BOOLshowFullScreen;
     private String mLibraryDir;
+    private File mImagesDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
     private final Handler mUpdateLibHandler = new Handler();
@@ -165,7 +166,7 @@ public class Main extends ListActivity implements OnGestureListener {
     private void createDefaultDirs() {
         // Create the /sdcard/reveal and eBooks dir if they don't exist
         // Notify of creation and maybe put people directly into the TitleBrowser if they don't have ANY ybk's
-         File revealdir = new File("/sdcard/reveal");
+        File revealdir = new File("/sdcard/reveal");
         if (!revealdir.exists()) {
         	 revealdir.mkdirs();
              Log.i(Global.TAG, "Create reveal dir on sdcard ok");
@@ -174,6 +175,12 @@ public class Main extends ListActivity implements OnGestureListener {
         if (!ebooksdir.exists()) {
         	 ebooksdir.mkdirs();
              Log.i(Global.TAG, "Create ebooks dir on sdcard ok");
+        }
+
+        mImagesDir = new File(mLibraryDir + "images/");
+        if (!mImagesDir.exists()) {
+             mImagesDir.mkdirs();
+             Log.i(Global.TAG, "Create images dir on sdcard ok");
         }
     }
     
@@ -218,23 +225,11 @@ public class Main extends ListActivity implements OnGestureListener {
         if (!libraryDir.exists()) {
             if (!libraryDir.mkdirs()) {
                 
-                PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                        new Intent(this, Main.class), 0);
-
-
-                CharSequence notifText = getResources().getText(LIBRARY_NOT_CREATED);
+                // Send a notice that the ebook library folder couldn't be created
+                Util.sendNotification(this, (String) getResources().getText(LIBRARY_NOT_CREATED), 
+                        android.R.drawable.stat_sys_warning, "Couldn't make eBook Library", 
+                        mNotifMgr, mNotifId++, Main.class);
                 
-                Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
-                        notifText,
-                        System.currentTimeMillis());
-                
-                notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
-                
-                notif.setLatestEventInfo(this, "eBook Library Refresh", 
-                        notifText, 
-                        contentIntent);
-                
-                mNotifMgr.notify(mNotifId++, notif);
             }
         }
         
@@ -265,6 +260,13 @@ public class Main extends ListActivity implements OnGestureListener {
                 }
                 
                 if (!fileFoundInDb) {
+                    if (!neededRefreshing) {
+                        // if the neededRefreshing flag is not set yet
+                        Util.sendNotification(this, "Refreshing the library", 
+                            android.R.drawable.stat_notify_more, "Library Refresh", 
+                            mNotifMgr, mNotifId++, Main.class);
+                    }
+                    
                     neededRefreshing = true;
                     ContentValues values = new ContentValues();
                     values.put(YbkProvider.FILE_NAME, dirFilename);
@@ -274,9 +276,6 @@ public class Main extends ListActivity implements OnGestureListener {
                             YbkProvider.BINDING_TEXT + " is not null", null,
                             " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
                     
-                    PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                            new Intent(this, Main.class), 0);
-
                     int lastSlashPos = dirFilename.lastIndexOf('/');
                     int lastDotPos = dirFilename.lastIndexOf('.');
                     String bookName = dirFilename;
@@ -284,18 +283,10 @@ public class Main extends ListActivity implements OnGestureListener {
                         bookName = dirFilename.substring(lastSlashPos + 1, lastDotPos);
                     }
 
-                    CharSequence notifText = "Added '" + bookName + "' to the book menu";
-                    Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
-                            notifText,
-                            System.currentTimeMillis());
-                    
-                    notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
-                    
-                    notif.setLatestEventInfo(this, "eBook Library Refresh", 
-                            notifText, 
-                            contentIntent);
-                    
-                    mNotifMgr.notify(mNotifId++, notif);
+                    Util.sendNotification(this, "Added '" + bookName + "' to the library", 
+                            android.R.drawable.stat_notify_more, "Library Refresh", 
+                            mNotifMgr, mNotifId++, Main.class);
+
                 }
             }            
             
@@ -336,22 +327,11 @@ public class Main extends ListActivity implements OnGestureListener {
         fileCursor.close();
         
         if (neededRefreshing) {
-            PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                    new Intent(this, Main.class), 0);
 
+            Util.sendNotification(this, "Refreshing of library complete.", 
+                    android.R.drawable.stat_notify_more, "Library Refresh", 
+                    mNotifMgr, mNotifId++, Main.class);
 
-            CharSequence notifText = "Refreshing of eBook menu complete.";
-            Notification notif = new Notification(android.R.drawable.stat_sys_warning, 
-                    notifText,
-                    System.currentTimeMillis());
-            
-            notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
-            
-            notif.setLatestEventInfo(this, "eBook Library Refresh", 
-                    notifText, 
-                    contentIntent);
-            
-            mNotifMgr.notify(mNotifId++, notif);
         }
         
     }

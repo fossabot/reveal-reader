@@ -6,6 +6,7 @@ import java.util.Stack;
 
 import android.app.Dialog;
 import android.app.ListActivity;
+import android.app.NotificationManager;
 import android.content.AsyncQueryHandler;
 import android.content.ContentUris;
 import android.content.Context;
@@ -38,7 +39,8 @@ public class TitleBrowser extends ListActivity {
 	private static final int UPDATE_ID = Menu.FIRST;
 	private static final int UPDATE_TOKEN = 12; // random number
 	private static String mDownloadServer = "http://www.thecoffeys.net/ebooks/default.asp?action=download&ID=";
-
+	private NotificationManager mNotifMgr;
+	private int mNotifId = 0;
 	private static final String TAG = "Reveal TitleBrowser";
 	private SimpleCursorAdapter mAdapter;
 	private Stack<Uri> mBreadCrumb;
@@ -65,7 +67,8 @@ public class TitleBrowser extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
+		
 		mBreadCrumb = new Stack<Uri>();
 
 		mDownloadSuccess = false;
@@ -361,11 +364,13 @@ public class TitleBrowser extends ListActivity {
 		mDownloadUrl = null;
 
 		if (mDownloadSuccess) {
-			Toast.makeText(this, R.string.ebook_download_complete,
-					Toast.LENGTH_SHORT).show();
+			Util.sendNotification(this, (String) getResources().getText(R.string.ebook_download_complete), 
+			        android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
+			        mNotifMgr, mNotifId++, Main.class);
 		} else {
-			Toast.makeText(this, R.string.ebook_download_failed,
-					Toast.LENGTH_SHORT).show();
+	        Util.sendNotification(this, (String) getResources().getText(R.string.ebook_download_failed), 
+                    android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
+                    mNotifMgr, mNotifId++, TitleBrowser.class);
 		}
 		mBusy = false;
 	}

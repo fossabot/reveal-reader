@@ -8,7 +8,6 @@
        android:orientation="horizontal"
        android:layout_height="wrap_content"
        android:layout_width="fill_parent"
-       android:textSize="@dimen/font_size"
        android:padding="5dip"
        >
         <ImageButton android:id="@+id/mainMenu"
@@ -25,7 +24,8 @@
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:visibility="invisible"
-              android:textSize="@dimen/button_font_size"/>
+              android:textSize="@dimen/button_font_size"
+              />
     </LinearLayout>
     <WebView android:id="@+id/ybkView"
           android:layout_width="fill_parent"
