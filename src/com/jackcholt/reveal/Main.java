@@ -443,9 +443,11 @@ public class Main extends ListActivity implements OnGestureListener {
         	Intent browserIntent = new Intent(this, TitleBrowser.class);
         	startActivity(browserIntent);
         	return true;
-        case REVELUPDATE_ID:
+        case REVELUPDATE_ID: {
+        	Toast.makeText(this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
         	UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
         	return true;
+        }
         case ABOUT_ID:
         	AboutDialog.create(this);
         	return true;

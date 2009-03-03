@@ -5,11 +5,13 @@
 <string name="no_books_xml">No eBook Information Downloaded. Please wait while we go online and refresh the eBook catalog...  eBook categories will appear on this screen once they are downloaded</string>
 <string name="menu_bookmark">Quickmark</string>
 <string name="menu_history">eBook History</string>
-<string name="menu_settings">Program Settings</string><string name="menu_refresh_library">Refresh eBook Library</string><string name="label_splash_screen">Disable Splash Screen</string>
+<string name="menu_settings">Program Settings</string>
+<string name="menu_refresh_library">Refresh eBook Library</string>
+<string name="label_splash_screen">Enable Splash Screen</string>
 <string name="menu_browser">Online eBook Download</string>
 <string name="settings_name">Reveal Settings</string>
-<string name="summary_on_show_splash_screen">Splash Screen disabled</string>
-<string name="summary_off_show_splash_screen">Splash Screen enabled</string>
+<string name="summary_on_show_splash_screen">Splash Screen enabled</string>
+<string name="summary_off_show_splash_screen">Splash Screen disabled</string>
 <string name="up_one_level">..</string>
 <string name="reveal_ybk_view">Reveal :: Read eBook</string>
 <string name="reference_not_found">The referenced eBook ({0}) cannot be found.</string>
@@ -39,8 +41,9 @@
 <string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
 <string name="ebook_update_complete">Finished Updating eBook Catalog</string>
 <string name="author">Jack Holt, Dave Packham, Joe Wiggins, Adam Gessel</string>
-<string name="contact">If you would like to donate via PayPal to our developers use the below addresses.  jackcholt@gmail.com, dave@thepackhams.com</string>
+<string name="contact">Contact Info for our developers.  jackcholt@gmail.com dave@thepackhams.com</string>
 <string name="website">http://revealreader.thepackhams.com</string>
+<string name="donate">If you would like to donate via PayPal to our developers use the below addresses.  jackcholt@gmail.com, dave@thepackhams.com</string>
 <string name="close">Close</string>
 <string name="title_download_url">http://revealreader.thepackhams.com/revealVersion.xml</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
