@@ -19,6 +19,8 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -45,8 +47,10 @@ public class TitleBrowser extends ListActivity {
 	private boolean mDownloadSuccess;
 	private URL mDownloadUrl = null;
 	private URL mFileLocation = null;
-	SharedPreferences mSharedPref;
+	private SharedPreferences mSharedPref;
 	private boolean mBusy = false;
+    private boolean BOOLshowFullScreen;
+
 
 	final Handler mHandler = new Handler();
 
@@ -66,6 +70,14 @@ public class TitleBrowser extends ListActivity {
 
 		mDownloadSuccess = false;
 
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
+    	
+        if (BOOLshowFullScreen) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE); 
+        }
+   		
 		setContentView(R.layout.browser_main);
 
 		mQueryHandler = new QueryHandler(this);
@@ -106,7 +118,7 @@ public class TitleBrowser extends ListActivity {
 		
 		updateScreen();
 
-		mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		//mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 	}
 	
 	@Override

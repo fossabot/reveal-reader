@@ -25,6 +25,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -42,6 +43,7 @@ public class YbkViewActivity extends Activity {
     private String mLibraryDir;
     private SharedPreferences mSharedPref;
     private boolean mShowPictures;
+    private boolean BOOLshowFullScreen;
     private String mFragment;
     private String mDialogFilename = "Never set";
     private String mChapBtnText = "Not Set";
@@ -68,6 +70,14 @@ public class YbkViewActivity extends Activity {
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         mShowPictures = mSharedPref.getBoolean("show_pictures", true);
         
+        //mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
+    	
+        if (BOOLshowFullScreen) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE); 
+        }
+         
         setContentView(R.layout.view_ybk);
 
         final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  

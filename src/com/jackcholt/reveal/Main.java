@@ -27,6 +27,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector.OnGestureListener;
 import android.widget.ListView;
@@ -61,6 +63,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
     private SharedPreferences mSharedPref;
     private boolean BOOLshowSplashScreen;
+    private boolean BOOLshowFullScreen;
     private String mLibraryDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
@@ -108,10 +111,18 @@ public class Main extends ListActivity implements OnGestureListener {
 
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
 
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
+    	
+        if (BOOLshowFullScreen) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE); 
+        }
+        
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
        
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        //mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
   
         //To capture LONG_PRESS gestures
@@ -121,7 +132,7 @@ public class Main extends ListActivity implements OnGestureListener {
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
         if (!configChanged) {
-        	mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        	//mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         	BOOLshowSplashScreen = mSharedPref.getBoolean("show_splash_screen", true);
             
           	if (BOOLshowSplashScreen) { 

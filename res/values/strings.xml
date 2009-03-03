@@ -72,4 +72,7 @@
 <dimen name="button_font_size">12sp</dimen>
 <string name="helpdialog_no_ebooks">You have no eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks.</string>
 <string name="helpdialog_if_you_need_help">If you need more help with Reveal Reader please visit the website and forums listed below.</string>
+<string name="label_fullscreen">Enable Fullscreen View</string>
+<string name="summary_on_fullscreen">Fullscreen will display</string>
+<string name="summary_off_fullscreen">Fullscreen will not Display</string>
 </resources>
