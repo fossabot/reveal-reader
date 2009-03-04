@@ -68,6 +68,9 @@ public class YbkViewActivity extends Activity {
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
+        if(!mLibraryDir.endsWith("/")) {
+        	mLibraryDir = mLibraryDir + "/";
+        }
         mShowPictures = mSharedPref.getBoolean("show_pictures", true);
         
         //mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);

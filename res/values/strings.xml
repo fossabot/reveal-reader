@@ -75,4 +75,5 @@
 <string name="label_fullscreen">Enable Fullscreen View</string>
 <string name="summary_on_fullscreen">Fullscreen will display</string>
 <string name="summary_off_fullscreen">Fullscreen will not Display</string>
+<string name="support_btn">Support</string>
 </resources>

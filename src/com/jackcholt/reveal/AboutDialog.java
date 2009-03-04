@@ -30,7 +30,8 @@ public class AboutDialog extends Dialog {
                         " : " + getContext().getPackageManager().getPackageInfo
                         (getContext().getPackageName(), PackageManager.GET_ACTIVITIES).versionName;
                                  
-                        //String.format("This is a string %s, this is a decimal %d", R.string.helpdialog_no_ebooks, Global.SVN_VERSION);
+                        //Grab the Global updated version instead of a static one
+                        title += String.format(" %d", Global.SVN_VERSION);
                         
                         setTitle(title);
          

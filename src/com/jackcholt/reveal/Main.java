@@ -125,7 +125,9 @@ public class Main extends ListActivity implements OnGestureListener {
        
         //mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-  
+        if(!mLibraryDir.endsWith("/")) {
+        	mLibraryDir = mLibraryDir + "/";
+        }
         //To capture LONG_PRESS gestures
         gestureScanner = new GestureDetector(this); 
         registerForContextMenu(getListView());
@@ -166,7 +168,8 @@ public class Main extends ListActivity implements OnGestureListener {
     private void createDefaultDirs() {
         // Create the /sdcard/reveal and eBooks dir if they don't exist
         // Notify of creation and maybe put people directly into the TitleBrowser if they don't have ANY ybk's
-        File revealdir = new File("/sdcard/reveal");
+    	//Must end in a SLASH
+        File revealdir = new File("/sdcard/reveal/");
         if (!revealdir.exists()) {
         	 revealdir.mkdirs();
              Log.i(Global.TAG, "Create reveal dir on sdcard ok");
@@ -396,7 +399,10 @@ public class Main extends ListActivity implements OnGestureListener {
         SharedPreferences sharedPref = mSharedPref;
         
         String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-        
+        if(!mLibraryDir.endsWith("/")) {
+        	mLibraryDir = mLibraryDir + "/";
+        }
+          
         mCurrentDirectory = new File(libDir);
     }
     

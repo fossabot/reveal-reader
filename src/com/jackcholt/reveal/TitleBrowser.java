@@ -328,13 +328,16 @@ public class TitleBrowser extends ListActivity {
 
 						Thread t = new Thread() {
 							public void run() {
-								String libDir = mSharedPref.getString(
+								String mLibraryDir = mSharedPref.getString(
 										"default_ebook_dir",
 										"/sdcard/reveal/ebooks/");
+							        if(!mLibraryDir.endsWith("/")) {
+							        	mLibraryDir = mLibraryDir + "/";
+							        }
 
 								try {
 									mDownloadSuccess = Util.fetchAndLoadTitle(
-											mFileLocation, mDownloadUrl, libDir,
+											mFileLocation, mDownloadUrl, mLibraryDir,
 											context);
 								} catch (IllegalStateException e) {
 									mDownloadSuccess = false;
