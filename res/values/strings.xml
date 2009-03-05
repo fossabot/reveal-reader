@@ -3,7 +3,7 @@
 <string name="app_name">Reveal</string>
 <string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks.</string>
 <string name="no_books_xml">No eBook Information Downloaded. Please wait while we go online and refresh the eBook catalog...  eBook categories will appear on this screen once they are downloaded</string>
-<string name="menu_bookmark">Quickmark</string>
+<string name="menu_bookmark">Bookmarks</string>
 <string name="menu_history">eBook History</string>
 <string name="menu_settings">Program Settings</string>
 <string name="menu_refresh_library">Refresh eBook Library</string>
@@ -56,7 +56,7 @@
 <string name="ebook_download_failed_url">Unable to download eBook at given location.</string>
 <string name="ebook_download_complete">eBook Download Complete</string>
 <string name="ebook_exists_still_download">This eBook already exists in your library.  Would you like to replace it with a new copy?</string>
-<string name="update_available"><b>Update Available</b>Reveal update available, Please check the Google App Market</string>
+<string name="update_available"><b>Update Available</b>Reveal update available, Please check Android Market</string>
 <string name="checking_for_new_version_online">Checking for new Version Online</string>
 <string name="version_you_are_running">Version you are running SVN rev </string>
 <string name="splash">Splash Screen Here</string>
@@ -76,4 +76,5 @@
 <string name="summary_on_fullscreen">Fullscreen will display</string>
 <string name="summary_off_fullscreen">Fullscreen will not Display</string>
 <string name="support_btn">Support</string>
+<string name="book_not_loaded">Could not open the eBook.</string>
 </resources>

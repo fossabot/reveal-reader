@@ -41,7 +41,7 @@ public class Main extends ListActivity implements OnGestureListener {
     //public final static int DISPLAYMODE_ABSOLUTE = 0;
     //public final static int DISPLAYMODE_RELATIVE = 1;
     
-    //private static final int HISTORY_ID = Menu.FIRST;
+    private static final int HISTORY_ID = Menu.FIRST;
     //private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
@@ -51,6 +51,7 @@ public class Main extends ListActivity implements OnGestureListener {
     private int mNotifId = 0;
 
     private static final int ACTIVITY_SETTINGS = 0;
+    private static final int ACTIVITY_HISTORY = 1;
     private static final int LIBRARY_NOT_CREATED = 0;
     //private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
@@ -111,7 +112,8 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreate(savedInstanceState);
 
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
-
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
     	
@@ -241,7 +243,6 @@ public class Main extends ListActivity implements OnGestureListener {
         if (ybkFiles != null && addNewBooks) {
             // add books that are not in the database
             // Notify that we are getting NEW list of eBooks
-            // Toast.makeText(this, "Updating eBook list", Toast.LENGTH_SHORT).show();
             Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
             
             for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
@@ -266,18 +267,9 @@ public class Main extends ListActivity implements OnGestureListener {
                     if (!neededRefreshing) {
                         // if the neededRefreshing flag is not set yet
                         Util.sendNotification(this, "Refreshing the library", 
-                            android.R.drawable.stat_notify_more, "Library Refresh", 
+                            android.R.drawable.stat_notify_more, "Reveal Library Refresh", 
                             mNotifMgr, mNotifId++, Main.class);
                     }
-                    
-                    neededRefreshing = true;
-                    ContentValues values = new ContentValues();
-                    values.put(YbkProvider.FILE_NAME, dirFilename);
-                    contRes.insert(bookUri, values);
-                
-                    mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
-                            YbkProvider.BINDING_TEXT + " is not null", null,
-                            " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
                     
                     int lastSlashPos = dirFilename.lastIndexOf('/');
                     int lastDotPos = dirFilename.lastIndexOf('.');
@@ -285,10 +277,27 @@ public class Main extends ListActivity implements OnGestureListener {
                     if (lastSlashPos != -1 && lastDotPos != -1) {
                         bookName = dirFilename.substring(lastSlashPos + 1, lastDotPos);
                     }
-
-                    Util.sendNotification(this, "Added '" + bookName + "' to the library", 
-                            android.R.drawable.stat_notify_more, "Library Refresh", 
-                            mNotifMgr, mNotifId++, Main.class);
+                    
+                    neededRefreshing = true;
+                    ContentValues values = new ContentValues();
+                    values.put(YbkProvider.FILE_NAME, dirFilename);
+                    Uri uri = contRes.insert(bookUri, values);
+                    
+                    String bookId = uri.getLastPathSegment();
+                    
+                    if (Integer.parseInt(bookId) > 0) {
+                        mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+                                YbkProvider.BINDING_TEXT + " is not null", null,
+                                " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
+    
+                        Util.sendNotification(this, "Added '" + bookName + "' to the library", 
+                                android.R.drawable.stat_notify_more, "Reveal Library Refresh", 
+                                mNotifMgr, mNotifId++, Main.class);
+                    } else {
+                        Util.sendNotification(this, "Could not add '" + bookName + "'. Bad file?", 
+                                android.R.drawable.stat_sys_warning, "Reveal Library Refresh", 
+                                mNotifMgr, mNotifId++, Main.class);                        
+                    }
 
                 }
             }            
@@ -332,7 +341,7 @@ public class Main extends ListActivity implements OnGestureListener {
         if (neededRefreshing) {
 
             Util.sendNotification(this, "Refreshing of library complete.", 
-                    android.R.drawable.stat_notify_more, "Library Refresh", 
+                    android.R.drawable.stat_notify_more, "Reveal Library Refresh", 
                     mNotifMgr, mNotifId++, Main.class);
 
         }
@@ -395,6 +404,8 @@ public class Main extends ListActivity implements OnGestureListener {
     public void onResume() {
         super.onResume();
         
+        setProgressBarIndeterminateVisibility(false);
+        
         // Set preferences from Setting screen
         SharedPreferences sharedPref = mSharedPref;
         
@@ -409,8 +420,8 @@ public class Main extends ListActivity implements OnGestureListener {
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         super.onCreateOptionsMenu(menu);
-        //menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
-        //    .setIcon(android.R.drawable.ic_menu_recent_history);
+        menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
+            .setIcon(android.R.drawable.ic_menu_recent_history);
         //menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
         //    .setIcon(android.R.drawable.ic_menu_compass);
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
@@ -432,31 +443,43 @@ public class Main extends ListActivity implements OnGestureListener {
         case REFRESH_LIB_ID:
             updateBookList();
             return true;
+            
         case SETTINGS_ID:
             Intent intent = new Intent(this, Settings.class);
             startActivityForResult(intent, ACTIVITY_SETTINGS);
             return true;
+            
         case BROWSER_ID:
         	Intent browserIntent = new Intent(this, TitleBrowser.class);
         	startActivity(browserIntent);
         	return true;
-        case REVELUPDATE_ID: {
+        	
+        case REVELUPDATE_ID: 
         	Toast.makeText(this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
         	UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
         	return true;
-        }
-        case ABOUT_ID:
+        	
+        case ABOUT_ID: 
         	AboutDialog.create(this);
         	return true;
-        //case HISTORY_ID:
-        //	startActivity(new Intent(this, HistoryDialog.class));
-        //	return true;
+        
+        case HISTORY_ID: 
+        	startActivity(new Intent(this, HistoryDialog.class));
+        	return true;
+        	
 
         }
        
         return super.onMenuItemSelected(featureId, item);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        
+    }
+    
     /**
      * This function browses to the
      * root-directory of the file-system.
@@ -511,14 +534,16 @@ public class Main extends ListActivity implements OnGestureListener {
 
     @Override
     protected void onListItemClick(final ListView listView, final View view, 
-            
             final int selectionRowId, final long id) {
+        
+        setProgressBarIndeterminateVisibility(true);        
         
         Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
         
         Intent intent = new Intent(this, YbkViewActivity.class);
         intent.putExtra(YbkProvider._ID, id);
         startActivity(intent);
+        
     }
     
     /**

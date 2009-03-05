@@ -29,7 +29,7 @@
 		<activity android:name=".TitleBrowser" android:label="@string/title_browser_name"  android:screenOrientation="sensor"/>
 		<provider android:name=".TitleProvider" android:multiprocess="true" android:authorities="com.jackcholt.reveal.titles"/>
 		
-<activity android:multiprocess="true" android:name=".HistoryDialog" android:label="@string/app_name" android:screenOrientation="sensor"></activity>
-</application>
+        <activity android:multiprocess="true" android:name=".HistoryDialog" android:label="@string/menu_history" android:screenOrientation="sensor"/>
+    </application>
 
 </manifest> 

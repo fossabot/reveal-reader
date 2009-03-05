@@ -71,6 +71,7 @@ public class YbkProvider extends ContentProvider {
     public static final String CREATE_DATETIME = "create_datetime";
     public static final String BOOKMARK_NUMBER = "bookmark_id";
     public static final int GET_LAST_HISTORY = 0;
+    public static final String FROM_HISTORY = "from history";
     
     /** Is the chapter a navigation chapter? Data type: INTEGER. 
      *  Use {@link CHAPTER_TYPE_NO_NAV} and 
@@ -463,14 +464,14 @@ public class YbkProvider extends ContentProvider {
 
             rowId = populateBook(values.getAsString(FILE_NAME));
             
-            if (rowId > 0) {
-                Uri bookUri = ContentUris.withAppendedId(
-                        Uri.withAppendedPath(CONTENT_URI, "book"), rowId);
-                getContext().getContentResolver().notifyChange(bookUri, null);
-                return bookUri;
-            }
+            //if (rowId > 0) {
+            Uri bookUri = ContentUris.withAppendedId(
+                    Uri.withAppendedPath(CONTENT_URI, "book"), rowId);
+            getContext().getContentResolver().notifyChange(bookUri, null);
+            return bookUri;
+            //}
             
-            break;
+            //break;
 
         case HISTORIES:
             if (values.containsKey(BOOK_ID) == false 
@@ -598,30 +599,32 @@ public class YbkProvider extends ContentProvider {
             break;
             
         case HISTORY:
-            
+            SQLiteDatabase db = mOpenHelper.getReadableDatabase();
             String histId = uri.getPathSegments().get(2);
+            String query;
             if (Integer.parseInt(histId) == GET_LAST_HISTORY) {
-                SQLiteDatabase db = mOpenHelper.getReadableDatabase();
                 
-                String query = "SELECT b." + FILE_NAME +", " +
+                query = "SELECT b." + FILE_NAME +", " +
                     CHAPTER_NAME + ", " + SCROLL_POS + 
                     " FROM " + HISTORY_TABLE_NAME + " AS h, " + BOOK_TABLE_NAME + " AS b " +
                     " WHERE b." + _ID + "=h." + BOOK_ID +
                     " ORDER BY " + CREATE_DATETIME + " DESC LIMIT 1";
                 
-                Cursor c = db.rawQuery(query, null);
-
-                    
-                // Tell the cursor what uri to watch, so it knows when its source data changes
-                c.setNotificationUri(getContext().getContentResolver(), uri);
-                return c;
                     
             } else {
-                qb.setTables(HISTORY_TABLE_NAME);
-                where = _ID + "=" + histId;
+                query = "SELECT h." + BOOK_ID + ", b." + FILE_NAME +", " +
+                    CHAPTER_NAME + ", " + SCROLL_POS + ", " + HISTORY_TITLE + " " +
+                    " FROM " + HISTORY_TABLE_NAME + " AS h, " + BOOK_TABLE_NAME + " AS b " +
+                    " WHERE b." + _ID + "=h." + BOOK_ID +
+                    " AND h." + _ID + "=" + histId;
             }
+
+            Cursor c = db.rawQuery(query, null);
+
             
-            break;
+            // Tell the cursor what uri to watch, so it knows when its source data changes
+            c.setNotificationUri(getContext().getContentResolver(), uri);
+            return c;            
             
         case BOOKMARKS:
             qb.setTables(HISTORY_TABLE_NAME);
@@ -693,6 +696,8 @@ public class YbkProvider extends ContentProvider {
      */
     private long populateBook(final String fileName) {
       
+        long bookId = 0;
+        
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         
         RandomAccessFile file = null;
@@ -707,41 +712,48 @@ public class YbkProvider extends ContentProvider {
         ContentValues values = new ContentValues();
         values.put(YbkProvider.FILE_NAME, fileName);
 
-        long bookId = db.insert(BOOK_TABLE_NAME, METADATA, values);
-        
-        if (bookId == -1) {
-            // we'll assume the fileName is already in the db and continue
-            Log.w(TAG, "Unable to insert book (" + 
-                    fileName + ") into the database.  Must already be in the database.");
-        }
-        
+        db.beginTransaction();
         try {
-            populateChapters(file, bookId);
-        } catch (IOException ioe) {
-            Log.e(TAG, fileName + "'s chapters could not be populated", ioe);
-        }
-        
-        values.clear();
-        try {
-            String bindingText = readBindingFile(file, bookId);
-            if (bindingText != null) {
-                values.put(BINDING_TEXT, bindingText);
-                String title = Util.getBookTitleFromBindingText(bindingText);
-                values.put(BOOK_TITLE, title);
-                values.put(SHORT_TITLE,Util.getBookShortTitleFromBindingText(bindingText));
-                values.put(FORMATTED_TITLE,Util.formatTitle(title));
-            }
-            values.put(METADATA, readMetaData(file, bookId));
+            bookId = db.insert(BOOK_TABLE_NAME, METADATA, values);
             
-            int count = db.update(BOOK_TABLE_NAME, values, _ID + "=" + bookId, null);
-            if (count != 1) {
-                throw new IllegalStateException("Book (" + fileName + ") was not updated. (bookId: " + bookId + ")");
+            if (bookId == -1) {
+                // we'll assume the fileName is already in the db and continue
+                Log.w(TAG, "Unable to insert book (" + 
+                        fileName + ") into the database.  Must already be in the database.");
             }
-        } catch (IOException ioe) {
-            throw new IllegalStateException("Could not update the book. " + ioe.getMessage());
+            
+            try {
+                populateChapters(file, bookId);
+            } catch (IOException ioe) {
+                Log.e(TAG, fileName + "'s chapters could not be populated", ioe);
+            }
+            
+            values.clear();
+            try {
+                String bindingText = readBindingFile(file, bookId);
+                if (bindingText != null) {
+                    values.put(BINDING_TEXT, bindingText);
+                    String title = Util.getBookTitleFromBindingText(bindingText);
+                    values.put(BOOK_TITLE, title);
+                    values.put(SHORT_TITLE,Util.getBookShortTitleFromBindingText(bindingText));
+                    values.put(FORMATTED_TITLE,Util.formatTitle(title));
+                }
+                values.put(METADATA, readMetaData(file, bookId));
+                
+                int count = db.update(BOOK_TABLE_NAME, values, _ID + "=" + bookId, null);
+                if (count != 1) {
+                    throw new IllegalStateException("Book (" + fileName + ") was not updated. (bookId: " + bookId + ")");
+                }
+                populateOrder(readOrderCfg(file, bookId), bookId);
+                
+                db.setTransactionSuccessful();
+            } catch (IOException ioe) {
+                Log.e(TAG,"Could not update the book. " + ioe.getMessage());
+                bookId = 0;
+            }
+        } finally {
+            db.endTransaction();
         }
-
-        populateOrder(readOrderCfg(file, bookId), bookId);
         
         return bookId;
     }

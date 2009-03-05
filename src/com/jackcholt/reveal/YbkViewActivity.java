@@ -14,6 +14,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -31,6 +32,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
@@ -55,16 +57,62 @@ public class YbkViewActivity extends Activity {
     private static final int INVALID_CHAPTER = 2;
     private static final int PREVIOUS_ID = Menu.FIRST;
     private static final int NEXT_ID = Menu.FIRST + 1;
+    private static final int HISTORY_ID = Menu.FIRST + 2;
     
     @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        if (!requestWindowFeature(Window.FEATURE_PROGRESS)) {
+        if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }
-        getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
+        
+        setProgressBarIndeterminateVisibility(true);
+
+        Long bookId = null;
+        Boolean isFromHistory = null;
+
+        HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
+        if (statusMap != null) {
+            mBookId = bookId = (Long) statusMap.get("bookId");
+            mBookFileName = (String) statusMap.get("bookFileName");
+            mChapFileName = (String) statusMap.get("chapFileName");
+            mHistTitle = (String) statusMap.get("histTitle");
+        } else { 
+
+            if (savedInstanceState != null) {
+                bookId = (Long) savedInstanceState.get(YbkProvider._ID);            
+                isFromHistory = (Boolean) savedInstanceState.get(YbkProvider.FROM_HISTORY);
+            } else {
+                Bundle extras = getIntent().getExtras();
+                if (extras != null) {
+                    isFromHistory = (Boolean) extras.get(YbkProvider.FROM_HISTORY);
+                    bookId = (Long) extras.get(YbkProvider._ID);
+                }
+            }
+            
+            if (isFromHistory != null) {
+                // bookId is actually the history id
+                Cursor histCurs = getContentResolver().query(
+                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), bookId), 
+                        null, null, null, null);
+                
+                if (histCurs.moveToFirst()) {
+                    bookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
+                    mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
+                    mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
+                    mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
+                }
+            }
+        }    
+        
+        if (bookId == null) {
+            Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
+            finish();
+        }
+
+        mBookId = bookId;
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
@@ -73,7 +121,6 @@ public class YbkViewActivity extends Activity {
         }
         mShowPictures = mSharedPref.getBoolean("show_pictures", true);
         
-        //mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
     	
         if (BOOLshowFullScreen) {
@@ -120,53 +167,22 @@ public class YbkViewActivity extends Activity {
             }
             
         });
+                    
+        ContentResolver contRes = getContentResolver();
+        Cursor bookCursor = contRes.query(
+                ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
+                        bookId),
+                new String[] {YbkProvider.FILE_NAME}, null, null, null);
         
-        Long bookId = savedInstanceState != null 
-        ? (Long) savedInstanceState.get(YbkProvider._ID)
-        : null;
-        
-        if (null == bookId) {
-            Bundle extras = getIntent().getExtras();
-            bookId = extras != null
-                ? (Long) extras.get(YbkProvider._ID)
-                : null;
-        }
-        
-        
-        HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
-        if (statusMap != null) {
-            mBookId = bookId = (Long) statusMap.get("bookId");
-            mBookFileName = (String) statusMap.get("bookFileName");
-            mChapFileName = (String) statusMap.get("chapFileName");
-            mHistTitle = (String) statusMap.get("histTitle");
-            
-            
-        } else {
-
-            if (null == bookId) {
-                throw new IllegalStateException("A YBK bookId was not passed in the intent.");
-            } 
-    
-            mBookId = bookId;
-                
-            ContentResolver contRes = getContentResolver();
-            Cursor bookCursor = contRes.query(
-                    ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
-                            bookId),
-                    new String[] {YbkProvider.FILE_NAME}, null, null, null);
-            
-            //final String filePath;
-            
-            try {
-                if (bookCursor.getCount() == 1) {
-                    bookCursor.moveToFirst();
-                    mBookFileName = bookCursor.getString(0);
-                } else {
-                    mBookFileName = "";
-                }
-            } finally {
-                bookCursor.close();
+        try {
+            if (bookCursor.getCount() == 1) {
+                bookCursor.moveToFirst();
+                mBookFileName = bookCursor.getString(0);
+            } else {
+                mBookFileName = "";
             }
+        } finally {
+            bookCursor.close();
         }
         
         try {
@@ -194,19 +210,28 @@ public class YbkViewActivity extends Activity {
             if (loadChapter(mBookFileName, mChapFileName)) {
                 setBookBtn(shortTitle, mBookFileName, mChapFileName);
             }
-            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
-            
+
             
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
                
+        setWebViewClient(ybkView);
+
+        setProgressBarIndeterminateVisibility(false);
+        
+    }
     
-        ybkView.setWebViewClient(new WebViewClient() {
+    /**
+     * Encapsulate the logic of setting the WebViewClient.
+     * @param view The WebView for which we're setting the WebViewClient.
+     */
+    private void setWebViewClient(final WebView view) {
+        view.setWebViewClient(new WebViewClient() {
             
             @Override
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
-                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
+                setProgressBarIndeterminateVisibility(true);
                 
                 Log.d(TAG, "WebView URL: " + url);
                 String book;
@@ -252,7 +277,7 @@ public class YbkViewActivity extends Activity {
                 if (loadChapter(book, chapter)) {                    
                     setBookBtn(shortTitle,book,chapter);
                 }
-                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
+                setProgressBarIndeterminateVisibility(false);
                 
                 
                 return true;
@@ -271,11 +296,7 @@ public class YbkViewActivity extends Activity {
                 
             }
         });
-
-        
-        
     }
-    
     /**
      * Set the book and chapter buttons.
      * 
@@ -296,12 +317,12 @@ public class YbkViewActivity extends Activity {
         bookBtn.setOnClickListener(new OnClickListener() {
             
             public void onClick(final View v) {
-                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
+                setProgressBarIndeterminateVisibility(true);
                 if (loadChapter(filePath, "index") ) {
                     setBookBtn(shortTitle, filePath, fileToOpen);
                     Log.d(TAG, "Book loaded");
                 } 
-                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
+                setProgressBarIndeterminateVisibility(false);
             }
             
         });
@@ -334,6 +355,8 @@ public class YbkViewActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         super.onCreateOptionsMenu(menu);
+        menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
+            .setIcon(android.R.drawable.ic_menu_recent_history);
         menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous)
             .setIcon(android.R.drawable.ic_media_previous);
         menu.add(Menu.NONE, NEXT_ID, Menu.NONE,  R.string.menu_next)
@@ -371,6 +394,10 @@ public class YbkViewActivity extends Activity {
             if (maxOrder > mChapOrderNbr) {
                 loadChapterByOrderId(mBookId, ++mChapOrderNbr);
             }
+            return true;
+        
+        case HISTORY_ID: 
+            startActivity(new Intent(this, HistoryDialog.class));
             return true;
         }
        
@@ -824,7 +851,7 @@ public class YbkViewActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent msg) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.FEATURE_INDETERMINATE_PROGRESS);
+            setProgressBarIndeterminateVisibility(true);
             ContentResolver contRes = getContentResolver(); 
             
             Uri lastHistUri = ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
@@ -854,7 +881,7 @@ public class YbkViewActivity extends Activity {
                     
                 }
             } finally {
-                getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_END);
+                setProgressBarIndeterminateVisibility(false);
                 c.close();
             }
         }
