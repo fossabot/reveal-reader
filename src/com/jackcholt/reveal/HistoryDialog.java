@@ -16,15 +16,15 @@ public class HistoryDialog extends ListActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        mListCursor = getContentResolver().query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
+        setTheme(android.R.style.Theme_Dialog);
+        
+        mListCursor = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
                 new String[] {YbkProvider.HISTORY_TITLE, YbkProvider._ID}, 
                 null, null,
                 YbkProvider.CREATE_DATETIME + " DESC");
         
         // Load the layout
- 
-        startManagingCursor(mListCursor);
-        
+         
         // Create an array to specify the fields we want to display in the list (only TITLE)
         String[] from = new String[] {YbkProvider.HISTORY_TITLE};
         

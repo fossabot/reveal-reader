@@ -84,7 +84,7 @@ public class YbkViewActivity extends Activity {
             mChapFileName = (String) statusMap.get("chapFileName");
             mHistTitle = (String) statusMap.get("histTitle");
             
-            if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+            //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
             
         } else { 
 
@@ -111,7 +111,7 @@ public class YbkViewActivity extends Activity {
                         mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
                         mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
                         mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                        if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+                       // if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
                     }
                 /*} finally {
                     histCurs.close();
@@ -163,7 +163,7 @@ public class YbkViewActivity extends Activity {
                     // is one
                     ContentValues values = new ContentValues();
                     values.put(YbkProvider.BOOK_ID, mBookId);
-                    if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+                    //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
 
                     values.put(YbkProvider.HISTORY_TITLE, mHistTitle);
                     values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
@@ -398,14 +398,11 @@ public class YbkViewActivity extends Activity {
                     null);
             
             int maxOrder = -1;
-            //try {
-                if (c.getCount() == 1) {
-                    c.moveToFirst();
-                    maxOrder = c.getInt(0);
-                }
-            /*} finally {
-                c.close();
-            }*/
+
+            if (c.getCount() == 1) {
+                c.moveToFirst();
+                maxOrder = c.getInt(0);
+            }
             
             if (maxOrder > mChapOrderNbr) {
                 loadChapterByOrderId(mBookId, ++mChapOrderNbr);
@@ -444,7 +441,7 @@ public class YbkViewActivity extends Activity {
                         mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
                         mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
                         mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                        if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+                        //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
                         
                         Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
                         
@@ -770,7 +767,7 @@ public class YbkViewActivity extends Activity {
                             values.put(YbkProvider.BOOK_ID, mBookId);
                             mHistTitle = mChapBtnText;
                             
-                            if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+                            //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
 
                             values.put(YbkProvider.HISTORY_TITLE, mHistTitle);
                             values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
