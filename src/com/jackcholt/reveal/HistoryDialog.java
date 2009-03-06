@@ -48,7 +48,8 @@ public class HistoryDialog extends ListActivity {
         Intent intent = new Intent(this, YbkViewActivity.class);
         intent.putExtra(YbkProvider._ID, id);
         intent.putExtra(YbkProvider.FROM_HISTORY, true);
-        startActivity(intent);
+        //startActivityIfNeeded(intent, 0);
+        setResult(RESULT_OK, intent);
         
         finish();
     }

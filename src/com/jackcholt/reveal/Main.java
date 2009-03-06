@@ -8,9 +8,7 @@ import com.flurry.android.FlurryAgent;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -39,10 +37,7 @@ import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class Main extends ListActivity implements OnGestureListener {
-	
-    //public final static int DISPLAYMODE_ABSOLUTE = 0;
-    //public final static int DISPLAYMODE_RELATIVE = 1;
-    
+	    
     private static final int HISTORY_ID = Menu.FIRST;
     //private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
@@ -218,12 +213,10 @@ public class Main extends ListActivity implements OnGestureListener {
         // Notify that we are getting current list of eBooks
         Log.i(Global.TAG,"Getting the list of books in the database");
    
-        fileCursor = contRes.query(bookUri, 
+        fileCursor = managedQuery(bookUri, 
                 new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
                 YbkProvider.FILE_NAME + " ASC");
-        
-        startManagingCursor(fileCursor);
-        
+                
         if (fileCursor.getCount() == 0) {
             Log.w(Global.TAG, "eBook database has no valid YBK files");
         }
@@ -289,7 +282,7 @@ public class Main extends ListActivity implements OnGestureListener {
                     String bookId = uri.getLastPathSegment();
                     
                     if (Integer.parseInt(bookId) > 0) {
-                        mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+                        mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
                                 YbkProvider.BINDING_TEXT + " is not null", null,
                                 " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
     
@@ -355,12 +348,10 @@ public class Main extends ListActivity implements OnGestureListener {
      * Refresh the list of books in the main list.
      */
     private void refreshBookList() {
-        mListCursor = mContRes.query(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+        mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
                 YbkProvider.BINDING_TEXT + " is not null", null,
                 " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
-        
-        startManagingCursor(mListCursor);
-        
+                
         // Create an array to specify the fields we want to display in the list (only TITLE)
         String[] from = new String[]{YbkProvider.FORMATTED_TITLE};
         
@@ -444,6 +435,7 @@ public class Main extends ListActivity implements OnGestureListener {
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         switch(item.getItemId()) {
         case REFRESH_LIB_ID:
+            Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_LONG).show();
             updateBookList();
             return true;
             
@@ -467,21 +459,15 @@ public class Main extends ListActivity implements OnGestureListener {
         	return true;
         
         case HISTORY_ID: 
-        	startActivity(new Intent(this, HistoryDialog.class));
+        	startActivityForResult(new Intent(this, HistoryDialog.class), 
+        	        YbkViewActivity.CALL_HISTORY);
         	return true;
-        	
 
         }
        
         return super.onMenuItemSelected(featureId, item);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        
-        
-    }
     
     /**
      * This function browses to the
@@ -602,4 +588,37 @@ public class Main extends ListActivity implements OnGestureListener {
 		// TODO Auto-generated method stub
 		
 	}
+
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+            case YbkViewActivity.CALL_HISTORY:
+                setProgressBarIndeterminateVisibility(true);  
+                
+                Bundle extras = data.getExtras();
+                long histId = extras.getLong(YbkProvider._ID);
+                
+                Cursor histCurs = managedQuery(
+                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), histId), 
+                        null, null, null, null);
+                
+                if (histCurs.moveToFirst()) {
+                    long bookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
+                    Intent intent = new Intent(this, YbkViewActivity.class);
+                    intent.putExtra(YbkProvider._ID, bookId);
+                    intent.putExtra(YbkProvider.FROM_HISTORY, true);
+                    startActivity(intent);            
+                } else {
+                    Log.e(Global.TAG, "Couldn't load chapter from history");
+                }
+                
+            }
+        }
+        
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+    
+
 }
