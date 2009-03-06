@@ -7,13 +7,15 @@
             android:key="show_splash_screen"
             android:title="@string/label_splash_screen"
             android:summaryOn="@string/summary_on_show_splash_screen" 
-            android:summaryOff="@string/summary_off_show_splash_screen" />
+            android:summaryOff="@string/summary_off_show_splash_screen" 
+            android:checked="true"/>
             
     <CheckBoxPreference
             android:key="show_fullscreen"
             android:title="@string/label_fullscreen"
             android:summaryOn="@string/summary_on_fullscreen" 
-            android:summaryOff="@string/summary_off_fullscreen" />
+            android:summaryOff="@string/summary_off_fullscreen" 
+            android:checked="true"/>
 
     <EditTextPreference
     		android:key="default_ebook_dir"
