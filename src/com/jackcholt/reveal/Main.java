@@ -3,6 +3,8 @@ package com.jackcholt.reveal;
 import java.io.File;
 import java.io.FileFilter;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -110,7 +112,8 @@ public class Main extends ListActivity implements OnGestureListener {
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        
+        FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         

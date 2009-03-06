@@ -7,6 +7,8 @@ import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -64,6 +66,7 @@ public class YbkViewActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }

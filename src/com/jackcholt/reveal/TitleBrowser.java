@@ -4,6 +4,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Stack;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
@@ -67,6 +69,8 @@ public class TitleBrowser extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
 		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
 		
 		mBreadCrumb = new Stack<Uri>();
@@ -322,6 +326,7 @@ public class TitleBrowser extends ListActivity {
 			download.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View view) {
 					if (mFileLocation != null) {
+						FlurryAgent.onEvent("eBookDownload");
 						Toast.makeText(context,
 								R.string.ebook_download_started,
 								Toast.LENGTH_SHORT).show();
