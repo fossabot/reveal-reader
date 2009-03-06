@@ -78,7 +78,7 @@ public class TitleBrowser extends ListActivity {
 		mDownloadSuccess = false;
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
+    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
     	
         if (BOOLshowFullScreen) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -127,6 +127,13 @@ public class TitleBrowser extends ListActivity {
 
 		//mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 	}
+	
+	/** Called when the activity is going away. */
+	@Override
+    protected void onStop() {
+        super.onStop();
+        FlurryAgent.onEndSession();
+    }
 	
 	@Override
 	public Object onRetainNonConfigurationInstance() {

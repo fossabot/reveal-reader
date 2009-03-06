@@ -35,16 +35,18 @@ public class UpdateChecker {
       URLConnection cnVersion;
       URL urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
       cnVersion = urlVersion.openConnection();
-      cnVersion.setReadTimeout(10000);
-      cnVersion.setConnectTimeout(10000);
+      //cnVersion.setReadTimeout(10000);
+      //cnVersion.setConnectTimeout(10000);
+      cnVersion.setDefaultUseCaches(false);
       cnVersion.connect();
       InputStream streamVersion = cnVersion.getInputStream();
   	  //Get the Update location URL
       URLConnection cnUpdate;
       URL urlUpdate = new URL("http://revealreader.thepackhams.com/revealUpdate.html");
       cnUpdate = urlUpdate.openConnection();
-      cnUpdate.setReadTimeout(10000);
-      cnUpdate.setConnectTimeout(10000);
+      //cnUpdate.setReadTimeout(10000);
+      //cnUpdate.setConnectTimeout(10000);
+      cnVersion.setDefaultUseCaches(false);
       cnUpdate.connect();
       InputStream streamUpdate = cnUpdate.getInputStream();
       //Proceed parsing the info

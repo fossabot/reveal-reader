@@ -107,13 +107,14 @@ public class Main extends ListActivity implements OnGestureListener {
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
+        FlurryAgent.setReportLocation(true);
         FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
+    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
     	
         if (BOOLshowFullScreen) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -158,6 +159,13 @@ public class Main extends ListActivity implements OnGestureListener {
             	updateBookList();
              }
         }
+    }
+
+    /** Called when the activity is going away. */
+	@Override
+    protected void onStop() {
+        super.onStop();
+        FlurryAgent.onEndSession();
     }
     
     @Override

@@ -133,7 +133,7 @@ public class YbkViewActivity extends Activity {
         }
         mShowPictures = mSharedPref.getBoolean("show_pictures", true);
         
-    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", true);
+    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
     	
         if (BOOLshowFullScreen) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -234,6 +234,13 @@ public class YbkViewActivity extends Activity {
 
         setProgressBarIndeterminateVisibility(false);
         
+    }
+    
+    /** Called when the activity is going away. */
+	@Override
+    protected void onStop() {
+        super.onStop();
+        FlurryAgent.onEndSession();
     }
     
     /**
