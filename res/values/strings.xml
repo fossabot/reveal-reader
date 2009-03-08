@@ -78,4 +78,5 @@
 <string name="support_btn">Support</string>
 <string name="book_not_loaded">Could not open the eBook.</string>
 <string name="no_more_history">You\'ve run out of history!</string>
+<string name="no_history">No History</string>
 </resources>

@@ -2,14 +2,10 @@ package com.jackcholt.reveal;
 
 import android.app.ListActivity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
@@ -20,7 +16,8 @@ public class HistoryDialog extends ListActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
  
-        setTheme(android.R.style.Theme_Dialog);
+        setContentView(R.layout.dialog_history);
+        //setTheme(android.R.style.Theme_Dialog);
         
         mListCursor = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
                 new String[] {YbkProvider.HISTORY_TITLE, YbkProvider._ID}, 

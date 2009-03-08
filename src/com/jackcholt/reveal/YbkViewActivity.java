@@ -105,17 +105,13 @@ public class YbkViewActivity extends Activity {
                         ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), bookId), 
                         null, null, null, null);
                 
-                //try {
-                    if (histCurs.moveToFirst()) {
-                        bookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
-                        mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
-                        mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
-                        mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                       // if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
-                    }
-                /*} finally {
-                    histCurs.close();
-                }*/
+                if (histCurs.moveToFirst()) {
+                    bookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
+                    mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
+                    mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
+                    mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
+                   // if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+                }
             }
         }    
         
@@ -188,16 +184,12 @@ public class YbkViewActivity extends Activity {
                         bookId),
                 new String[] {YbkProvider.FILE_NAME}, null, null, null);
         
-        //try {
-            if (bookCursor.getCount() == 1) {
-                bookCursor.moveToFirst();
-                mBookFileName = bookCursor.getString(0);
-            } else {
-                mBookFileName = "";
-            }
-        /*} finally {
-            bookCursor.close();
-        }*/
+        if (bookCursor.getCount() == 1) {
+            bookCursor.moveToFirst();
+            mBookFileName = bookCursor.getString(0);
+        } else {
+            mBookFileName = "";
+        }
         
         try {
             YbkFileReader ybkReader = mYbkReader = new YbkFileReader(mBookFileName);
@@ -356,19 +348,17 @@ public class YbkViewActivity extends Activity {
         	view window being smaller. - Adam Gessel 
          */
         
-        if ( mChapBtnText.length() > 20 )
-        {
+        if ( mChapBtnText.length() > 20 ) {
         	
         	String mChapBtnTextSmall = mChapBtnText.substring(0, 20) + "...";
         	chapBtn.setText(mChapBtnTextSmall);
         	
-        }
-        else
-        {
-        	
-        	chapBtn.setText(mChapBtnText);
+        } else {
+
+            chapBtn.setText(mChapBtnText);
         
         }
+        
         chapBtn.setVisibility(View.VISIBLE);
         
     }
@@ -442,38 +432,34 @@ public class YbkViewActivity extends Activity {
                         ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), histId), 
                         null, null, null, null);
                 
-                //try {
-                    if (histCurs.moveToFirst()) {
-                        mBookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
-                        mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
-                        mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
-                        mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                        //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+                if (histCurs.moveToFirst()) {
+                    mBookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
+                    mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
+                    mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
+                    mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
+                    //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
+                    
+                    Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
+                    
+                    if (loadChapter(mBookFileName, mChapFileName)) {
+                        String[] projection = new String[] {YbkProvider.SHORT_TITLE};
+                        Cursor c = managedQuery(
+                                ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
+                                projection, null, null, null);
+                        //try {
+                            if (c.moveToFirst()) {
+                                
+                                setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
+                                        mBookFileName, mChapFileName);
+                            }
+                        //} finally {
+                        //    c.close();
+                        //}
                         
-                        Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
-                        
-                        if (loadChapter(mBookFileName, mChapFileName)) {
-                            String[] projection = new String[] {YbkProvider.SHORT_TITLE};
-                            Cursor c = managedQuery(
-                                    ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
-                                    projection, null, null, null);
-                            //try {
-                                if (c.moveToFirst()) {
-                                    
-                                    setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
-                                            mBookFileName, mChapFileName);
-                                }
-                            //} finally {
-                            //    c.close();
-                            //}
-                            
-                        }
-                    } else {
-                        Log.e(TAG, "Couldn't load chapter from history");
                     }
-                /*} finally {
-                    histCurs.close();
-                }*/
+                } else {
+                    Log.e(TAG, "Couldn't load chapter from history");
+                }
                 
                 setProgressBarIndeterminateVisibility(false);
                 
@@ -492,28 +478,23 @@ public class YbkViewActivity extends Activity {
      * @return Did the chapter load?
      */
     private boolean loadChapterByOrderId(final long bookId, final int orderId) {
-        ContentResolver contRes = getContentResolver();
         
         Cursor c = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), 
                 new String[] {YbkProvider._ID}, YbkProvider.CHAPTER_ORDER_NUMBER + "=? AND " + YbkProvider.BOOK_ID + "=?", 
                 new String[] {Integer.toString(orderId), Long.toString(bookId)}, null);
         
-        //try {
-            if (c.getCount() == 1) {
-                c.moveToFirst();
-                int chapterId = c.getInt(0);
-                    
-                return loadChapter(chapterId);
+        if (c.getCount() == 1) {
+            c.moveToFirst();
+            int chapterId = c.getInt(0);
                 
-            } else if (c.getCount() == 0) {    
-                throw new IllegalStateException("No chapters found for order_number: " + orderId);
-            } else {
-                throw new IllegalStateException(
-                        "Too many rows returned from a query for one chapter (order_number: " + orderId + ")");
-            }
-        /*} finally {
-            c.close();
-        }*/
+            return loadChapter(chapterId);
+            
+        } else if (c.getCount() == 0) {    
+            throw new IllegalStateException("No chapters found for order_number: " + orderId);
+        } else {
+            throw new IllegalStateException(
+                    "Too many rows returned from a query for one chapter (order_number: " + orderId + ")");
+        }
             
     }
 
@@ -529,43 +510,39 @@ public class YbkViewActivity extends Activity {
         Cursor c = managedQuery(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), chapterId), 
                 new String[] {YbkProvider.FILE_NAME, YbkProvider.BOOK_ID}, null, null, null);
         
-        //try {
+        if (c.getCount() == 1) {
+            c.moveToFirst();
+            String chapter = c.getString(0);
+            int bookId = c.getInt(1);
+            
+            c = managedQuery(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId), 
+                new String[] {YbkProvider.FILE_NAME}, null, null, null);
+            
             if (c.getCount() == 1) {
                 c.moveToFirst();
-                String chapter = c.getString(0);
-                int bookId = c.getInt(1);
+                String bookFileName = c.getString(0);
                 
-                c = managedQuery(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId), 
-                    new String[] {YbkProvider.FILE_NAME}, null, null, null);
+                String[] pathParts = bookFileName.split("/");
+                String[] fileNameParts = pathParts[pathParts.length - 1].split("\\.");
+                String shortTitle = fileNameParts[0];
                 
-                if (c.getCount() == 1) {
-                    c.moveToFirst();
-                    String bookFileName = c.getString(0);
-                    
-                    String[] pathParts = bookFileName.split("/");
-                    String[] fileNameParts = pathParts[pathParts.length - 1].split("\\.");
-                    String shortTitle = fileNameParts[0];
-                    
-                    if (bookLoaded = loadChapter(bookFileName, chapter)) {
-                        setBookBtn(shortTitle, bookFileName, chapter);
-                    }
-                
-                
-                } else if (c.getCount() == 0) {    
-                    throw new IllegalStateException("No books found for id: " + bookId);
-                } else {
-                    throw new IllegalStateException(
-                            "Too many rows returned from a query for one book (id: " + bookId + ")");
+                if (bookLoaded = loadChapter(bookFileName, chapter)) {
+                    setBookBtn(shortTitle, bookFileName, chapter);
                 }
+            
+            
             } else if (c.getCount() == 0) {    
-                throw new IllegalStateException("No chapters found for id: " + chapterId);
+                throw new IllegalStateException("No books found for id: " + bookId);
             } else {
                 throw new IllegalStateException(
-                        "Too many rows returned from a query for one chapter (id: " + chapterId + ")");
+                        "Too many rows returned from a query for one book (id: " + bookId + ")");
             }
-        /*} finally {
-            c.close();
-        }*/
+        } else if (c.getCount() == 0) {    
+            throw new IllegalStateException("No chapters found for id: " + chapterId);
+        } else {
+            throw new IllegalStateException(
+                    "Too many rows returned from a query for one chapter (id: " + chapterId + ")");
+        }
         
         return bookLoaded;    
     }
@@ -626,19 +603,15 @@ public class YbkViewActivity extends Activity {
                         new String[] {YbkProvider._ID}, "lower(" + YbkProvider.FILE_NAME + ")=?", 
                         new String[] {filePath.toLowerCase()}, null);
                 
-                //try {
-                    int count = c.getCount();
-                    if (count == 1) {
-                        c.moveToFirst();
-                        bookId = c.getLong(0);
-                    } else if (count == 0){
-                        throw new IllegalStateException("No books found for '" + filePath);
-                    } else {
-                        throw new IllegalStateException("More than one book found for '" + filePath);
-                    }
-                /*} finally {
-                    c.close();
-                }*/
+                int count = c.getCount();
+                if (count == 1) {
+                    c.moveToFirst();
+                    bookId = c.getLong(0);
+                } else if (count == 0){
+                    throw new IllegalStateException("No books found for '" + filePath);
+                } else {
+                    throw new IllegalStateException("More than one book found for '" + filePath);
+                }
                 
                 
                 try {
@@ -735,26 +708,23 @@ public class YbkViewActivity extends Activity {
                             new String[] {YbkProvider.CHAPTER_ORDER_NUMBER}, 
                             "lower(" + YbkProvider.FILE_NAME + ")=?", 
                             new String[] {chap.toLowerCase()}, null);
-                    
-                    //try {
-                        if (chapCurs.getCount() == 1) {
-                            chapCurs.moveToFirst();
-                            mChapOrderNbr = chapCurs.getInt(0);
-                        } else if (chapCurs.getCount() == 0){
-                            mChapOrderNbr = -1;
-                        } else {
-                            throw new IllegalStateException(
-                                    "More than one chapter returned when attempting to get order number for: " 
-                                    + chap);
-                        }
-                    /*} finally {
-                        chapCurs.close();
-                    }*/
+                
+                    if (chapCurs.getCount() == 1) {
+                        chapCurs.moveToFirst();
+                        mChapOrderNbr = chapCurs.getInt(0);
+                    } else if (chapCurs.getCount() == 0){
+                        mChapOrderNbr = -1;
+                    } else {
+                        throw new IllegalStateException(
+                                "More than one chapter returned when attempting to get order number for: " 
+                                + chap);
+                    }
                     
                     // replace MS-Word "smartquotes" and other extended characters with spaces
                     content = content.replace('\u0093', '"').replace('\u0094','"');
                     
                     String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
+                    mHistTitle = mChapBtnText;
                     setChapBtnText(content);
     
                     content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
@@ -767,12 +737,12 @@ public class YbkViewActivity extends Activity {
                     bookLoaded = true;
                     
                     if (!mBackButtonPressed) {
-                        if (mChapFileName != null) {
+                        if (mChapFileName != null && !chap.equalsIgnoreCase(mChapFileName)) {
                             // Save the previous book and chapter to history if there
                             // is one
                             ContentValues values = new ContentValues();
                             values.put(YbkProvider.BOOK_ID, mBookId);
-                            mHistTitle = mChapBtnText;
+                            //mHistTitle = mChapBtnText;
                             
                             //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
 
