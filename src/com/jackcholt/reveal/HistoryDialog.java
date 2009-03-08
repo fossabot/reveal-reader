@@ -33,13 +33,13 @@ public class HistoryDialog extends ListActivity {
         String[] from = new String[] {YbkProvider.HISTORY_TITLE};
         
         // and an array of the fields we want to bind those fields to (in this case just text1)
-        //int[] to = new int[] {R.id.historyText};
+        int[] to = new int[] {R.id.historyText};
         
         // Now create a simple cursor adapter and set it to display
-        //SimpleCursorAdapter historyAdapter = 
-               // new SimpleCursorAdapter(this, R.layout.history_list_row, mListCursor, from, to);
+        SimpleCursorAdapter historyAdapter = 
+                new SimpleCursorAdapter(this, R.layout.history_list_row, mListCursor, from, to);
         
-        //setListAdapter(historyAdapter);
+        setListAdapter(historyAdapter);
        
     }
 	
