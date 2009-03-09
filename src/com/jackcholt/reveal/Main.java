@@ -43,8 +43,10 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
     private static final int BROWSER_ID = Menu.FIRST + 4;
-    private static final int REVELUPDATE_ID = Menu.FIRST + 5;
+    private static final int HELP_ID = Menu.FIRST + 5;
     private static final int ABOUT_ID = Menu.FIRST + 6;
+    private static final int REVELUPDATE_ID = Menu.FIRST + 7;
+
     private int mNotifId = 0;
 
     private static final int ACTIVITY_SETTINGS = 0;
@@ -432,10 +434,12 @@ public class Main extends ListActivity implements OnGestureListener {
         	.setIcon(android.R.drawable.ic_menu_rotate);        
         menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser)
         	.setIcon(android.R.drawable.ic_menu_set_as);        
-        menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE,  R.string.menu_update)
-        	.setIcon(android.R.drawable.ic_menu_share);
+        menu.add(Menu.NONE, HELP_ID, Menu.NONE,  R.string.menu_help)
+    	.setIcon(android.R.drawable.ic_menu_info_details);
         menu.add(Menu.NONE, ABOUT_ID, Menu.NONE,  R.string.menu_about)
     	.setIcon(android.R.drawable.ic_menu_info_details);
+        menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE,  R.string.menu_update)
+        	.setIcon(android.R.drawable.ic_menu_share);
         return true;
     }
     
@@ -464,6 +468,10 @@ public class Main extends ListActivity implements OnGestureListener {
         	
         case ABOUT_ID: 
         	AboutDialog.create(this);
+        	return true;
+        	
+        case HELP_ID: 
+        	HelpDialog.create(this);
         	return true;
         
         case HISTORY_ID: 

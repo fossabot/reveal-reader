@@ -8,9 +8,16 @@ import android.text.Html;
 import android.view.View;
 import android.widget.Button;
 
+
+/**
+ * AboutDialog for telling people who we be  :)
+ * 
+ * by Dave Packham
+ */
+
 public class AboutDialog extends Dialog {
-        public AboutDialog(Context context) {
-                super(context);
+        public AboutDialog(Context _this) {
+                super(_this);
                 setContentView(R.layout.about);
 
                 Button close = (Button) findViewById(R.id.close_about_btn);
@@ -41,8 +48,8 @@ public class AboutDialog extends Dialog {
                 
         }
 
-        public static AboutDialog create(Context context) {
-                AboutDialog dlg = new AboutDialog(context);
+        public static AboutDialog create(Context _this) {
+                AboutDialog dlg = new AboutDialog(_this);
                 dlg.show();
                 return dlg;
         }
