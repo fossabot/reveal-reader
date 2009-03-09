@@ -15,6 +15,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.content.Context;
+import android.webkit.WebView;
 import android.widget.Toast;
 
 /**
@@ -28,28 +29,24 @@ public class UpdateChecker {
   
 
   @SuppressWarnings("finally")
-  public static int getLatestVersionCode() {
+  public static int getLatestVersionCode(Context _this) {
     int version = 0;
     try {
       //Get the XML update Version to prompt user to get a new Update From the market
       URLConnection cnVersion;
       URL urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
       cnVersion = urlVersion.openConnection();
-      //cnVersion.setReadTimeout(10000);
-      //cnVersion.setConnectTimeout(10000);
+      cnVersion.setReadTimeout(10000);
+      cnVersion.setConnectTimeout(10000);
       cnVersion.setDefaultUseCaches(false);
       cnVersion.connect();
       InputStream streamVersion = cnVersion.getInputStream();
   	  //Get the Update location URL
-      URLConnection cnUpdate;
-      URL urlUpdate = new URL("http://revealreader.thepackhams.com/revealUpdate.html");
-      cnUpdate = urlUpdate.openConnection();
-      //cnUpdate.setReadTimeout(10000);
-      //cnUpdate.setConnectTimeout(10000);
-      cnVersion.setDefaultUseCaches(false);
-      cnUpdate.connect();
-      InputStream streamUpdate = cnUpdate.getInputStream();
-      //Proceed parsing the info
+      WebView wv = new WebView(_this);
+      wv.clearCache(true);
+      wv.getSettings().setJavaScriptEnabled(true);
+      wv.loadUrl("http://revealreader.thepackhams.com/revealUpdate.html");
+     //Proceed parsing the info
       DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();
       Document manifestDoc = docBuild.parse(streamVersion);
       NodeList manifestNodeList = manifestDoc.getElementsByTagName("manifest");
@@ -82,7 +79,7 @@ public class UpdateChecker {
 	  //Check here an XML file stored on our website for new version info
 	  //Comment this out due to feedback fromusers that it checks too much.  at least that it notifies too much
       //Toast.makeText(_this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
-  	  Global.NEW_VERSION = getLatestVersionCode();
+  	  Global.NEW_VERSION = getLatestVersionCode(_this);
     if (Global.NEW_VERSION > currentVersion) {
     	//Tell user to Download a new REV of this cool CODE from the Market
     	//Only Toast if there IS and update
