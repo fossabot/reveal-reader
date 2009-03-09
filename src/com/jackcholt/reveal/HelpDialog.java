@@ -2,8 +2,6 @@ package com.jackcholt.reveal;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.WebView;

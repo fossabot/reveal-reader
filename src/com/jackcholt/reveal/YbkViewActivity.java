@@ -118,6 +118,7 @@ public class YbkViewActivity extends Activity {
         if (bookId == null) {
             Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
             finish();
+            return;
         }
 
         mBookId = bookId;
@@ -742,7 +743,6 @@ public class YbkViewActivity extends Activity {
                             // is one
                             ContentValues values = new ContentValues();
                             values.put(YbkProvider.BOOK_ID, mBookId);
-                            //mHistTitle = mChapBtnText;
                             
                             //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
 

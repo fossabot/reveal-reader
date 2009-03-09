@@ -39,12 +39,12 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class Main extends ListActivity implements OnGestureListener {
 	    
     private static final int HISTORY_ID = Menu.FIRST;
-    //private static final int BOOKMARK_ID = Menu.FIRST + 1;
-    private static final int SETTINGS_ID = Menu.FIRST + 2;
-    private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
-    private static final int BROWSER_ID = Menu.FIRST + 4;
-    private static final int HELP_ID = Menu.FIRST + 5;
-    private static final int ABOUT_ID = Menu.FIRST + 6;
+    private static final int BOOKMARK_ID = Menu.FIRST + 1;    
+    private static final int SETTINGS_ID = Menu.FIRST + 2;    
+    private static final int REFRESH_LIB_ID = Menu.FIRST + 3;    
+    private static final int BROWSER_ID = Menu.FIRST + 4;    
+    private static final int HELP_ID = Menu.FIRST + 5;    
+    private static final int ABOUT_ID = Menu.FIRST + 6;    
     private static final int REVELUPDATE_ID = Menu.FIRST + 7;
 
     private int mNotifId = 0;
