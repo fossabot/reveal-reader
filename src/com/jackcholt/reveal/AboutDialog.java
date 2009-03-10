@@ -4,9 +4,10 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.text.Html;
 import android.view.View;
 import android.widget.Button;
+
+import com.flurry.android.FlurryAgent;
 
 
 /**
@@ -39,7 +40,9 @@ public class AboutDialog extends Dialog {
                                  
                         //Grab the Global updated version instead of a static one
                         title += String.format(" %d", Global.SVN_VERSION);
-                        
+                        //Testing Flurry agent calls
+                        FlurryAgent.onEvent("AboutScreen");
+                                              
                         setTitle(title);
          
                 } catch (NameNotFoundException e) {

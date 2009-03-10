@@ -1,5 +1,7 @@
 package com.jackcholt.reveal;
 
+import com.flurry.android.FlurryAgent;
+
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
@@ -18,6 +20,7 @@ public class Settings extends PreferenceActivity
         
         // Load the XML preferences file
         addPreferencesFromResource(R.xml.preferences);
+        FlurryAgent.onEvent("SettingScreen");
   }
 
     @Override

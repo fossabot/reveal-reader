@@ -1,5 +1,7 @@
 package com.jackcholt.reveal;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.view.KeyEvent;
@@ -17,7 +19,8 @@ public class HelpDialog extends Dialog {
     public HelpDialog(Context _this) {
             super(_this);
             setContentView(R.layout.help);
-         
+            
+            FlurryAgent.onEvent("OnlineHelp");
         	WebView wv = new WebView(_this);
     	    wv.clearCache(true);
     	    wv.getSettings().setJavaScriptEnabled(true);

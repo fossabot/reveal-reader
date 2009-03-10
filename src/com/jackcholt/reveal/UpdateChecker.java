@@ -14,6 +14,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.flurry.android.FlurryAgent;
+
 import android.content.Context;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -33,6 +35,7 @@ public class UpdateChecker {
     int version = 0;
     try {
       //Get the XML update Version to prompt user to get a new Update From the market
+      FlurryAgent.onEvent("UpdateCheck");
       URLConnection cnVersion;
       URL urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
       cnVersion = urlVersion.openConnection();
