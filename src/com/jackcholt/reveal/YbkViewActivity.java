@@ -733,6 +733,8 @@ public class YbkViewActivity extends Activity {
                     ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
                             "text/html","utf-8","");
                     
+                    Log.d(TAG, "Content Height: " + ybkView.getContentHeight());
+                    
                     bookLoaded = true;
                     
                     if (!mBackButtonPressed) {
@@ -903,8 +905,11 @@ public class YbkViewActivity extends Activity {
     
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent msg) {
+        WebView ybkView = mYbkView;
+        
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             setProgressBarIndeterminateVisibility(true);
+            
             ContentResolver contRes = getContentResolver(); 
             
             Uri lastHistUri = ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
@@ -934,10 +939,12 @@ public class YbkViewActivity extends Activity {
             } else {
                 Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
             }
+            
             setProgressBarIndeterminateVisibility(false);
+            return true;
         }
 
-        return false;
+        return super.onKeyDown(keyCode, msg);
     }
     
     @Override
