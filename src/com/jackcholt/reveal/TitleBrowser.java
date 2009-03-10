@@ -70,7 +70,7 @@ public class TitleBrowser extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
+		FlurryAgent.onEvent("TitleBrowser");
 		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
 		
 		mBreadCrumb = new Stack<Uri>();
@@ -132,7 +132,6 @@ public class TitleBrowser extends ListActivity {
 	@Override
     protected void onStop() {
         super.onStop();
-        FlurryAgent.onEndSession();
     }
 	
 	@Override
