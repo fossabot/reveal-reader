@@ -1,38 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
 	android:orientation="vertical"
 	>
-
-	<ScrollView
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    >
-    
-	    <LinearLayout
-	         android:id="@+id/help_container"
+   
+	    <WebView
+	         android:id="@+id/help"
 	         android:layout_width="fill_parent"
-	         android:layout_height="fill_parent"
-	         android:paddingLeft="5dip"
-	         android:paddingRight="5dip"
-	         android:orientation="vertical"
-	         >
-	  
-		<ListView
-			android:id="@+id/helpdialog"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"/>
-			
-		</LinearLayout>
-	</ScrollView>
-	
-	        <Button
-                android:id="@+id/close_about_btn"
-                android:text="@string/close"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-        android:padding="5sp"/>
-  
+	         android:layout_height="fill_parent"/>
+	         
 </LinearLayout>

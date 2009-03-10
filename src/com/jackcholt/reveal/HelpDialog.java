@@ -3,9 +3,7 @@ package com.jackcholt.reveal;
 import android.app.Dialog;
 import android.content.Context;
 import android.view.KeyEvent;
-import android.view.View;
 import android.webkit.WebView;
-import android.widget.Button;
 import android.widget.LinearLayout;
 
 
@@ -19,18 +17,7 @@ public class HelpDialog extends Dialog {
     public HelpDialog(Context _this) {
             super(_this);
             setContentView(R.layout.help);
- 
-            Button close = (Button) findViewById(R.id.close_about_btn);
-            close.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
-                            dismiss();
-                    }
-            });
-
-        	String title;
-            title = "Reveal Reader Help";
-            setTitle(title);
-            
+         
         	WebView wv = new WebView(_this);
     	    wv.clearCache(true);
     	    wv.getSettings().setJavaScriptEnabled(true);
@@ -47,6 +34,10 @@ public class HelpDialog extends Dialog {
     		dialog.addContentView(wv, new LinearLayout.LayoutParams(  
     				                      LinearLayout.LayoutParams.WRAP_CONTENT,  
     				                      LinearLayout.LayoutParams.FILL_PARENT));
+          	String title;
+          	title = "Reveal Reader Help";
+			setTitle(title);
+   
     		dialog.show();
       
     }
