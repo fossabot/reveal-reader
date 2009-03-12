@@ -25,6 +25,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -36,6 +38,28 @@ public class Util {
 	private static final int DIALOG_DELETE = 1;
 	private static final int DIALOG_RENAME = 2;
 	private File mContextFile = new File("");
+
+	
+	
+	/**
+	 * Dave Packham
+	 * Check for network connectivity before trying to go to the net and hanging :)
+	 * hitting F8 in the emulator will turn network on/off
+	 */
+	@SuppressWarnings("static-access")
+	public static boolean isNetworkUp(Context _this) {
+		boolean networkUpOrNot;
+		
+		ConnectivityManager cm = (ConnectivityManager)_this.getSystemService(_this.CONNECTIVITY_SERVICE); 
+		NetworkInfo netinfo = cm.getActiveNetworkInfo(); 
+			if(netinfo.getState() == NetworkInfo.State.CONNECTED){ 
+				networkUpOrNot = true;    
+		}  else {
+			networkUpOrNot = false;    
+        }
+		 	 
+		return networkUpOrNot;
+	}
     
     /**
      * Remove HTML, surrounding quotes and Titlecase a book title.

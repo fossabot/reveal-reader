@@ -16,6 +16,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
@@ -107,6 +108,8 @@ public class Main extends ListActivity implements OnGestureListener {
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Debug.startMethodTracing("reveal");
+
 
         FlurryAgent.setReportLocation(true);
         FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
@@ -133,6 +136,12 @@ public class Main extends ListActivity implements OnGestureListener {
         gestureScanner = new GestureDetector(this); 
         registerForContextMenu(getListView());
                 
+        //Is Network up or not?
+        if (Util.isNetworkUp(this)) {
+        	
+        	
+        }
+        
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
         if (!configChanged) {
@@ -166,6 +175,8 @@ public class Main extends ListActivity implements OnGestureListener {
     protected void onStop() {
         super.onStop();
         FlurryAgent.onEndSession();
+        //Debug.stopMethodTracing();
+
     }
     
     @Override

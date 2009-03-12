@@ -1,5 +1,7 @@
 package com.jackcholt.reveal;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.webkit.WebView;
@@ -14,13 +16,14 @@ import android.webkit.WebView;
 public class HelpDialog extends Dialog {
     public HelpDialog(Context _this) {
             super(_this);
+            FlurryAgent.onEvent("OnlineHelp");
             setContentView(R.layout.help);
              /*Button close = (Button) findViewById(R.id.close_about_btn);            
               * close.setOnClickListener(new View.OnClickListener() {                    
               * public void onClick(View v) {                            
               * dismiss();                    }            });*/        	
             String title;            
-            title = "Reveal Reader Help";            
+            title = "Reveal Online Help";            
             setTitle(title);            
         	
             WebView wv = (WebView) findViewById(R.id.helpView);    	    
