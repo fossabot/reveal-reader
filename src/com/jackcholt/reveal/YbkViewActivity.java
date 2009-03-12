@@ -7,8 +7,6 @@ import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 
-import com.flurry.android.FlurryAgent;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -24,6 +22,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,6 +32,7 @@ import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -57,10 +57,13 @@ public class YbkViewActivity extends Activity {
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
+    private static final int ASK_BOOKMARK_NAME = 3;
     private static final int PREVIOUS_ID = Menu.FIRST;
     private static final int NEXT_ID = Menu.FIRST + 1;
     private static final int HISTORY_ID = Menu.FIRST + 2;
+    private static final int BOOKMARK_ID = Menu.FIRST + 3;
     public static final int CALL_HISTORY = 1;
+    public static final int CALL_BOOKMARK = 2;
     
     @SuppressWarnings("unchecked")
     @Override
@@ -82,8 +85,6 @@ public class YbkViewActivity extends Activity {
             mBookFileName = (String) statusMap.get("bookFileName");
             mChapFileName = (String) statusMap.get("chapFileName");
             mHistTitle = (String) statusMap.get("histTitle");
-            
-            //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
             
         } else { 
 
@@ -109,7 +110,6 @@ public class YbkViewActivity extends Activity {
                     mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
                     mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
                     mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                   // if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
                 }
             }
         }    
@@ -367,6 +367,8 @@ public class YbkViewActivity extends Activity {
         super.onCreateOptionsMenu(menu);
         menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
             .setIcon(android.R.drawable.ic_menu_recent_history);
+        menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
+            .setIcon(android.R.drawable.ic_menu_compass);
         menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous)
             .setIcon(android.R.drawable.ic_media_previous);
         menu.add(Menu.NONE, NEXT_ID, Menu.NONE,  R.string.menu_next)
@@ -409,7 +411,12 @@ public class YbkViewActivity extends Activity {
         case HISTORY_ID: 
             setProgressBarIndeterminateVisibility(true);
             startActivityForResult(new Intent(this, HistoryDialog.class), CALL_HISTORY);
-            //finish();
+            setProgressBarIndeterminateVisibility(false);
+            return true;
+
+        case BOOKMARK_ID: 
+            setProgressBarIndeterminateVisibility(true);
+            startActivityForResult(new Intent(this, BookmarkDialog.class), CALL_BOOKMARK);
             setProgressBarIndeterminateVisibility(false);
             return true;
         }
@@ -418,13 +425,16 @@ public class YbkViewActivity extends Activity {
     }
 
     @Override
-    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+    protected void onActivityResult(final int requestCode, final int resultCode, 
+            final Intent data) {
+        
+        Bundle extras;
         
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
             case CALL_HISTORY:
                 setProgressBarIndeterminateVisibility(true);
-                Bundle extras = data.getExtras();
+                extras = data.getExtras();
                 long histId = extras.getLong(YbkProvider._ID);
                 
                 Cursor histCurs = managedQuery(
@@ -436,7 +446,6 @@ public class YbkViewActivity extends Activity {
                     mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
                     mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
                     mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                    //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
                     
                     Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
                     
@@ -445,15 +454,12 @@ public class YbkViewActivity extends Activity {
                         Cursor c = managedQuery(
                                 ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
                                 projection, null, null, null);
-                        //try {
-                            if (c.moveToFirst()) {
-                                
-                                setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
-                                        mBookFileName, mChapFileName);
-                            }
-                        //} finally {
-                        //    c.close();
-                        //}
+
+                        if (c.moveToFirst()) {
+                            
+                            setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
+                                    mBookFileName, mChapFileName);
+                        }
                         
                     }
                 } else {
@@ -463,7 +469,52 @@ public class YbkViewActivity extends Activity {
                 setProgressBarIndeterminateVisibility(false);
                 
                 return;
+
+            case CALL_BOOKMARK:
+                setProgressBarIndeterminateVisibility(true);
+                extras = data.getExtras();
                 
+                boolean addBookMark = extras.getBoolean(BookmarkDialog.ADD_BOOKMARK);
+                
+                if (addBookMark) {
+                    showDialog(ASK_BOOKMARK_NAME);
+                } else {
+                    long bmId = extras.getLong(YbkProvider.BOOKMARK_NUMBER);
+                    
+                    Cursor bmCurs = managedQuery(
+                            ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"bookmark"), bmId), 
+                            null, null, null, null);
+                    
+                    if (bmCurs.moveToFirst()) {
+                        mBookId = bmCurs.getLong(bmCurs.getColumnIndex(YbkProvider.BOOK_ID));
+                        mBookFileName = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.FILE_NAME));
+                        mChapFileName = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
+                        mHistTitle = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
+                        
+                        Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: " + mChapFileName);
+                        
+                        if (loadChapter(mBookFileName, mChapFileName)) {
+                            String[] projection = new String[] {YbkProvider.SHORT_TITLE};
+                            Cursor c = managedQuery(
+                                    ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
+                                    projection, null, null, null);
+    
+                            if (c.moveToFirst()) {
+                                
+                                setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
+                                        mBookFileName, mChapFileName);
+                            }
+                            
+                        }
+                    } else {
+                        Log.e(TAG, "Couldn't load chapter from bookmarks");
+                    }
+                }
+                
+                setProgressBarIndeterminateVisibility(false);
+                
+                return;
+
             }
         }
         
@@ -807,8 +858,44 @@ public class YbkViewActivity extends Activity {
                 }
             })
             .create();
+        
+        case ASK_BOOKMARK_NAME :
+            LayoutInflater factory = LayoutInflater.from(this);
+            final View textEntryView = factory.inflate(R.layout.view_ask_bm, null);
+            final EditText et = (EditText) textEntryView.findViewById(R.id.ask_bm_name);
+            
+            return new AlertDialog.Builder(this)
+            .setIcon(android.R.drawable.ic_dialog_info)
+            .setTitle("Enter Bookmark Name")
+            .setView(textEntryView)
+            .setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+
+                    String bmName = (String) et.getText().toString();
+                    
+                    Log.i(TAG, "Text entered " + bmName); 
+                    
+                    ContentValues values = new ContentValues();
+                    values.put(YbkProvider.BOOK_ID, mBookId);
+                    
+                    values.put(YbkProvider.HISTORY_TITLE, bmName);
+                    values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
+                    // TODO Temporarily using 0 until we figure out how to get the actual value
+                    values.put(YbkProvider.SCROLL_POS, 0);
+                    
+                    Log.d(TAG, "Saving bookmark for: " + values);
+                    
+                    getContentResolver().insert(
+                            Uri.withAppendedPath(YbkProvider.CONTENT_URI,"bookmark"), 
+                            values);
+
+                }
+            })
+            .create();
+            
         }
         return null;
+        
     }
 
     @Override
@@ -905,7 +992,6 @@ public class YbkViewActivity extends Activity {
     
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent msg) {
-        WebView ybkView = mYbkView;
         
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             setProgressBarIndeterminateVisibility(true);

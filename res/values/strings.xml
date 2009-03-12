@@ -80,4 +80,6 @@
 <string name="no_more_history">You\'ve run out of history!</string>
 <string name="no_history">No History</string>
 <string name="menu_help">Online Help</string>
+<string name="add_bookmark">Add Bookmark here</string>
+<string name="no_bookmark">No Bookmarks</string>
 </resources>

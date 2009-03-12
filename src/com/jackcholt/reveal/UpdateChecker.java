@@ -32,8 +32,9 @@ import android.widget.Toast;
 public class UpdateChecker {
   public static String marketId;
   
+  //@SuppressWarnings("finally")
   @SuppressWarnings("finally")
-  public static int getLatestVersionCode(Context _this) {
+public static int getLatestVersionCode(Context _this) {
     int version = 0;
 
     try {
@@ -74,16 +75,12 @@ public class UpdateChecker {
       marketId = clcNodeList.item(0).getAttributes().getNamedItem("marketId").getNodeValue();
       
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (SAXException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (ParserConfigurationException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (FactoryConfigurationError e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } finally {
     	Global.NEW_VERSION = version;
@@ -93,8 +90,7 @@ public class UpdateChecker {
 
 public static  void checkForNewerVersion(int currentVersion, final Context _this) {
 	  //Check here an XML file stored on our website for new version info
-	  //Comment this out due to feedback fromusers that it checks too much.  at least that it notifies too much
-   
+	
 	  Thread t = new Thread() {
             public void run() {
             	Global.NEW_VERSION = getLatestVersionCode(_this);
@@ -105,7 +101,7 @@ public static  void checkForNewerVersion(int currentVersion, final Context _this
 	  
 	  if (Global.NEW_VERSION > currentVersion) {
     	//Tell user to Download a new REV of this cool CODE from the Market
-    	//Only Toast if there IS and update
+    	//Only Toast if there IS an update
         Toast.makeText(_this, R.string.update_available, Toast.LENGTH_LONG).show();
     }
   }

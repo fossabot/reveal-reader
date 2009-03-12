@@ -17,7 +17,6 @@ public class HistoryDialog extends ListActivity {
         super.onCreate(savedInstanceState);
  
         setContentView(R.layout.dialog_history);
-        //setTheme(android.R.style.Theme_Dialog);
         
         mListCursor = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
                 new String[] {YbkProvider.HISTORY_TITLE, YbkProvider._ID}, 
@@ -49,7 +48,6 @@ public class HistoryDialog extends ListActivity {
         Intent intent = new Intent(this, YbkViewActivity.class);
         intent.putExtra(YbkProvider._ID, id);
         intent.putExtra(YbkProvider.FROM_HISTORY, true);
-        //startActivityIfNeeded(intent, 0);
         setResult(RESULT_OK, intent);
         
         finish();

@@ -33,6 +33,10 @@
             android:label="@string/menu_history" 
 	        android:screenOrientation="sensor"
 	        android:theme="@android:style/Theme.Dialog"/>
+        <activity android:multiprocess="true" android:name=".BookmarkDialog" 
+            android:label="@string/menu_bookmark" 
+            android:screenOrientation="sensor"
+            android:theme="@android:style/Theme.Dialog"/>
     </application>
 
 

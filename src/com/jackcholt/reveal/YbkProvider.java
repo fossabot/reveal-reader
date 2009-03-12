@@ -43,7 +43,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 11;
+    public static final int DATABASE_VERSION = 12;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -110,7 +110,7 @@ public class YbkProvider extends ContentProvider {
     private static final String ORDER_CONFIG_FILENAME = "\\ORDER.CFG";
     private static final String BOOK_DEFAULT_SORT_ORDER = FORMATTED_TITLE + " ASC";
     private static final String HISTORY_DEFAULT_SORT_ORDER = CREATE_DATETIME + " DESC";
-    private static final String BOOKMARK_DEFAULT_SORT_ORDER = BOOKMARK_NUMBER + " ASC";
+    private static final String BOOKMARK_DEFAULT_SORT_ORDER = HISTORY_TITLE + " ASC";
     
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
@@ -169,7 +169,7 @@ public class YbkProvider extends ContentProvider {
                     + CREATE_DATETIME + " TEXT DEFAULT CURRENT_TIMESTAMP UNIQUE,"
                     + SCROLL_POS + " INTEGER," 
                     + HISTORY_TITLE + " TEXT,"
-                    + BOOKMARK_NUMBER + " INTEGER UNIQUE, "
+                    + BOOKMARK_NUMBER + " INTEGER, "
                     + " FOREIGN KEY (" + BOOK_ID + ") REFERENCES "
                     + BOOK_TABLE_NAME + " (" + _ID + ")"
                     + " ON DELETE CASCADE"
@@ -211,6 +211,7 @@ public class YbkProvider extends ContentProvider {
     private File mImagesDir;
     private SharedPreferences mSharedPref;
     private String mHistoryEntryAmount; 
+    private String mBookmarkEntryAmount; 
     
     /**
      * @see {@link ContentProvider.delete(Uri uri, String selection, String[] selectionArgs)}
@@ -464,14 +465,10 @@ public class YbkProvider extends ContentProvider {
 
             rowId = populateBook(values.getAsString(FILE_NAME));
             
-            //if (rowId > 0) {
             Uri bookUri = ContentUris.withAppendedId(
                     Uri.withAppendedPath(CONTENT_URI, "book"), rowId);
             getContext().getContentResolver().notifyChange(bookUri, null);
             return bookUri;
-            //}
-            
-            //break;
 
         case HISTORIES:
             if (values.containsKey(BOOK_ID) == false 
@@ -497,12 +494,23 @@ public class YbkProvider extends ContentProvider {
             if (values.containsKey(BOOK_ID) == false 
                     || values.containsKey(CHAPTER_NAME) == false 
                     || values.containsKey(SCROLL_POS) == false 
-                    || values.containsKey(BOOKMARK_NUMBER) == false 
                     || values.containsKey(HISTORY_TITLE) == false) {
                 throw new IllegalArgumentException("One of the following parameters were not passed while adding a bookmark: \n"
                         + BOOK_ID + " ," + CHAPTER_NAME + " ," 
-                        + SCROLL_POS + " ," + HISTORY_TITLE + " ," + BOOKMARK_NUMBER);
+                        + SCROLL_POS + " ," + HISTORY_TITLE);
             }
+
+            Cursor maxBMCurs = db.rawQuery("SELECT max(" + BOOKMARK_NUMBER + ") FROM " + HISTORY_TABLE_NAME, null);
+            
+            int maxBM;
+            if (maxBMCurs.moveToFirst()) {
+                maxBM = maxBMCurs.getInt(0);
+            } else {
+                maxBM = 1;
+            }
+            maxBMCurs.close();
+            
+            values.put(BOOKMARK_NUMBER, maxBM + 1);
 
             rowId = db.insert(HISTORY_TABLE_NAME, CHAPTER_NAME, values);
             if (rowId > 0) {
@@ -531,18 +539,20 @@ public class YbkProvider extends ContentProvider {
         }
         mImagesDir = new File(mLibraryDir + "images/");
         mHistoryEntryAmount = mSharedPref.getString("default_history_entry_amount", "30");
+        mBookmarkEntryAmount = mSharedPref.getString("default_bookmark_entry_amount", "20");
         return true;
     }
 
     @Override
     public Cursor query(final Uri uri, final String[] projection, 
             final String selection, final String[] selectionArgs, 
-            final String sortOrder) {
+            String sortOrder) {
 
         String orderBy = null;
         String where = null;
         String limit = null;
         
+        SQLiteDatabase db = mOpenHelper.getReadableDatabase();        
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         
         switch (sUriMatcher.match(uri)) {
@@ -591,15 +601,17 @@ public class YbkProvider extends ContentProvider {
                 orderBy = sortOrder;
             }
             
+            qb.appendWhere(BOOKMARK_NUMBER + " IS NULL ");
+            
             if (selection != null) { 
-                qb.appendWhere(selection + " AND " + BOOKMARK_NUMBER + " IS NULL ");
-                limit = mHistoryEntryAmount;
+                qb.appendWhere(selection);
             }
+
+            limit = mHistoryEntryAmount;
         
             break;
             
         case HISTORY:
-            SQLiteDatabase db = mOpenHelper.getReadableDatabase();
             String histId = uri.getPathSegments().get(2);
             String query;
             if (Integer.parseInt(histId) == GET_LAST_HISTORY) {
@@ -627,34 +639,45 @@ public class YbkProvider extends ContentProvider {
             return c;            
             
         case BOOKMARKS:
-            qb.setTables(HISTORY_TABLE_NAME);
-            
-            // If no sort order is specified use the default
-            if (TextUtils.isEmpty(sortOrder)) {
-                orderBy = BOOKMARK_DEFAULT_SORT_ORDER;
-            } else {
-                orderBy = sortOrder;
-            }
-            
-            if (selection != null) { 
-                qb.appendWhere(selection);
-            }
+            // Must use a rawQuery so the bookmark_name field can be aliased to 
+            // _id
         
+            String bmQuery = "SELECT " + BOOK_ID + ", " + BOOKMARK_NUMBER + " AS _id, " +
+            CHAPTER_NAME + ", " + SCROLL_POS + ", " + HISTORY_TITLE + " " +
+            " FROM " + HISTORY_TABLE_NAME +
+            " WHERE " + BOOKMARK_NUMBER + " IS NOT NULL ";
             
-            break;
+            if (null == sortOrder) {
+                sortOrder = BOOKMARK_DEFAULT_SORT_ORDER;
+            }
+            
+            bmQuery += " ORDER BY " + sortOrder + " LIMIT " + mBookmarkEntryAmount;
+            
+            Cursor bmksCurs = db.rawQuery(bmQuery, null);
+
+            // Tell the cursor what uri to watch, so it knows when its source data changes
+            bmksCurs.setNotificationUri(getContext().getContentResolver(), uri);
+            return bmksCurs;            
             
         case BOOKMARK:
-            qb.setTables(HISTORY_TABLE_NAME);
             String bmkId = uri.getPathSegments().get(2);
-            where = _ID + "=" + bmkId; 
-            break;
+
+            Cursor bmkCurs = db.rawQuery("SELECT h." + _ID + ", h." + BOOK_ID + ", b." + FILE_NAME +", " +
+                    CHAPTER_NAME + ", " + SCROLL_POS + ", " + HISTORY_TITLE + " " +
+                    " FROM " + HISTORY_TABLE_NAME + " AS h, " + BOOK_TABLE_NAME + " AS b " +
+                    " WHERE b." + _ID + "=h." + BOOK_ID +
+                    " AND h." + BOOKMARK_NUMBER + "=" + bmkId, null);
+
+            
+            // Tell the cursor what uri to watch, so it knows when its source data changes
+            bmkCurs.setNotificationUri(getContext().getContentResolver(), uri);
+            return bmkCurs;            
             
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
         
         // Get the database and run the query
-        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         Cursor c = qb.query(db, projection,  where, selectionArgs, null, null, 
                 orderBy, limit);
 

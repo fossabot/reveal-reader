@@ -3,8 +3,6 @@ package com.jackcholt.reveal;
 import java.io.File;
 import java.io.FileFilter;
 
-import com.flurry.android.FlurryAgent;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -15,7 +13,6 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -35,6 +32,8 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+
+import com.flurry.android.FlurryAgent;
 
 public class Main extends ListActivity implements OnGestureListener {
 	    
@@ -426,18 +425,18 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreateOptionsMenu(menu);
         menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
             .setIcon(android.R.drawable.ic_menu_recent_history);
-        //menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
-        //    .setIcon(android.R.drawable.ic_menu_compass);
+        menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
+            .setIcon(android.R.drawable.ic_menu_compass);
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
             .setIcon(android.R.drawable.ic_menu_preferences);
-        menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library)
-        	.setIcon(android.R.drawable.ic_menu_rotate);        
         menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser)
         	.setIcon(android.R.drawable.ic_menu_set_as);        
         menu.add(Menu.NONE, HELP_ID, Menu.NONE,  R.string.menu_help)
-    	.setIcon(android.R.drawable.ic_menu_info_details);
+    	    .setIcon(android.R.drawable.ic_menu_info_details);
+        menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library)
+            .setIcon(android.R.drawable.ic_menu_rotate);        
         menu.add(Menu.NONE, ABOUT_ID, Menu.NONE,  R.string.menu_about)
-    	.setIcon(android.R.drawable.ic_menu_info_details);
+    	    .setIcon(android.R.drawable.ic_menu_info_details);
         menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE,  R.string.menu_update)
         	.setIcon(android.R.drawable.ic_menu_share);
         return true;
@@ -479,62 +478,16 @@ public class Main extends ListActivity implements OnGestureListener {
         	        YbkViewActivity.CALL_HISTORY);
         	return true;
 
+        case BOOKMARK_ID: 
+            Intent bmIntent = new Intent(this, BookmarkDialog.class);
+            bmIntent.putExtra("fromMain", true);
+            startActivityForResult(bmIntent, 
+                    YbkViewActivity.CALL_BOOKMARK);
+            return true;
+
         }
        
         return super.onMenuItemSelected(featureId, item);
-    }
-
-    
-    /**
-     * This function browses to the
-     * root-directory of the file-system.
-     */
-    /*private void browseToRoot(final boolean showFolders) {
-         browseTo(new File(mLibraryDir), showFolders);
-    }*/
-    
-    /**
-     * This function browses up one level
-     * according to the field: mCurrentDirectory
-     */
-    @SuppressWarnings("unused")
-    private void upOneLevel(){
-         if(this.mCurrentDirectory.getParent() != null)
-              this.browseTo(this.mCurrentDirectory.getParentFile(), true);
-    } 
-    
-    private void browseTo(final File aDirectory, final boolean showFolders) {
-        
-        if (aDirectory.isDirectory()){
-             this.mCurrentDirectory = aDirectory;
-             //fill(aDirectory.listFiles(), showFolders);
-        } else {
-             OnClickListener okButtonListener = new OnClickListener() {
-                  // @Override
-                 public void onClick(DialogInterface arg0, int arg1) {
-                     // Lets start an intent to View the file, that was clicked...
-                     String path = aDirectory.getAbsolutePath();
-                     Intent myIntent = new Intent(android.content.Intent.ACTION_VIEW,
-                               Uri.parse("file://" + path));
-                     
-                     startActivity(myIntent); 
-                 }
-             };
-     
-             OnClickListener cancelButtonListener = new OnClickListener(){
-                 // @Override
-                 public void onClick(DialogInterface arg0, int arg1) {
-                     // Do nothing
-                 }
-             };
-     
-             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-             builder.setMessage("Do you want to open that file?\n"
-                     + aDirectory.getName());
-             builder.setNegativeButton("Cancel", cancelButtonListener);
-             builder.setPositiveButton("OK", okButtonListener);
-             builder.show();
-        }
     }
 
     @Override
@@ -607,14 +560,16 @@ public class Main extends ListActivity implements OnGestureListener {
 
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        Bundle extras;
+        long histId;
         
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
             case YbkViewActivity.CALL_HISTORY:
                 setProgressBarIndeterminateVisibility(true);  
                 
-                Bundle extras = data.getExtras();
-                long histId = extras.getLong(YbkProvider._ID);
+                extras = data.getExtras();
+                histId = extras.getLong(YbkProvider._ID);
                 
                 Cursor histCurs = managedQuery(
                         ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), histId), 
@@ -630,6 +585,27 @@ public class Main extends ListActivity implements OnGestureListener {
                     Log.e(Global.TAG, "Couldn't load chapter from history");
                 }
                 
+                break;
+            case YbkViewActivity.CALL_BOOKMARK:
+                setProgressBarIndeterminateVisibility(true);  
+                
+                extras = data.getExtras();
+                long bmId = extras.getLong(YbkProvider.BOOKMARK_NUMBER);
+                
+                Cursor bmCurs = managedQuery(
+                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"bookmark"), bmId), 
+                        null, null, null, null);
+                
+                if (bmCurs.moveToFirst()) {
+                    histId = bmCurs.getLong(bmCurs.getColumnIndex(YbkProvider._ID));
+                    Intent intent = new Intent(this, YbkViewActivity.class);
+                    intent.putExtra(YbkProvider._ID, histId);
+                    intent.putExtra(YbkProvider.FROM_HISTORY, true);
+                    startActivity(intent);            
+                } else {
+                    Log.e(Global.TAG, "Couldn't load chapter from bookmarks");
+                }
+                break;
             }
         }
         
