@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import android.app.NotificationManager;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -123,13 +124,17 @@ public class YbkProvider extends ContentProvider {
         sUriMatcher.addURI(AUTHORITY, "ybk/bookmark/#", BOOKMARK);
         sUriMatcher.addURI(AUTHORITY, "ybk/bookmark", BOOKMARKS);
     }
-    
+
     private HashMap<Uri, File> mTempImgFiles = new HashMap<Uri, File>();
     
     private static class DatabaseHelper extends SQLiteOpenHelper {
-
+        Context mContext;
+        
         DatabaseHelper(final Context context) {
+            
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
+
+            mContext = context;
         }  
 
         @Override
@@ -197,6 +202,13 @@ public class YbkProvider extends ContentProvider {
 
             Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
+            
+            NotificationManager nm = 
+                (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE); 
+            
+            Util.sendNotification(mContext, "Rebuilding library...", 
+                    android.R.drawable.stat_sys_warning, "Reveal Database Updated", nm, Main.mNotifId++, 
+                    Main.class);
             
             db.execSQL("DROP TABLE IF EXISTS " + CHAPTER_TABLE_NAME);
             db.execSQL("DROP TABLE IF EXISTS " + HISTORY_TABLE_NAME);

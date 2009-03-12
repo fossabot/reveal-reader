@@ -46,10 +46,10 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int ABOUT_ID = Menu.FIRST + 6;    
     private static final int REVELUPDATE_ID = Menu.FIRST + 7;
 
-    private int mNotifId = 0;
+    public static int mNotifId = 0;
 
     private static final int ACTIVITY_SETTINGS = 0;
-    private static final int ACTIVITY_HISTORY = 1;
+    //private static final int ACTIVITY_HISTORY = 1;
     private static final int LIBRARY_NOT_CREATED = 0;
     //private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
@@ -70,7 +70,6 @@ public class Main extends ListActivity implements OnGestureListener {
     private final Handler mUpdateLibHandler = new Handler();
     private Cursor mListCursor; 
     private ContentResolver mContRes; 
-    public int i = -1;
     private boolean mUpdating = false;
     
     private final Runnable mUpdateBookList = new Runnable() {
