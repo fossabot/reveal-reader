@@ -50,12 +50,16 @@ public class Util {
 	public static boolean isNetworkUp(Context _this) {
 		boolean networkUpOrNot;
 		
-		ConnectivityManager cm = (ConnectivityManager)_this.getSystemService(_this.CONNECTIVITY_SERVICE); 
-		NetworkInfo netinfo = cm.getActiveNetworkInfo(); 
-			if(netinfo.getState() == NetworkInfo.State.CONNECTED){ 
+		ConnectivityManager connectivityManager  = (ConnectivityManager)_this.getSystemService(_this.CONNECTIVITY_SERVICE); 
+		NetworkInfo netinfo = connectivityManager .getActiveNetworkInfo(); 
+		NetworkInfo activeNetInfo = connectivityManager .getActiveNetworkInfo();
+		NetworkInfo mobNetInfo = connectivityManager .getNetworkInfo(ConnectivityManager.TYPE_MOBILE); 
+			if(mobNetInfo.getState() == NetworkInfo.State.CONNECTED){ 
 				networkUpOrNot = true;    
 		}  else {
-			networkUpOrNot = false;    
+				networkUpOrNot = false;    
+	        	Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
+	  
         }
 		 	 
 		return networkUpOrNot;

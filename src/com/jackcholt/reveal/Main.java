@@ -13,6 +13,7 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -110,9 +111,13 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreate(savedInstanceState);
         //Debug.startMethodTracing("reveal");
 
-
         FlurryAgent.setReportLocation(true);
         FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
+        String title;
+        title = getString(R.string.app_name);
+        title += String.format(" %d", Global.SVN_VERSION);       
+        FlurryAgent.onEvent(title);
+        
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         
@@ -136,24 +141,23 @@ public class Main extends ListActivity implements OnGestureListener {
         gestureScanner = new GestureDetector(this); 
         registerForContextMenu(getListView());
                 
-        //Is Network up or not?
-        if (Util.isNetworkUp(this)) {
-        	
-        	
-        }
         
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
         if (!configChanged) {
-        	//mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         	BOOLshowSplashScreen = mSharedPref.getBoolean("show_splash_screen", true);
             
           	if (BOOLshowSplashScreen) { 
                 Util.showSplashScreen(this);
             }
-            //Actually go ONLINE and check...  duhhhh
+        }
+  
+        //Is Network up or not?
+        if (Util.isNetworkUp(this)) {
+        	//Actually go ONLINE and check...  duhhhh
             UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
         }
+  
         
         refreshBookList();
 
