@@ -219,8 +219,8 @@ public class YbkProvider extends ContentProvider {
     }
 
     private DatabaseHelper mOpenHelper;
-    private String mLibraryDir = "/sdcard/reveal/ebooks/";
-    private File mImagesDir;
+    //private String mLibraryDir = "/sdcard/reveal/ebooks/";
+    //private File mImagesDir;
     private SharedPreferences mSharedPref;
     private String mHistoryEntryAmount; 
     private String mBookmarkEntryAmount; 
@@ -545,11 +545,11 @@ public class YbkProvider extends ContentProvider {
         mOpenHelper = new DatabaseHelper(getContext());
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
+        /*mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         if(!mLibraryDir.endsWith("/")) {
         	mLibraryDir = mLibraryDir + "/";
         }
-        mImagesDir = new File(mLibraryDir + "images/");
+        mImagesDir = new File(mLibraryDir + "images/");*/
         mHistoryEntryAmount = mSharedPref.getString("default_history_entry_amount", "30");
         mBookmarkEntryAmount = mSharedPref.getString("default_bookmark_entry_amount", "20");
         return true;
@@ -1109,11 +1109,13 @@ public class YbkProvider extends ContentProvider {
                 }
                 tempFileName = tempFileName.substring(0, tempFileName.length()-1);
                 
-                outFile = new File(mImagesDir, tempFileName);
+                String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                
+                outFile = new File(libDir + "images/", tempFileName);
                 outFile.deleteOnExit();
                      
                 if (!outFile.exists()) {
-                    HashMap<String,String> chapterMap = Util.getFileNameChapterFromUri(strUri, mLibraryDir, false);
+                    HashMap<String,String> chapterMap = Util.getFileNameChapterFromUri(strUri, libDir, false);
                     String fileName = chapterMap.get("book");
                     String chapter = chapterMap.get("chapter");
                     RandomAccessFile file = new RandomAccessFile(fileName, "r");

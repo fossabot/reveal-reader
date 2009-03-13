@@ -44,7 +44,7 @@ public class YbkViewActivity extends Activity {
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
-    private String mLibraryDir;
+    //private String mLibraryDir;
     private SharedPreferences mSharedPref;
     private boolean mShowPictures;
     private boolean BOOLshowFullScreen;
@@ -123,10 +123,11 @@ public class YbkViewActivity extends Activity {
         mBookId = bookId;
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
+        /*mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
         if(!mLibraryDir.endsWith("/")) {
         	mLibraryDir = mLibraryDir + "/";
-        }
+        }*/
+        
         mShowPictures = mSharedPref.getBoolean("show_pictures", true);
         
     	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
@@ -245,6 +246,8 @@ public class YbkViewActivity extends Activity {
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                 setProgressBarIndeterminateVisibility(true);
                 
+                String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                
                 Log.d(TAG, "WebView URL: " + url);
                 String book;
                 String chapter = "";
@@ -274,7 +277,7 @@ public class YbkViewActivity extends Activity {
                         shortTitle = urlParts[0] = book.substring(1);
                     }
                     
-                    book = mLibraryDir + urlParts[0] + ".ybk";
+                    book = libDir + urlParts[0] + ".ybk";
                     
                     for (int i = 0; i < urlParts.length; i++) {
                        chapter += "\\" + urlParts[i];
@@ -777,7 +780,9 @@ public class YbkViewActivity extends Activity {
                     mHistTitle = mChapBtnText;
                     setChapBtnText(content);
     
-                    content = Util.processIfbook(content, getContentResolver(), mLibraryDir);
+                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                    
+                    content = Util.processIfbook(content, getContentResolver(), libDir);
                     content = Util.convertAhtag(content);
                     content = Util.convertIfvar(content);
                     

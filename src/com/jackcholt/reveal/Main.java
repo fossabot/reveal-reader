@@ -51,7 +51,6 @@ public class Main extends ListActivity implements OnGestureListener {
     public static int mNotifId = 0;
 
     private static final int ACTIVITY_SETTINGS = 0;
-    //private static final int ACTIVITY_HISTORY = 1;
     private static final int LIBRARY_NOT_CREATED = 0;
     //private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
@@ -65,8 +64,8 @@ public class Main extends ListActivity implements OnGestureListener {
     private SharedPreferences mSharedPref;
     private boolean BOOLshowSplashScreen;
     private boolean BOOLshowFullScreen;
-    private String mLibraryDir;
-    private File mImagesDir;
+    //private String mLibraryDir;
+    //private File mImagesDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
     private final Handler mUpdateLibHandler = new Handler();
@@ -96,7 +95,8 @@ public class Main extends ListActivity implements OnGestureListener {
     		mUpdating = true;
 	        Thread t = new Thread() {
 	            public void run() {
-	                refreshLibrary();
+	                String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks");
+	                refreshLibrary(ebookDir);
 	                mUpdateLibHandler.post(mUpdateBookList);
 	            }
 	        };
@@ -132,11 +132,11 @@ public class Main extends ListActivity implements OnGestureListener {
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
        
-        //mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
+        /*mLibraryDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
         if(!mLibraryDir.endsWith("/")) {
         	mLibraryDir = mLibraryDir + "/";
-        }
+        }*/
+        
         //To capture LONG_PRESS gestures
         gestureScanner = new GestureDetector(this); 
         registerForContextMenu(getListView());
@@ -168,7 +168,7 @@ public class Main extends ListActivity implements OnGestureListener {
             	Log.e(Global.TAG, "sdcard not installed");
             	Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
             } else {
-            	createDefaultDirs();
+            	Util.createDefaultDirs(this);
             	updateBookList();
              }
         }
@@ -188,7 +188,7 @@ public class Main extends ListActivity implements OnGestureListener {
         return "configuration changed";
     }
     
-    private void createDefaultDirs() {
+    /*private void createDefaultDirs() {
         // Create the /sdcard/reveal and eBooks dir if they don't exist
         // Notify of creation and maybe put people directly into the TitleBrowser if they don't have ANY ybk's
     	//Must end in a SLASH
@@ -208,14 +208,14 @@ public class Main extends ListActivity implements OnGestureListener {
              mImagesDir.mkdirs();
              Log.i(Global.TAG, "Create images dir on sdcard ok");
         }
-    }
+    }*/
     
     /**
      * Convenience method to make calling refreshLibrary() without any 
      * parameters retaining its original behavior. 
      */
-    private void refreshLibrary() {
-        refreshLibrary(ADD_BOOKS);
+    private void refreshLibrary(final String strLibDir) {
+        refreshLibrary(strLibDir, ADD_BOOKS);
     }
     
     /**
@@ -225,11 +225,10 @@ public class Main extends ListActivity implements OnGestureListener {
      * database as well as the code that removes missing books from the database 
      * (which runs regardless).
      */
-    private void refreshLibrary(final boolean addNewBooks) {
+    private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
         boolean neededRefreshing = false;
         ContentResolver contRes = mContRes;
         Uri bookUri = mBookUri;
-        String strLibDir = mLibraryDir;
         Cursor fileCursor = null;
         
         // get a list of files from the database
@@ -426,9 +425,9 @@ public class Main extends ListActivity implements OnGestureListener {
         // Set preferences from Setting screen
         SharedPreferences sharedPref = mSharedPref;
         
-        String libDir = mLibraryDir = sharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-        if(!mLibraryDir.endsWith("/")) {
-        	mLibraryDir = mLibraryDir + "/";
+        String libDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+        if(!libDir.endsWith("/")) {
+        	libDir = libDir + "/";
         }
           
         mCurrentDirectory = new File(libDir);
@@ -620,6 +619,14 @@ public class Main extends ListActivity implements OnGestureListener {
                     Log.e(Global.TAG, "Couldn't load chapter from bookmarks");
                 }
                 break;
+                
+            case ACTIVITY_SETTINGS:
+                extras = data.getExtras();
+                boolean libDirChanged = extras.getBoolean(Settings.EBOOK_DIR_CHANGED);
+                
+                if (libDirChanged) {
+                    updateBookList();
+                }
             }
         }
         

@@ -28,6 +28,7 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -880,5 +881,28 @@ public class Util {
         
         notifMgr.notify(notifId, notif);
 	}
+	
+	/**
+	 * Create the file directories if they don't exist.
+	 * 
+	 * @param ctx The context in which we are running.
+	 */
+	public static void createDefaultDirs(final Context ctx) {
+	    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
+	    String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+	    
+	    File revealdir = new File(strRevealDir);
+        if (!revealdir.exists()) {
+             revealdir.mkdirs();
+             Log.i(Global.TAG, "Create reveal dir on sdcard ok");
+        }
+        
+        File imagesDir = new File(strRevealDir + "images/");
+        if (!imagesDir.exists()) {
+             imagesDir.mkdirs();
+             Log.i(Global.TAG, "Create images dir on sdcard ok");
+        }
+    }
+
 }
 

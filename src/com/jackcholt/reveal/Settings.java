@@ -1,17 +1,18 @@
 package com.jackcholt.reveal;
 
-import com.flurry.android.FlurryAgent;
-
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
+
+import com.flurry.android.FlurryAgent;
 
 
-public class Settings extends PreferenceActivity 
-		implements OnSharedPreferenceChangeListener { 
+public class Settings extends PreferenceActivity { 
 
+    public static final String EBOOK_DIRECTORY_KEY = "default_ebook_dir";
+    public static final String EBOOK_DIR_CHANGED = "ebook_dir_changed";
 	public static final String PREFS_NAME = "com.jackcholt.reveal_preferences";
 	
     @Override
@@ -20,36 +21,43 @@ public class Settings extends PreferenceActivity
         
         // Load the XML preferences file
         addPreferencesFromResource(R.xml.preferences);
+        
         FlurryAgent.onEvent("SettingScreen");
+        
+        getPreferenceScreen().getSharedPreferences()
+            .registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
+                public void onSharedPreferenceChanged(final SharedPreferences sharedPref, final String key) {
+                    if (key.equals(EBOOK_DIRECTORY_KEY)) {
+                        String ebookDir = sharedPref.getString(EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                        
+                        if (!ebookDir.endsWith("/")) {
+                            ebookDir += "/";
+                            Editor edit = sharedPref.edit();
+                            edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
+                            edit.commit();
+
+                            // exit here to avoid recursiveness
+                            return;
+                        }
+                        
+                        // if the ebook directory changed, recreate
+                        Util.createDefaultDirs(getBaseContext());
+                        Intent intent = new Intent(getBaseContext(), Main.class);
+                        intent.putExtra(EBOOK_DIR_CHANGED, true);
+                        setResult(RESULT_OK, intent);
+                    }
+                }
+            });
   }
 
-    @Override
+    /*@Override
 	public void onResume() {
 		super.onResume();
 		
-		SharedPreferences prefs=PreferenceManager.getDefaultSharedPreferences(this);
+		
 
 	}
-    
-private void readPrefs() {
-	Log.d(Global.TAG, "Settings prefs controls");
-	//mShowSplashScreen.setChecked(mDisplayIcon);
-}
-
-private void revertPrefs() {
-	Log.d(Global.TAG, "Reverting prefs");
-	//SharedPreferences.Editor ed = Settings.getEditor(this);
-	//ed.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreen);
-	//ed.commit();
-}
-
-private void savePrefs() {
-	Log.d(Global.TAG, "Saving prefs");
-	//SharedPreferences.Editor editor = Settings.getEditor(this);
-	//editor.putBoolean(DISPLAY_DETAILS_KEY, mShowSplashScreenCheckbox.isChecked());
-	//editor.commit();
-}
-
+*/    
 
 	@Override
     protected void onStop() {
@@ -66,23 +74,17 @@ private void savePrefs() {
 
     }
         
-  @Override
+/*  @Override
     protected void onPause() {
         super.onPause();
         
-        revertPrefs();
+        //revertPrefs();
         // Unregister the listener whenever a key changes
-        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        //getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
         
     }
-
-    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
-        // Let's do something when my counter preference value changes
-        /*if (key.equals(KEY_MY_PREFERENCE)) {
-            Toast.makeText(this, "Thanks! You increased my count to "
-                    + sharedPreferences.getInt(key, 0), Toast.LENGTH_SHORT).show();
-        }*/
-    }
+*/
+    
 
 
 
