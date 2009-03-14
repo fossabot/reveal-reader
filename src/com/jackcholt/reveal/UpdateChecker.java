@@ -39,7 +39,7 @@ public static int getLatestVersionCode(Context _this) {
 
     try {
       //Get the XML update Version to prompt user to get a new Update From the market
-      FlurryAgent.onEvent("UpdateCheck");
+      if (!Global.DEBUGGING) FlurryAgent.onEvent("UpdateCheck");
       URLConnection cnVersion;
       URL urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
       cnVersion = urlVersion.openConnection();
@@ -54,14 +54,7 @@ public static int getLatestVersionCode(Context _this) {
       mWebView.clearCache(true);
       mWebView.getSettings().setJavaScriptEnabled(true);
       mWebView.loadUrl("http://revealreader.thepackhams.com/revealUpdate.html");
-      //URLConnection cnUpdate;
-      //URL urlUpdate = new URL("http://revealreader.thepackhams.com/revealUpdate.html");
-      //cnUpdate = urlUpdate.openConnection();
-      //cnUpdate.setReadTimeout(10000);
-      //cnUpdate.setConnectTimeout(10000);
-      //cnUpdate.setDefaultUseCaches(false);
-      //cnUpdate.connect();
-      //InputStream streamUpdate = cnUpdate.getInputStream();
+
 
       //Proceed parsing the info
       DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();

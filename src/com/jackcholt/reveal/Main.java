@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -111,12 +112,8 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreate(savedInstanceState);
         //Debug.startMethodTracing("reveal");
 
-        FlurryAgent.setReportLocation(true);
-        FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
-        String title;
-        title = getString(R.string.app_name);
-        title += String.format(" %d", Global.SVN_VERSION);       
-        FlurryAgent.onEvent(title);
+        if (!Global.DEBUGGING) FlurryAgent.setReportLocation(true);
+        if (!Global.DEBUGGING) FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -178,7 +175,7 @@ public class Main extends ListActivity implements OnGestureListener {
 	@Override
     protected void onStop() {
         super.onStop();
-        FlurryAgent.onEndSession();
+        if (!Global.DEBUGGING) FlurryAgent.onEndSession();
         //Debug.stopMethodTracing();
 
     }
@@ -482,13 +479,13 @@ public class Main extends ListActivity implements OnGestureListener {
         	AboutDialog.create(this);
         	return true;
         	
-        case HELP_ID: 
+        case HELP_ID:
         	HelpDialog.create(this);
         	return true;
         
         case HISTORY_ID: 
         	startActivityForResult(new Intent(this, HistoryDialog.class), 
-        	        YbkViewActivity.CALL_HISTORY);
+        	YbkViewActivity.CALL_HISTORY);
         	return true;
 
         case BOOKMARK_ID: 

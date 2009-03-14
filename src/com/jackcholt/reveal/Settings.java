@@ -22,7 +22,7 @@ public class Settings extends PreferenceActivity {
         // Load the XML preferences file
         addPreferencesFromResource(R.xml.preferences);
         
-        FlurryAgent.onEvent("SettingScreen");
+        if (!Global.DEBUGGING) FlurryAgent.onEvent("SettingScreen");
         
         getPreferenceScreen().getSharedPreferences()
             .registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {

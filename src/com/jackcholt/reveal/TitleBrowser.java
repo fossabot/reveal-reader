@@ -70,7 +70,7 @@ public class TitleBrowser extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		FlurryAgent.onEvent("TitleBrowser");
+		if (!Global.DEBUGGING) FlurryAgent.onEvent("TitleBrowser");
 		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		
@@ -336,7 +336,7 @@ public class TitleBrowser extends ListActivity {
 			download.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View view) {
 					if (mFileLocation != null) {
-						FlurryAgent.onEvent("eBookDownload");
+						if (!Global.DEBUGGING) FlurryAgent.onEvent("eBookDownload");
 						Util.sendNotification(context, (String) getResources().getText(R.string.ebook_download_started), 
 						        android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
 						        mNotifMgr, mNotifId++, Main.class);
