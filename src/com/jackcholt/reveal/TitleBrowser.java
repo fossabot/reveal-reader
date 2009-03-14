@@ -72,6 +72,7 @@ public class TitleBrowser extends ListActivity {
 		
 		FlurryAgent.onEvent("TitleBrowser");
 		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		
 		mBreadCrumb = new Stack<Uri>();
 
@@ -102,6 +103,7 @@ public class TitleBrowser extends ListActivity {
 			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
 					.show();
 
+			setProgressBarIndeterminateVisibility(true);
 			mBusy = true;
 			mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
 					TitleProvider.CONTENT_URI, "updatefile"), null, null, null);
@@ -179,6 +181,7 @@ public class TitleBrowser extends ListActivity {
 			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
 					.show();
 
+			setProgressBarIndeterminateVisibility(true);
 			mBusy = true;
 			mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
 					TitleProvider.CONTENT_URI, "update"), null, null, null);
@@ -256,6 +259,7 @@ public class TitleBrowser extends ListActivity {
 			
 			updateScreen();
 			
+			setProgressBarIndeterminateVisibility(false);
 			mBusy = false;
 
 			Toast.makeText(mContext, R.string.ebook_update_complete,
@@ -333,6 +337,9 @@ public class TitleBrowser extends ListActivity {
 				public void onClick(View view) {
 					if (mFileLocation != null) {
 						FlurryAgent.onEvent("eBookDownload");
+						Util.sendNotification(context, (String) getResources().getText(R.string.ebook_download_started), 
+						        android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
+						        mNotifMgr, mNotifId++, Main.class);
 						Toast.makeText(context,
 								R.string.ebook_download_started,
 								Toast.LENGTH_SHORT).show();
@@ -386,6 +393,7 @@ public class TitleBrowser extends ListActivity {
                     android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
                     mNotifMgr, mNotifId++, TitleBrowser.class);
 		}
+		setProgressBarIndeterminateVisibility(false);
 		mBusy = false;
 	}
 }
