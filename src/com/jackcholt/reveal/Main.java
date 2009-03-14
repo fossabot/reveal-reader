@@ -112,8 +112,8 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreate(savedInstanceState);
         //Debug.startMethodTracing("reveal");
 
-        if (!Global.DEBUGGING) FlurryAgent.setReportLocation(true);
-        if (!Global.DEBUGGING) FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
+        FlurryAgent.setReportLocation(true);
+        FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -175,7 +175,7 @@ public class Main extends ListActivity implements OnGestureListener {
 	@Override
     protected void onStop() {
         super.onStop();
-        if (!Global.DEBUGGING) FlurryAgent.onEndSession();
+        FlurryAgent.onEndSession();
         //Debug.stopMethodTracing();
 
     }

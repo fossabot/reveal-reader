@@ -18,7 +18,7 @@ public class HelpDialog extends Dialog {
             super(_this);
             //Is Network up or not?
             if (Util.isNetworkUp(_this)) {
-	            if (!Global.DEBUGGING) FlurryAgent.onEvent("OnlineHelp");
+	            FlurryAgent.onEvent("OnlineHelp");
 	            setContentView(R.layout.help);
 	            String title;            
 	            title = "Reveal Online Help";            

@@ -39,7 +39,7 @@ public static int getLatestVersionCode(Context _this) {
 
     try {
       //Get the XML update Version to prompt user to get a new Update From the market
-      if (!Global.DEBUGGING) FlurryAgent.onEvent("UpdateCheck");
+      FlurryAgent.onEvent("UpdateCheck");
       URLConnection cnVersion;
       URL urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=" + Global.SVN_VERSION);
       cnVersion = urlVersion.openConnection();
