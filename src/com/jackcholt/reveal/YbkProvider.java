@@ -545,11 +545,7 @@ public class YbkProvider extends ContentProvider {
         mOpenHelper = new DatabaseHelper(getContext());
         
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        /*mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-        if(!mLibraryDir.endsWith("/")) {
-        	mLibraryDir = mLibraryDir + "/";
-        }
-        mImagesDir = new File(mLibraryDir + "images/");*/
+
         mHistoryEntryAmount = mSharedPref.getString("default_history_entry_amount", "30");
         mBookmarkEntryAmount = mSharedPref.getString("default_bookmark_entry_amount", "20");
         return true;

@@ -29,16 +29,34 @@ public class Settings extends PreferenceActivity {
                 public void onSharedPreferenceChanged(final SharedPreferences sharedPref, final String key) {
                     if (key.equals(EBOOK_DIRECTORY_KEY)) {
                         String ebookDir = sharedPref.getString(EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
-                        
+
+                        if (!ebookDir.startsWith("/sdcard")) {
+                	    	String ebookDirTemp = ebookDir;
+
+                	    	if(!ebookDir.startsWith("/")){
+                	    		ebookDir = "/sdcard/" + ebookDirTemp;
+                	    	} else {
+                	    		ebookDir = "/sdcard" + ebookDirTemp;
+                
+                	    	}
+      	    	            Editor edit = sharedPref.edit();
+                            edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
+                            edit.commit();
+                            
+                            // exit here to avoid recursiveness
+                            return;
+                	    }
+
                         if (!ebookDir.endsWith("/")) {
                             ebookDir += "/";
                             Editor edit = sharedPref.edit();
                             edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
                             edit.commit();
-
+                            
                             // exit here to avoid recursiveness
                             return;
                         }
+                        
                         
                         // if the ebook directory changed, recreate
                         Util.createDefaultDirs(getBaseContext());
@@ -71,6 +89,7 @@ public class Settings extends PreferenceActivity {
 
         // Don't forget to commit your edits!!!
         editor.commit();
+        FlurryAgent.onEndSession();
 
     }
         

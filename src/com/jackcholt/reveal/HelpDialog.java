@@ -38,4 +38,10 @@ public class HelpDialog extends Dialog {
             return dlg;
     }
     
+	/** Called when the activity is going away. */
+	@Override
+    protected void onStop() {
+        super.onStop();
+        FlurryAgent.onEndSession();
+    }
 };

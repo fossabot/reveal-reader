@@ -128,17 +128,11 @@ public class Main extends ListActivity implements OnGestureListener {
         
         setContentView(R.layout.main);
         mContRes = getContentResolver(); 
-       
-        /*mLibraryDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
-        if(!mLibraryDir.endsWith("/")) {
-        	mLibraryDir = mLibraryDir + "/";
-        }*/
         
         //To capture LONG_PRESS gestures
         gestureScanner = new GestureDetector(this); 
         registerForContextMenu(getListView());
-                
-        
+                        
         boolean configChanged = (getLastNonConfigurationInstance() != null);
         
         if (!configChanged) {
@@ -155,7 +149,6 @@ public class Main extends ListActivity implements OnGestureListener {
             UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
         }
   
-        
         refreshBookList();
 
         if (!configChanged) {
@@ -184,28 +177,6 @@ public class Main extends ListActivity implements OnGestureListener {
     public Object onRetainNonConfigurationInstance() {
         return "configuration changed";
     }
-    
-    /*private void createDefaultDirs() {
-        // Create the /sdcard/reveal and eBooks dir if they don't exist
-        // Notify of creation and maybe put people directly into the TitleBrowser if they don't have ANY ybk's
-    	//Must end in a SLASH
-        File revealdir = new File("/sdcard/reveal/");
-        if (!revealdir.exists()) {
-        	 revealdir.mkdirs();
-             Log.i(Global.TAG, "Create reveal dir on sdcard ok");
-        }
-        File ebooksdir = new File(mLibraryDir);
-        if (!ebooksdir.exists()) {
-        	 ebooksdir.mkdirs();
-             Log.i(Global.TAG, "Create ebooks dir on sdcard ok");
-        }
-
-        mImagesDir = new File(mLibraryDir + "images/");
-        if (!mImagesDir.exists()) {
-             mImagesDir.mkdirs();
-             Log.i(Global.TAG, "Create images dir on sdcard ok");
-        }
-    }*/
     
     /**
      * Convenience method to make calling refreshLibrary() without any 

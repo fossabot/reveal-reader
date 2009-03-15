@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import com.flurry.android.FlurryAgent;
+
 
 /**
  * A class to do all the work of reading and accessing YBK files.
@@ -83,6 +85,7 @@ public class YbkTitleReader {
         byte[] indexArray = new byte[indexLength];
         
         if (dataInput.read(indexArray) < indexLength) {
+        	FlurryAgent.onError("YbkTitleReader", "Index Lenght Greater than length of file", "WARNING");
             throw new IllegalStateException("Index Length is greater than length of file.");
         }
         
@@ -116,6 +119,7 @@ public class YbkTitleReader {
                 } catch (IOException ioe) {
                     Log.w("YbkFileReader", "YBK file's DataInputStream had to be closed and reopened. " 
                             + ioe.getMessage());
+                	FlurryAgent.onError("YbkTitleReader", "YBK file's DataInputStream had to be closed and reopened", "WARNING");
                     dataInput.close();
                     initDataStream();
                 }
@@ -126,6 +130,7 @@ public class YbkTitleReader {
                 if (amountRead < len) {
                     throw new InvalidFileFormatException(
                             "Couldn't read all of " + iFilename + ".");
+                    
                 }
                 
                 String bindingText = readBindingFile(offset, len);
@@ -151,6 +156,7 @@ public class YbkTitleReader {
         try {
             dataInput.reset();
         } catch (IOException ioe) {
+        	FlurryAgent.onError("YbkTitleReader", "YBK file's DataInputStream had to be closed and reopened", "WARNING");
             Log.w("YbkTitleReader", "YBK file's DataInputStream had to be closed and reopened. " 
                     + ioe.getMessage());
             dataInput.close();
@@ -168,6 +174,7 @@ public class YbkTitleReader {
         String fileText = new String(text);
         
         if (null == fileText) {
+        	FlurryAgent.onError("YbkTitleReader", "The YBK file contains no binding.html", "WARNING");
             throw new InvalidFileFormatException("The YBK file contains no binding.html");
         }
         

@@ -2,6 +2,8 @@ package com.jackcholt.reveal;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 import com.flurry.android.FlurryAgent;
@@ -92,6 +94,10 @@ public class TitleBrowser extends ListActivity {
 
 		// If this database doesn't have anything to display, let's load it from
 		// the embedded file
+		FlurryAgent.onEvent("TitleBrowser");
+		Map<String, String> flurryMap = new HashMap<String, String>();
+		flurryMap.put("eBook Downloaded", "eBookname"); 
+
 		mListCursor = getContentResolver()
 				.query(
 						Uri.withAppendedPath(TitleProvider.CONTENT_URI,
@@ -134,6 +140,7 @@ public class TitleBrowser extends ListActivity {
 	@Override
     protected void onStop() {
         super.onStop();
+        FlurryAgent.onEndSession();
     }
 	
 	@Override
@@ -212,8 +219,9 @@ public class TitleBrowser extends ListActivity {
 			updateScreen();
 		} else {
 			if (mBusy) {
-				Toast.makeText(this, R.string.ebook_download_busy,
+				Toast.makeText(this, R.string.ebook_download_busy, 
 						Toast.LENGTH_LONG).show();
+					FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
 			} else {
 				TitleDialog dialog = new TitleDialog(this, id);
 				dialog.show();
@@ -247,7 +255,7 @@ public class TitleBrowser extends ListActivity {
 		@Override
 		protected void onUpdateComplete(int token, Object cookie, int result) {
 			super.onUpdateComplete(token, cookie, result);
-
+			FlurryAgent.onError("TitleBrowser", "Download New Catalog", "INFO");
 			// establish data connection
 			Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
 					"categoryparent");
@@ -320,6 +328,10 @@ public class TitleBrowser extends ListActivity {
 						information
 								.append("Description: " + description + "\n");
 					}
+					// Create a map and add the name of the downloaded eBook to it
+					Map<String, String> flurryMap = new HashMap<String, String>();
+					flurryMap.put("eBook Downloaded", name); 
+					FlurryAgent.onEvent("TitleBrowser", flurryMap);
 				}
 			}
 
@@ -336,7 +348,6 @@ public class TitleBrowser extends ListActivity {
 			download.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View view) {
 					if (mFileLocation != null) {
-						FlurryAgent.onEvent("eBookDownload");
 						Util.sendNotification(context, (String) getResources().getText(R.string.ebook_download_started), 
 						        android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
 						        mNotifMgr, mNotifId++, Main.class);
@@ -349,10 +360,6 @@ public class TitleBrowser extends ListActivity {
 								String mLibraryDir = mSharedPref.getString(
 										"default_ebook_dir",
 										"/sdcard/reveal/ebooks/");
-							        if(!mLibraryDir.endsWith("/")) {
-							        	mLibraryDir = mLibraryDir + "/";
-							        }
-
 								try {
 									mDownloadSuccess = Util.fetchAndLoadTitle(
 											mFileLocation, mDownloadUrl, mLibraryDir,

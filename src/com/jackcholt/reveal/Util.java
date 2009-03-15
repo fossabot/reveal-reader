@@ -891,7 +891,18 @@ public class Util {
 	    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
 	    String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
 	    
+	    if (!strRevealDir.startsWith("/sdcard/")) {
+	    	String strRevealDirTemp = strRevealDir;
+
+	    	if(!strRevealDir.startsWith("/")){
+		    	strRevealDir = "/sdcard/" + strRevealDirTemp;
+	    	} else {
+		    	strRevealDir = "/sdcard" + strRevealDirTemp;
+	    	}
+	    }
+	    
 	    File revealdir = new File(strRevealDir);
+	    
         if (!revealdir.exists()) {
              revealdir.mkdirs();
              Log.i(Global.TAG, "Create reveal dir on sdcard ok");

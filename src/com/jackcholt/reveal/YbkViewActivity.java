@@ -7,6 +7,8 @@ import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -123,10 +125,6 @@ public class YbkViewActivity extends Activity {
         mBookId = bookId;
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        /*mLibraryDir = mSharedPref.getString("default_ebook_dir", "/sdcard/reveal/ebooks/");
-        if(!mLibraryDir.endsWith("/")) {
-        	mLibraryDir = mLibraryDir + "/";
-        }*/
         
         mShowPictures = mSharedPref.getBoolean("show_pictures", true);
         
@@ -209,6 +207,7 @@ public class YbkViewActivity extends Activity {
                             "text/plain","ISO_8859-1");
                     
                     Log.e(TAG, "YBK file has no index page.");
+                    FlurryAgent.onError("YbkViewActivity", "YBK file has no index page", "WARNING");
                     return;
                 }
                 mChapFileName = tryFileToOpen;
@@ -467,6 +466,7 @@ public class YbkViewActivity extends Activity {
                     }
                 } else {
                     Log.e(TAG, "Couldn't load chapter from history");
+                    FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");
                 }
                 
                 setProgressBarIndeterminateVisibility(false);
@@ -511,6 +511,7 @@ public class YbkViewActivity extends Activity {
                         }
                     } else {
                         Log.e(TAG, "Couldn't load chapter from bookmarks");
+                        FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");
                     }
                 }
                 
