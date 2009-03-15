@@ -65,8 +65,6 @@ public class Main extends ListActivity implements OnGestureListener {
     private SharedPreferences mSharedPref;
     private boolean BOOLshowSplashScreen;
     private boolean BOOLshowFullScreen;
-    //private String mLibraryDir;
-    //private File mImagesDir;
     private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
     private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
     private final Handler mUpdateLibHandler = new Handler();

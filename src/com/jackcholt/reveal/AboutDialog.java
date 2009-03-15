@@ -52,6 +52,7 @@ public class AboutDialog extends Dialog {
         }
 
         public static AboutDialog create(Context _this) {
+        		FlurryAgent.onStartSession(_this, "C9D5YMTMI5SPPTE8S4S4");
                 AboutDialog dlg = new AboutDialog(_this);
                 dlg.show();
                 return dlg;

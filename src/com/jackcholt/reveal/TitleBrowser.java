@@ -72,6 +72,7 @@ public class TitleBrowser extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
 		FlurryAgent.onEvent("TitleBrowser");
 		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);

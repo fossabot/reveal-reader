@@ -83,7 +83,7 @@ public static int getLatestVersionCode(Context _this) {
 
 public static  void checkForNewerVersion(int currentVersion, final Context _this) {
 	  //Check here an XML file stored on our website for new version info
-	
+		FlurryAgent.onStartSession(_this, "C9D5YMTMI5SPPTE8S4S4");
 	  Thread t = new Thread() {
             public void run() {
             	Global.NEW_VERSION = getLatestVersionCode(_this);

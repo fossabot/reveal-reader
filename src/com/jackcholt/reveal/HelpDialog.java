@@ -34,6 +34,7 @@ public class HelpDialog extends Dialog {
     }
 
     public static HelpDialog create(Context _this) {
+    		FlurryAgent.onStartSession(_this, "C9D5YMTMI5SPPTE8S4S4");
     		HelpDialog dlg = new HelpDialog(_this);
             return dlg;
     }
