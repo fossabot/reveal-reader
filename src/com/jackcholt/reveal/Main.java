@@ -7,18 +7,15 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
-import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
@@ -50,7 +47,8 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int REVELUPDATE_ID = Menu.FIRST + 7;
 
     public static int mNotifId = 0;
-
+    public static Main mApplication;
+    
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
     //private static final boolean DONT_ADD_BOOKS = false;
@@ -110,6 +108,8 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreate(savedInstanceState);
         //Debug.startMethodTracing("reveal");
 
+        mApplication = this;
+        
         FlurryAgent.setReportLocation(true);
         FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         
@@ -144,7 +144,7 @@ public class Main extends ListActivity implements OnGestureListener {
         //Is Network up or not?
         if (Util.isNetworkUp(this)) {
         	//Actually go ONLINE and check...  duhhhh
-            UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
+            UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
         }
   
         refreshBookList();
@@ -441,7 +441,7 @@ public class Main extends ListActivity implements OnGestureListener {
         	
         case REVELUPDATE_ID: 
         	Toast.makeText(this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
-        	UpdateChecker.checkForNewerVersion(Global.SVN_VERSION, this);
+        	UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
         	return true;
         	
         case ABOUT_ID: 
@@ -598,6 +598,10 @@ public class Main extends ListActivity implements OnGestureListener {
         
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+	public static Main getMainApplication() {
+		return mApplication;
+	}
     
 
 }
