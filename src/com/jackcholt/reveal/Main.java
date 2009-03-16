@@ -111,6 +111,12 @@ public class Main extends ListActivity implements OnGestureListener {
         mApplication = this;
         
         FlurryAgent.setReportLocation(true);
+        //Change this when building a RELEASE Version for the GOOGLE APP MARKET
+        
+        //Release Key for use of the END USERS
+        //FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
+        
+        //Development key for use of the DEVELOPMENT TEAM
         FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
