@@ -257,7 +257,7 @@ public class Main extends ListActivity implements OnGestureListener {
                     if (!neededRefreshing) {
                         // if the neededRefreshing flag is not set yet
                         Util.sendNotification(this, "Refreshing the library", 
-                            android.R.drawable.stat_notify_more, "Reveal Library Refresh", 
+                            R.drawable.ebooksmall, "Reveal Library Refresh", 
                             mNotifMgr, mNotifId++, Main.class);
                     }
                     
@@ -281,7 +281,7 @@ public class Main extends ListActivity implements OnGestureListener {
                                 " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
     
                         Util.sendNotification(this, "Added '" + bookName + "' to the library", 
-                                android.R.drawable.stat_notify_more, "Reveal Library Refresh", 
+                                R.drawable.ebooksmall, "Reveal Library Refresh", 
                                 mNotifMgr, mNotifId++, Main.class);
                     } else {
                         Util.sendNotification(this, "Could not add '" + bookName + "'. Bad file?", 
@@ -331,7 +331,7 @@ public class Main extends ListActivity implements OnGestureListener {
         if (neededRefreshing) {
 
             Util.sendNotification(this, "Refreshing of library complete.", 
-                    android.R.drawable.stat_notify_more, "Reveal Library Refresh", 
+                    R.drawable.ebooksmall, "Reveal Library Refresh", 
                     mNotifMgr, mNotifId++, Main.class);
 
         }

@@ -207,7 +207,7 @@ public class YbkProvider extends ContentProvider {
                 (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE); 
             
             Util.sendNotification(mContext, "Rebuilding library...", 
-                    android.R.drawable.stat_sys_warning, "Reveal Database Updated", nm, Main.mNotifId++, 
+                    R.drawable.ebooksmall, "Reveal Database Updated", nm, Main.mNotifId++, 
                     Main.class);
             
             db.execSQL("DROP TABLE IF EXISTS " + CHAPTER_TABLE_NAME);

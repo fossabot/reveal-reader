@@ -350,7 +350,7 @@ public class TitleBrowser extends ListActivity {
 				public void onClick(View view) {
 					if (mFileLocation != null) {
 						Util.sendNotification(context, (String) getResources().getText(R.string.ebook_download_started), 
-						        android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
+						        R.drawable.ebooksmall, "Reveal Online eBook Download", 
 						        mNotifMgr, mNotifId++, Main.class);
 						Toast.makeText(context,
 								R.string.ebook_download_started,
@@ -394,11 +394,11 @@ public class TitleBrowser extends ListActivity {
 
 		if (mDownloadSuccess) {
 			Util.sendNotification(this, (String) getResources().getText(R.string.ebook_download_complete), 
-			        android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
+			        R.drawable.ebooksmall, "Reveal Online eBook Download", 
 			        mNotifMgr, mNotifId++, Main.class);
 		} else {
 	        Util.sendNotification(this, (String) getResources().getText(R.string.ebook_download_failed), 
-                    android.R.drawable.stat_notify_more, "Reveal Online eBook Download", 
+                    R.drawable.ebooksmall, "Reveal Online eBook Download", 
                     mNotifMgr, mNotifId++, TitleBrowser.class);
 		}
 		setProgressBarIndeterminateVisibility(false);
