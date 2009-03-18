@@ -185,7 +185,7 @@ public class YbkFileReader {
             byte b;
             int fileNameStartPos = pos;
 
-            while((b = indexArray[pos++]) != 0) {
+            while((b = indexArray[pos++]) != 0 && pos < mIndexLength) {
                 fileNameSBuf.append((char) b);                
             }
             
@@ -229,7 +229,8 @@ public class YbkFileReader {
     /**
      * Return the contents of BINDING.HTML internal file as a String.
      * 
-     * @return The contents of BINDING.HTML.
+     * @return The contents of BINDING.HTML.  Returns null if there was an EOFException
+     * while reading the file.
      * @throws IOException If there is a problem reading the Binding file.
      * @throws InvalidFileFormatException if there is no Binding internal file 
      * found. 

@@ -43,6 +43,7 @@ public class YbkViewActivity extends Activity {
     private long mBookId;
     private String mBookFileName;
     private String mChapFileName;
+    private int mScrollYPos = 0;
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
@@ -56,6 +57,7 @@ public class YbkViewActivity extends Activity {
     private String mHistTitle = "";
     private int mChapOrderNbr = -1;
     private boolean mBackButtonPressed = false;
+    private int mHistoryPos = 0;
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
@@ -87,7 +89,7 @@ public class YbkViewActivity extends Activity {
             mBookFileName = (String) statusMap.get("bookFileName");
             mChapFileName = (String) statusMap.get("chapFileName");
             mHistTitle = (String) statusMap.get("histTitle");
-            
+            mScrollYPos = (Integer) statusMap.get("scrollYPos");
         } else { 
 
             if (savedInstanceState != null) {
@@ -152,26 +154,6 @@ public class YbkViewActivity extends Activity {
         mainBtn.setOnClickListener(new OnClickListener() {
 
             public void onClick(final View view) {
-                
-                if (mChapFileName != null) {
-                    // Save the previous book and chapter to history if there
-                    // is one
-                    ContentValues values = new ContentValues();
-                    values.put(YbkProvider.BOOK_ID, mBookId);
-                    //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
-
-                    values.put(YbkProvider.HISTORY_TITLE, mHistTitle);
-                    values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
-                    // TODO Temporarily using 0 until we figure out how to get the actual value
-                    values.put(YbkProvider.SCROLL_POS, 0);
-                    
-                    Log.d(TAG, "Saving history for: " + values);
-                    
-                    getContentResolver().insert(
-                            Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
-                            values);
-                }
-                
                 
                 finish();
             }
@@ -291,8 +273,8 @@ public class YbkViewActivity extends Activity {
                 if (loadChapter(book, chapter)) {                    
                     setBookBtn(shortTitle,book,chapter);
                 }
-                setProgressBarIndeterminateVisibility(false);
                 
+                mScrollYPos = 0;
                 
                 return true;
             }
@@ -305,8 +287,11 @@ public class YbkViewActivity extends Activity {
                     mFragment = null;
                 } else if (url.indexOf('@') != -1) {
                     view.loadUrl("javascript:location.href=\"#top\"");
+                } else if (mScrollYPos != 0){
+                    view.scrollTo(0,mScrollYPos);
                 }
                 
+                setProgressBarIndeterminateVisibility(false);
                 
             }
         });
@@ -336,7 +321,7 @@ public class YbkViewActivity extends Activity {
                     setBookBtn(shortTitle, filePath, fileToOpen);
                     Log.d(TAG, "Book loaded");
                 } 
-                setProgressBarIndeterminateVisibility(false);
+                //setProgressBarIndeterminateVisibility(false);
             }
             
         });
@@ -448,6 +433,7 @@ public class YbkViewActivity extends Activity {
                     mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
                     mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
                     mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
+                    mScrollYPos = histCurs.getInt(histCurs.getColumnIndex(YbkProvider.SCROLL_POS));
                     
                     Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
                     
@@ -462,7 +448,7 @@ public class YbkViewActivity extends Activity {
                             setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
                                     mBookFileName, mChapFileName);
                         }
-                        
+
                     }
                 } else {
                     Log.e(TAG, "Couldn't load chapter from history");
@@ -474,7 +460,6 @@ public class YbkViewActivity extends Activity {
                 return;
 
             case CALL_BOOKMARK:
-                setProgressBarIndeterminateVisibility(true);
                 extras = data.getExtras();
                 
                 boolean addBookMark = extras.getBoolean(BookmarkDialog.ADD_BOOKMARK);
@@ -482,6 +467,7 @@ public class YbkViewActivity extends Activity {
                 if (addBookMark) {
                     showDialog(ASK_BOOKMARK_NAME);
                 } else {
+                    setProgressBarIndeterminateVisibility(true);
                     long bmId = extras.getLong(YbkProvider.BOOKMARK_NUMBER);
                     
                     Cursor bmCurs = managedQuery(
@@ -493,6 +479,7 @@ public class YbkViewActivity extends Activity {
                         mBookFileName = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.FILE_NAME));
                         mChapFileName = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
                         mHistTitle = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
+                        mScrollYPos = bmCurs.getInt(bmCurs.getColumnIndex(YbkProvider.SCROLL_POS));
                         
                         Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: " + mChapFileName);
                         
@@ -508,15 +495,17 @@ public class YbkViewActivity extends Activity {
                                         mBookFileName, mChapFileName);
                             }
                             
+                            //mYbkView.scrollTo(0, scrollYPos);
                         }
                     } else {
                         Log.e(TAG, "Couldn't load chapter from bookmarks");
                         FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");
                     }
+                    
+                    setProgressBarIndeterminateVisibility(false);
+
                 }
-                
-                setProgressBarIndeterminateVisibility(false);
-                
+                                
                 return;
 
             }
@@ -784,7 +773,11 @@ public class YbkViewActivity extends Activity {
                     String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
                     
                     content = Util.processIfbook(content, getContentResolver(), libDir);
-                    content = Util.convertAhtag(content);
+                    
+                    // Convert the ahtags
+                    content = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>", 
+                        "<span class=\"ah\" id=\"ah$1\">$2</span>");
+                    
                     content = Util.convertIfvar(content);
                     
                     ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
@@ -795,33 +788,39 @@ public class YbkViewActivity extends Activity {
                     bookLoaded = true;
                     
                     if (!mBackButtonPressed) {
-                        if (mChapFileName != null && !chap.equalsIgnoreCase(mChapFileName)) {
-                            // Save the previous book and chapter to history if there
+                        
+                        if (mChapFileName != null) {
+                            // Save the book and chapter to history if there
                             // is one
                             ContentValues values = new ContentValues();
-                            values.put(YbkProvider.BOOK_ID, mBookId);
-                            
-                            //if (TextUtils.isEmpty(mHistTitle)) throw new IllegalStateException("HistoryTitle is empty"); // TODO Get rid of this
-
-                            values.put(YbkProvider.HISTORY_TITLE, mHistTitle);
-                            values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
-                            // TODO Temporarily using 0 until we figure out how to get the actual value
-                            values.put(YbkProvider.SCROLL_POS, 0);
+                            values.put(YbkProvider.BOOK_ID, bookId);
+                            values.put(YbkProvider.HISTORY_TITLE, mChapBtnText);
+                            values.put(YbkProvider.CHAPTER_NAME, chap);
+                            values.put(YbkProvider.SCROLL_POS, mYbkView.getScrollY());
                             
                             Log.d(TAG, "Saving history for: " + values);
                             
                             getContentResolver().insert(
                                     Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
                                     values);
+                            
+                            // remove the excess histories
+                            getContentResolver().delete(
+                                    Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
+                                    null, null);
                         }
                         
-                        mChapFileName = chap;
-                        mBookFileName = filePath;
+                        // Reset the back button to the top of the history list;
+                        mHistoryPos = 0;
                         mBookId = bookId;
-                        mHistTitle = mChapBtnText;
+                        mChapFileName = chap;
+                        mScrollYPos = mYbkView.getScrollY();
+
                     }
                 } catch (IOException e) {
-                    ybkView.loadData("The chapter could not be opened.",
+                    ybkView.loadData("The chapter could not be opened.  " +
+                    		"The book may have a corrupted file.  " +
+                    		"You may want to get a new copy of the book.",
                             "text/plain","utf-8");
                     
                     Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
@@ -886,8 +885,7 @@ public class YbkViewActivity extends Activity {
                     
                     values.put(YbkProvider.HISTORY_TITLE, bmName);
                     values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
-                    // TODO Temporarily using 0 until we figure out how to get the actual value
-                    values.put(YbkProvider.SCROLL_POS, 0);
+                    values.put(YbkProvider.SCROLL_POS, mYbkView.getScrollY());
                     
                     Log.d(TAG, "Saving bookmark for: " + values);
                     
@@ -1002,19 +1000,17 @@ public class YbkViewActivity extends Activity {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             setProgressBarIndeterminateVisibility(true);
             
-            ContentResolver contRes = getContentResolver(); 
+            Uri prevHistUri = ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "back"), 
+                    ++mHistoryPos);
             
-            Uri lastHistUri = ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "history"), 
-                    YbkProvider.GET_LAST_HISTORY);
+            Cursor c = managedQuery(prevHistUri,null, null, null, null);
             
-            Cursor c = managedQuery(lastHistUri,null, null, null, null);
-            
-            int count = c.getCount();
-            if (count == 1) {
-                c.moveToFirst();
-                String bookFileName = c.getString(0);
-                String chapFileName = c.getString(1);
-                int scrollPos = c.getInt(2);
+            if (c.moveToFirst()) {
+                String bookFileName = c.getString(c.getColumnIndex(YbkProvider.FILE_NAME));
+                String chapFileName = c.getString(c.getColumnIndex(YbkProvider.CHAPTER_NAME));
+                mScrollYPos = c.getInt(c.getColumnIndex(YbkProvider.SCROLL_POS));
+                
+                Log.d(TAG,"Going back to: " + bookFileName + ", " + chapFileName);
                 
                 mBackButtonPressed = true;
                 if (loadChapter(bookFileName, chapFileName)) {
@@ -1023,7 +1019,6 @@ public class YbkViewActivity extends Activity {
                     
                     setBookBtn(bookFileName.substring(slashPos + 1, dotPos),bookFileName,chapFileName);
                     
-                    contRes.delete(lastHistUri, null, null);
                 }
                 
                 mBackButtonPressed = false;
@@ -1032,7 +1027,6 @@ public class YbkViewActivity extends Activity {
                 Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
             }
             
-            setProgressBarIndeterminateVisibility(false);
             return true;
         }
 
@@ -1047,7 +1041,7 @@ public class YbkViewActivity extends Activity {
         stateMap.put("chapFileName", mChapFileName);
         stateMap.put("bookId", mBookId);
         stateMap.put("histTitle", mHistTitle);
-        
+        stateMap.put("scrollYPos", mYbkView.getScrollY());
         return stateMap;
         
     }

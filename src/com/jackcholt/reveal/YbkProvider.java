@@ -41,6 +41,7 @@ public class YbkProvider extends ContentProvider {
     public static final int HISTORIES = 5;
     public static final int BOOKMARK = 6;
     public static final int BOOKMARKS = 7;
+    public static final int BACK = 8;
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
@@ -94,6 +95,7 @@ public class YbkProvider extends ContentProvider {
     public static final String HISTORY_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.history";
     public static final String BOOKMARK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.bookmark";
     public static final String BOOKMARK_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.bookmark";
+    public static final String BACK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.back";
     /** Non navigation chapter */
     public static final int CHAPTER_TYPE_NONNAV = 0; 
     /** Navigation chapter */
@@ -123,6 +125,7 @@ public class YbkProvider extends ContentProvider {
         sUriMatcher.addURI(AUTHORITY, "ybk/history", HISTORIES);
         sUriMatcher.addURI(AUTHORITY, "ybk/bookmark/#", BOOKMARK);
         sUriMatcher.addURI(AUTHORITY, "ybk/bookmark", BOOKMARKS);
+        sUriMatcher.addURI(AUTHORITY, "ybk/back/#", BACK);
     }
 
     private HashMap<Uri, File> mTempImgFiles = new HashMap<Uri, File>();
@@ -491,14 +494,15 @@ public class YbkProvider extends ContentProvider {
                         + BOOK_ID + " ," + CHAPTER_NAME + " ," 
                         + SCROLL_POS + " ," + HISTORY_TITLE);
             }
-
+            
             rowId = db.insert(HISTORY_TABLE_NAME, CHAPTER_NAME, values);
             if (rowId > 0) {
                 Uri histUri = ContentUris.withAppendedId(CONTENT_URI, rowId);
                 getContext().getContentResolver().notifyChange(histUri, null);
                 return histUri;
+            } else {
+                Log.w(TAG,"History was not saved for: " + values);
             }
-            
             
             break;
         
@@ -628,6 +632,7 @@ public class YbkProvider extends ContentProvider {
                     CHAPTER_NAME + ", " + SCROLL_POS + 
                     " FROM " + HISTORY_TABLE_NAME + " AS h, " + BOOK_TABLE_NAME + " AS b " +
                     " WHERE b." + _ID + "=h." + BOOK_ID +
+                    " AND " + BOOKMARK_NUMBER + " IS NULL " +
                     " ORDER BY " + CREATE_DATETIME + " DESC LIMIT 1";
                 
                     
@@ -680,6 +685,21 @@ public class YbkProvider extends ContentProvider {
             // Tell the cursor what uri to watch, so it knows when its source data changes
             bmkCurs.setNotificationUri(getContext().getContentResolver(), uri);
             return bmkCurs;            
+            
+        case BACK:
+            String backId = uri.getPathSegments().get(2);
+ 
+            Cursor backCurs = db.rawQuery("SELECT b." + FILE_NAME +", " +
+                    CHAPTER_NAME + ", " + SCROLL_POS + 
+                    " FROM " + HISTORY_TABLE_NAME + " AS h, " + BOOK_TABLE_NAME + " AS b " +
+                    " WHERE b." + _ID + "=h." + BOOK_ID +
+                    " AND " + BOOKMARK_NUMBER + " IS NULL " +
+                    " ORDER BY " + CREATE_DATETIME + " DESC LIMIT 1 OFFSET " + backId, null);
+
+            
+            // Tell the cursor what uri to watch, so it knows when its source data changes
+            backCurs.setNotificationUri(getContext().getContentResolver(), uri);
+            return backCurs;            
             
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);

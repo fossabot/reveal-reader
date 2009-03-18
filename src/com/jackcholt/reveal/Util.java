@@ -2,6 +2,7 @@ package com.jackcholt.reveal;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -171,20 +172,25 @@ public class Util {
      * Uncompress a GZip file that has been converted to a byte array.
      * 
      * @param buf The byte array that contains the GZip file contents.
-     * @return The uncompressed String.
-     * @throws IOException If there is a problem reading the byte array. 
+     * @return The uncompressed String. Returns null if there was an IOException.
      */
-    public static final String decompressGzip(final byte[] buf) throws IOException {
+    public static final String decompressGzip(final byte[] buf) {
+        StringBuilder decomp = null;
         
-        ByteArrayInputStream bis = new ByteArrayInputStream(buf);
-        GZIPInputStream zip = new GZIPInputStream(bis);
-        final int BUF_SIZE = 255;
-        StringBuilder decomp = new StringBuilder(BUF_SIZE);
-        byte[] newBuf = new byte[BUF_SIZE];
-        
-        int bytesRead = 0;
-        while (-1 != (bytesRead = zip.read(newBuf, 0, BUF_SIZE))) { 
-            decomp.append(new String(newBuf, "ISO_8859-1").substring(0, bytesRead));
+        try {
+            ByteArrayInputStream bis = new ByteArrayInputStream(buf);
+            GZIPInputStream zip = new GZIPInputStream(bis);
+            final int BUF_SIZE = 255;
+            decomp = new StringBuilder(BUF_SIZE);
+            byte[] newBuf = new byte[BUF_SIZE];
+            
+            int bytesRead = 0;
+            while (-1 != (bytesRead = zip.read(newBuf, 0, BUF_SIZE))) { 
+                decomp.append(new String(newBuf, "ISO_8859-1").substring(0, bytesRead));
+            }
+        } catch (IOException ioe) {
+            Log.e(TAG, "Error decompressing file: " + ioe.getMessage());
+            return null;
         }
     
         return decomp.toString();
@@ -444,7 +450,13 @@ public class Util {
      * @return The converted content.
      */
     public static String convertAhtag(final String content) {
-        StringBuilder newContent = new StringBuilder();
+        String fixedContent = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>", 
+                "<span class=\"ah\" id=\"ah$1\">$2</span>");
+        
+        Log.d(TAG, "Fixed Content"  + fixedContent);
+        
+        return fixedContent;
+/*        StringBuilder newContent = new StringBuilder();
 
         // Use this to get the actual content
         StringBuilder oldContent = new StringBuilder(content);
@@ -497,7 +509,7 @@ public class Util {
         newContent.append(oldContent);
         
         return newContent.toString();
-
+*/
     }
 
     /**
@@ -508,6 +520,13 @@ public class Util {
      * @return The converted content.
      */
     public static String convertIfvar(final String content) {
+        /*String findString = "<(ifvar|IFVAR)=([a-zA-Z0-9]+)>(.+)" +
+        		"<[aA]\\s+(href|HREF)=['\"]\\+\\2=0['\"]>(.+)</[aA]>(.+)" +
+        		"<(elsevar|ELSEVAR)=\\2>(.+)<[aA]\\s+(href|HREF)=['\"]\\+\\2=1['\"]>" +
+        		"(.+)</[aA]>(.+)<(endvar|ENDVAR)=\\2>";
+        String fixedContent = content.replaceAll(findString, 
+                "<span class=\"_show$2\">$3<a href=\"javascript:hideSpan('$2')></span>");
+        */
         StringBuilder newContent = new StringBuilder();
 
         // Use this to get the actual content

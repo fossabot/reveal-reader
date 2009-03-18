@@ -325,8 +325,8 @@ public class Main extends ListActivity implements OnGestureListener {
         }
             
         // no longer need the fileCursor
-        stopManagingCursor(fileCursor);
-        fileCursor.close();
+        //stopManagingCursor(fileCursor);
+        //fileCursor.close();
         
         if (neededRefreshing) {
 
