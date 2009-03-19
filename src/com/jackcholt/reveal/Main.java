@@ -159,7 +159,7 @@ public class Main extends ListActivity implements OnGestureListener {
             //Check for SDcard presence
             //if we have one create the dirs and look fer ebooks
         	if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
-            	Log.e(Global.TAG, "sdcard not installed");
+            	//Log.e(Global.TAG, "sdcard not installed");
             	Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
             } else {
             	Util.createDefaultDirs(this);
@@ -205,7 +205,7 @@ public class Main extends ListActivity implements OnGestureListener {
         
         // get a list of files from the database
         // Notify that we are getting current list of eBooks
-        Log.i(Global.TAG,"Getting the list of books in the database");
+        //Log.i(Global.TAG,"Getting the list of books in the database");
    
         fileCursor = managedQuery(bookUri, 
                 new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
@@ -233,11 +233,11 @@ public class Main extends ListActivity implements OnGestureListener {
         if (ybkFiles != null && addNewBooks) {
             // add books that are not in the database
             // Notify that we are getting NEW list of eBooks
-            Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
+            //Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
             
             for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
                 String dirFilename = ybkFiles[i].getAbsolutePath();
-                Log.d(Global.TAG, "dirFilename: " + dirFilename);
+                //Log.d(Global.TAG, "dirFilename: " + dirFilename);
                 
                 boolean fileFoundInDb = false;
                 
@@ -294,7 +294,7 @@ public class Main extends ListActivity implements OnGestureListener {
             
         }
         
-        Log.i(Global.TAG, "Removing Books from the database which are not in directory");
+       // Log.i(Global.TAG, "Removing Books from the database which are not in directory");
         
         // remove the books from the database if they are not in the directory
         int fileIndex = 0;
@@ -481,7 +481,7 @@ public class Main extends ListActivity implements OnGestureListener {
         
         setProgressBarIndeterminateVisibility(true);        
         
-        Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
+       // Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
         
         Intent intent = new Intent(this, YbkViewActivity.class);
         intent.putExtra(YbkProvider._ID, id);

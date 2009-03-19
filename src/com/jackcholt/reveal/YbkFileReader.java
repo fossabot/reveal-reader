@@ -166,7 +166,7 @@ public class YbkFileReader {
     private void populateFileData() throws IOException {
         RandomAccessFile file = mFile;
         mIndexLength = Util.readVBInt(file);
-        Log.d(TAG,"Index Length: " + mIndexLength);
+        //Log.d(TAG,"Index Length: " + mIndexLength);
         
         byte[] indexArray = new byte[mIndexLength];
         

@@ -7,12 +7,9 @@ import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 
-import com.flurry.android.FlurryAgent;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -37,6 +34,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
+
+import com.flurry.android.FlurryAgent;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
@@ -229,7 +228,7 @@ public class YbkViewActivity extends Activity {
                 
                 String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
                 
-                Log.d(TAG, "WebView URL: " + url);
+                //Log.d(TAG, "WebView URL: " + url);
                 String book;
                 String chapter = "";
                 String shortTitle = null;
@@ -268,7 +267,7 @@ public class YbkViewActivity extends Activity {
                         chapter += ".gz";                        
                     }
                 }
-                Log.i(TAG, "Loading chapter '" + chapter + "'");
+                //Log.i(TAG, "Loading chapter '" + chapter + "'");
                 
                 if (loadChapter(book, chapter)) {                    
                     setBookBtn(shortTitle,book,chapter);
@@ -282,7 +281,7 @@ public class YbkViewActivity extends Activity {
             public void onPageFinished(final WebView view, final String url) {
                 // make it jump to the internal link
                 if (mFragment != null) {
-                    Log.d(TAG, "In onPageFinished(). Jumping to #" + mFragment);
+                    //Log.d(TAG, "In onPageFinished(). Jumping to #" + mFragment);
                     view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
                     mFragment = null;
                 } else if (url.indexOf('@') != -1) {
@@ -319,7 +318,7 @@ public class YbkViewActivity extends Activity {
                 setProgressBarIndeterminateVisibility(true);
                 if (loadChapter(filePath, "index") ) {
                     setBookBtn(shortTitle, filePath, fileToOpen);
-                    Log.d(TAG, "Book loaded");
+                    //Log.d(TAG, "Book loaded");
                 } 
                 //setProgressBarIndeterminateVisibility(false);
             }
@@ -435,7 +434,7 @@ public class YbkViewActivity extends Activity {
                     mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
                     mScrollYPos = histCurs.getInt(histCurs.getColumnIndex(YbkProvider.SCROLL_POS));
                     
-                    Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
+                    //Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
                     
                     if (loadChapter(mBookFileName, mChapFileName)) {
                         String[] projection = new String[] {YbkProvider.SHORT_TITLE};
@@ -481,7 +480,7 @@ public class YbkViewActivity extends Activity {
                         mHistTitle = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
                         mScrollYPos = bmCurs.getInt(bmCurs.getColumnIndex(YbkProvider.SCROLL_POS));
                         
-                        Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: " + mChapFileName);
+                        //Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: " + mChapFileName);
                         
                         if (loadChapter(mBookFileName, mChapFileName)) {
                             String[] projection = new String[] {YbkProvider.SHORT_TITLE};
@@ -617,7 +616,7 @@ public class YbkViewActivity extends Activity {
             String content = "";
             String fragment = mFragment = null;
             
-            Log.d(TAG, "FilePath: " + filePath);
+            //Log.d(TAG, "FilePath: " + filePath);
             
             File testFile = new File(filePath);
             if (!testFile.exists()) {
@@ -783,7 +782,7 @@ public class YbkViewActivity extends Activity {
                     ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
                             "text/html","utf-8","");
                     
-                    Log.d(TAG, "Content Height: " + ybkView.getContentHeight());
+                    //Log.d(TAG, "Content Height: " + ybkView.getContentHeight());
                     
                     bookLoaded = true;
                     
@@ -798,7 +797,7 @@ public class YbkViewActivity extends Activity {
                             values.put(YbkProvider.CHAPTER_NAME, chap);
                             values.put(YbkProvider.SCROLL_POS, mYbkView.getScrollY());
                             
-                            Log.d(TAG, "Saving history for: " + values);
+                            //Log.d(TAG, "Saving history for: " + values);
                             
                             getContentResolver().insert(
                                     Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
@@ -878,7 +877,7 @@ public class YbkViewActivity extends Activity {
 
                     String bmName = (String) et.getText().toString();
                     
-                    Log.i(TAG, "Text entered " + bmName); 
+                    //Log.i(TAG, "Text entered " + bmName); 
                     
                     ContentValues values = new ContentValues();
                     values.put(YbkProvider.BOOK_ID, mBookId);
@@ -887,7 +886,7 @@ public class YbkViewActivity extends Activity {
                     values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
                     values.put(YbkProvider.SCROLL_POS, mYbkView.getScrollY());
                     
-                    Log.d(TAG, "Saving bookmark for: " + values);
+                    //Log.d(TAG, "Saving bookmark for: " + values);
                     
                     getContentResolver().insert(
                             Uri.withAppendedPath(YbkProvider.CONTENT_URI,"bookmark"), 
@@ -932,14 +931,14 @@ public class YbkViewActivity extends Activity {
     throws IOException {
      // need to read a special footnote chapter
         String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-        Log.d(TAG, "concat file: " + concatChap);
+        //Log.d(TAG, "concat file: " + concatChap);
         
         String endString = ".";
         if (chap.endsWith(".html.gz")) {
             endString = ".html.gz";
         }
         String verse = chap.substring(chap.lastIndexOf("\\") + 1, chap.lastIndexOf(endString));
-        Log.d(TAG, "verse: " + verse);
+        //Log.d(TAG, "verse: " + verse);
         
         String content = ybkReader.readInternalFile(concatChap);
         
@@ -1010,7 +1009,7 @@ public class YbkViewActivity extends Activity {
                 String chapFileName = c.getString(c.getColumnIndex(YbkProvider.CHAPTER_NAME));
                 mScrollYPos = c.getInt(c.getColumnIndex(YbkProvider.SCROLL_POS));
                 
-                Log.d(TAG,"Going back to: " + bookFileName + ", " + chapFileName);
+                //Log.d(TAG,"Going back to: " + bookFileName + ", " + chapFileName);
                 
                 mBackButtonPressed = true;
                 if (loadChapter(bookFileName, chapFileName)) {

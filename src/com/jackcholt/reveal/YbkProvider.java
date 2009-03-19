@@ -45,7 +45,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 12;
+    public static final int DATABASE_VERSION = 13;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -152,10 +152,13 @@ public class YbkProvider extends ContentProvider {
                     + SHORT_TITLE + " TEXT,"
                     + METADATA + " TEXT"
                     + "); ");
-            
+
+            db.execSQL("CREATE INDEX " + BOOK_TABLE_NAME + "_" + FILE_NAME + "_index ON " +
+                    BOOK_TABLE_NAME + " (" + FILE_NAME + "); ");
+
             db.execSQL("CREATE TABLE " + CHAPTER_TABLE_NAME + " ("
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + BOOK_ID + " INTEGER,"
+                    + BOOK_ID + " INTEGER ,"
                     + FILE_NAME + " TEXT,"
                     + CHAPTER_OFFSET + " INTEGER,"
                     + CHAPTER_LENGTH + " INTEGER,"
@@ -170,6 +173,9 @@ public class YbkProvider extends ContentProvider {
                     + " ON DELETE CASCADE"
                     + "); ");
             
+            db.execSQL("CREATE INDEX " + CHAPTER_TABLE_NAME + "_" + BOOK_ID + "_index ON " +
+            		CHAPTER_TABLE_NAME + " (" + BOOK_ID + "); ");
+            
             db.execSQL("CREATE TABLE " + HISTORY_TABLE_NAME + " (" 
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + BOOK_ID + " INTEGER NOT NULL,"
@@ -182,6 +188,9 @@ public class YbkProvider extends ContentProvider {
                     + BOOK_TABLE_NAME + " (" + _ID + ")"
                     + " ON DELETE CASCADE"
                     + "); ");
+
+            db.execSQL("CREATE INDEX " + HISTORY_TABLE_NAME + "_" + BOOKMARK_NUMBER + "_index ON " +
+                    HISTORY_TABLE_NAME + " (" + BOOKMARK_NUMBER + "); ");
 
             //turns out they allow the cascade and foreign keys, but don't
             // enforce them!
@@ -203,8 +212,8 @@ public class YbkProvider extends ContentProvider {
         public void onUpgrade(final SQLiteDatabase db, final int oldVersion, 
                 final int newVersion) {
 
-            Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
-                    + newVersion + ", which will destroy all old data");
+            //Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+              //      + newVersion + ", which will destroy all old data");
             
             NotificationManager nm = 
                 (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE); 
@@ -241,9 +250,9 @@ public class YbkProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
         
-        if (selectionArgs != null) {
+        /*if (selectionArgs != null) {
             Log.w(TAG,"selectionArgs are not yet supported.  They will not be used.");
-        }
+        }*/
 
         
         int match = sUriMatcher.match(uri);
@@ -290,9 +299,9 @@ public class YbkProvider extends ContentProvider {
                 db.endTransaction();
             }
 
-            if (bookRows > recordsAffected) {
+            /*if (bookRows > recordsAffected) {
                 Log.w(TAG, "Not all the books could be deleted");
-            }
+            }*/
             break;
         
         case HISTORY:
@@ -828,7 +837,7 @@ public class YbkProvider extends ContentProvider {
         
         try {
             int count = c.getCount();
-            Log.d(TAG, "Cursor record count is: " + count);
+            //Log.d(TAG, "Cursor record count is: " + count);
             
             if (count == 1) {
                 c.moveToFirst();
@@ -1021,7 +1030,7 @@ public class YbkProvider extends ContentProvider {
         }
 
         int indexLength = Util.readVBInt(file);
-        Log.d(TAG,"Index Length: " + indexLength);
+        //Log.d(TAG,"Index Length: " + indexLength);
         
         byte[] indexArray = new byte[indexLength];
         
@@ -1102,7 +1111,7 @@ public class YbkProvider extends ContentProvider {
     public ParcelFileDescriptor openFile(final Uri uri, final String mode) 
     throws FileNotFoundException {
         final int BUFFER_SIZE = 8096;
-        Log.d(TAG,"In openFile. URI is: " + uri.toString());
+        //Log.d(TAG,"In openFile. URI is: " + uri.toString());
         
         HashMap<Uri, File> tempImgFiles = mTempImgFiles;
         File outFile = null;
@@ -1150,7 +1159,7 @@ public class YbkProvider extends ContentProvider {
                 
             }
         } else {
-            Log.i(TAG, "openFile was called for non-image URI: " + uri);
+            Log.w(TAG, "openFile was called for non-image URI: " + uri);
         }
         
         int m = ParcelFileDescriptor.MODE_READ_ONLY;
@@ -1185,10 +1194,10 @@ public class YbkProvider extends ContentProvider {
                         BOOK_ID + "=? AND lower(" + FILE_NAME + ") like '%\\" + chapter.replace("'", "''") + "%'",
                         new String[] {Long.toString(bookId)});
                 
-                if (recUpdated != 1) {
+                /*if (recUpdated != 1) {
                     Log.e(TAG, "Order.cfg appears to contain a reference to a non-existant chapter.\n" +
                     		"Records updated for " + chapter + " should be 1, Is: " + recUpdated);
-                }
+                }*/
                 
                 values.clear();
             }

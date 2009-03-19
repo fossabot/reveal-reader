@@ -2,7 +2,6 @@ package com.jackcholt.reveal;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,12 +33,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-
+/**
+ * The purpose of this class is to hold general purpose methods.
+ * 
+ * @author Jack C. Holt, Dave Packham and others
+ *
+ */
 public class Util {
     private static final String TAG = "Util"; 
-	private static final int DIALOG_DELETE = 1;
-	private static final int DIALOG_RENAME = 2;
-	private File mContextFile = new File("");
+	//private static final int DIALOG_DELETE = 1;
+	//private static final int DIALOG_RENAME = 2;
+	//private File mContextFile = new File("");
 
 	
 	
@@ -53,8 +57,8 @@ public class Util {
 		boolean networkUpOrNot;
 		
 		ConnectivityManager connectivityManager  = (ConnectivityManager)_this.getSystemService(_this.CONNECTIVITY_SERVICE); 
-		NetworkInfo netinfo = connectivityManager .getActiveNetworkInfo(); 
-		NetworkInfo activeNetInfo = connectivityManager .getActiveNetworkInfo();
+		//NetworkInfo netinfo = connectivityManager .getActiveNetworkInfo(); 
+		//NetworkInfo activeNetInfo = connectivityManager .getActiveNetworkInfo();
 		NetworkInfo mobNetInfo = connectivityManager .getNetworkInfo(ConnectivityManager.TYPE_MOBILE); 
 			if(mobNetInfo.getState() == NetworkInfo.State.CONNECTED){ 
 				networkUpOrNot = true;    
@@ -299,7 +303,7 @@ public class Util {
             ".ah {" + (showAH ? "display:inline;" : "display:none") + "}" +
             "</style>";
         
-        Log.d(TAG, "style: " + style);
+        //Log.d(TAG, "style: " + style);
         
         return "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">" 
         + style + "</head><body>" + content + "</body></html>";
@@ -414,7 +418,7 @@ public class Util {
                         
                         if (count == 1) {
                             newContent.append(oldContent.substring(gtPos + 1, elsePos));
-                            Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, elsePos));
+                            //Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, elsePos));
                         } else if (count == 0) {
                             newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
                         } else {
@@ -453,7 +457,7 @@ public class Util {
         String fixedContent = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>", 
                 "<span class=\"ah\" id=\"ah$1\">$2</span>");
         
-        Log.d(TAG, "Fixed Content"  + fixedContent);
+        //Log.d(TAG, "Fixed Content"  + fixedContent);
         
         return fixedContent;
 /*        StringBuilder newContent = new StringBuilder();
@@ -486,7 +490,7 @@ public class Util {
                     
                     newContent.append("<span class=\"ah\" id=\"ah").append(number).append("\">");
                     newContent.append(oldContent.substring(gtPos + 1, endPos));
-                    Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, endPos));
+                    //Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, endPos));
                     newContent.append("</span>");
                     
                     //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
@@ -520,13 +524,24 @@ public class Util {
      * @return The converted content.
      */
     public static String convertIfvar(final String content) {
-        /*String findString = "<(ifvar|IFVAR)=([a-zA-Z0-9]+)>(.+)" +
-        		"<[aA]\\s+(href|HREF)=['\"]\\+\\2=0['\"]>(.+)</[aA]>(.+)" +
-        		"<(elsevar|ELSEVAR)=\\2>(.+)<[aA]\\s+(href|HREF)=['\"]\\+\\2=1['\"]>" +
-        		"(.+)</[aA]>(.+)<(endvar|ENDVAR)=\\2>";
-        String fixedContent = content.replaceAll(findString, 
-                "<span class=\"_show$2\">$3<a href=\"javascript:hideSpan('$2')></span>");
-        */
+        /*String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" +
+        		"<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
+        		"<elsevar=\\1>(.+)<[aA]\\s+href=['\"]\\+\\1=1['\"]>" +
+        		"(.+)</[aA]>(.+)<endvar=\\1>";
+        
+        Log.d(TAG, "findString: " + findString);
+        
+        String replaceString = "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">" +
+            "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>";
+        
+        Log.d(TAG, "replaceString: " + replaceString);
+
+        String fixedContent = content.replaceAll(findString, replaceString);
+        
+        Log.d(TAG, "fixedContent: " + fixedContent);
+
+        return fixedContent;*/
+        
         StringBuilder newContent = new StringBuilder();
 
         // Use this to get the actual content
@@ -594,7 +609,7 @@ public class Util {
                         }
                         
                         newContent.append(newShowText);
-                        Log.d(TAG, "Appending: " + newShowText);
+                        //Log.d(TAG, "Appending: " + newShowText);
                         
                         oldContent.delete(0, elsePos + variable.length() + 10);
                         oldLowerContent.delete(0, elsePos + variable.length() + 10);
@@ -924,13 +939,13 @@ public class Util {
 	    
         if (!revealdir.exists()) {
              revealdir.mkdirs();
-             Log.i(Global.TAG, "Create reveal dir on sdcard ok");
+             //Log.i(Global.TAG, "Create reveal dir on sdcard ok");
         }
         
         File imagesDir = new File(strRevealDir + "images/");
         if (!imagesDir.exists()) {
              imagesDir.mkdirs();
-             Log.i(Global.TAG, "Create images dir on sdcard ok");
+             //Log.i(Global.TAG, "Create images dir on sdcard ok");
         }
     }
 
