@@ -221,7 +221,7 @@ public class Main extends ListActivity implements OnGestureListener {
             if (!libraryDir.mkdirs()) {
                 
                 // Send a notice that the ebook library folder couldn't be created
-                Util.sendNotification(this, (String) getResources().getText(LIBRARY_NOT_CREATED), 
+                Util.sendNotification(this, (String) getResources().getText(R.string.library_not_created), 
                         android.R.drawable.stat_sys_warning, "Couldn't make eBook Library", 
                         mNotifMgr, mNotifId++, Main.class);
                 
