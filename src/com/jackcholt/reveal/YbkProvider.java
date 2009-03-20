@@ -19,6 +19,7 @@ import android.content.SharedPreferences;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -45,7 +46,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 13;
+    public static final int DATABASE_VERSION = 14;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -180,7 +181,7 @@ public class YbkProvider extends ContentProvider {
                     + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + BOOK_ID + " INTEGER NOT NULL,"
                     + CHAPTER_NAME + " TEXT NOT NULL,"
-                    + CREATE_DATETIME + " TEXT DEFAULT CURRENT_TIMESTAMP UNIQUE,"
+                    + CREATE_DATETIME + " TEXT DEFAULT CURRENT_TIMESTAMP,"
                     + SCROLL_POS + " INTEGER," 
                     + HISTORY_TITLE + " TEXT,"
                     + BOOKMARK_NUMBER + " INTEGER, "
@@ -504,7 +505,14 @@ public class YbkProvider extends ContentProvider {
                         + SCROLL_POS + " ," + HISTORY_TITLE);
             }
             
-            rowId = db.insert(HISTORY_TABLE_NAME, CHAPTER_NAME, values);
+            Log.d(TAG, "Values: " + values);
+            
+            try {
+                rowId = db.insert(HISTORY_TABLE_NAME, CHAPTER_NAME, values);
+            } catch (SQLiteConstraintException sce) {
+                rowId = 0;
+            }
+
             if (rowId > 0) {
                 Uri histUri = ContentUris.withAppendedId(CONTENT_URI, rowId);
                 getContext().getContentResolver().notifyChange(histUri, null);
@@ -794,6 +802,9 @@ public class YbkProvider extends ContentProvider {
                 if (bindingText != null) {
                     values.put(BINDING_TEXT, bindingText);
                     String title = Util.getBookTitleFromBindingText(bindingText);
+                    if (title == Util.NO_TITLE) {
+                        throw new IllegalStateException("Book (" + fileName + ") was not inserted. (bookId: " + bookId + ")");
+                    }
                     values.put(BOOK_TITLE, title);
                     values.put(SHORT_TITLE,Util.getBookShortTitleFromBindingText(bindingText));
                     values.put(FORMATTED_TITLE,Util.formatTitle(title));
@@ -810,8 +821,13 @@ public class YbkProvider extends ContentProvider {
             } catch (IOException ioe) {
                 Log.e(TAG,"Could not update the book. " + ioe.getMessage());
                 bookId = 0;
+            } catch (IllegalStateException ise) {
+                Log.e(TAG,"Book may be corrupt. " + ise.getMessage());
+                bookId = 0;                
             }
+            
         } finally {
+        
             db.endTransaction();
         }
         
@@ -1001,7 +1017,7 @@ public class YbkProvider extends ContentProvider {
             if (c.getCount() == 1) {
                 c.moveToFirst();
                 try {
-                    fileText = readInternalFile(file, bookId, c.getInt(0));
+                    fileText = readInternalFile(file, bookId, c.getInt(c.getColumnIndex(_ID)));
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
                 }
@@ -1058,7 +1074,7 @@ public class YbkProvider extends ContentProvider {
             byte b;
             int fileNameStartPos = pos;
 
-            while((b = indexArray[pos++]) != 0) {
+            while((b = indexArray[pos++]) != 0 && pos < indexLength) {
                 fileNameSBuf.append((char) b);                
             }
             
@@ -1195,7 +1211,7 @@ public class YbkProvider extends ContentProvider {
                         new String[] {Long.toString(bookId)});
                 
                 /*if (recUpdated != 1) {
-                    Log.e(TAG, "Order.cfg appears to contain a reference to a non-existant chapter.\n" +
+                    Log.e(TAG, "Order.cfg appears to contain a reference to a non-existent chapter.\n" +
                     		"Records updated for " + chapter + " should be 1, Is: " + recUpdated);
                 }*/
                 

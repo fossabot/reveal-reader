@@ -68,10 +68,11 @@ public class Main extends ListActivity implements OnGestureListener {
     private final Handler mUpdateLibHandler = new Handler();
     private Cursor mListCursor; 
     private ContentResolver mContRes; 
-    private boolean mUpdating = false;
+    private static boolean mUpdating = false;
     
     private final Runnable mUpdateBookList = new Runnable() {
         public void run() {
+            
             refreshBookList();
             
             mUpdating = false;
@@ -193,6 +194,7 @@ public class Main extends ListActivity implements OnGestureListener {
     /**
      * Refresh the eBook directory.
      * 
+     * @param strLibDir the path to the library directory.
      * @param addNewBooks If true, run the code that will add new books to the
      * database as well as the code that removes missing books from the database 
      * (which runs regardless).

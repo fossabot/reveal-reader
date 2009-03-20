@@ -224,58 +224,60 @@ public class YbkViewActivity extends Activity {
             
             @Override
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
-                setProgressBarIndeterminateVisibility(true);
+                int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
                 
-                String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                if (url.length() > ContentUriLength + 1) {
+                    setProgressBarIndeterminateVisibility(true);
                 
-                //Log.d(TAG, "WebView URL: " + url);
-                String book;
-                String chapter = "";
-                String shortTitle = null;
-                
-                if (url.indexOf('@') != -1) {
-                    book = mBookFileName;
-                    chapter = mChapFileName;
+                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                    
+                    Log.d(TAG, "WebView URL: " + url);
+                    String book;
+                    String chapter = "";
+                    String shortTitle = null;
+                    
+                    if (url.indexOf('@') != -1) {
+                        book = mBookFileName;
+                        chapter = mChapFileName;
+                    } else {
+                    
+                        String dataString; 
+                        try {
+                            dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
+                        } catch (UnsupportedEncodingException uee) {
+                            dataString = url.substring(ContentUriLength + 1);
+                        }
+                        
+                        String[] urlParts = dataString.split("/");
+                        
+                        // get rid of the book indicator since it is only used in some cases.
+                        book = shortTitle = urlParts[0];
+                        if (book.charAt(0) == '!' || book.charAt(0) == '^') {
+                            shortTitle = urlParts[0] = book.substring(1);
+                        }
+                        
+                        book = libDir + urlParts[0] + ".ybk";
+                        
+                        for (int i = 0; i < urlParts.length; i++) {
+                           chapter += "\\" + urlParts[i];
+                        }
+                        
+                        /*if (!chapter.contains("#")) {
+                            chapter += ".gz";                        
+                        }*/
+                    }
+                    //Log.i(TAG, "Loading chapter '" + chapter + "'");
+                    
+                    if (loadChapter(book, chapter)) {                    
+                        setBookBtn(shortTitle,book,chapter);
+                    }
+                    
+                    mScrollYPos = 0;
+                    
+                    return true;
                 } else {
-                
-                    int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
-                    
-                    String dataString; 
-                    try {
-                        dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
-                    } catch (UnsupportedEncodingException uee) {
-                        dataString = url.substring(ContentUriLength + 1);
-                    }
-                    
-                    
-                    String[] urlParts = dataString.split("/");
-                    
-                    
-                    // get rid of the book indicator since it is only used in some cases.
-                    book = shortTitle = urlParts[0];
-                    if (book.charAt(0) == '!' || book.charAt(0) == '^') {
-                        shortTitle = urlParts[0] = book.substring(1);
-                    }
-                    
-                    book = libDir + urlParts[0] + ".ybk";
-                    
-                    for (int i = 0; i < urlParts.length; i++) {
-                       chapter += "\\" + urlParts[i];
-                    }
-                    
-                    if (!chapter.contains("#")) {
-                        chapter += ".gz";                        
-                    }
+                    return false;
                 }
-                //Log.i(TAG, "Loading chapter '" + chapter + "'");
-                
-                if (loadChapter(book, chapter)) {                    
-                    setBookBtn(shortTitle,book,chapter);
-                }
-                
-                mScrollYPos = 0;
-                
-                return true;
             }
             
             public void onPageFinished(final WebView view, final String url) {

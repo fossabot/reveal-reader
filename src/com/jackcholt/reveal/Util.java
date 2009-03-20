@@ -45,7 +45,7 @@ public class Util {
 	//private static final int DIALOG_RENAME = 2;
 	//private File mContextFile = new File("");
 
-	
+	public static final String NO_TITLE = "no_book_title";
 	
 	/**
 	 * Dave Packham
@@ -112,7 +112,7 @@ public class Util {
      */
     public static final String getBookTitleFromBindingText(String binding) {
         // parse binding text to populate book title
-        String bookTitle = "No book title";
+        String bookTitle = NO_TITLE;
 
         int bindingPos = binding.toLowerCase().indexOf("<a");
         

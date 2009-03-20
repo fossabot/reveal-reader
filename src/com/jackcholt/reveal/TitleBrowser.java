@@ -167,6 +167,9 @@ public class TitleBrowser extends ListActivity {
 		}
 
 		mListCursor = managedQuery(currentUri, projection, null, null, null);
+		
+		Log.d(TAG, "currentUri/mListCursor.getCount(): " + currentUri + " / " + mListCursor.getCount());
+		
 		mAdapter = new SimpleCursorAdapter(this, R.layout.browser_list_item,
 				mListCursor, from, to);
 		setListAdapter(mAdapter);
