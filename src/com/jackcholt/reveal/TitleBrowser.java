@@ -99,8 +99,7 @@ public class TitleBrowser extends ListActivity {
 		Map<String, String> flurryMap = new HashMap<String, String>();
 		flurryMap.put("eBook Downloaded", "eBookname"); 
 
-		mListCursor = getContentResolver()
-				.query(
+		mListCursor = managedQuery(
 						Uri.withAppendedPath(TitleProvider.CONTENT_URI,
 								"category"),
 						new String[] { TitleProvider.Categories._ID }, null,
@@ -115,8 +114,6 @@ public class TitleBrowser extends ListActivity {
 			mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
 					TitleProvider.CONTENT_URI, "updatefile"), null, null, null);
 		}
-
-		mListCursor.close();
 
 		// setup current location in stack
 		Object lastStack = getLastNonConfigurationInstance();
@@ -134,7 +131,6 @@ public class TitleBrowser extends ListActivity {
 		
 		updateScreen();
 
-		//mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 	}
 	
 	/** Called when the activity is going away. */
