@@ -297,7 +297,7 @@ public class Main extends ListActivity implements OnGestureListener {
         }
         
        // Log.i(Global.TAG, "Removing Books from the database which are not in directory");
-        
+              
         // remove the books from the database if they are not in the directory
         int fileIndex = 0;
         fileCursor.moveToFirst();
@@ -313,6 +313,14 @@ public class Main extends ListActivity implements OnGestureListener {
                     break;
                 } 
             }
+  //          //remove files that are 0 byte size
+  //          File f = new File (dbFilename);
+  //         if (f.length() == 0) {
+  //          	f.delete();
+  //              Util.sendNotification(this, "Removed Corrupt eBook", 
+  //                      R.drawable.ebooksmall, "Removed Corrupt eBook", 
+  //                      mNotifMgr, mNotifId++, Main.class);
+  //          }
             
             if (!fileFoundInDir) {
                 neededRefreshing = true;

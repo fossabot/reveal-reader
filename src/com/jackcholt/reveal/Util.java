@@ -67,6 +67,7 @@ public class Util {
 	        	Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
 	  
         }
+		
 		 	 
 		return networkUpOrNot;
 	}
