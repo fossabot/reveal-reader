@@ -36,6 +36,8 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.YbkDAO;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
@@ -46,6 +48,7 @@ public class YbkViewActivity extends Activity {
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
+    private YbkDAO mYbkDao;
     //private String mLibraryDir;
     private SharedPreferences mSharedPref;
     private boolean mShowPictures;
@@ -92,13 +95,13 @@ public class YbkViewActivity extends Activity {
         } else { 
 
             if (savedInstanceState != null) {
-                bookId = (Long) savedInstanceState.get(YbkProvider._ID);            
+                bookId = (Long) savedInstanceState.get(YbkDAO.ID);            
                 isFromHistory = (Boolean) savedInstanceState.get(YbkProvider.FROM_HISTORY);
             } else {
                 Bundle extras = getIntent().getExtras();
                 if (extras != null) {
                     isFromHistory = (Boolean) extras.get(YbkProvider.FROM_HISTORY);
-                    bookId = (Long) extras.get(YbkProvider._ID);
+                    bookId = (Long) extras.get(YbkDAO.ID);
                 }
             }
             
@@ -124,12 +127,11 @@ public class YbkViewActivity extends Activity {
         }
 
         mBookId = bookId;
-
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         
-        mShowPictures = mSharedPref.getBoolean("show_pictures", true);
+        mShowPictures = sharedPref.getBoolean("show_pictures", true);
         
-    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
+    	BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
     	
         if (BOOLshowFullScreen) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -158,22 +160,17 @@ public class YbkViewActivity extends Activity {
             }
             
         });
-                    
-        Cursor bookCursor = managedQuery(
-                ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
-                        bookId),
-                new String[] {YbkProvider.FILE_NAME}, null, null, null);
         
-        if (bookCursor.getCount() == 1) {
-            bookCursor.moveToFirst();
-            mBookFileName = bookCursor.getString(0);
-        } else {
-            mBookFileName = "";
-        }
+        YbkDAO ybkDao = mYbkDao = new YbkDAO(this, 
+                sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks"));
+        
+        Book book = ybkDao.getBook(bookId);
+        
+        mBookFileName = book.fileName;
         
         try {
             YbkFileReader ybkReader = mYbkReader = new YbkFileReader(mBookFileName);
-            String shortTitle = ybkReader.getBookShortTitle();
+            String shortTitle = book.shortTitle;
             if (mChapFileName == null) {
                 String tryFileToOpen = "\\" + shortTitle + ".html.gz";
                 String content = ybkReader.readInternalFile(tryFileToOpen);

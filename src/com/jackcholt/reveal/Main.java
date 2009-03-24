@@ -2,6 +2,8 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Iterator;
+import java.util.List;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -9,7 +11,6 @@ import android.app.ListActivity;
 import android.app.NotificationManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,12 +29,14 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector.OnGestureListener;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.YbkDAO;
 
 public class Main extends ListActivity implements OnGestureListener {
 	    
@@ -69,6 +72,7 @@ public class Main extends ListActivity implements OnGestureListener {
     private Cursor mListCursor; 
     private ContentResolver mContRes; 
     private static boolean mUpdating = false;
+    private YbkDAO mYbkDao;
     
     private final Runnable mUpdateBookList = new Runnable() {
         public void run() {
@@ -123,9 +127,14 @@ public class Main extends ListActivity implements OnGestureListener {
         mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);       
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
+        SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     	
+    	// Get the YanceyBook DAO 
+        mYbkDao = new YbkDAO(this, 
+    	        sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/"));
+    	
+        BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+
         if (BOOLshowFullScreen) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
             requestWindowFeature(Window.FEATURE_NO_TITLE); 
@@ -164,7 +173,9 @@ public class Main extends ListActivity implements OnGestureListener {
             	Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
             } else {
             	Util.createDefaultDirs(this);
-            	updateBookList();
+            	//updateBookList();
+            	refreshLibrary(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks"));
+            	refreshBookList();
              }
         }
     }
@@ -175,7 +186,9 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onStop();
         FlurryAgent.onEndSession();
         //Debug.stopMethodTracing();
-
+        
+        // Remove any references so it can be garbage collected.
+        mYbkDao = null;
     }
     
     @Override
@@ -201,19 +214,15 @@ public class Main extends ListActivity implements OnGestureListener {
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
         boolean neededRefreshing = false;
-        ContentResolver contRes = mContRes;
-        Uri bookUri = mBookUri;
-        Cursor fileCursor = null;
         
         // get a list of files from the database
         // Notify that we are getting current list of eBooks
         //Log.i(Global.TAG,"Getting the list of books in the database");
    
-        fileCursor = managedQuery(bookUri, 
-                new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
-                YbkProvider.FILE_NAME + " ASC");
-                
-        if (fileCursor.getCount() == 0) {
+        YbkDAO ybkDao = mYbkDao;
+        Iterator<Book> fileIterator = ybkDao.getBookTitles().iterator();
+        
+        if (!fileIterator.hasNext()) {
             Log.w(Global.TAG, "eBook database has no valid YBK files");
         }
         
@@ -243,16 +252,15 @@ public class Main extends ListActivity implements OnGestureListener {
                 
                 boolean fileFoundInDb = false;
                 
-                fileCursor.moveToFirst();
-                while(!fileCursor.isAfterLast()) {
+                fileIterator = ybkDao.getBookTitles().iterator();
+                while(fileIterator.hasNext()) {
+                    Book book = fileIterator.next();
                     
-                    String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
-                    if (dirFilename.equalsIgnoreCase(dbFilename)) {
+                    if (dirFilename.equalsIgnoreCase(book.fileName)) {
                         fileFoundInDb = true;
                         break;
                     } 
                     
-                    fileCursor.moveToNext();
                 }
                 
                 if (!fileFoundInDb) {
@@ -271,17 +279,14 @@ public class Main extends ListActivity implements OnGestureListener {
                     }
                     
                     neededRefreshing = true;
-                    ContentValues values = new ContentValues();
-                    values.put(YbkProvider.FILE_NAME, dirFilename);
-                    Uri uri = contRes.insert(bookUri, values);
                     
-                    String bookId = uri.getLastPathSegment();
+                    long bookId = ybkDao.insertBook(dirFilename);
                     
-                    if (Integer.parseInt(bookId) > 0) {
-                        mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+                    if (bookId > 0) {
+                        /*mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
                                 YbkProvider.BINDING_TEXT + " is not null", null,
                                 " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
-    
+    */
                         Util.sendNotification(this, "Added '" + bookName + "' to the library", 
                                 R.drawable.ebooksmall, "Reveal Library Refresh", 
                                 mNotifMgr, mNotifId++, Main.class);
@@ -296,14 +301,16 @@ public class Main extends ListActivity implements OnGestureListener {
             
         }
         
-       // Log.i(Global.TAG, "Removing Books from the database which are not in directory");
+        // Log.i(Global.TAG, "Removing Books from the database which are not in directory");
         
         // remove the books from the database if they are not in the directory
-        int fileIndex = 0;
-        fileCursor.moveToFirst();
-        while(!fileCursor.isAfterLast()) {
-            fileIndex++;
-            String dbFilename = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider.FILE_NAME));
+        //int fileIndex = 0;
+        // restart the file Iterator
+        fileIterator = ybkDao.getBookTitles().iterator();
+        while(fileIterator.hasNext()) {
+            //fileIndex++;
+            Book book = fileIterator.next();
+            String dbFilename = book.fileName;
             
             boolean fileFoundInDir = false;
             for(int i = 0, dirListLen = ybkFiles.length; i < dirListLen; i++) {
@@ -316,20 +323,18 @@ public class Main extends ListActivity implements OnGestureListener {
             
             if (!fileFoundInDir) {
                 neededRefreshing = true;
-                String bookId = fileCursor.getString(fileCursor.getColumnIndexOrThrow(YbkProvider._ID));
-                Uri deleteUri = ContentUris.withAppendedId(bookUri, Long.parseLong(bookId));
-                contRes.delete(deleteUri, null , null);
+                //long bookId = book.id;
+                ybkDao.deleteBook(book);
+                
+                //Uri deleteUri = ContentUris.withAppendedId(bookUri, Long.parseLong(bookId));
+                //contRes.delete(deleteUri, null , null);
                 
                 
             }
             
-            fileCursor.moveToNext();
+            //fileCursor.moveToNext();
         }
             
-        // no longer need the fileCursor
-        //stopManagingCursor(fileCursor);
-        //fileCursor.close();
-        
         if (neededRefreshing) {
 
             Util.sendNotification(this, "Refreshing of library complete.", 
@@ -340,14 +345,19 @@ public class Main extends ListActivity implements OnGestureListener {
         
     }
     
+    
     /**
      * Refresh the list of books in the main list.
      */
     private void refreshBookList() {
-        mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
+        /*mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
                 YbkProvider.BINDING_TEXT + " is not null", null,
-                " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
-                
+                " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");*/
+        
+        YbkDAO ybkDao = mYbkDao;
+        
+        List<Book> data = ybkDao.getBookTitles().getList(null, null);
+        
         // Create an array to specify the fields we want to display in the list (only TITLE)
         String[] from = new String[]{YbkProvider.FORMATTED_TITLE};
         
@@ -355,8 +365,10 @@ public class Main extends ListActivity implements OnGestureListener {
         int[] to = new int[]{R.id.bookText};
         
         // Now create a simple cursor adapter and set it to display
-        SimpleCursorAdapter bookAdapter = 
-                new SimpleCursorAdapter(this, R.layout.book_list_row, mListCursor, from, to);
+        ArrayAdapter<Book> bookAdapter = 
+                new ArrayAdapter<Book>(this, R.layout.book_list_row, data) {
+            
+        };
         
         setListAdapter(bookAdapter);
         
@@ -483,10 +495,10 @@ public class Main extends ListActivity implements OnGestureListener {
         
         setProgressBarIndeterminateVisibility(true);        
         
-       // Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
-        
+        Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
+        Book book = (Book) listView.getItemAtPosition(selectionRowId);
         Intent intent = new Intent(this, YbkViewActivity.class);
-        intent.putExtra(YbkProvider._ID, id);
+        intent.putExtra(YbkDAO.ID, book.id);
         startActivity(intent);
         
     }
@@ -611,5 +623,4 @@ public class Main extends ListActivity implements OnGestureListener {
 		return mApplication;
 	}
     
-
 }
