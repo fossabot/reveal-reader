@@ -2,6 +2,7 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
+import android.os.Process; 
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -14,6 +15,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,8 +30,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector.OnGestureListener;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
@@ -92,7 +96,10 @@ public class Main extends ListActivity implements OnGestureListener {
     	} else {
     		mUpdating = true;
 	        Thread t = new Thread() {
+	        	
 	            public void run() {
+	            	//Try to tame this from stealing all the interface CPU
+	            	Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 	                String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks");
 	                refreshLibrary(ebookDir);
 	                mUpdateLibHandler.post(mUpdateBookList);
@@ -212,7 +219,7 @@ public class Main extends ListActivity implements OnGestureListener {
         // get a list of files from the database
         // Notify that we are getting current list of eBooks
         //Log.i(Global.TAG,"Getting the list of books in the database");
-   
+        
         fileCursor = managedQuery(bookUri, 
                 new String[] {YbkProvider.FILE_NAME,YbkProvider._ID}, null, null,
                 YbkProvider.FILE_NAME + " ASC");
@@ -445,7 +452,8 @@ public class Main extends ListActivity implements OnGestureListener {
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         switch(item.getItemId()) {
         case REFRESH_LIB_ID:
-            Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_LONG).show();
+        	RefreshDialog.create(this);
             updateBookList();
             return true;
             

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="app_name">Reveal</string>
-<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks.</string>
+<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card.</string>
 <string name="no_books_xml">No eBook Information Downloaded. Please wait while we go online and refresh the eBook catalog...  eBook categories will appear on this screen once they are downloaded</string>
 <string name="menu_bookmark">Bookmarks</string>
 <string name="menu_history">eBook History</string>
@@ -70,7 +70,7 @@
 <color name="translucent_red">#80ff0000</color>
 <string name="build_number">%1$d results for &lt;b>&amp;quot;%2$s&amp;quot;&lt;/b></string>
 <dimen name="button_font_size">12sp</dimen>
-<string name="helpdialog_no_ebooks">You have no eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\'  to get new eBooks or or \'Refresh eBook Library\' to add eBooks already on your memory card</string>
+<string name="helpdialog_no_ebooks">You have no eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\'  to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card</string>
 <string name="helpdialog_if_you_need_help">If you need more help with Reveal Reader please visit the website and forums listed below.</string>
 <string name="label_fullscreen">Enable Fullscreen View</string>
 <string name="summary_on_fullscreen">Fullscreen will display</string>
@@ -82,4 +82,6 @@
 <string name="menu_help">Online Help</string>
 <string name="add_bookmark">Add Bookmark here</string>
 <string name="no_bookmark">No Bookmarks</string>
+<string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
+<string name="refresh_title">Refreshing eBooks.  </string>
 </resources>

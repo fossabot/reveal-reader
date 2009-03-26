@@ -57,17 +57,15 @@ public class Util {
 		boolean networkUpOrNot;
 		
 		ConnectivityManager connectivityManager  = (ConnectivityManager)_this.getSystemService(_this.CONNECTIVITY_SERVICE); 
-		//NetworkInfo netinfo = connectivityManager .getActiveNetworkInfo(); 
-		//NetworkInfo activeNetInfo = connectivityManager .getActiveNetworkInfo();
 		NetworkInfo mobNetInfo = connectivityManager .getNetworkInfo(ConnectivityManager.TYPE_MOBILE); 
-			if(mobNetInfo.getState() == NetworkInfo.State.CONNECTED){ 
-				networkUpOrNot = true;    
-		}  else {
-				networkUpOrNot = false;    
-	        	Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
-	  
-        }
+		NetworkInfo wifiNetInfo = connectivityManager .getNetworkInfo(ConnectivityManager.TYPE_WIFI); 
 		
+		if(mobNetInfo.getState() == NetworkInfo.State.CONNECTED || wifiNetInfo.getState() == NetworkInfo.State.CONNECTED){ 
+			networkUpOrNot = true;    
+		}  else {
+			networkUpOrNot = false;    
+        	Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
+		}
 		 	 
 		return networkUpOrNot;
 	}
