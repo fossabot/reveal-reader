@@ -390,23 +390,14 @@ public class Main extends ListActivity implements OnGestureListener {
         }
     }
     
-    //do stuff with the Gestures we capture.
-    public boolean onContextItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-        case DELETE_ID:
-            AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-            //Write Delete from DB Helper
-            //DeleteFileHere(info.id);
-            refreshBookList();
-            return true;
-        }
-        return super.onContextItemSelected(item);
-    }
-    
+    //on main menu long press we go here to do stuff like delete
     @Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
-        menu.add(0, DELETE_ID, 0, R.string.really_delete);
+        //AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+        //Write Delete from DB Helper
+        //DeleteFileHere(info.id);
+		menu.add(0, DELETE_ID, 0, R.string.really_delete);
 	}
     
     @Override
@@ -452,7 +443,6 @@ public class Main extends ListActivity implements OnGestureListener {
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         switch(item.getItemId()) {
         case REFRESH_LIB_ID:
-            //Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_LONG).show();
         	RefreshDialog.create(this);
             updateBookList();
             return true;
@@ -561,7 +551,7 @@ public class Main extends ListActivity implements OnGestureListener {
 	}
 
 	public void onLongPress(MotionEvent arg0) {
-		// TODO Auto-generated method stub
+		Log.e(Global.TAG, "ONLONGPRESS");
 		
 	}
 
