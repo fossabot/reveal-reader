@@ -19,6 +19,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Process;
 import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -357,6 +358,7 @@ public class TitleBrowser extends ListActivity {
 
 						Thread t = new Thread() {
 							public void run() {
+								Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 								String mLibraryDir = mSharedPref.getString(
 										"default_ebook_dir",
 										"/sdcard/reveal/ebooks/");

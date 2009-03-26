@@ -15,6 +15,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.os.Looper;
+import android.os.Process;
 import android.webkit.WebView;
 import android.widget.Toast;
 
@@ -95,6 +96,7 @@ public static int getLatestVersionCode() {
 		FlurryAgent.onStartSession(Main.getMainApplication(), "C9D5YMTMI5SPPTE8S4S4");
 		Thread t = new Thread() {
 			public void run() {
+				Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 				Looper.prepare();
 				Global.NEW_VERSION = getLatestVersionCode();
 			}
