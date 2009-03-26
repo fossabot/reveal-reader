@@ -113,6 +113,7 @@ public class Main extends ListActivity implements OnGestureListener {
         
         FlurryAgent.setReportLocation(true);
         //Change this when building a RELEASE Version for the GOOGLE APP MARKET
+        //This allows for real usage stats and end user error reporting
         
         //Release Key for use of the END USERS
         //FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
@@ -153,7 +154,7 @@ public class Main extends ListActivity implements OnGestureListener {
         	//Actually go ONLINE and check...  duhhhh
             UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
         }
-  
+        
         refreshBookList();
 
         if (!configChanged) {
@@ -164,7 +165,10 @@ public class Main extends ListActivity implements OnGestureListener {
             	Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
             } else {
             	Util.createDefaultDirs(this);
-            	updateBookList();
+            	//Lets not do this on every onCreate.  if users have a bad ebook
+                //they wont be able to use reveal at all if we do.
+                
+            	//updateBookList();
              }
         }
     }
@@ -422,16 +426,16 @@ public class Main extends ListActivity implements OnGestureListener {
             .setIcon(android.R.drawable.ic_menu_recent_history);
         menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
             .setIcon(android.R.drawable.ic_menu_compass);
-        menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
-            .setIcon(android.R.drawable.ic_menu_preferences);
+        menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library)
+        .setIcon(android.R.drawable.ic_menu_rotate);        
         menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser)
         	.setIcon(android.R.drawable.ic_menu_set_as);        
         menu.add(Menu.NONE, HELP_ID, Menu.NONE,  R.string.menu_help)
     	    .setIcon(android.R.drawable.ic_menu_info_details);
-        menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,  R.string.menu_refresh_library)
-            .setIcon(android.R.drawable.ic_menu_rotate);        
         menu.add(Menu.NONE, ABOUT_ID, Menu.NONE,  R.string.menu_about)
     	    .setIcon(android.R.drawable.ic_menu_info_details);
+        menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
+            .setIcon(android.R.drawable.ic_menu_preferences);
         menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE,  R.string.menu_update)
         	.setIcon(android.R.drawable.ic_menu_share);
         return true;
