@@ -91,9 +91,18 @@ public static int getLatestVersionCode() {
   }
   
   public static void checkForNewerVersion(int currentVersion) {
-		// Check here an XML file stored on our website for new version info
+	  // Check here an XML file stored on our website for new version info
 
-		FlurryAgent.onStartSession(Main.getMainApplication(), "C9D5YMTMI5SPPTE8S4S4");
+  	  //Change this when building a RELEASE Version for the GOOGLE APP MARKET
+      //This allows for real usage stats and end user error reporting
+      
+      //Release Key for use of the END USERS
+      //FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+      
+      //Development key for use of the DEVELOPMENT TEAM
+      FlurryAgent.onStartSession(Main.getMainApplication(), "C9D5YMTMI5SPPTE8S4S4");
+		
+		
 		Thread t = new Thread() {
 			public void run() {
 				Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);

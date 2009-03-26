@@ -34,9 +34,17 @@ public class HelpDialog extends Dialog {
     }
 
     public static HelpDialog create(Context _this) {
-    		FlurryAgent.onStartSession(_this, "C9D5YMTMI5SPPTE8S4S4");
-    		HelpDialog dlg = new HelpDialog(_this);
-            return dlg;
+    	//Change this when building a RELEASE Version for the GOOGLE APP MARKET
+        //This allows for real usage stats and end user error reporting
+        
+        //Release Key for use of the END USERS
+        //FlurryAgent.onStartSession(_this, "BLRRZRSNYZ446QUWKSP4");
+        
+        //Development key for use of the DEVELOPMENT TEAM
+        FlurryAgent.onStartSession(_this, "C9D5YMTMI5SPPTE8S4S4");
+        FlurryAgent.onEvent("TitleBrowser");
+		HelpDialog dlg = new HelpDialog(_this);
+        return dlg;
     }
     
 	/** Called when the activity is going away. */

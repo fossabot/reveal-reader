@@ -73,8 +73,16 @@ public class TitleBrowser extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
-		FlurryAgent.onEvent("TitleBrowser");
+		//Change this when building a RELEASE Version for the GOOGLE APP MARKET
+        //This allows for real usage stats and end user error reporting
+        
+        //Release Key for use of the END USERS
+        //FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
+        
+        //Development key for use of the DEVELOPMENT TEAM
+        FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
+        FlurryAgent.onEvent("TitleBrowser");
+		
 		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		
