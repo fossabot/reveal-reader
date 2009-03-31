@@ -305,15 +305,12 @@ public class Main extends ListActivity implements OnGestureListener {
                                 android.R.drawable.stat_sys_warning, "Reveal Library Refresh", 
                                 mNotifMgr, mNotifId++, Main.class);     
                         ReportError.reportError("BAD_EBOOK_FILE_" + bookName);
-        				//ErrorDialog.create(this);
                     }
-
                 }
             }            
-            
         }
         
-       // Log.i(Global.TAG, "Removing Books from the database which are not in directory");
+        // Log.i(Global.TAG, "Removing Books from the database which are not in directory");
               
         // remove the books from the database if they are not in the directory
         int fileIndex = 0;
