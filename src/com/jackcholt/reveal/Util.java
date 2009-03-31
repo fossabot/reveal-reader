@@ -47,6 +47,7 @@ public class Util {
 
 	public static final String NO_TITLE = "no_book_title";
 	
+	
 	/**
 	 * Dave Packham
 	 * Check for network connectivity before trying to go to the net and hanging :)
@@ -57,19 +58,23 @@ public class Util {
 		boolean networkUpOrNot;
 		
 		ConnectivityManager connectivityManager  = (ConnectivityManager)_this.getSystemService(_this.CONNECTIVITY_SERVICE); 
+		//NetworkInfo netinfo = connectivityManager .getActiveNetworkInfo(); 
+		//NetworkInfo activeNetInfo = connectivityManager .getActiveNetworkInfo();
 		NetworkInfo mobNetInfo = connectivityManager .getNetworkInfo(ConnectivityManager.TYPE_MOBILE); 
-		NetworkInfo wifiNetInfo = connectivityManager .getNetworkInfo(ConnectivityManager.TYPE_WIFI); 
-		
-		if(mobNetInfo.getState() == NetworkInfo.State.CONNECTED || wifiNetInfo.getState() == NetworkInfo.State.CONNECTED){ 
-			networkUpOrNot = true;    
+			if(mobNetInfo.getState() == NetworkInfo.State.CONNECTED){ 
+				networkUpOrNot = true;    
 		}  else {
-			networkUpOrNot = false;    
-        	Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
-		}
+				networkUpOrNot = false;    
+	        	//Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
+	  
+        }
+		
 		 	 
 		return networkUpOrNot;
 	}
     
+	
+	
     /**
      * Remove HTML, surrounding quotes and Titlecase a book title.
      * 

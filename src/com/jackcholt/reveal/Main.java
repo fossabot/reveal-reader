@@ -2,6 +2,7 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
+import android.os.Process; 
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -14,10 +15,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Process;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
@@ -29,9 +31,12 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector.OnGestureListener;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.flurry.android.FlurryAgent;
 
@@ -96,9 +101,11 @@ public class Main extends ListActivity implements OnGestureListener {
 	            public void run() {
 	            	//Try to tame this from stealing all the interface CPU
 	            	Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+	            	Looper.prepare();
 	                String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks");
 	                refreshLibrary(ebookDir);
 	                mUpdateLibHandler.post(mUpdateBookList);
+	                
 	            }
 	        };
 	        
@@ -159,7 +166,7 @@ public class Main extends ListActivity implements OnGestureListener {
         }
         
         refreshBookList();
-
+      
         if (!configChanged) {
             //Check for SDcard presence
             //if we have one create the dirs and look fer ebooks
@@ -168,6 +175,7 @@ public class Main extends ListActivity implements OnGestureListener {
             	Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
             } else {
             	Util.createDefaultDirs(this);
+  
             	//Lets not do this on every onCreate.  if users have a bad ebook
                 //they wont be able to use reveal at all if we do.
                 
@@ -295,7 +303,9 @@ public class Main extends ListActivity implements OnGestureListener {
                     } else {
                         Util.sendNotification(this, "Could not add '" + bookName + "'. Bad file?", 
                                 android.R.drawable.stat_sys_warning, "Reveal Library Refresh", 
-                                mNotifMgr, mNotifId++, Main.class);                        
+                                mNotifMgr, mNotifId++, Main.class);     
+                        ReportError.reportError("BAD_EBOOK_FILE_" + bookName);
+        				//ErrorDialog.create(this);
                     }
 
                 }

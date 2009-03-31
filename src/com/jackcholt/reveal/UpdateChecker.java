@@ -21,9 +21,6 @@ import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
 
-
-
-
 /**
  * Checks for updates to the program
  * 
@@ -33,7 +30,6 @@ import com.flurry.android.FlurryAgent;
 public class UpdateChecker {
   public static String marketId;
   
-  //@SuppressWarnings("finally")
   @SuppressWarnings("finally")
 public static int getLatestVersionCode() {
     int version = 0;

@@ -17,43 +17,37 @@ import com.flurry.android.FlurryAgent;
  */
 
 public class AboutDialog extends Dialog {
-        public AboutDialog(Context _this) {
-                super(_this);
-                setContentView(R.layout.about);
+	public AboutDialog(Context _this) {
+	    super(_this);
+	    setContentView(R.layout.about);
+	
+	    Button close = (Button) findViewById(R.id.close_about_btn);
+	    close.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                    dismiss();
+            }
+	    });
+	    String title;
+	    try {
+			title = getContext().getString(R.string.app_name) + 
+			" : " + getContext().getPackageManager().getPackageInfo
+			(getContext().getPackageName(), PackageManager.GET_ACTIVITIES).versionName;
+			         
+			//Grab the Global updated version instead of a static one
+			title += String.format(" %d", Global.SVN_VERSION);
+			//Testing Flurry agent calls
+			FlurryAgent.onEvent("AboutScreen");
+			                                      
+		    setTitle(title);
+			 
+	        } catch (NameNotFoundException e) {
+	        	title = "Unknown version";
+	    }
+	}
 
-                Button close = (Button) findViewById(R.id.close_about_btn);
-                close.setOnClickListener(new View.OnClickListener() {
-                        public void onClick(View v) {
-                                dismiss();
-                        }
-                });
-                String title;
-                //String escapedTitle = TextUtil.htmlEncode(title);
-                try {
-                	//String resultsTextFormat = getContext().getResources().getString(R.string.build_number);
-                	//String resultsText = String.format(resultsTextFormat, Global.SVN_VERSION);
-                	//CharSequence styledResults = Html.fromHtml(resultsText);
-                	
-                        title = getContext().getString(R.string.app_name) + 
-                        " : " + getContext().getPackageManager().getPackageInfo
-                        (getContext().getPackageName(), PackageManager.GET_ACTIVITIES).versionName;
-                                 
-                        //Grab the Global updated version instead of a static one
-                        title += String.format(" %d", Global.SVN_VERSION);
-                        //Testing Flurry agent calls
-                        FlurryAgent.onEvent("AboutScreen");
-                                              
-                        setTitle(title);
-         
-                } catch (NameNotFoundException e) {
-                        title = "Unknown version";
-                }
-                
-        }
-
-        public static AboutDialog create(Context _this) {
-                AboutDialog dlg = new AboutDialog(_this);
-                dlg.show();
-                return dlg;
-        }
+	public static AboutDialog create(Context _this) {
+		AboutDialog dlg = new AboutDialog(_this);
+		dlg.show();
+		return dlg;
+    }
 }

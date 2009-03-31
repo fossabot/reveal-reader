@@ -84,4 +84,6 @@
 <string name="no_bookmark">No Bookmarks</string>
 <string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
 <string name="refresh_title">Refreshing eBooks.  </string>
+<string name="error_reported">Reveal Error Reported.  Please check the forums for a fix.</string>
+<string name="error_title">Reporting Reveal Error</string>
 </resources>
