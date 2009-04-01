@@ -46,7 +46,7 @@ public class YbkProvider extends ContentProvider {
     public static final String TAG = "YbkProvider";
     public static final String BOOK_TABLE_NAME = "books";
     public static final String DATABASE_NAME = "reveal_ybk.db";
-    public static final int DATABASE_VERSION = 14;
+    public static final int DATABASE_VERSION = 15;
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
     public static final String BINDING_TEXT = "binding_text";
@@ -154,7 +154,7 @@ public class YbkProvider extends ContentProvider {
                     + METADATA + " TEXT"
                     + "); ");
 
-            db.execSQL("CREATE INDEX " + BOOK_TABLE_NAME + "_" + FILE_NAME + "_index ON " +
+            db.execSQL("CREATE UNIQUE INDEX " + BOOK_TABLE_NAME + "_" + FILE_NAME + "_index ON " +
                     BOOK_TABLE_NAME + " (" + FILE_NAME + "); ");
 
             db.execSQL("CREATE TABLE " + CHAPTER_TABLE_NAME + " ("
@@ -190,12 +190,12 @@ public class YbkProvider extends ContentProvider {
                     + " ON DELETE CASCADE"
                     + "); ");
 
-            db.execSQL("CREATE INDEX " + HISTORY_TABLE_NAME + "_" + BOOKMARK_NUMBER + "_index ON " +
-                    HISTORY_TABLE_NAME + " (" + BOOKMARK_NUMBER + "); ");
+            /*db.execSQL("CREATE INDEX " + HISTORY_TABLE_NAME + "_" + BOOKMARK_NUMBER + "_index ON " +
+                    HISTORY_TABLE_NAME + " (" + BOOKMARK_NUMBER + "); ");*/
 
             //turns out they allow the cascade and foreign keys, but don't
             // enforce them!
-            db.execSQL("CREATE TRIGGER fkd_chapters_books_id \n"
+            /*db.execSQL("CREATE TRIGGER fkd_chapters_books_id \n"
             		+ "BEFORE DELETE ON " + BOOK_TABLE_NAME
             		+ " FOR EACH ROW BEGIN DELETE FROM "
             		+ CHAPTER_TABLE_NAME + " WHERE "
@@ -206,7 +206,7 @@ public class YbkProvider extends ContentProvider {
                     + " FOR EACH ROW BEGIN DELETE FROM "
                     + HISTORY_TABLE_NAME + " WHERE "
                     + BOOK_ID + " = OLD." + _ID + "; END;");
-            
+*/            
         }
 
         @Override

@@ -140,8 +140,11 @@ public class YbkViewActivity extends Activity {
 
         final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);  
         ybkView.getSettings().setJavaScriptEnabled(true);
+        
         final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
+        
         mBookBtn = (Button) findViewById(R.id.bookButton);
+        
         final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
         chapBtn.setOnClickListener(new OnClickListener() {
             /** set the chapter button so it scrolls the window to the top */
@@ -176,21 +179,7 @@ public class YbkViewActivity extends Activity {
             String shortTitle = ybkReader.getBookShortTitle();
             if (mChapFileName == null) {
                 String tryFileToOpen = "\\" + shortTitle + ".html.gz";
-                String content = ybkReader.readInternalFile(tryFileToOpen);
-                if (content == null) {
-                    tryFileToOpen = "\\" + shortTitle + ".html";
-                    content = ybkReader.readInternalFile(tryFileToOpen);
-                }
                 
-                
-                if (content == null) {
-                    ybkView.loadData("YBK file has no index page.",
-                            "text/plain","ISO_8859-1");
-                    
-                    Log.e(TAG, "YBK file has no index page.");
-                    FlurryAgent.onError("YbkViewActivity", "YBK file has no index page", "WARNING");
-                    return;
-                }
                 mChapFileName = tryFileToOpen;
             }
             
@@ -721,7 +710,7 @@ public class YbkViewActivity extends Activity {
                             if (chap.toLowerCase().endsWith(".gz")) {
                                 
                                 // Try it without the .gz 
-                                chap.substring(0, chap.length() - 3);
+                                chap = chap.substring(0, chap.length() - 3);
                                 content = mYbkReader.readInternalFile(chap);
                                 if (content != null) {
                                     break label_get_content;
@@ -780,6 +769,8 @@ public class YbkViewActivity extends Activity {
                         "<span class=\"ah\" id=\"ah$1\">$2</span>");
                     
                     content = Util.convertIfvar(content);
+                    
+                    //Log.d(TAG, content);
                     
                     ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
                             "text/html","utf-8","");
