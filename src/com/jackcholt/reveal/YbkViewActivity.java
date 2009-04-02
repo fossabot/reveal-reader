@@ -166,26 +166,10 @@ public class YbkViewActivity extends Activity {
         mBookFileName = book.fileName;
         
         try {
-            //YbkFileReader ybkReader = mYbkReader = new YbkFileReader(this,mBookFileName);
+            mYbkReader = new YbkFileReader(this,mBookFileName);
             String shortTitle = book.shortTitle;
             if (mChapFileName == null) {
-                String tryFileToOpen = "\\" + shortTitle + ".html";
-                /*String content = ybkReader.readInternalFile(tryFileToOpen);
-                if (content == null) {
-                    tryFileToOpen = "\\" + shortTitle + ".html";
-                    content = ybkReader.readInternalFile(tryFileToOpen);
-                }
-                
-                
-                if (content == null) {
-                    ybkView.loadData("YBK file has no index page.",
-                            "text/plain","ISO_8859-1");
-                    
-                    Log.e(TAG, "YBK file has no index page.");
-                    FlurryAgent.onError("YbkViewActivity", "YBK file has no index page", "WARNING");
-                    return;
-                }*/
-                mChapFileName = tryFileToOpen;
+                mChapFileName = "\\" + shortTitle + ".html";
             }
             
             if (loadChapter(mBookFileName, mChapFileName)) {
@@ -273,7 +257,7 @@ public class YbkViewActivity extends Activity {
                         return false;
                     }
                     
-                    mScrollYPos = 0;
+                    //mScrollYPos = 0;
                     
                     return true;
                 } else {
@@ -455,7 +439,15 @@ public class YbkViewActivity extends Activity {
                     
                 Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
                 
-                setBookBtn(book.shortTitle, mBookFileName, mChapFileName);
+                try {
+                    if (loadChapter(mBookFileName, mChapFileName)) {
+                        setBookBtn(book.shortTitle, mBookFileName, mChapFileName);
+                        
+                    }   
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Couldn't load chapter from history. " + ioe.getMessage());
+                    FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");                        
+                }
                 
                 setProgressBarIndeterminateVisibility(false);
                 
@@ -498,11 +490,12 @@ public class YbkViewActivity extends Activity {
                                             mBookFileName, mChapFileName);
                                 }
                                 
-                                //mYbkView.scrollTo(0, scrollYPos);
+                                mYbkView.scrollTo(0, mScrollYPos);
                             }
                         } catch (IOException ioe) {
                             Log.e(TAG, "Couldn't load chapter from bookmarks. " + ioe.getMessage());
-                            FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");                        }
+                            FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");                        
+                        }
                     } else {
                         Log.e(TAG, "Couldn't load chapter from bookmarks");
                         FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");
@@ -777,22 +770,12 @@ public class YbkViewActivity extends Activity {
                         if (mChapFileName != null) {
                             // Save the book and chapter to history if there
                             // is one
-                            ContentValues values = new ContentValues();
-                            values.put(YbkProvider.BOOK_ID, bookId);
-                            values.put(YbkProvider.HISTORY_TITLE, mChapBtnText);
-                            values.put(YbkProvider.CHAPTER_NAME, chap);
-                            values.put(YbkProvider.SCROLL_POS, mYbkView.getScrollY());
                             
-                            //Log.d(TAG, "Saving history for: " + values);
-                            
-                            getContentResolver().insert(
-                                    Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
-                                    values);
+                            ybkDao.insertHistory(bookId, mChapBtnText, chap, 
+                                    mYbkView.getScrollY());
                             
                             // remove the excess histories
-                            getContentResolver().delete(
-                                    Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), 
-                                    null, null);
+                            ybkDao.deleteHistories();
                         }
                         
                         // Reset the back button to the top of the history list;

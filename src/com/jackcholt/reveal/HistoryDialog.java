@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -39,9 +40,10 @@ public class HistoryDialog extends ListActivity {
             final int selectionRowId, final long id) {
         
         Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
-        
+        History hist = (History) listView.getItemAtPosition(selectionRowId);
+
         Intent intent = new Intent(this, YbkViewActivity.class);
-        intent.putExtra(YbkDAO.ID, id);
+        intent.putExtra(YbkDAO.ID, hist.id);
         intent.putExtra(YbkDAO.FROM_HISTORY, true);
         setResult(RESULT_OK, intent);
         

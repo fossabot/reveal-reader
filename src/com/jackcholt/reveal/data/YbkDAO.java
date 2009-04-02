@@ -227,7 +227,6 @@ public class YbkDAO {
         if (orderNumber != null) chap.orderNumber = orderNumber;
         if (zoomPicture != null) chap.zoomPicture = zoomPicture;
         
-        
         YbkRoot root = getRoot(mDb);
         
         // Persistence-by-reachability causes objects to become persistent once
@@ -238,22 +237,93 @@ public class YbkDAO {
         boolean b4 = root.chapterOrderNbrIndex.put(chap);
         
         return (b1 && b2 && b3 && b4);
-        /*if (b1 && b2 && b3 && b4) {
-            
-            mDb.commit();
-            return id;
-            
-        } else {
-        
-            // one of the puts failed
-            mDb.rollback();
-            Log.e(TAG, "Could not insert a chapter " + fileName + " for book id " 
-                    + bookId + ".");
-            return 0;
-        }*/
         
     }
+    
+    /**
+     * Convenience method to save a history item but not a bookmark (no bookmarkNumber).
+     * 
+     * @param bookId The id of the book that this is related to.
+     * @param title The title to be shown in the history/bookmark list.
+     * @param chapterName The chapter that was being read.
+     * @param scrollPos The position in the chapter that was being read.
+     * @return
+     */
+    public boolean insertHistory(final long bookId, final String title, 
+            final String chapterName, final int scrollYPos) {
 
+        return insertHistory(bookId, title, chapterName, scrollYPos, null);
+    }
+
+    /**
+     * Save a new history/bookMark item.
+     * 
+     * @param bookId The id of the book that this is related to.
+     * @param historyTitle The title to be shown in the history/bookmark list.
+     * @param chapterName The chapter that was being read.
+     * @param scrollPos The position in the chapter that was being read.
+     * @param bookmarkNumber The number of the bookmark to save.
+     * @return True if the insert succeeded, False otherwise.
+     */
+    public boolean insertHistory(final long bookId, final String title, 
+            final String chapterName, final int scrollYPos, 
+            final Integer bookmarkNumber) {
+        boolean success = true;
+        
+        History hist = new History();
+        hist.bookId = bookId;
+        hist.bookmarkNumber = bookmarkNumber;
+        hist.chapterName = chapterName;
+        hist.scrollYPos = scrollYPos;
+        hist.title = title;
+        
+        YbkRoot root = getRoot(mDb);
+        
+        // Persistence-by-reachability causes objects to become persistent once
+        // they are referred to by a persistent object.
+        boolean b1 = root.historyIdIndex.put(hist);
+        boolean b2 = root.historyTitleIndex.put(hist);
+        boolean b3 = true;
+
+        if (bookmarkNumber != null) {
+            b3 = root.historyBookmarkNumberIndex.put(hist);
+        }
+        
+        if (b1 && b2 && b3) {
+            mDb.commit();
+        } else {
+            mDb.rollback();
+            success = false;
+        }
+        
+        return success;
+    }
+    
+    /**
+     * Remove all histories that have a timestamp earlier than the milliseconds
+     * passed in.
+     */
+    public void deleteHistories() {
+        SharedPreferences sharedPref = mSharedPref;
+        int histToKeep = sharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, 
+                Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
+        
+        List<History> historyList = getHistoryList();
+        if (historyList.size() > histToKeep) {
+            List<History> delHistList = historyList.subList(histToKeep, historyList.size());
+            YbkRoot root = getRoot(mDb);
+            
+            for(int i = 0; i < delHistList.size(); i++) {
+                History hist = delHistList.get(i);
+                root.historyIdIndex.removeKey(hist);
+                root.historyTitleIndex.removeKey(hist);
+                hist.deallocate();
+            }
+            root.modify();
+            mDb.commit();
+        }
+    }
+    
     /**
      * Remove the book from the database.
      * 
@@ -355,6 +425,8 @@ public class YbkDAO {
      * @return The history object identified by histId.
      */
     public History getHistory(final long histId) {
+        //History hist = new History();
+        //hist.id = histId;
         return getRoot(mDb).historyIdIndex.get(new Key(histId));
     }
     

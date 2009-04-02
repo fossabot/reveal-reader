@@ -93,8 +93,6 @@ public class Main extends ListActivity implements OnGestureListener {
     		mUpdating = true;
 	        Thread t = new Thread() {
 	            public void run() {
-	                //String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
-	                //refreshLibrary(ebookDir);
 	                
 	                //Try to tame this from stealing all the interface CPU
                     Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
@@ -102,8 +100,6 @@ public class Main extends ListActivity implements OnGestureListener {
 	                        Settings.DEFAULT_EBOOK_DIRECTORY));
 	                //refreshBookList();
 
-	                
-	                
 	                mUpdateLibHandler.post(mUpdateBookList);
 	            }
 	        };
@@ -573,9 +569,9 @@ public class Main extends ListActivity implements OnGestureListener {
                 extras = data.getExtras();
                 histId = extras.getLong(YbkDAO.ID);
                 
-                hist = ybkDao.getHistory(histId);
+                //hist = ybkDao.getHistory(histId);
                 intent = new Intent(this, YbkViewActivity.class);
-                intent.putExtra(YbkDAO.ID, hist.bookId);
+                intent.putExtra(YbkDAO.ID, histId);
                 intent.putExtra(YbkDAO.FROM_HISTORY, true);
                 startActivity(intent);            
                 break;
