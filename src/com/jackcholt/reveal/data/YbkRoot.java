@@ -26,21 +26,29 @@ public class YbkRoot extends Persistent {
     public FieldIndex<Chapter> chapterBookIdIndex;
     // Index for the Chapter object on the bookId field
     public FieldIndex<Chapter> chapterOrderNbrIndex;
+    public FieldIndex<Chapter> chapterNameIndex;
     // Index for the History object on its primary field
     public FieldIndex<History> historyIdIndex;
+    public FieldIndex<History> historyBookmarkNumberIndex;
+    public FieldIndex<History> historyTitleIndex;
     
     
     public YbkRoot(final Storage db) {
         super(db);
         
         bookIdIndex = db.<Book>createFieldIndex(Book.class, "id", true);
-        bookTitleIndex = db.<Book>createFieldIndex(Book.class, "formattedTitle", true);
-        bookFilenameIndex = db.<Book>createFieldIndex(Book.class, "fileName", true);
+        bookTitleIndex = db.<Book>createFieldIndex(Book.class, "formattedTitle", true, true);
+        bookFilenameIndex = db.<Book>createFieldIndex(Book.class, "fileName", true, true);
         chapterIdIndex = db.<Chapter>createFieldIndex(Chapter.class, "id", true);
         chapterBookIdIndex = db.<Chapter>createFieldIndex(Chapter.class, "bookId", false);
         chapterOrderNbrIndex = db.<Chapter>createFieldIndex(Chapter.class, 
-                new String[] {"id", "orderNumber"}, true);
+                new String[] {"bookId", "orderNumber"}, false); 
+        chapterNameIndex = db.<Chapter>createFieldIndex(Chapter.class, 
+                new String[] {"bookId","fileName"}, true, true);
         historyIdIndex = db.<History>createFieldIndex(History.class, "id", true);
+        historyBookmarkNumberIndex = db.<History>createFieldIndex(History.class, 
+                "bookmarkNumber", false);
+        historyTitleIndex = db.<History>createFieldIndex(History.class, "title", false, true);
     }
     
 

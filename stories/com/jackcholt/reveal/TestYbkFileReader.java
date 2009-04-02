@@ -4,7 +4,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
@@ -25,10 +24,10 @@ public class TestYbkFileReader {
         ybkRdr = null;
     }
 
-    @Test
+    /*@Test
     public void testGetBookTitle() {
         assertTrue(ybkRdr.getBookTitle().startsWith("P<small>"));
-    }
+    }*/
     
     @Test
     public void testGetBindingText() {
@@ -37,10 +36,10 @@ public class TestYbkFileReader {
         Log.d("testGetBindingText", bindingText);
     }
     
-    @Test
+    /*@Test
     public void testGetBookMetaData() {
         Log.i("TestYbkReader", "Book meta data: " + ybkRdr.getBookMetaData());
-    }
+    }*/
 
     @Test
     public void testGetBindingFile() throws IOException {
@@ -117,7 +116,7 @@ public class TestYbkFileReader {
         assertTrue(new String(image).startsWith("GIF89", 0));
     }
 
-    @Test
+    /*@Test
     public void testGetFormattedTitle() {
         assertTrue(!Util.formatTitle(ybkRdr.getBookTitle()).contains("<"));
     }
@@ -244,5 +243,5 @@ public class TestYbkFileReader {
         Log.d("testDaCSG_8_DC13", "DaCSG: " + content);
     }
 
-
+*/
 }

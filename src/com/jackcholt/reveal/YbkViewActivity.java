@@ -37,6 +37,8 @@ import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.Chapter;
+import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class YbkViewActivity extends Activity {
@@ -76,11 +78,24 @@ public class YbkViewActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        
+        mShowPictures = sharedPref.getBoolean("show_pictures", true);
+        
+        BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+        
+        if (BOOLshowFullScreen) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE); 
+        }
+
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }
         
         setProgressBarIndeterminateVisibility(true);
+
+        YbkDAO ybkDao = mYbkDao = YbkDAO.getInstance(this);
 
         Long bookId = null;
         Boolean isFromHistory = null;
@@ -96,27 +111,22 @@ public class YbkViewActivity extends Activity {
 
             if (savedInstanceState != null) {
                 bookId = (Long) savedInstanceState.get(YbkDAO.ID);            
-                isFromHistory = (Boolean) savedInstanceState.get(YbkProvider.FROM_HISTORY);
+                isFromHistory = (Boolean) savedInstanceState.get(YbkDAO.FROM_HISTORY);
             } else {
                 Bundle extras = getIntent().getExtras();
                 if (extras != null) {
-                    isFromHistory = (Boolean) extras.get(YbkProvider.FROM_HISTORY);
+                    isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
                     bookId = (Long) extras.get(YbkDAO.ID);
                 }
             }
             
             if (isFromHistory != null) {
                 // bookId is actually the history id
-                Cursor histCurs = managedQuery(
-                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), bookId), 
-                        null, null, null, null);
-                
-                if (histCurs.moveToFirst()) {
-                    bookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
-                    mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
-                    mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
-                    mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                }
+                History hist = ybkDao.getHistory(bookId);
+                bookId = hist.bookId;
+                mBookFileName = ybkDao.getBook(bookId).fileName;
+                mChapFileName = hist.chapterName;
+                mHistTitle = hist.title;
             }
         }    
         
@@ -127,16 +137,6 @@ public class YbkViewActivity extends Activity {
         }
 
         mBookId = bookId;
-        SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        
-        mShowPictures = sharedPref.getBoolean("show_pictures", true);
-        
-    	BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
-    	
-        if (BOOLshowFullScreen) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            requestWindowFeature(Window.FEATURE_NO_TITLE); 
-        }
          
         setContentView(R.layout.view_ybk);
 
@@ -161,19 +161,16 @@ public class YbkViewActivity extends Activity {
             
         });
         
-        YbkDAO ybkDao = mYbkDao = new YbkDAO(this, 
-                sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks"));
-        
         Book book = ybkDao.getBook(bookId);
         
         mBookFileName = book.fileName;
         
         try {
-            YbkFileReader ybkReader = mYbkReader = new YbkFileReader(mBookFileName);
+            //YbkFileReader ybkReader = mYbkReader = new YbkFileReader(this,mBookFileName);
             String shortTitle = book.shortTitle;
             if (mChapFileName == null) {
-                String tryFileToOpen = "\\" + shortTitle + ".html.gz";
-                String content = ybkReader.readInternalFile(tryFileToOpen);
+                String tryFileToOpen = "\\" + shortTitle + ".html";
+                /*String content = ybkReader.readInternalFile(tryFileToOpen);
                 if (content == null) {
                     tryFileToOpen = "\\" + shortTitle + ".html";
                     content = ybkReader.readInternalFile(tryFileToOpen);
@@ -187,7 +184,7 @@ public class YbkViewActivity extends Activity {
                     Log.e(TAG, "YBK file has no index page.");
                     FlurryAgent.onError("YbkViewActivity", "YBK file has no index page", "WARNING");
                     return;
-                }
+                }*/
                 mChapFileName = tryFileToOpen;
             }
             
@@ -197,7 +194,12 @@ public class YbkViewActivity extends Activity {
 
             
         } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
+            Log.e(TAG, "Could not load: "  + mBookFileName + " chapter: " 
+                    + mChapFileName + ". " + ioe.getMessage());
+            
+            Toast.makeText(this, "Could not load : "  + mBookFileName + " chapter: " 
+                    + mChapFileName + ". Please report this at " 
+                    + getResources().getText(R.string.website), Toast.LENGTH_LONG);
         }
                
         setWebViewClient(ybkView);
@@ -226,7 +228,8 @@ public class YbkViewActivity extends Activity {
                 if (url.length() > ContentUriLength + 1) {
                     setProgressBarIndeterminateVisibility(true);
                 
-                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
+                            Settings.DEFAULT_EBOOK_DIRECTORY);
                     
                     Log.d(TAG, "WebView URL: " + url);
                     String book;
@@ -259,14 +262,15 @@ public class YbkViewActivity extends Activity {
                            chapter += "\\" + urlParts[i];
                         }
                         
-                        /*if (!chapter.contains("#")) {
-                            chapter += ".gz";                        
-                        }*/
                     }
                     //Log.i(TAG, "Loading chapter '" + chapter + "'");
                     
-                    if (loadChapter(book, chapter)) {                    
-                        setBookBtn(shortTitle,book,chapter);
+                    try {
+                        if (loadChapter(book, chapter)) {                    
+                            setBookBtn(shortTitle,book,chapter);
+                        }
+                    } catch (IOException ioe) {
+                        return false;
                     }
                     
                     mScrollYPos = 0;
@@ -315,11 +319,16 @@ public class YbkViewActivity extends Activity {
             
             public void onClick(final View v) {
                 setProgressBarIndeterminateVisibility(true);
-                if (loadChapter(filePath, "index") ) {
-                    setBookBtn(shortTitle, filePath, fileToOpen);
-                    //Log.d(TAG, "Book loaded");
-                } 
-                //setProgressBarIndeterminateVisibility(false);
+                
+                try {
+                    if (loadChapter(filePath, "index") ) {
+                        setBookBtn(shortTitle, filePath, fileToOpen);
+                        //Log.d(TAG, "Book loaded");
+                    } 
+                } catch (IOException ioe) {
+                    Log.w(TAG, "Could not load index page of " + filePath);
+                    setProgressBarIndeterminateVisibility(false);
+                }
             }
             
         });
@@ -368,7 +377,12 @@ public class YbkViewActivity extends Activity {
         case PREVIOUS_ID:
             setProgressBarIndeterminateVisibility(true);
             if (mChapOrderNbr > 0) {
-                loadChapterByOrderId(mBookId, --mChapOrderNbr);
+                try {
+                    loadChapterByOrderId(mBookId, --mChapOrderNbr);
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not move to the previous chapter. " 
+                            + ioe.getMessage());
+                }
             }
             setProgressBarIndeterminateVisibility(false);
             return true;
@@ -388,7 +402,12 @@ public class YbkViewActivity extends Activity {
             }
             
             if (maxOrder > mChapOrderNbr) {
-                loadChapterByOrderId(mBookId, ++mChapOrderNbr);
+                try {
+                    loadChapterByOrderId(mBookId, ++mChapOrderNbr);
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not move to the next chapter. " 
+                            + ioe.getMessage());
+                }
             }
             setProgressBarIndeterminateVisibility(false);
             return true;
@@ -419,39 +438,24 @@ public class YbkViewActivity extends Activity {
             switch (requestCode) {
             case CALL_HISTORY:
                 setProgressBarIndeterminateVisibility(true);
+                
+                YbkDAO ybkDao = mYbkDao;
+                
                 extras = data.getExtras();
-                long histId = extras.getLong(YbkProvider._ID);
+                long histId = extras.getLong(YbkDAO.ID);
                 
-                Cursor histCurs = managedQuery(
-                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), histId), 
-                        null, null, null, null);
+                History hist = ybkDao.getHistory(histId);
                 
-                if (histCurs.moveToFirst()) {
-                    mBookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
-                    mBookFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.FILE_NAME));
-                    mChapFileName = histCurs.getString(histCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
-                    mHistTitle = histCurs.getString(histCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                    mScrollYPos = histCurs.getInt(histCurs.getColumnIndex(YbkProvider.SCROLL_POS));
+                mBookId = hist.bookId;
+                Book book = ybkDao.getBook(mBookId);
+                mBookFileName = book.fileName;
+                mChapFileName = hist.chapterName;
+                mHistTitle = hist.title;
+                mScrollYPos = hist.scrollYPos;
                     
-                    //Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
-                    
-                    if (loadChapter(mBookFileName, mChapFileName)) {
-                        String[] projection = new String[] {YbkProvider.SHORT_TITLE};
-                        Cursor c = managedQuery(
-                                ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
-                                projection, null, null, null);
-
-                        if (c.moveToFirst()) {
-                            
-                            setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
-                                    mBookFileName, mChapFileName);
-                        }
-
-                    }
-                } else {
-                    Log.e(TAG, "Couldn't load chapter from history");
-                    FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");
-                }
+                Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
+                
+                setBookBtn(book.shortTitle, mBookFileName, mChapFileName);
                 
                 setProgressBarIndeterminateVisibility(false);
                 
@@ -481,20 +485,24 @@ public class YbkViewActivity extends Activity {
                         
                         //Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: " + mChapFileName);
                         
-                        if (loadChapter(mBookFileName, mChapFileName)) {
-                            String[] projection = new String[] {YbkProvider.SHORT_TITLE};
-                            Cursor c = managedQuery(
-                                    ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
-                                    projection, null, null, null);
-    
-                            if (c.moveToFirst()) {
+                        try {
+                            if (loadChapter(mBookFileName, mChapFileName)) {
+                                String[] projection = new String[] {YbkProvider.SHORT_TITLE};
+                                Cursor c = managedQuery(
+                                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
+                                        projection, null, null, null);
+   
+                                if (c.moveToFirst()) {
+                                    
+                                    setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
+                                            mBookFileName, mChapFileName);
+                                }
                                 
-                                setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
-                                        mBookFileName, mChapFileName);
+                                //mYbkView.scrollTo(0, scrollYPos);
                             }
-                            
-                            //mYbkView.scrollTo(0, scrollYPos);
-                        }
+                        } catch (IOException ioe) {
+                            Log.e(TAG, "Couldn't load chapter from bookmarks. " + ioe.getMessage());
+                            FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");                        }
                     } else {
                         Log.e(TAG, "Couldn't load chapter from bookmarks");
                         FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");
@@ -517,8 +525,9 @@ public class YbkViewActivity extends Activity {
      * 
      * @param chapterId The record id of the chapter to load.
      * @return Did the chapter load?
+     * @throws IOException If there was a problem reading the chapter.
      */
-    private boolean loadChapterByOrderId(final long bookId, final int orderId) {
+    private boolean loadChapterByOrderId(final long bookId, final int orderId) throws IOException {
         
         Cursor c = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), 
                 new String[] {YbkProvider._ID}, YbkProvider.CHAPTER_ORDER_NUMBER + "=? AND " + YbkProvider.BOOK_ID + "=?", 
@@ -544,8 +553,9 @@ public class YbkViewActivity extends Activity {
      * 
      * @param chapterId The record id of the chapter to load.
      * @return Did the chapter load?
+     * @throws IOException If there is a problem reading the chapter.
      */
-    private boolean loadChapter(final int chapterId) {
+    private boolean loadChapter(final int chapterId) throws IOException {
         boolean bookLoaded = false;
                 
         Cursor c = managedQuery(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), chapterId), 
@@ -594,8 +604,9 @@ public class YbkViewActivity extends Activity {
      * 
      * @param filePath The path to the YBK file from which to read the chapter. 
      * @param chapter The "filename" of the chapter to load.
+     * @throws IOException 
      */
-    private boolean loadChapter(String filePath, final String chapter) {
+    private boolean loadChapter(String filePath, final String chapter) throws IOException {
         boolean bookLoaded = false;
         WebView ybkView = mYbkView; 
         YbkFileReader ybkReader = mYbkReader;
@@ -632,32 +643,17 @@ public class YbkViewActivity extends Activity {
             } else {
                 // Only create a new YbkFileReader if we're opening a different book
                 if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
-                    try {
-                        ybkReader = mYbkReader = new YbkFileReader(filePath);
-                        
-                    } catch (IOException ioe) {
-                        throw new RuntimeException(ioe);
-                    }
+                    ybkReader = mYbkReader = new YbkFileReader(this,filePath);
                 }    
              
-                Cursor c = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
-                        new String[] {YbkProvider._ID}, "lower(" + YbkProvider.FILE_NAME + ")=?", 
-                        new String[] {filePath.toLowerCase()}, null);
+                YbkDAO ybkDao = mYbkDao;
+                Book book = ybkDao.getBook(filePath.toLowerCase());
                 
-                int count = c.getCount();
-                if (count == 1) {
-                    c.moveToFirst();
-                    bookId = c.getLong(0);
-                } else if (count == 0){
-                    throw new IllegalStateException("No books found for '" + filePath);
-                } else {
-                    throw new IllegalStateException("More than one book found for '" + filePath);
-                }
-                
+                bookId = book.id;
                 
                 try {
                     if (chap.equals("index")) {
-                        String shortTitle = ybkReader.getBookShortTitle();
+                        String shortTitle = book.shortTitle;
                         String tryFileToOpen = "\\" + shortTitle + ".html.gz";
                         content = ybkReader.readInternalFile(tryFileToOpen);
                         if (content == null) {
@@ -739,27 +735,19 @@ public class YbkViewActivity extends Activity {
                             }
                             
                             // if we haven't reached a break statement yet, we have a problem.
-                            throw new IllegalStateException("Unable to read chapter '" + chap + "'");
-                            
+                            Toast.makeText(this, "Could not read chapter '" + chap + "'", Toast.LENGTH_LONG);
+                            return false;
                         } // label_get_content:
                         
                     }
     
-                    Cursor chapCurs = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"chapter"), 
-                            new String[] {YbkProvider.CHAPTER_ORDER_NUMBER}, 
-                            "lower(" + YbkProvider.FILE_NAME + ")=?", 
-                            new String[] {chap.toLowerCase()}, null);
-                
-                    if (chapCurs.getCount() == 1) {
-                        chapCurs.moveToFirst();
-                        mChapOrderNbr = chapCurs.getInt(0);
-                    } else if (chapCurs.getCount() == 0){
-                        mChapOrderNbr = -1;
+                    Chapter chapObj = ybkDao.getChapter(bookId,chap.toLowerCase());
+                    
+                    if (chapObj != null) {
+                        mChapOrderNbr = chapObj.orderNumber;
                     } else {
-                        throw new IllegalStateException(
-                                "More than one chapter returned when attempting to get order number for: " 
-                                + chap);
-                    }
+                        mChapOrderNbr = -1;
+                    } 
                     
                     // replace MS-Word "smartquotes" and other extended characters with spaces
                     content = content.replace('\u0093', '"').replace('\u0094','"');
@@ -768,7 +756,8 @@ public class YbkViewActivity extends Activity {
                     mHistTitle = mChapBtnText;
                     setChapBtnText(content);
     
-                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
+                            Settings.DEFAULT_EBOOK_DIRECTORY);
                     
                     content = Util.processIfbook(content, getContentResolver(), libDir);
                     
@@ -780,8 +769,6 @@ public class YbkViewActivity extends Activity {
                     
                     ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref),
                             "text/html","utf-8","");
-                    
-                    //Log.d(TAG, "Content Height: " + ybkView.getContentHeight());
                     
                     bookLoaded = true;
                     
@@ -1011,12 +998,16 @@ public class YbkViewActivity extends Activity {
                 //Log.d(TAG,"Going back to: " + bookFileName + ", " + chapFileName);
                 
                 mBackButtonPressed = true;
-                if (loadChapter(bookFileName, chapFileName)) {
-                    int slashPos = bookFileName.lastIndexOf("/");
-                    int dotPos = bookFileName.indexOf(".");
-                    
-                    setBookBtn(bookFileName.substring(slashPos + 1, dotPos),bookFileName,chapFileName);
-                    
+                try {
+                    if (loadChapter(bookFileName, chapFileName)) {
+                        int slashPos = bookFileName.lastIndexOf("/");
+                        int dotPos = bookFileName.indexOf(".");
+                        
+                        setBookBtn(bookFileName.substring(slashPos + 1, dotPos),bookFileName,chapFileName);
+                        
+                    }
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
                 }
                 
                 mBackButtonPressed = false;

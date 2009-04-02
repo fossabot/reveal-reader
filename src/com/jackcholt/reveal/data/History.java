@@ -12,17 +12,15 @@ import org.garret.perst.Persistent;
  *
  */
 public class History extends Persistent {
-    public int id;
-    public int bookId;
-    public String name;
-    public String createDateTime;
-    public int scrollPos;
+    public long id  = System.currentTimeMillis();
+    public long bookId;
+    public String chapterName;
+    public int scrollYPos;
     public String title;
-    public int bookmarkNumber;
+    public Integer bookmarkNumber = null;
     
     public String toString() {
-        return id + ":" + bookId + ":" + name + ":" + createDateTime + 
-        ":" + scrollPos + ":" + title + ":" + bookmarkNumber;
+        return title;
     }
     
     

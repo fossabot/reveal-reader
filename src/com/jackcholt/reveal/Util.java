@@ -522,8 +522,9 @@ public class Util {
      * 
      * @param content The content containing the ahtags to convert.
      * @return The converted content.
+     * @throws InvalidFileFormatException If content is in the wrong format.
      */
-    public static String convertIfvar(final String content) {
+    public static String convertIfvar(final String content) throws InvalidFileFormatException {
         /*String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" +
         		"<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
         		"<elsevar=\\1>(.+)<[aA]\\s+href=['\"]\\+\\1=1['\"]>" +

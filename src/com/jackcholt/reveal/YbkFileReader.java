@@ -4,8 +4,19 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
+import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.Chapter;
+import com.jackcholt.reveal.data.YbkDAO;
 
 /**
  * A class to do all the work of reading and accessing YBK files.
@@ -28,8 +39,10 @@ public class YbkFileReader {
     
     private static final int INDEX_FILENAME_STRING_LENGTH = 48;
     private static final String BINDING_FILENAME = "\\BINDING.HTML";
-    private static final String BOOKMETADATA_FILENAME = "\\BOOKMETADATA.HTML.GZ"; 
+    private static final String BOOKMETADATA_FILENAME = "\\BOOKMETADATA.HTML"; 
     private static final String ORDER_CONFIG_FILENAME = "\\ORDER.CFG";
+    private static final int FROM_INTERNAL = 1;
+    private static final int FROM_DB = 2;
     private RandomAccessFile mFile;
     private String mFilename;
     //private DataInputStream mDataInput;
@@ -46,119 +59,112 @@ public class YbkFileReader {
     private String mChapterHistoryTitle = "No Title";
     private int mChapterNavFile = CHAPTER_TYPE_SETTINGS;
     private int mChapterZoomPicture = CHAPTER_ZOOM_MENU_OFF;
-    //private Context context = null;
+    private SharedPreferences mSharedPref; 
+    private YbkDAO mYbkDao;
+    private long mBookId = -1;  
+    
     /**
      * A class to act as a structure for holding information about the chapters 
      * held inside a YBK ebook.
      * 
      */
     private class InternalFile {
-        private String mFileName;
-        private int mYbkOffset;
-        private int mYbkLen;
+        public String fileName;
+        public int offset;
+        public int len;
 
         InternalFile() {
             // do nothing
         }
         
-        InternalFile(final String fileName, final int ybkOffset, 
+        InternalFile(final String newFileName, final int ybkOffset, 
                 final int ybkLen) {
-            mFileName = fileName;
-            mYbkOffset = ybkOffset;
-            mYbkLen = ybkLen;
+            fileName = newFileName;
+            offset = ybkOffset;
+            len = ybkLen;
         }
         
         /**
          * @return the fileName
          */
         final String getFileName() {
-            return mFileName;
+            return fileName;
         }
         
         /**
          * @return the ybkLen
          */
         final int getYbkLen() {
-            return mYbkLen;
+            return len;
         }
         
         /**
          * @return the ybkOffset
          */
         final int getYbkOffset() {
-            return mYbkOffset;
+            return offset;
         }
         
         /**
          * @param fileName the fileName to set
          */
-        final void setFileName(final String fileName) {
-            mFileName = fileName;
+        final void setFileName(final String newFileName) {
+            fileName = newFileName;
         }
         
         /**
          * @param ybkLen the ybkLen to set
          */
         final void setYbkLen(final int ybkLen) {
-            mYbkLen = ybkLen;
+            len = ybkLen;
         }
         
         /**
          * @param ybkOffset the ybkOffset to set
          */
         final void setYbkOffset(final int ybkOffset) {
-            mYbkOffset = ybkOffset;
+            offset = ybkOffset;
         }
     }
     
     /**
-     * Construct a new 
-     * YbkFileReader on the given File <code>file</code>. If the 
+     * Construct a new YbkFileReader on the given File <code>file</code>. If the 
      * <code>file</code> specified cannot be found, throw a FileNotFoundException.
      * 
      * @param file a File to be opened for reading characters from.
      * @throws FileNotFoundException if the file cannot be opened for 
      * reading. 
      */
-    public YbkFileReader(final RandomAccessFile file) 
+    public YbkFileReader(final Context ctx, final RandomAccessFile file) 
     throws FileNotFoundException, IOException {
         mFile = file;
-        populateFileData();
+        //populateFileData();
+        
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
     }
 
     /**
-     * Construct a new 
-     * YbkFileReader on the given file named <code>filename</code>. If the 
-     * <code>filename</code> specified cannot be found, throw a FileNotFoundException.
+     * Construct a new YbkFileReader on the given file named <code>filename</code>. 
+     * If the <code>filename</code> specified cannot be found, 
+     * throw a FileNotFoundException.
      * 
      * @param fileName an absolute or relative path specifying the file to open.
      * @throws FileNotFoundException if the filename cannot be opened for 
      * reading. 
      */
-    public YbkFileReader(final String fileName) 
+    public YbkFileReader(final Context ctx, final String fileName) 
     throws FileNotFoundException, IOException {
-        this(new RandomAccessFile(fileName, "r"));
+        this(ctx, new RandomAccessFile(fileName, "r"));
+        
         mFilename = fileName;
+        
+        YbkDAO ybkDao = mYbkDao = YbkDAO.getInstance(ctx);
+        Book book = ybkDao.getBook(fileName);
+        if (book != null) {
+            mBookId = book.id;
+        }
     }
-    
-    /**
-     * Return the title of the book.
-     * 
-     * @return The book title.
-     */
-    public String getBookTitle() {
-        return mBookTitle;
-    
-    }
-    
-    /**
-     * @return the mBookMetaData
-     */
-    public final String getBookMetaData() {
-        return mBookMetaData;
-    }
-
-    
+        
     /**
      * Analyze the YBK file and save file contents data for later reference.
      * @throws IOException If the YBK file is not readable.
@@ -166,13 +172,10 @@ public class YbkFileReader {
     private void populateFileData() throws IOException {
         RandomAccessFile file = mFile;
         mIndexLength = Util.readVBInt(file);
-        //Log.d(TAG,"Index Length: " + mIndexLength);
         
         byte[] indexArray = new byte[mIndexLength];
         
-        if (file.read(indexArray) < mIndexLength) {
-            throw new IllegalStateException("Index Length is greater than length of file.");
-        }
+        file.readFully(indexArray);
         
         // Read the index information into the internalFiles list
         int pos = 0;
@@ -189,28 +192,27 @@ public class YbkFileReader {
                 fileNameSBuf.append((char) b);                
             }
             
-            iFile.setFileName(fileNameSBuf.toString());
+            iFile.fileName = fileNameSBuf.toString();
             
             pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
             
-            iFile.setYbkOffset(Util.readVBInt(Util.makeVBIntArray(indexArray, pos)));
+            iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
             pos += 4;
             
-            iFile.setYbkLen(Util.readVBInt(Util.makeVBIntArray(indexArray, pos)));
+            iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
             pos += 4;
             
             // Add the internal file into the list
             mInternalFiles.add(iFile);
             
-            
         }
         
-        mBindingText = readBindingFile();
+        mBindingText = readBindingFile(FROM_INTERNAL);
         if (mBindingText != null) {
             mBookTitle = Util.getBookTitleFromBindingText(mBindingText);
             mBookShortTitle = Util.getBookShortTitleFromBindingText(mBindingText);
-            mBookMetaData = readMetaData();
-            populateOrder(readOrderCfg());
+            mBookMetaData = readMetaData(FROM_INTERNAL);
+            populateOrder(readOrderCfg(FROM_INTERNAL));
         }
     }
     
@@ -218,12 +220,82 @@ public class YbkFileReader {
         if (null != orderString) {
             Scanner orderScan = new Scanner(orderString).useDelimiter(",");
             
-            ArrayList<String> orderList = mOrderList;
+            ArrayList<String> orderList = new ArrayList<String>();
             
             while(orderScan.hasNext()) {
                 orderList.add(orderScan.next());
             }
+            mOrderList = orderList;
         }
+    }
+
+    /**
+     * Get and save the book information into the database.
+     * 
+     * @param fileName The file name of the book.
+     * @return The id of the book that was saved into the database.
+     * @throws IOException 
+     */
+    public long populateBook() throws IOException {
+        String fileName = mFilename;
+        boolean success = true;
+        YbkDAO ybkDao = mYbkDao;
+        populateFileData();
+        
+        String bindingText = readBindingFile(FROM_INTERNAL);
+        long bookId = mBookId = ybkDao.insertBook(fileName, bindingText, Util.getBookTitleFromBindingText(bindingText), 
+                Util.getBookShortTitleFromBindingText(bindingText), 
+                mBookMetaData);
+        
+        if (bookId == 0) {
+            // we'll assume the fileName is already in the db and continue
+            Log.w(TAG, "Unable to insert book (" + 
+                    fileName + ") into the database.  Must already be in the database.");
+        } else {
+       
+            List<InternalFile> ifList = mInternalFiles;
+            for(int i=0, chapAmount = ifList.size(); i < chapAmount; i++) {
+                Integer orderNbr = null;
+                InternalFile iFile = ifList.get(i);
+                ArrayList<String> orderList = mOrderList;
+                if (orderList != null) {
+                    
+                    String[] orderArray = orderList.toArray(new String[orderList.size()]);
+                    
+                    int orderNumber = Arrays.binarySearch(orderArray, iFile.fileName, 
+                            new Comparator<String>() {
+        
+                        public int compare(String arg0, String arg1) {
+                            return arg0.compareToIgnoreCase(arg1);
+                        }
+                        
+                    });
+                    
+                    if (orderNumber >= 0) {
+                        orderNbr = orderNumber;          
+                    }
+                }
+                
+                if (!ybkDao.insertChapter(bookId, iFile.fileName, null, iFile.len, 
+                        null, null, iFile.offset, null, orderNbr, null)) {
+                
+                    success = false;
+                    break;
+                }
+                
+            }
+            
+            if (success) {
+                ybkDao.commit();
+            } else {
+                ybkDao.rollback();
+                bookId = 0;
+                Log.e(TAG, "The book and all its chapters could not be inserted.");
+            }
+            
+        }
+        
+        return bookId;
     }
 
     /**
@@ -231,22 +303,24 @@ public class YbkFileReader {
      * 
      * @return The contents of BINDING.HTML.  Returns null if there was an EOFException
      * while reading the file.
-     * @throws IOException If there is a problem reading the Binding file.
-     * @throws InvalidFileFormatException if there is no Binding internal file 
-     * found. 
+     * @throws IOException If there is a problem reading the Binding file. 
      */
     public String readBindingFile() 
-    throws IOException, InvalidFileFormatException {
-        String fileText = readInternalFile(BINDING_FILENAME);
+    throws IOException {
+        return readBindingFile(FROM_DB);
+    }
+
+    public String readBindingFile(final int source) throws IOException {
+        String fileText = readInternalFile(BINDING_FILENAME, source);
         
         if (null == fileText) {
-            Log.w(TAG,"The YBK file contains no binding.html");
+            Log.e(TAG,"The YBK file contains no binding.html");
         }
         
         return fileText;
+        
     }
-
-    public String readInternalFile(final String iFilename) throws IOException {
+/*    public String readInternalFile(final String iFilename) throws IOException {
         String fileText = null;
         int offset = 0;
         int len = 0;
@@ -281,7 +355,99 @@ public class YbkFileReader {
         }
         return fileText;
     }
+*/    
+    public String readInternalFile(final String chapName) throws IOException {
+        return readInternalFile(chapName, FROM_DB);
+    }
     
+    Comparator iFileComp = new Comparator() {
+
+        public int compare(Object arg0, Object arg1) {
+            InternalFile if0 = (InternalFile) arg0;
+            InternalFile if1 = (InternalFile) arg1;
+            
+            return if0.fileName.compareToIgnoreCase(if1.fileName);
+        }
+        
+    };
+    
+    /**
+     * The brains behind reading YBK file chapters (or internal files).
+     * 
+     * @param dataInput The input stream that is the YanceyBook.
+     * @param bookId The id of the book record in the database.
+     * @param chapterId The id of the chapter record in the database.
+     * @return The text of the chapter.
+     * @throws IOException If the chapter cannot be read.
+     */
+    @SuppressWarnings("unchecked")
+    public String readInternalFile(String chapName, final int source) 
+    throws IOException {
+        String fileText = null;
+        int offset = 0;
+        int len = 0;
+        boolean fileFound = false;
+        
+        RandomAccessFile file = mFile;
+        YbkDAO ybkDao = mYbkDao;
+        Chapter chap;
+        
+        if (source == FROM_DB) {
+            chap = ybkDao.getChapter(mBookId, chapName);
+            if (chap == null) {
+                chapName += ".gz";
+                chap = ybkDao.getChapter(mBookId, chapName);
+                if (chap == null) {
+                    throw new IOException(chapName + " could not be found in");
+                }
+            }
+            
+            offset = chap.offset;
+            len = chap.length;
+            fileFound = true;
+        } else {
+            
+            InternalFile iFile = new InternalFile();
+            iFile.fileName = chapName;
+            Object[] ifArray = mInternalFiles.toArray();
+            Arrays.sort(ifArray, iFileComp);
+            int index = Arrays.binarySearch(ifArray, iFile, iFileComp);
+            
+            if (index >= 0) {
+                offset = mInternalFiles.get(index).offset;
+                len = mInternalFiles.get(index).len;
+                fileFound = true;
+            } else {
+                chapName += ".gz";
+                iFile.fileName = chapName;
+                index = Arrays.binarySearch(ifArray, iFile, iFileComp);
+                if (index > -1) {
+                    offset = mInternalFiles.get(index).offset;
+                    len = mInternalFiles.get(index).len;
+                    fileFound = true;
+                } 
+            }
+        }
+        
+        if (fileFound) {
+            byte[] text = new byte[len];
+            file.seek(offset);
+            int amountRead = file.read(text);
+            if (amountRead < len) {
+                throw new InvalidFileFormatException(
+                        "Couldn't read all of " + chapName + ".");
+            }
+            
+            if (chapName.toLowerCase().endsWith(".gz")) {
+                fileText = Util.decompressGzip(text);
+            } else {
+                fileText = new String(text, "ISO_8859-1");
+            }
+        } 
+                        
+        return fileText;
+    }
+
     /**
      * Return the uncompressed contents of Book Metadata internal file as a 
      * String or null if the YBK file doesn't contain one.
@@ -289,12 +455,12 @@ public class YbkFileReader {
      * @return The uncompressed contents of the Book Metadata file.
      * @throws IOException if there is a problem reading the Book Metadata file. 
      */
-    private String readMetaData() throws IOException {
-        return readInternalFile(BOOKMETADATA_FILENAME);
+    private String readMetaData(final int source) throws IOException {
+        return readInternalFile(BOOKMETADATA_FILENAME, source);
     }
     
-    private String readOrderCfg() throws IOException {
-        return readInternalFile(ORDER_CONFIG_FILENAME);
+    private String readOrderCfg(final int source) throws IOException {
+        return readInternalFile(ORDER_CONFIG_FILENAME, source);
     }
 
     /**
@@ -622,4 +788,89 @@ public class YbkFileReader {
     public final String getFilename() {
         return mFilename;
     }
+
+    /**
+     * Analyze the YBK file and save file contents data for later reference.
+     * 
+     * @param bookId The id of the book these chapters belong in.
+     * @throws InvalidFileFormatException If the YBK file is not readable.
+     */
+    public boolean populateChapters(final long bookId) 
+    throws IOException {
+        String iFileName = "";
+        int iBookOffset = 0;
+        int iBookLength = 0;
+        boolean success = true;
+        
+        RandomAccessFile file = mFile;
+        YbkDAO ybkDao = mYbkDao;
+        
+        String orderString = readOrderCfg(FROM_INTERNAL);
+        String[] orders = null;
+        if (orderString != null) {
+            orders = orderString.split(",");
+        }
+
+        int indexLength = Util.readVBInt(file);
+        //Log.d(TAG,"Index Length: " + indexLength);
+        
+        byte[] indexArray = new byte[indexLength];
+        
+        if (file.read(indexArray) < indexLength) {
+            throw new InvalidFileFormatException("Index Length is greater than length of file.");
+        } 
+
+        if (!ybkDao.deleteChapters(bookId)) {
+            Log.e(TAG, "Could not delete the chapters for book with id " + bookId);
+        } else {
+            
+            // Read the index information into the internalFiles list
+            int pos = 0;
+            
+            // Read the index and create chapter records
+            while (pos < indexLength) {
+                Integer orderNumber = null;
+                
+                StringBuffer fileNameSBuf = new StringBuffer();
+                
+                byte b;
+                int fileNameStartPos = pos;
+    
+                while((b = indexArray[pos++]) != 0 && pos < indexLength) {
+                    fileNameSBuf.append((char) b);                
+                }
+                
+                iFileName = fileNameSBuf.toString();
+                
+                pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
+                
+                iBookOffset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                pos += 4;
+                
+                iBookLength = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                pos += 4;
+                
+                if (orders != null) {
+                     int orderNbr = Arrays.binarySearch(orders, iFileName, new Comparator<String>() {
+        
+                        public int compare(String arg0, String arg1) {
+                            return arg0.compareToIgnoreCase(arg1);
+                        }
+                        
+                    });
+                    
+                    if (orderNbr >= 0) {
+                        orderNumber = orderNbr;            
+                    }
+                }
+                
+                ybkDao.insertChapter(bookId, iFileName, null, iBookLength, null, 
+                        null, iBookOffset, null, orderNumber, null);
+                
+            }
+        }
+        return success;
+    }
+
 }
+

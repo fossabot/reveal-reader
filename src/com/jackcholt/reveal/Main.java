@@ -2,6 +2,7 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,15 +10,12 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Process;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
@@ -36,6 +34,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class Main extends ListActivity implements OnGestureListener {
@@ -66,18 +65,15 @@ public class Main extends ListActivity implements OnGestureListener {
     private SharedPreferences mSharedPref;
     private boolean BOOLshowSplashScreen;
     private boolean BOOLshowFullScreen;
-    private Uri mBookUri= Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
-    private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/"); 
     private final Handler mUpdateLibHandler = new Handler();
-    private Cursor mListCursor; 
-    private ContentResolver mContRes; 
     private static boolean mUpdating = false;
     private YbkDAO mYbkDao;
+    private List<Book> mBookTitleList;
     
     private final Runnable mUpdateBookList = new Runnable() {
         public void run() {
             
-            refreshBookList();
+            mBookTitleList = mYbkDao.getBookTitles().getList(null, null);
             
             mUpdating = false;
         }
@@ -97,8 +93,17 @@ public class Main extends ListActivity implements OnGestureListener {
     		mUpdating = true;
 	        Thread t = new Thread() {
 	            public void run() {
-	                String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks");
-	                refreshLibrary(ebookDir);
+	                //String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
+	                //refreshLibrary(ebookDir);
+	                
+	                //Try to tame this from stealing all the interface CPU
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+	                refreshLibrary(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
+	                        Settings.DEFAULT_EBOOK_DIRECTORY));
+	                //refreshBookList();
+
+	                
+	                
 	                mUpdateLibHandler.post(mUpdateBookList);
 	            }
 	        };
@@ -130,8 +135,7 @@ public class Main extends ListActivity implements OnGestureListener {
         SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     	
     	// Get the YanceyBook DAO 
-        mYbkDao = new YbkDAO(this, 
-    	        sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/"));
+        mYbkDao = YbkDAO.getInstance(this);
     	
         BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
 
@@ -141,7 +145,6 @@ public class Main extends ListActivity implements OnGestureListener {
         }
         
         setContentView(R.layout.main);
-        mContRes = getContentResolver(); 
         
         //To capture LONG_PRESS gestures
         gestureScanner = new GestureDetector(this); 
@@ -174,8 +177,7 @@ public class Main extends ListActivity implements OnGestureListener {
             } else {
             	Util.createDefaultDirs(this);
             	//updateBookList();
-            	refreshLibrary(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks"));
-            	refreshBookList();
+            	
              }
         }
     }
@@ -244,11 +246,11 @@ public class Main extends ListActivity implements OnGestureListener {
         if (ybkFiles != null && addNewBooks) {
             // add books that are not in the database
             // Notify that we are getting NEW list of eBooks
-            //Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
+            Log.i(Global.TAG, "Updating eBook List from " + libraryDir);
             
             for(int i=0, dirListLen=ybkFiles.length; i < dirListLen; i++) {
                 String dirFilename = ybkFiles[i].getAbsolutePath();
-                //Log.d(Global.TAG, "dirFilename: " + dirFilename);
+                Log.d(Global.TAG, "dirFilename: " + dirFilename);
                 
                 boolean fileFoundInDb = false;
                 
@@ -280,17 +282,25 @@ public class Main extends ListActivity implements OnGestureListener {
                     
                     neededRefreshing = true;
                     
-                    long bookId = ybkDao.insertBook(dirFilename);
-                    
-                    if (bookId > 0) {
-                        /*mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
-                                YbkProvider.BINDING_TEXT + " is not null", null,
-                                " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");
-    */
+                    try {
+                        // Create an object for reading a ybk file;
+                        YbkFileReader ybkRdr = new YbkFileReader(this, dirFilename);
+                        // Tell the YbkFileReader to populate the book info into the database;
+                        ybkRdr.populateBook();
+                        
+                        //refreshBookList();
+                        mBookTitleList = ybkDao.getBookTitles().getList(null, null);
+
+                        /*List<Book> data = ybkDao.getBookTitles().getList(null, null);
+                        
+                        // Now create a simple cursor adapter and set it to display
+                        mBookAdapter = 
+                                new ArrayAdapter<Book>(this, R.layout.book_list_row, data);*/
+                        
                         Util.sendNotification(this, "Added '" + bookName + "' to the library", 
                                 R.drawable.ebooksmall, "Reveal Library Refresh", 
                                 mNotifMgr, mNotifId++, Main.class);
-                    } else {
+                    } catch (IOException ioe){
                         Util.sendNotification(this, "Could not add '" + bookName + "'. Bad file?", 
                                 android.R.drawable.stat_sys_warning, "Reveal Library Refresh", 
                                 mNotifMgr, mNotifId++, Main.class);                        
@@ -350,25 +360,14 @@ public class Main extends ListActivity implements OnGestureListener {
      * Refresh the list of books in the main list.
      */
     private void refreshBookList() {
-        /*mListCursor = managedQuery(mBookUri, new String[] {YbkProvider.FORMATTED_TITLE, YbkProvider._ID}, 
-                YbkProvider.BINDING_TEXT + " is not null", null,
-                " LOWER(" + YbkProvider.FORMATTED_TITLE + ") ASC");*/
         
         YbkDAO ybkDao = mYbkDao;
         
-        List<Book> data = ybkDao.getBookTitles().getList(null, null);
-        
-        // Create an array to specify the fields we want to display in the list (only TITLE)
-        String[] from = new String[]{YbkProvider.FORMATTED_TITLE};
-        
-        // and an array of the fields we want to bind those fields to (in this case just text1)
-        int[] to = new int[]{R.id.bookText};
+        mBookTitleList = ybkDao.getBookTitles().getList(null, null);
         
         // Now create a simple cursor adapter and set it to display
         ArrayAdapter<Book> bookAdapter = 
-                new ArrayAdapter<Book>(this, R.layout.book_list_row, data) {
-            
-        };
+                new ArrayAdapter<Book>(this, R.layout.book_list_row, mBookTitleList);
         
         setListAdapter(bookAdapter);
         
@@ -411,12 +410,13 @@ public class Main extends ListActivity implements OnGestureListener {
         // Set preferences from Setting screen
         SharedPreferences sharedPref = mSharedPref;
         
-        String libDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
-        if(!libDir.endsWith("/")) {
+        String libDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
+                Settings.DEFAULT_EBOOK_DIRECTORY);
+        
+        if (!libDir.endsWith("/")) {
         	libDir = libDir + "/";
         }
           
-        mCurrentDirectory = new File(libDir);
     }
     
     @Override
@@ -495,7 +495,7 @@ public class Main extends ListActivity implements OnGestureListener {
         
         setProgressBarIndeterminateVisibility(true);        
         
-        Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
+        //Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
         Book book = (Book) listView.getItemAtPosition(selectionRowId);
         Intent intent = new Intent(this, YbkViewActivity.class);
         intent.putExtra(YbkDAO.ID, book.id);
@@ -561,6 +561,9 @@ public class Main extends ListActivity implements OnGestureListener {
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         Bundle extras;
         long histId;
+        History hist;
+        Intent intent;
+        YbkDAO ybkDao = mYbkDao;
         
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
@@ -568,42 +571,26 @@ public class Main extends ListActivity implements OnGestureListener {
                 setProgressBarIndeterminateVisibility(true);  
                 
                 extras = data.getExtras();
-                histId = extras.getLong(YbkProvider._ID);
+                histId = extras.getLong(YbkDAO.ID);
                 
-                Cursor histCurs = managedQuery(
-                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"history"), histId), 
-                        null, null, null, null);
-                
-                if (histCurs.moveToFirst()) {
-                    long bookId = histCurs.getLong(histCurs.getColumnIndex(YbkProvider.BOOK_ID));
-                    Intent intent = new Intent(this, YbkViewActivity.class);
-                    intent.putExtra(YbkProvider._ID, bookId);
-                    intent.putExtra(YbkProvider.FROM_HISTORY, true);
-                    startActivity(intent);            
-                } else {
-                    Log.e(Global.TAG, "Couldn't load chapter from history");
-                }
-                
+                hist = ybkDao.getHistory(histId);
+                intent = new Intent(this, YbkViewActivity.class);
+                intent.putExtra(YbkDAO.ID, hist.bookId);
+                intent.putExtra(YbkDAO.FROM_HISTORY, true);
+                startActivity(intent);            
                 break;
+
             case YbkViewActivity.CALL_BOOKMARK:
                 setProgressBarIndeterminateVisibility(true);  
                 
                 extras = data.getExtras();
-                long bmId = extras.getLong(YbkProvider.BOOKMARK_NUMBER);
-                
-                Cursor bmCurs = managedQuery(
-                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"bookmark"), bmId), 
-                        null, null, null, null);
-                
-                if (bmCurs.moveToFirst()) {
-                    histId = bmCurs.getLong(bmCurs.getColumnIndex(YbkProvider._ID));
-                    Intent intent = new Intent(this, YbkViewActivity.class);
-                    intent.putExtra(YbkProvider._ID, histId);
-                    intent.putExtra(YbkProvider.FROM_HISTORY, true);
-                    startActivity(intent);            
-                } else {
-                    Log.e(Global.TAG, "Couldn't load chapter from bookmarks");
-                }
+                long bmId = extras.getLong(YbkDAO.BOOKMARK_NUMBER);
+                hist = ybkDao.getBookmark(bmId);
+                histId = hist.id;
+                intent = new Intent(this, YbkViewActivity.class);
+                intent.putExtra(YbkDAO.ID, hist.id);
+                intent.putExtra(YbkDAO.FROM_HISTORY, true);
+                startActivity(intent);            
                 break;
                 
             case ACTIVITY_SETTINGS:
@@ -611,7 +598,12 @@ public class Main extends ListActivity implements OnGestureListener {
                 boolean libDirChanged = extras.getBoolean(Settings.EBOOK_DIR_CHANGED);
                 
                 if (libDirChanged) {
-                    updateBookList();
+
+                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
+                            Settings.DEFAULT_EBOOK_DIRECTORY);
+                    
+                    refreshLibrary(libDir, ADD_BOOKS);
+                    refreshBookList();
                 }
             }
         }

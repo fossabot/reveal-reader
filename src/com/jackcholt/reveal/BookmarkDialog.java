@@ -13,7 +13,7 @@ import android.widget.SimpleCursorAdapter;
 
 public class BookmarkDialog extends ListActivity {
     private Cursor mListCursor;
-	private Button mAddBtn;
+	//private Button mAddBtn;
 	private final String TAG = "BookmarkDialog";
 	public static final String ADD_BOOKMARK = "add_bookmark";
 	
@@ -26,7 +26,7 @@ public class BookmarkDialog extends ListActivity {
         
         setContentView(R.layout.dialog_bookmark);
         
-        Button addBtn = mAddBtn = (Button) findViewById(R.id.addBMButton);
+        Button addBtn = (Button) findViewById(R.id.addBMButton);
 
         if (extras != null && extras.getBoolean("fromMain") == true) {
             addBtn.setVisibility(View.GONE);

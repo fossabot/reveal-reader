@@ -1,6 +1,8 @@
 package com.jackcholt.reveal;
 
-public class InvalidFileFormatException extends RuntimeException {
+import java.io.IOException;
+
+public class InvalidFileFormatException extends IOException {
 
     /**
      * Indicates that the YBK file format is invalid.

@@ -1,19 +1,23 @@
 package com.jackcholt.reveal.data;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.garret.perst.FieldIndex;
+import org.garret.perst.GenericIndex;
+import org.garret.perst.IterableIterator;
 import org.garret.perst.Key;
-import org.garret.perst.Persistent;
 import org.garret.perst.Storage;
 import org.garret.perst.StorageFactory;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.jackcholt.reveal.Settings;
 import com.jackcholt.reveal.Util;
-import com.jackcholt.reveal.YbkFileReader;
 
 /**
  * A class for managing all the database accesses for the Perst OODB.
@@ -22,16 +26,66 @@ import com.jackcholt.reveal.YbkFileReader;
  *
  */
 public class YbkDAO {
-    public static String DATABASE_NAME = "reveal_ybk.pdb";
-    private static final int PAGE_POOL_SIZE = 2*1024*1024;
+    private static String DATABASE_NAME = "reveal_ybk.pdb";
+    private static final int PAGE_POOL_SIZE = 512*1024;
     private Storage mDb;
+    //private Context mCtx;
+    private static YbkDAO mSelf;
+    private SharedPreferences mSharedPref;
     private static final String TAG = "YbkDAO";
     public static final String ID = "id";
+    public static final int GET_LAST_HISTORY = 0;
+    public static final String FROM_HISTORY = "from history";
+    public static final String BOOKMARK_NUMBER = "bookmarkNumber";
     
-    public YbkDAO(final Context ctx, final String libDir) {
+    /** Is the chapter a navigation chapter? Data type: INTEGER. 
+     *  Use {@link CHAPTER_TYPE_NO_NAV} and 
+     *  {@link CHAPTER_TYPE_NAV} to set values.
+     */
+    public static final String CHAPTER_NAV_FILE = "nav_file";
+    
+    /** Should the user be able to zoom the page? Data type: INTEGER. Used when
+     * the chapter contains a picture. 
+     *  Use {@link CHAPTER_ZOOM_MENU_OFF} and 
+     *  {@link CHAPTER_ZOOM_MENU_ON} to set values.
+     */
+    public static final String CHAPTER_ZOOM_PICTURE = "zoom_picture";
+
+    /**
+     * Allow the user to get the one and only instance of the YbkDAO.
+     * 
+     * @param ctx The Android instance.
+     * @return The YbkDAO singleton.
+     */
+    public static YbkDAO getInstance(final Context ctx) {
+        if (mSelf == null) {
+            mSelf = new YbkDAO(ctx);
+        }
+        
+        return mSelf;
+    }
+    
+    /** 
+     * Disallow cloning to avoid getting around the singleton design pattern.
+     */
+    public Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException("YbkDAO may not be cloned.");
+    }
+    
+    /**
+     * Make this a singleton by blocking direct access to the constructor.
+     * 
+     * @param ctx The Android context.
+     */
+    private YbkDAO(final Context ctx) {
+        //mCtx = ctx;
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
+                Settings.DEFAULT_EBOOK_DIRECTORY);
+        
         mDb = StorageFactory.getInstance().createStorage();
         mDb.open(libDir + DATABASE_NAME, PAGE_POOL_SIZE);
-        
+        Log.d(TAG, "Opened the database");
     }
     
     /**
@@ -61,11 +115,29 @@ public class YbkDAO {
     }
     
     /**
+     * Get an Iterator for history records that are bookmarks sorted by title.
+     * @return
+     */
+    public Iterator<History> getBookmarkIterator() {
+        Iterator<History> iter = getRoot(mDb).historyTitleIndex.iterator();
+        List<History> bmList = new ArrayList<History>();
+        
+        while(iter.hasNext()) {
+            History hist = iter.next();
+            if (hist.bookmarkNumber != null) {
+                bmList.add(hist);
+            }
+        }
+        
+        return bmList.iterator();
+    }
+    
+    /**
      * Insert a book into the database. 
      * @param fileName The name of the file that contains the book.
      * @return The record id of the book.
      */
-    public long insertBook(final String fileName) {
+    /*public long insertBook(final String fileName) {
         YbkFileReader ybkRdr;
         
         long recordId = 0;
@@ -88,7 +160,7 @@ public class YbkDAO {
         }
         
         return recordId;
-    }
+    }*/
     
     /**
      * Insert a book into the database.
@@ -106,7 +178,7 @@ public class YbkDAO {
         
         Book book = new Book();
         book.id = id;
-        book.fileName = fileName;
+        book.fileName = fileName.toLowerCase();
         book.active = true;
         book.bindingText = bindingText;
         book.formattedTitle = Util.formatTitle(title);
@@ -135,6 +207,53 @@ public class YbkDAO {
         
     }
     
+    public boolean insertChapter(final long bookId, final String fileName, 
+            final String historyTitle, final Integer length, final String navbarTitle, 
+            final Integer navFile, final int offset, final String orderName, 
+            final Integer orderNumber, final Integer zoomPicture) {
+        
+        long id = System.currentTimeMillis();
+        
+        Chapter chap = new Chapter();
+        chap.id = id;
+        chap.bookId = bookId;
+        chap.fileName = fileName;
+        chap.historyTitle = historyTitle;
+        chap.length = length;
+        chap.navbarTitle = navbarTitle;
+        if (navFile != null) chap.navFile = navFile;
+        chap.offset = offset;
+        chap.orderName = orderName;
+        if (orderNumber != null) chap.orderNumber = orderNumber;
+        if (zoomPicture != null) chap.zoomPicture = zoomPicture;
+        
+        
+        YbkRoot root = getRoot(mDb);
+        
+        // Persistence-by-reachability causes objects to become persistent once
+        // they are referred to by a persistent object.
+        boolean b1 = root.chapterBookIdIndex.put(chap);
+        boolean b2 = root.chapterIdIndex.put(chap);
+        boolean b3 = root.chapterNameIndex.put(chap);
+        boolean b4 = root.chapterOrderNbrIndex.put(chap);
+        
+        return (b1 && b2 && b3 && b4);
+        /*if (b1 && b2 && b3 && b4) {
+            
+            mDb.commit();
+            return id;
+            
+        } else {
+        
+            // one of the puts failed
+            mDb.rollback();
+            Log.e(TAG, "Could not insert a chapter " + fileName + " for book id " 
+                    + bookId + ".");
+            return 0;
+        }*/
+        
+    }
+
     /**
      * Remove the book from the database.
      * 
@@ -156,6 +275,43 @@ public class YbkDAO {
             return false;
         }
         
+    }
+    
+    /**
+     * Remove the book from the database.
+     * 
+     * @param book The book to be deleted.
+     * @return True if the book was deleted
+     */
+    public boolean deleteChapters(final long bookId) {
+        YbkRoot root = getRoot(mDb);
+        boolean success = true;
+        
+        Chapter[] chapters = (Chapter[]) root.chapterBookIdIndex.get(new Key(bookId), null);
+        
+        for (int i=0, size = chapters.length; i < size; i++) {
+            if (root.chapterBookIdIndex.remove(chapters[i]) 
+                    && root.chapterIdIndex.remove(chapters[i])
+                    && root.chapterNameIndex.remove(chapters[i])
+                    && root.chapterOrderNbrIndex.remove(chapters[i])) {
+                // do nothing
+            } else {
+                success = false;
+                break;
+            }    
+        }
+        
+        if (success) {
+            for (int i=0, size = chapters.length; i < size; i++) {
+                chapters[i].deallocate();
+            }
+            root.modify();
+            mDb.commit();
+        } else {
+            mDb.rollback();
+        }    
+        
+        return success;
     }
     
     
@@ -188,8 +344,73 @@ public class YbkDAO {
      * @param bookId The key of the book to get.
      * @return The book object identified by bookId.
      */
-    public Book getBook(long bookId) {
+    public Book getBook(final long bookId) {
         return getRoot(mDb).bookIdIndex.get(new Key(bookId));
+    }
+    
+    /**
+     * Get the history item identified by histId.
+     * 
+     * @param histId The key of the history to get.
+     * @return The history object identified by histId.
+     */
+    public History getHistory(final long histId) {
+        return getRoot(mDb).historyIdIndex.get(new Key(histId));
+    }
+    
+    /**
+     * Get a bookmark by bookmarkNumber.
+     * @param bmId the bookmark id.
+     * @return The History object that contains the bookmark.
+     */
+    public History getBookmark(final long bmId) {
+        return getRoot(mDb).historyBookmarkNumberIndex.get(new Key(bmId));
+    }
+    
+    /**
+     * Get a list if Histories sorted from newest to oldest for use with 
+     * ArrayAdapter for showing histories in a ListActivity.
+     * 
+     * @return the List of History objects.
+     */
+    public List<History> getHistoryList() {
+        IterableIterator<History> iter = getRoot(mDb).historyIdIndex.iterator(
+                null, null, GenericIndex.DESCENT_ORDER);
+        
+        List<History> histList = new ArrayList<History>();
+        
+        int maxHistories = mSharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, 
+                Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
+        
+        int histCount = 0;
+        while(iter.hasNext() && histCount < maxHistories) {
+            History hist = iter.next();
+            if (hist.bookmarkNumber == null) {
+                histList.add(hist);
+                histCount++;
+            }
+        }
+        
+        return histList;
+    }
+    
+    /**
+     * Get a book object identified by the fileName.
+     * @param fileName the filename we're looking for.
+     * @return A Book object identified by the passed in filename.
+     */
+    public Book getBook(final String fileName) {
+        return getRoot(mDb).bookFilenameIndex.get(new Key(fileName.toLowerCase()));
+    }
+    
+    /**
+     * Get a chapter object identified by the fileName.
+     * 
+     * @param fileName the name of the internal chapter file.
+     * @return the chapter
+     */
+    public Chapter getChapter(final long bookId, final String fileName) {
+        return getRoot(mDb).chapterNameIndex.get(new Key(new Object[] {bookId,fileName.toLowerCase()}));
     }
     
     /**
@@ -197,10 +418,26 @@ public class YbkDAO {
      */
     public void finalize() throws Throwable {
         try {
-            mDb.close();
+            if (mDb.isOpened()) {
+                mDb.close();
+                Log.d(TAG, "Closed the database in finalize()");
+            }
         } finally {
             super.finalize();
         }
         
     }
+    
+    public void commit() {
+        mDb.commit();
+    }
+    
+    public void rollback() {
+        mDb.rollback();
+    }
+    
+    /*public void close() {
+        mDb.close();
+        Log.d(TAG, "Closed the database in YbkDAO.close()");
+    }*/
 }

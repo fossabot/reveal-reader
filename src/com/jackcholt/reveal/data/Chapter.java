@@ -12,17 +12,17 @@ import org.garret.perst.Persistent;
  *
  */
 public class Chapter extends Persistent {
-    public int id;
-    public int bookId;
+    public long id;
+    public long bookId;
     public String fileName;
     public int offset;
     public int length;
-    public String orderName;
-    public int orderNumber;
-    public String navbarTitle;
-    public String historyTitle;
-    public int navFile;
-    public int zoomPicture;
+    public String orderName = null;
+    public int orderNumber = 0;
+    public String navbarTitle = null;
+    public String historyTitle = null;
+    public int navFile = 0;
+    public int zoomPicture = 0;
     
     public String toString() {
         return id + ":" + bookId + ":" + fileName + ":" + offset + 
