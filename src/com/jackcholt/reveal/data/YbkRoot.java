@@ -47,7 +47,7 @@ public class YbkRoot extends Persistent {
                 new String[] {"bookId","fileName"}, true, true);
         historyIdIndex = db.<History>createFieldIndex(History.class, "id", true);
         historyBookmarkNumberIndex = db.<History>createFieldIndex(History.class, 
-                "bookmarkNumber", false);
+                "bookmarkNumber", true);
         historyTitleIndex = db.<History>createFieldIndex(History.class, "title", false, true);
     }
     

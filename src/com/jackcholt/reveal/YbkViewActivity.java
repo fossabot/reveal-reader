@@ -346,7 +346,7 @@ public class YbkViewActivity extends Activity {
         menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
             .setIcon(android.R.drawable.ic_menu_recent_history);
         menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
-            .setIcon(android.R.drawable.ic_menu_compass);
+            .setIcon(android.R.drawable.ic_input_get);
         menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous)
             .setIcon(android.R.drawable.ic_media_previous);
         menu.add(Menu.NONE, NEXT_ID, Menu.NONE,  R.string.menu_next)
@@ -418,35 +418,43 @@ public class YbkViewActivity extends Activity {
         
         Bundle extras;
         
+        YbkDAO ybkDao = mYbkDao;
+        
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
             case CALL_HISTORY:
                 setProgressBarIndeterminateVisibility(true);
-                
-                YbkDAO ybkDao = mYbkDao;
                 
                 extras = data.getExtras();
                 long histId = extras.getLong(YbkDAO.ID);
                 
                 History hist = ybkDao.getHistory(histId);
                 
-                mBookId = hist.bookId;
-                Book book = ybkDao.getBook(mBookId);
-                mBookFileName = book.fileName;
-                mChapFileName = hist.chapterName;
-                mHistTitle = hist.title;
-                mScrollYPos = hist.scrollYPos;
+                if (hist != null) {
+                    mBookId = hist.bookId;
+                    Book book = ybkDao.getBook(mBookId);
+                    if (book != null) {
+                        mBookFileName = book.fileName;
+                    }
                     
-                Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
-                
-                try {
-                    if (loadChapter(mBookFileName, mChapFileName)) {
-                        setBookBtn(book.shortTitle, mBookFileName, mChapFileName);
+                    mChapFileName = hist.chapterName;
+                    mHistTitle = hist.title;
+                    mScrollYPos = hist.scrollYPos;
                         
-                    }   
-                } catch (IOException ioe) {
-                    Log.e(TAG, "Couldn't load chapter from history. " + ioe.getMessage());
-                    FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");                        
+                    Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: " + mChapFileName);
+                    
+                    try {
+                        if (loadChapter(mBookFileName, mChapFileName)) {
+                            setBookBtn(book.shortTitle, mBookFileName, mChapFileName);
+                            
+                        }   
+                    } catch (IOException ioe) {
+                        Log.e(TAG, "Couldn't load chapter from history. " + ioe.getMessage());
+                        FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");                        
+                    }
+                } else {
+                    Log.e(TAG, "Couldn't load chapter from history. ");
+                    FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");                                            
                 }
                 
                 setProgressBarIndeterminateVisibility(false);
@@ -462,34 +470,28 @@ public class YbkViewActivity extends Activity {
                     showDialog(ASK_BOOKMARK_NAME);
                 } else {
                     setProgressBarIndeterminateVisibility(true);
-                    long bmId = extras.getLong(YbkProvider.BOOKMARK_NUMBER);
+                    int histId = extras.getInt(YbkDAO.ID);
                     
-                    Cursor bmCurs = managedQuery(
-                            ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"bookmark"), bmId), 
-                            null, null, null, null);
+                    History bm = ybkDao.getBookmark(bmId);
                     
-                    if (bmCurs.moveToFirst()) {
-                        mBookId = bmCurs.getLong(bmCurs.getColumnIndex(YbkProvider.BOOK_ID));
-                        mBookFileName = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.FILE_NAME));
-                        mChapFileName = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.CHAPTER_NAME));
-                        mHistTitle = bmCurs.getString(bmCurs.getColumnIndex(YbkProvider.HISTORY_TITLE));
-                        mScrollYPos = bmCurs.getInt(bmCurs.getColumnIndex(YbkProvider.SCROLL_POS));
+                    if (bm != null) {
+                        mBookId = bm.bookId;
+                        Book book = ybkDao.getBook(bm.bookId);
+                        if (book != null) {
+                            mBookFileName = book.fileName;
+                        }
+                        mChapFileName = bm.chapterName;
+                        mHistTitle = bm.title;
+                        mScrollYPos = bm.scrollYPos;
                         
-                        //Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: " + mChapFileName);
+                        Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: " + mChapFileName);
                         
                         try {
                             if (loadChapter(mBookFileName, mChapFileName)) {
-                                String[] projection = new String[] {YbkProvider.SHORT_TITLE};
-                                Cursor c = managedQuery(
-                                        ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), mBookId), 
-                                        projection, null, null, null);
-   
-                                if (c.moveToFirst()) {
                                     
-                                    setBookBtn(c.getString(c.getColumnIndex(YbkProvider.SHORT_TITLE)), 
-                                            mBookFileName, mChapFileName);
-                                }
-                                
+                                setBookBtn(book.shortTitle, 
+                                        mBookFileName, mChapFileName);
+                            
                                 mYbkView.scrollTo(0, mScrollYPos);
                             }
                         } catch (IOException ioe) {
@@ -848,18 +850,10 @@ public class YbkViewActivity extends Activity {
                     
                     //Log.i(TAG, "Text entered " + bmName); 
                     
-                    ContentValues values = new ContentValues();
-                    values.put(YbkProvider.BOOK_ID, mBookId);
+                    int bookmarkNumber = mYbkDao.getMaxBookmarkNumber();
                     
-                    values.put(YbkProvider.HISTORY_TITLE, bmName);
-                    values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
-                    values.put(YbkProvider.SCROLL_POS, mYbkView.getScrollY());
-                    
-                    //Log.d(TAG, "Saving bookmark for: " + values);
-                    
-                    getContentResolver().insert(
-                            Uri.withAppendedPath(YbkProvider.CONTENT_URI,"bookmark"), 
-                            values);
+                    mYbkDao.insertHistory(mBookId, bmName, mChapFileName, 
+                            mYbkView.getScrollY(), bookmarkNumber);
 
                 }
             })

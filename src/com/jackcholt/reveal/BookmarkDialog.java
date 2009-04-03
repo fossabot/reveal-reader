@@ -1,5 +1,10 @@
 package com.jackcholt.reveal;
 
+import java.util.List;
+
+import com.jackcholt.reveal.data.History;
+import com.jackcholt.reveal.data.YbkDAO;
+
 import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -7,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -32,22 +38,16 @@ public class BookmarkDialog extends ListActivity {
             addBtn.setVisibility(View.GONE);
         }
 
-        mListCursor = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "bookmark"), 
-                null, null, null, null);
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
         
-        // Load the layout
-         
-        // Create an array to specify the fields we want to display in the list (only HISTORY_TITLE)
-        String[] from = new String[] {YbkProvider.HISTORY_TITLE};
+        List<History> data = ybkDao.getBookmarkList();
         
-        // and an array of the fields we want to bind those fields to (in this case just text1)
-        int[] to = new int[] {R.id.historyText};
         
         // Now create a simple cursor adapter and set it to display
-        SimpleCursorAdapter historyAdapter = 
-                new SimpleCursorAdapter(this, R.layout.history_list_row, mListCursor, from, to);
-        
-        setListAdapter(historyAdapter);
+        ArrayAdapter<History> histAdapter = 
+                new ArrayAdapter<History>(this, R.layout.history_list_row, data);
+
+        setListAdapter(histAdapter);
         
         addBtn.setOnClickListener(new OnClickListener() {
 
@@ -72,10 +72,11 @@ public class BookmarkDialog extends ListActivity {
             final int selectionRowId, final long id) {
         
         Log.d(TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
-        
+        History hist = (History) listView.getItemAtPosition(selectionRowId);
+
         Intent intent = new Intent(this, YbkViewActivity.class);
-        intent.putExtra(YbkProvider.BOOKMARK_NUMBER, id);
-        intent.putExtra(YbkProvider.FROM_HISTORY, true);
+        intent.putExtra(YbkDAO.ID, hist.id);
+        intent.putExtra(YbkDAO.FROM_HISTORY, true);
         setResult(RESULT_OK, intent);
         
         finish();

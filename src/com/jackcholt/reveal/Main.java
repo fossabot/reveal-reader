@@ -421,7 +421,7 @@ public class Main extends ListActivity implements OnGestureListener {
         menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
             .setIcon(android.R.drawable.ic_menu_recent_history);
         menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE,  R.string.menu_bookmark)
-            .setIcon(android.R.drawable.ic_menu_compass);
+            .setIcon(android.R.drawable.ic_input_get);
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE,  R.string.menu_settings)
             .setIcon(android.R.drawable.ic_menu_preferences);
         menu.add(Menu.NONE, BROWSER_ID, Menu.NONE,  R.string.menu_browser)
@@ -564,30 +564,34 @@ public class Main extends ListActivity implements OnGestureListener {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
             case YbkViewActivity.CALL_HISTORY:
+            case YbkViewActivity.CALL_BOOKMARK:
                 setProgressBarIndeterminateVisibility(true);  
                 
                 extras = data.getExtras();
                 histId = extras.getLong(YbkDAO.ID);
                 
-                //hist = ybkDao.getHistory(histId);
                 intent = new Intent(this, YbkViewActivity.class);
                 intent.putExtra(YbkDAO.ID, histId);
                 intent.putExtra(YbkDAO.FROM_HISTORY, true);
                 startActivity(intent);            
                 break;
 
-            case YbkViewActivity.CALL_BOOKMARK:
+            /*case YbkViewActivity.CALL_BOOKMARK:
                 setProgressBarIndeterminateVisibility(true);  
                 
                 extras = data.getExtras();
-                long bmId = extras.getLong(YbkDAO.BOOKMARK_NUMBER);
+                int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
                 hist = ybkDao.getBookmark(bmId);
-                histId = hist.id;
-                intent = new Intent(this, YbkViewActivity.class);
-                intent.putExtra(YbkDAO.ID, hist.id);
-                intent.putExtra(YbkDAO.FROM_HISTORY, true);
-                startActivity(intent);            
-                break;
+                if (hist != null) {
+                    histId = hist.id;
+                    intent = new Intent(this, YbkViewActivity.class);
+                    intent.putExtra(YbkDAO.ID, hist.id);
+                    intent.putExtra(YbkDAO.FROM_HISTORY, true);
+                    startActivity(intent);
+                } else {
+                    Log.e(Global.TAG, "Couldn't load chapter from Bookmark. Bookmark id is: " + bmId);
+                }
+                break;*/
                 
             case ACTIVITY_SETTINGS:
                 extras = data.getExtras();

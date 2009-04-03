@@ -1,6 +1,7 @@
 package com.jackcholt.reveal.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class YbkDAO {
      * @param ctx The Android instance.
      * @return The YbkDAO singleton.
      */
-    public static YbkDAO getInstance(final Context ctx) {
+    public static synchronized YbkDAO getInstance(final Context ctx) {
         if (mSelf == null) {
             mSelf = new YbkDAO(ctx);
         }
@@ -124,7 +125,7 @@ public class YbkDAO {
         
         while(iter.hasNext()) {
             History hist = iter.next();
-            if (hist.bookmarkNumber != null) {
+            if (hist.bookmarkNumber != 0) {
                 bmList.add(hist);
             }
         }
@@ -252,7 +253,7 @@ public class YbkDAO {
     public boolean insertHistory(final long bookId, final String title, 
             final String chapterName, final int scrollYPos) {
 
-        return insertHistory(bookId, title, chapterName, scrollYPos, null);
+        return insertHistory(bookId, title, chapterName, scrollYPos, 0);
     }
 
     /**
@@ -267,7 +268,7 @@ public class YbkDAO {
      */
     public boolean insertHistory(final long bookId, final String title, 
             final String chapterName, final int scrollYPos, 
-            final Integer bookmarkNumber) {
+            final int bookmarkNumber) {
         boolean success = true;
         
         History hist = new History();
@@ -285,7 +286,7 @@ public class YbkDAO {
         boolean b2 = root.historyTitleIndex.put(hist);
         boolean b3 = true;
 
-        if (bookmarkNumber != null) {
+        if (bookmarkNumber != 0) {
             b3 = root.historyBookmarkNumberIndex.put(hist);
         }
         
@@ -435,7 +436,7 @@ public class YbkDAO {
      * @param bmId the bookmark id.
      * @return The History object that contains the bookmark.
      */
-    public History getBookmark(final long bmId) {
+    public History getBookmark(final int bmId) {
         return getRoot(mDb).historyBookmarkNumberIndex.get(new Key(bmId));
     }
     
@@ -457,13 +458,39 @@ public class YbkDAO {
         int histCount = 0;
         while(iter.hasNext() && histCount < maxHistories) {
             History hist = iter.next();
-            if (hist.bookmarkNumber == null) {
+            if (hist.bookmarkNumber == 0) {
                 histList.add(hist);
                 histCount++;
             }
         }
         
         return histList;
+    }
+    
+    public List<History> getBookmarkList() {
+        FieldIndex<History> historyBookmarkNumberIndex = getRoot(mDb).historyBookmarkNumberIndex;
+        History[] array = historyBookmarkNumberIndex.toArray(new History[historyBookmarkNumberIndex.size()]);
+        
+        return Arrays.asList(array);
+        
+    }
+    
+    /**
+     * Get the last bookmark in the list.
+     * 
+     * @return The highest numbered bookmark.
+     */
+    public int getMaxBookmarkNumber() {
+        int bmNbr = 1;
+        FieldIndex<History> bmNbrIndex = getRoot(mDb).historyBookmarkNumberIndex;
+        
+        int indexSize = bmNbrIndex.size();
+        if (indexSize > 0) {
+            History hist = bmNbrIndex.getAt(indexSize - 1);
+            bmNbr = hist.bookmarkNumber + 1;
+        }
+        
+        return bmNbr;
     }
     
     /**

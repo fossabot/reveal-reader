@@ -17,7 +17,7 @@ public class History extends Persistent {
     public String chapterName;
     public int scrollYPos;
     public String title;
-    public Integer bookmarkNumber = null;
+    public int bookmarkNumber = 0;
     
     public String toString() {
         return title;
