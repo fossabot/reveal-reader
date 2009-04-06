@@ -289,7 +289,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
                         /*List<Book> data = ybkDao.getBookTitles().getList(null, null);
                         
-                        // Now create a simple cursor adapter and set it to display
+                        // Now create a simple adapter and set it to display
                         mBookAdapter = 
                                 new ArrayAdapter<Book>(this, R.layout.book_list_row, data);*/
                         
@@ -329,16 +329,10 @@ public class Main extends ListActivity implements OnGestureListener {
             
             if (!fileFoundInDir) {
                 neededRefreshing = true;
-                //long bookId = book.id;
                 ybkDao.deleteBook(book);
-                
-                //Uri deleteUri = ContentUris.withAppendedId(bookUri, Long.parseLong(bookId));
-                //contRes.delete(deleteUri, null , null);
-                
                 
             }
             
-            //fileCursor.moveToNext();
         }
             
         if (neededRefreshing) {
@@ -361,7 +355,7 @@ public class Main extends ListActivity implements OnGestureListener {
         
         mBookTitleList = ybkDao.getBookTitles().getList(null, null);
         
-        // Now create a simple cursor adapter and set it to display
+        // Now create a simple adapter and set it to display
         ArrayAdapter<Book> bookAdapter = 
                 new ArrayAdapter<Book>(this, R.layout.book_list_row, mBookTitleList);
         

@@ -52,7 +52,7 @@ public class YbkFileReader {
     private String mBookTitle = "Couldn't get the title of this book";
     private String mBookShortTitle = "No Short Title";
     private String mBookMetaData = null;     
-    private ArrayList<String> mOrderList = new ArrayList<String>();
+    private ArrayList<Order> mOrderList = new ArrayList<Order>();
     private String mCurrentChapterOrderName = null;
     private int mCurrentChapterOrderNumber = -1;
     private String mChapterNavBarTitle = "No Title";
@@ -216,14 +216,27 @@ public class YbkFileReader {
         }
     }
     
+    private class Order {
+        public String chapter;
+        public int order;
+        
+        public Order(String newChapter, int newOrder) {
+            chapter =  newChapter;
+            order = newOrder;
+        }
+    }
+    
     private void populateOrder(final String orderString) {
         if (null != orderString) {
             Scanner orderScan = new Scanner(orderString).useDelimiter(",");
             
-            ArrayList<String> orderList = new ArrayList<String>();
+             
+            ArrayList<Order> orderList = new ArrayList<Order>();
             
+            int order = 1;
             while(orderScan.hasNext()) {
-                orderList.add(orderScan.next());
+                Order ord = new Order(orderScan.next(), order++);
+                orderList.add(ord);
             }
             mOrderList = orderList;
         }
@@ -236,6 +249,7 @@ public class YbkFileReader {
      * @return The id of the book that was saved into the database.
      * @throws IOException 
      */
+    @SuppressWarnings("unchecked")
     public long populateBook() throws IOException {
         String fileName = mFilename;
         boolean success = true;
@@ -254,26 +268,60 @@ public class YbkFileReader {
         } else {
        
             List<InternalFile> ifList = mInternalFiles;
+            ArrayList<Order> orderList = mOrderList;
+            
+            
+            Order[] orderArray = orderList.toArray(new Order[orderList.size()]);
+            
+            Comparator orderComp = new Comparator<Order>() {
+
+                public int compare(Order arg0, Order arg1) {
+                    return arg0.chapter.compareToIgnoreCase(arg1.chapter);
+                }
+                
+            };
+            
+            Arrays.sort(orderArray,orderComp);
+            
             for(int i=0, chapAmount = ifList.size(); i < chapAmount; i++) {
                 Integer orderNbr = null;
                 InternalFile iFile = ifList.get(i);
-                ArrayList<String> orderList = mOrderList;
+                if (iFile.fileName.length() == 0) {
+                    break;
+                }
+                
                 if (orderList != null) {
                     
-                    String[] orderArray = orderList.toArray(new String[orderList.size()]);
+                    String iFileOrderString = "";
+                    String[] iFileOrderParts = iFile.fileName.toLowerCase().split("\\\\");
+                    int partLength = iFileOrderParts.length;
                     
-                    int orderNumber = Arrays.binarySearch(orderArray, iFile.fileName, 
-                            new Comparator<String>() {
-        
-                        public int compare(String arg0, String arg1) {
-                            return arg0.compareToIgnoreCase(arg1);
+                    if (partLength > 2) {
+                        for(int k = 2; k < partLength; k++) {
+                            iFileOrderString += iFileOrderParts[k] + "\\";
                         }
-                        
-                    });
-                    
-                    if (orderNumber >= 0) {
-                        orderNbr = orderNumber;          
+
+                        if (iFileOrderString.length() > 0) {
+                            iFileOrderString = iFileOrderString.substring(0, iFileOrderString.length() - 1);
+                        }
+
+                    } else {
+                        Log.e(TAG, "Internal File Name: " + iFile.fileName);
+                        iFileOrderString = iFile.fileName.toLowerCase().substring(1);
                     }
+                                        
+                    int dotPos = iFileOrderString.indexOf(".");
+                    if (dotPos != -1) {
+                        iFileOrderString = iFileOrderString.substring(0, dotPos);
+                        int orderNumber = Arrays.binarySearch(orderArray, new Order(iFileOrderString, 0), orderComp);
+                        
+                        if (orderNumber >= 0) {
+                            orderNbr = orderArray[orderNumber].order;          
+                        }
+                    } else {
+                        Log.w(TAG, "Chapter is missing file extension. '" + iFileOrderString + "'");
+                    }
+                    
                 }
                 
                 if (!ybkDao.insertChapter(bookId, iFile.fileName, null, iFile.len, 
@@ -476,7 +524,7 @@ public class YbkFileReader {
      * 
      * @return the orderList
      */
-    public final List<String> getOrderList() {
+    public final List<Order> getOrderList() {
         return mOrderList;
     }
 
@@ -487,10 +535,10 @@ public class YbkFileReader {
      * @return Contents of the next chapter or <code>null</code> if there is no next chapter.
      * @throws IOException When the next chapter cannot be read.
      */
-    public String readNextChapter() {
+    /*public String readNextChapter() {
         String chapter = null;
         
-        ArrayList<String> orderList = mOrderList;
+        ArrayList<Order> orderList = mOrderList;
         int orderListSize = orderList.size();
         if (orderListSize > 0) {
             if (mCurrentChapterOrderNumber < orderListSize) {
@@ -516,7 +564,7 @@ public class YbkFileReader {
         setChapterData(chapter);
         
         return chapter;
-    }
+    }*/
 
     /**
      * Return the text of the previous chapter and set the current chapter to the 
@@ -526,7 +574,7 @@ public class YbkFileReader {
      * previous chapter
      * @throws IOException When the previous chapter cannot be read.
      */
-    public String readPrevChapter() {
+    /*public String readPrevChapter() {
         String chapter = null;
         
         ArrayList<String> orderList = mOrderList;
@@ -552,7 +600,7 @@ public class YbkFileReader {
         }
         
         return chapter;
-    }
+    }*/
 
     /**
      * @return the currentChapterOrderName
@@ -623,7 +671,7 @@ public class YbkFileReader {
         
     }
     
-    public String readChapter(final String chapterName) {
+    /*public String readChapter(final String chapterName) {
         String text = null;
         String pChapterName = chapterName;
         
@@ -662,9 +710,9 @@ public class YbkFileReader {
         }
         return text;
         
-    }
+    }*/
 
-    private void setChapterData(final String chapter) {
+    /*private void setChapterData(final String chapter) {
         String chapterHistoryTitle = "No Title";
         String chapterNavBarTitle = "No Title";
         int chapterNavFile = CHAPTER_TYPE_SETTINGS;
@@ -716,7 +764,7 @@ public class YbkFileReader {
         mChapterNavBarTitle = chapterNavBarTitle;
         mChapterNavFile = chapterNavFile;
         mChapterZoomPicture = chapterZoomPicture;
-    }
+    }*/
 
     /**
      * @return the mChapterNavBarTitle

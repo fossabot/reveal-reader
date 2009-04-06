@@ -42,7 +42,7 @@ public class YbkRoot extends Persistent {
         chapterIdIndex = db.<Chapter>createFieldIndex(Chapter.class, "id", true);
         chapterBookIdIndex = db.<Chapter>createFieldIndex(Chapter.class, "bookId", false);
         chapterOrderNbrIndex = db.<Chapter>createFieldIndex(Chapter.class, 
-                new String[] {"bookId", "orderNumber"}, false); 
+                new String[] {"bookId", "orderNumber"}, true); 
         chapterNameIndex = db.<Chapter>createFieldIndex(Chapter.class, 
                 new String[] {"bookId","fileName"}, true, true);
         historyIdIndex = db.<History>createFieldIndex(History.class, "id", true);

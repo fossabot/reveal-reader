@@ -235,7 +235,10 @@ public class YbkDAO {
         boolean b1 = root.chapterBookIdIndex.put(chap);
         boolean b2 = root.chapterIdIndex.put(chap);
         boolean b3 = root.chapterNameIndex.put(chap);
-        boolean b4 = root.chapterOrderNbrIndex.put(chap);
+        boolean b4 = true;
+        if (chap.orderNumber != 0) {
+            b4 = root.chapterOrderNbrIndex.put(chap);
+        }
         
         return (b1 && b2 && b3 && b4);
         
@@ -509,7 +512,19 @@ public class YbkDAO {
      * @return the chapter
      */
     public Chapter getChapter(final long bookId, final String fileName) {
-        return getRoot(mDb).chapterNameIndex.get(new Key(new Object[] {bookId,fileName.toLowerCase()}));
+        return getRoot(mDb).chapterNameIndex.get(
+                new Key(new Object[] {bookId,fileName.toLowerCase()}));
+    }
+    
+    /**
+     * Get chapter by book id and order id.
+     * @param bookId The id of the book that contains the chapter.
+     * @param orderId The number of the chapter in the order of chapters.
+     * @return The chapter we're look for.
+     */
+    public Chapter getChapter(final long bookId, final int orderId) { 
+        return getRoot(mDb).chapterOrderNbrIndex.get(
+                new Key(new Object[] {bookId, orderId}));
     }
     
     /**
@@ -535,8 +550,22 @@ public class YbkDAO {
         mDb.rollback();
     }
     
-    /*public void close() {
-        mDb.close();
-        Log.d(TAG, "Closed the database in YbkDAO.close()");
-    }*/
+    /**
+     * Get the history at the current position in the list of histories that the 
+     * back button has taken us to.
+     * 
+     * @param historyPos The position in the history list that we're getting the 
+     * history at.
+     */
+    public History getPreviousHistory(int historyPos) {
+        History hist = null;
+        
+        if (historyPos >= 0) {
+            List<History> historyList = getHistoryList();
+            if (historyList.size() - 1 >= historyPos) {
+                hist = historyList.get(historyPos);
+            }
+        }
+        return hist;
+    }
 }

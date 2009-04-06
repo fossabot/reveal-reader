@@ -10,12 +10,9 @@ import java.util.HashMap;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -59,7 +56,7 @@ public class YbkViewActivity extends Activity {
     private String mDialogFilename = "Never set";
     private String mChapBtnText = "Not Set";
     private String mHistTitle = "";
-    private int mChapOrderNbr = -1;
+    private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
     private int mHistoryPos = 0;
     private static final String TAG = "YbkViewActivity";
@@ -373,26 +370,15 @@ public class YbkViewActivity extends Activity {
         case NEXT_ID:
             setProgressBarIndeterminateVisibility(true);
             
-            Cursor c = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), 
-                    new String[] {"max(" + YbkProvider.CHAPTER_ORDER_NUMBER + ")"}, 
-                    YbkProvider.BOOK_ID + "=?", new String[] {Long.toString(mBookId)}, 
-                    null);
-            
-            int maxOrder = -1;
-
-            if (c.getCount() == 1) {
-                c.moveToFirst();
-                maxOrder = c.getInt(0);
-            }
-            
-            if (maxOrder > mChapOrderNbr) {
-                try {
-                    loadChapterByOrderId(mBookId, ++mChapOrderNbr);
-                } catch (IOException ioe) {
-                    Log.e(TAG, "Could not move to the next chapter. " 
-                            + ioe.getMessage());
+            try {
+                if (loadChapterByOrderId(mBookId, mChapOrderNbr + 1)) {
+                    mChapOrderNbr++;
                 }
+            } catch (IOException ioe) {
+                Log.e(TAG, "Could not move to the next chapter. " 
+                        + ioe.getMessage());
             }
+        
             setProgressBarIndeterminateVisibility(false);
             return true;
         
@@ -417,6 +403,7 @@ public class YbkViewActivity extends Activity {
             final Intent data) {
         
         Bundle extras;
+        long histId;
         
         YbkDAO ybkDao = mYbkDao;
         
@@ -426,7 +413,7 @@ public class YbkViewActivity extends Activity {
                 setProgressBarIndeterminateVisibility(true);
                 
                 extras = data.getExtras();
-                long histId = extras.getLong(YbkDAO.ID);
+                histId = extras.getLong(YbkDAO.ID);
                 
                 History hist = ybkDao.getHistory(histId);
                 
@@ -470,9 +457,9 @@ public class YbkViewActivity extends Activity {
                     showDialog(ASK_BOOKMARK_NAME);
                 } else {
                     setProgressBarIndeterminateVisibility(true);
-                    int histId = extras.getInt(YbkDAO.ID);
+                    histId = extras.getLong(YbkDAO.ID);
                     
-                    History bm = ybkDao.getBookmark(bmId);
+                    History bm = ybkDao.getHistory(histId);
                     
                     if (bm != null) {
                         mBookId = bm.bookId;
@@ -516,30 +503,33 @@ public class YbkViewActivity extends Activity {
     }
     
     /**
-     * Load a chapter as identified by the id field of the chapters table.
+     * Load a chapter as identified by the id field of the book table and the 
+     * order id.
      * 
-     * @param chapterId The record id of the chapter to load.
+     * @param bookId The record id of the chapter to load.
      * @return Did the chapter load?
      * @throws IOException If there was a problem reading the chapter.
      */
-    private boolean loadChapterByOrderId(final long bookId, final int orderId) throws IOException {
+    private boolean loadChapterByOrderId(final long bookId, final int orderId) 
+    throws IOException {
         
-        Cursor c = managedQuery(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), 
-                new String[] {YbkProvider._ID}, YbkProvider.CHAPTER_ORDER_NUMBER + "=? AND " + YbkProvider.BOOK_ID + "=?", 
-                new String[] {Integer.toString(orderId), Long.toString(bookId)}, null);
+        boolean bookLoaded = false;
         
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            int chapterId = c.getInt(0);
+        YbkDAO ybkDao = mYbkDao;
+        
+        Chapter chap = ybkDao.getChapter(bookId, orderId);
+        
+        if (chap != null) {
+            Book book = ybkDao.getBook(chap.bookId);
+            if (bookLoaded = loadChapter(book.fileName, chap.fileName)) {
+                setBookBtn(book.shortTitle, book.fileName, chap.fileName);
+            }
                 
-            return loadChapter(chapterId);
-            
-        } else if (c.getCount() == 0) {    
-            throw new IllegalStateException("No chapters found for order_number: " + orderId);
-        } else {
-            throw new IllegalStateException(
-                    "Too many rows returned from a query for one chapter (order_number: " + orderId + ")");
+        } else {    
+            Log.e(TAG, "No chapters found for order id: " + orderId);
         }
+     
+        return bookLoaded;
             
     }
 
@@ -550,9 +540,12 @@ public class YbkViewActivity extends Activity {
      * @return Did the chapter load?
      * @throws IOException If there is a problem reading the chapter.
      */
-    private boolean loadChapter(final int chapterId) throws IOException {
+    /*private boolean loadChapter(final int chapterId) throws IOException {
         boolean bookLoaded = false;
                 
+        YbkDAO ybkDao = mYbkDao;
+        
+        
         Cursor c = managedQuery(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), chapterId), 
                 new String[] {YbkProvider.FILE_NAME, YbkProvider.BOOK_ID}, null, null, null);
         
@@ -591,7 +584,7 @@ public class YbkViewActivity extends Activity {
         }
         
         return bookLoaded;    
-    }
+    }*/
     
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the 
@@ -741,7 +734,7 @@ public class YbkViewActivity extends Activity {
                     if (chapObj != null) {
                         mChapOrderNbr = chapObj.orderNumber;
                     } else {
-                        mChapOrderNbr = -1;
+                        mChapOrderNbr = 0;
                     } 
                     
                     // replace MS-Word "smartquotes" and other extended characters with spaces
@@ -962,25 +955,23 @@ public class YbkViewActivity extends Activity {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             setProgressBarIndeterminateVisibility(true);
             
-            Uri prevHistUri = ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "back"), 
-                    ++mHistoryPos);
+            YbkDAO ybkDao = mYbkDao;
             
-            Cursor c = managedQuery(prevHistUri,null, null, null, null);
-            
-            if (c.moveToFirst()) {
-                String bookFileName = c.getString(c.getColumnIndex(YbkProvider.FILE_NAME));
-                String chapFileName = c.getString(c.getColumnIndex(YbkProvider.CHAPTER_NAME));
-                mScrollYPos = c.getInt(c.getColumnIndex(YbkProvider.SCROLL_POS));
+            History hist = ybkDao.getPreviousHistory(++mHistoryPos);
+            if (hist != null) {
+                Book book = ybkDao.getBook(hist.bookId);
+                String bookFileName = book.fileName;
+                String chapFileName = hist.chapterName;
+                mScrollYPos = hist.scrollYPos;
+                
                 
                 //Log.d(TAG,"Going back to: " + bookFileName + ", " + chapFileName);
                 
                 mBackButtonPressed = true;
                 try {
                     if (loadChapter(bookFileName, chapFileName)) {
-                        int slashPos = bookFileName.lastIndexOf("/");
-                        int dotPos = bookFileName.indexOf(".");
                         
-                        setBookBtn(bookFileName.substring(slashPos + 1, dotPos),bookFileName,chapFileName);
+                        setBookBtn(book.shortTitle,bookFileName,chapFileName);
                         
                     }
                 } catch (IOException ioe) {

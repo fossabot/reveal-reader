@@ -1,11 +1,9 @@
 package com.jackcholt.reveal;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,14 +47,14 @@ public class TestYbkFileReader {
         Log.d("reveal", text);
     }
 
-    @Test
+    /*@Test
     public void testGetOrderCfg() throws IOException {
         List<String> orderList = ybkRdr.getOrderList();
         
         for (String order : orderList) {
             Log.d("testGetOrderCfg", "Chapter name: " + order);
         }
-    }
+    }*/
 
     @Test
     public void testGetChapters() throws IOException {
@@ -67,7 +65,7 @@ public class TestYbkFileReader {
         Log.d("TestGetChapters", "Moses 6 footnotes: " + text);
     }
     
-    @Test
+    /*@Test
     public void testGetNextChapter() {
         String text = ybkRdr.readNextChapter();
         
@@ -76,37 +74,37 @@ public class TestYbkFileReader {
         text = ybkRdr.readNextChapter();
         
         Log.d("testGetNextChapter", text);
-    }
+    }*/
 
-    @Test
+    /*@Test
     public void testGetPrevChapter() {
         ybkRdr.readNextChapter();        
         ybkRdr.readNextChapter();
         String text = ybkRdr.readPrevChapter();
         
         Log.d("testGetPrevChapter", text);
-    }
+    }*/
 
-    @Test
+    /*@Test
     public void testGetPrevChapterNoPrev() {
         String text = ybkRdr.readPrevChapter();
 
         assertNull(text);
-    }
+    }*/
 
-    @Test
+    /*@Test
     public void testGetChapter() {
         String text = ybkRdr.readChapter("\\pogp\\abr\\1.html");
         
         Log.d("testGetChapter", text);
-    }
+    }*/
 
-    @Test
+    /*@Test
     public void testGetFacsimile() {
         String text = ybkRdr.readChapter("\\pogp\\abr\\fac_3.html");
         
         Log.d("testGetFacsimile", text);
-    }
+    }*/
 
     @Test
     public void testGetImage() throws IOException {
