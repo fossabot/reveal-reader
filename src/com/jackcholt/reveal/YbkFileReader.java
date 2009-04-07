@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Scanner;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.jackcholt.reveal.data.Book;
@@ -53,15 +51,16 @@ public class YbkFileReader {
     private String mBookShortTitle = "No Short Title";
     private String mBookMetaData = null;     
     private ArrayList<Order> mOrderList = new ArrayList<Order>();
-    private String mCurrentChapterOrderName = null;
-    private int mCurrentChapterOrderNumber = -1;
-    private String mChapterNavBarTitle = "No Title";
-    private String mChapterHistoryTitle = "No Title";
-    private int mChapterNavFile = CHAPTER_TYPE_SETTINGS;
-    private int mChapterZoomPicture = CHAPTER_ZOOM_MENU_OFF;
-    private SharedPreferences mSharedPref; 
-    private YbkDAO mYbkDao;
+    //private String mCurrentChapterOrderName = null;
+    //private int mCurrentChapterOrderNumber = -1;
+    //private String mChapterNavBarTitle = "No Title";
+    //private String mChapterHistoryTitle = "No Title";
+    //private int mChapterNavFile = CHAPTER_TYPE_SETTINGS;
+    //private int mChapterZoomPicture = CHAPTER_ZOOM_MENU_OFF;
+    //private SharedPreferences mSharedPref; 
+    //private YbkDAO mYbkDao;
     private long mBookId = -1;  
+    private Context mCtx; 
     
     /**
      * A class to act as a structure for holding information about the chapters 
@@ -84,47 +83,6 @@ public class YbkFileReader {
             len = ybkLen;
         }
         
-        /**
-         * @return the fileName
-         */
-        final String getFileName() {
-            return fileName;
-        }
-        
-        /**
-         * @return the ybkLen
-         */
-        final int getYbkLen() {
-            return len;
-        }
-        
-        /**
-         * @return the ybkOffset
-         */
-        final int getYbkOffset() {
-            return offset;
-        }
-        
-        /**
-         * @param fileName the fileName to set
-         */
-        final void setFileName(final String newFileName) {
-            fileName = newFileName;
-        }
-        
-        /**
-         * @param ybkLen the ybkLen to set
-         */
-        final void setYbkLen(final int ybkLen) {
-            len = ybkLen;
-        }
-        
-        /**
-         * @param ybkOffset the ybkOffset to set
-         */
-        final void setYbkOffset(final int ybkOffset) {
-            offset = ybkOffset;
-        }
     }
     
     /**
@@ -138,9 +96,10 @@ public class YbkFileReader {
     public YbkFileReader(final Context ctx, final RandomAccessFile file) 
     throws FileNotFoundException, IOException {
         mFile = file;
+        mCtx = ctx;
         //populateFileData();
         
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        //mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
     }
 
     /**
@@ -158,7 +117,7 @@ public class YbkFileReader {
         
         mFilename = fileName;
         
-        YbkDAO ybkDao = mYbkDao = YbkDAO.getInstance(ctx);
+        YbkDAO ybkDao = YbkDAO.getInstance(ctx);
         Book book = ybkDao.getBook(fileName);
         if (book != null) {
             mBookId = book.id;
@@ -253,7 +212,7 @@ public class YbkFileReader {
     public long populateBook() throws IOException {
         String fileName = mFilename;
         boolean success = true;
-        YbkDAO ybkDao = mYbkDao;
+        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
         populateFileData();
         
         String bindingText = readBindingFile(FROM_INTERNAL);
@@ -306,7 +265,7 @@ public class YbkFileReader {
                         }
 
                     } else {
-                        Log.e(TAG, "Internal File Name: " + iFile.fileName);
+                        Log.d(TAG, "Internal File Name: " + iFile.fileName);
                         iFileOrderString = iFile.fileName.toLowerCase().substring(1);
                     }
                                         
@@ -437,7 +396,7 @@ public class YbkFileReader {
         boolean fileFound = false;
         
         RandomAccessFile file = mFile;
-        YbkDAO ybkDao = mYbkDao;
+        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
         Chapter chap;
         
         if (source == FROM_DB) {
@@ -445,14 +404,13 @@ public class YbkFileReader {
             if (chap == null) {
                 chapName += ".gz";
                 chap = ybkDao.getChapter(mBookId, chapName);
-                if (chap == null) {
-                    throw new IOException(chapName + " could not be found in");
-                }
             }
             
-            offset = chap.offset;
-            len = chap.length;
-            fileFound = true;
+            if (chap != null) {
+                offset = chap.offset;
+                len = chap.length;
+                fileFound = true;
+            }
         } else {
             
             InternalFile iFile = new InternalFile();
@@ -486,6 +444,7 @@ public class YbkFileReader {
                         "Couldn't read all of " + chapName + ".");
             }
             
+            
             if (chapName.toLowerCase().endsWith(".gz")) {
                 fileText = Util.decompressGzip(text);
             } else {
@@ -512,325 +471,6 @@ public class YbkFileReader {
     }
 
     /**
-     * @param bookMetaData the mBookMetaData to set
-     */
-    public final void setMBookMetaData(String bookMetaData) {
-        mBookMetaData = bookMetaData;
-    }
-
-    
-    /**
-     * Get the list order info.
-     * 
-     * @return the orderList
-     */
-    public final List<Order> getOrderList() {
-        return mOrderList;
-    }
-
-    /**
-     * Return the text of the next chapter and set the current chapter to the 
-     * chapter returned.
-     *  
-     * @return Contents of the next chapter or <code>null</code> if there is no next chapter.
-     * @throws IOException When the next chapter cannot be read.
-     */
-    /*public String readNextChapter() {
-        String chapter = null;
-        
-        ArrayList<Order> orderList = mOrderList;
-        int orderListSize = orderList.size();
-        if (orderListSize > 0) {
-            if (mCurrentChapterOrderNumber < orderListSize) {
-                mCurrentChapterOrderNumber++;
-                
-                String currentChapterOrderName = mCurrentChapterOrderName = orderList.get(mCurrentChapterOrderNumber);
-                if (!currentChapterOrderName.toLowerCase().endsWith(".html")) {
-                    currentChapterOrderName += ".html";
-                }
-
-                String chapterName = "\\" + mBookShortTitle + "\\" + currentChapterOrderName + ".gz";
-          
-                try {
-                    chapter = readInternalFile(chapterName);
-                } catch (IOException ioe) {
-                    Log.e("reveal", "Chapter " + chapterName + " could not be read. " 
-                            + ioe.getMessage());
-                }
-                
-            } 
-        }
-        
-        setChapterData(chapter);
-        
-        return chapter;
-    }*/
-
-    /**
-     * Return the text of the previous chapter and set the current chapter to the 
-     * chapter returned.
-     *  
-     * @return Contents of the next chapter or <code>null</code> if there is no 
-     * previous chapter
-     * @throws IOException When the previous chapter cannot be read.
-     */
-    /*public String readPrevChapter() {
-        String chapter = null;
-        
-        ArrayList<String> orderList = mOrderList;
-
-        if (orderList.size() > 0) {
-            if (mCurrentChapterOrderNumber > 0) {
-                mCurrentChapterOrderNumber--;
-                
-                String currentChapterOrderName = mCurrentChapterOrderName = orderList.get(mCurrentChapterOrderNumber);
-                if (!currentChapterOrderName.toLowerCase().endsWith(".html")) {
-                    currentChapterOrderName += ".html";
-                }
-          
-                String chapterName = "\\" + mBookShortTitle + "\\" + currentChapterOrderName + ".gz";
-                
-                try {
-                    chapter = readInternalFile(chapterName);
-                } catch (IOException ioe) {
-                    Log.e("reveal", "Chapter " + chapterName + " could not be read. " 
-                            + ioe.getMessage());
-                }
-            } 
-        }
-        
-        return chapter;
-    }*/
-
-    /**
-     * @return the currentChapterOrderName
-     */
-    public final String getCurrentChapterOrderName() {
-        return mCurrentChapterOrderName;
-    }
-
-    /**
-     * @return the currentChapterOrderNumber
-     */
-    public final int getCurrentChapterOrderNumber() {
-        return mCurrentChapterOrderNumber;
-    }
-
-    /**
-     * @return the mBindingText
-     */
-    public final String getBindingText() {
-        return mBindingText;
-    }
-    
-    /**
-     * Get the contents of an image file from within the YBK file.
-     * 
-     * @param imageFileName The filename of the image.
-     * @return The bytes which make up the image.
-     * @throws IOException if the image file cannot be read.
-     */
-    public byte[] readImage(final String imageFileName) throws IOException {
-        byte[] image = null;
-        int offset = 0;
-        int len = 0;
-        RandomAccessFile file = mFile;
-        
-        String fileName = "\\" + imageFileName;
-        fileName = fileName.replace("/", "\\");
-        
-        
-        ArrayList<InternalFile> internalFiles = mInternalFiles;
-        for(InternalFile iFile : internalFiles) {
-            if (iFile.getFileName().equalsIgnoreCase(fileName)) {
-                offset = iFile.getYbkOffset();
-                len = iFile.getYbkLen();
-        
-                //DataInputStream dataInput = mDataInput;
-                /*try {
-                    dataInput.reset();
-                } catch (IOException ioe) {
-                    Log.w("YbkFileReader", "YBK file's DataInputStream had to be closed and reopened. " 
-                            + ioe.getMessage());
-                    dataInput.close();
-                    initDataStream();
-                }*/
-             
-                image = new byte[len];
-                file.seek(offset);
-                int amountRead = file.read(image);
-                if (amountRead < len) {
-                    throw new InvalidFileFormatException(
-                            "Couldn't read all of " + imageFileName + ".");
-                }
-                                
-                break;
-            }
-        }
-        return image;
-        
-    }
-    
-    /*public String readChapter(final String chapterName) {
-        String text = null;
-        String pChapterName = chapterName;
-        
-        String bookShortTitle = mBookShortTitle;
-        if (!pChapterName.toLowerCase().startsWith("\\" + bookShortTitle.toLowerCase() , 0)) {
-            throw new IllegalArgumentException(
-                    "chapterName does not start with the book folder.");
-        }
-        
-        if (!pChapterName.toLowerCase().endsWith(".html")) {
-            pChapterName += ".html";
-        }
-  
-        try {
-            text = readInternalFile(pChapterName + ".gz");
-        } catch (IOException ioe) {
-            Log.e("reveal", "Chapter " + chapterName + " could not be read. " 
-                    + ioe.getMessage());
-        }
-        
-        // Update the current chapter information
-        String indexName4Search = chapterName.substring(("\\" + bookShortTitle + "\\").length());
-        int dotIndex = indexName4Search.indexOf(".");
-        if (dotIndex != -1) {
-            indexName4Search = indexName4Search.substring(0, dotIndex);
-            
-            ArrayList<String> orderList = mOrderList;
-            int orderListSize = orderList.size();
-            for (int i = 0; i < orderListSize; i++) {
-                if (orderList.get(i).toLowerCase().indexOf(indexName4Search.toLowerCase()) != -1 ) {
-                    mCurrentChapterOrderNumber = i;
-                    mCurrentChapterOrderName = orderList.get(i);
-                    break;
-                }
-            }
-        }
-        return text;
-        
-    }*/
-
-    /*private void setChapterData(final String chapter) {
-        String chapterHistoryTitle = "No Title";
-        String chapterNavBarTitle = "No Title";
-        int chapterNavFile = CHAPTER_TYPE_SETTINGS;
-        int chapterZoomPicture = CHAPTER_ZOOM_MENU_OFF;
-        
-        if (null != chapter) {
-            int pos = chapter.toLowerCase().indexOf("<ln>");
-            
-            if (pos != -1) {
-                pos += 4;
-                int endPos = chapter.indexOf("<", pos);
-                if (endPos != -1) {
-                    chapterNavBarTitle = chapter.substring(pos, endPos);
-                }
-            }
-
-            pos = chapter.toLowerCase().indexOf("<fn>");
-            
-            if (pos != -1) {
-                pos += 4;
-                int endPos = chapter.indexOf("<", pos);
-                if (endPos != -1) {
-                    chapterHistoryTitle = chapter.substring(pos, endPos);
-                }
-            }
-
-            pos = chapter.toLowerCase().indexOf("<nf>");
-            
-            if (pos != -1) {
-                pos += 4;
-                int endPos = chapter.indexOf("<", pos);
-                if (endPos != -1) {
-                    chapterNavFile = Integer.parseInt(chapter.substring(pos, endPos));
-                }
-            }
-
-            pos = chapter.toLowerCase().indexOf("<zp>");
-            
-            if (pos != -1) {
-                pos += 4;
-                int endPos = chapter.indexOf("<", pos);
-                if (endPos != -1) {
-                    chapterZoomPicture = Integer.parseInt(chapter.substring(pos, endPos));
-                }
-            }
-        }
-        
-        mChapterHistoryTitle = chapterHistoryTitle;
-        mChapterNavBarTitle = chapterNavBarTitle;
-        mChapterNavFile = chapterNavFile;
-        mChapterZoomPicture = chapterZoomPicture;
-    }*/
-
-    /**
-     * @return the mChapterNavBarTitle
-     */
-    public final String getChapterNavBarTitle() {
-        return mChapterNavBarTitle;
-    }
-
-    /**
-     * @param chapterNavBarTitle the mChapterNavBarTitle to set
-     */
-    public final void setChapterNavBarTitle(String chapterNavBarTitle) {
-        mChapterNavBarTitle = chapterNavBarTitle;
-    }
-
-    /**
-     * @return the mChapterHistoryTitle
-     */
-    public final String getChapterHistoryTitle() {
-        return mChapterHistoryTitle;
-    }
-
-    /**
-     * @param chapterHistoryTitle the mChapterHistoryTitle to set
-     */
-    public final void setChapterHistoryTitle(String chapterHistoryTitle) {
-        mChapterHistoryTitle = chapterHistoryTitle;
-    }
-
-    /**
-     * @return the mChapterNavFile
-     */
-    public final int getChapterNavFile() {
-        return mChapterNavFile;
-    }
-
-    /**
-     * @param chapterNavFile the mChapterNavFile to set
-     */
-    public final void setChapterNavFile(int chapterNavFile) {
-        mChapterNavFile = chapterNavFile;
-    }
-
-    /**
-     * @return the mChapterZoomPicture
-     */
-    public final int getChapterZoomPicture() {
-        return mChapterZoomPicture;
-    }
-
-    /**
-     * @param chapterZoomPicture the mChapterZoomPicture to set
-     */
-    public final void setChapterZoomPicture(int chapterZoomPicture) {
-        mChapterZoomPicture = chapterZoomPicture;
-    }
-
-    /**
-     * @return the mBookShortTitle
-     */
-    public final String getBookShortTitle() {
-        return mBookShortTitle;
-    }
-
-    
-    /**
      * @return the filename
      */
     public final String getFilename() {
@@ -851,7 +491,7 @@ public class YbkFileReader {
         boolean success = true;
         
         RandomAccessFile file = mFile;
-        YbkDAO ybkDao = mYbkDao;
+        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
         
         String orderString = readOrderCfg(FROM_INTERNAL);
         String[] orders = null;
@@ -920,5 +560,40 @@ public class YbkFileReader {
         return success;
     }
 
+    /**
+     * 
+     * @param file
+     * @param bookFileName
+     * @param chapterName
+     * @return
+     * @throws IOException
+     */
+    public byte[] readInternalBinaryFile(final String chapterName) 
+    throws IOException {
+        
+        long bookId = mBookId;
+        RandomAccessFile file = mFile;
+        int offset = 0;
+        int len = 0;
+        byte[] bytes = null;
+        
+        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
+        
+        Chapter chap = ybkDao.getChapter(bookId, chapterName);
+        if (chap != null) {
+            offset = chap.offset;
+            len = chap.length;
+            
+            bytes = new byte[len];
+            file.seek(offset);
+            int amountRead = file.read(bytes);
+            if (amountRead < len) {
+                throw new IOException(
+                        "Couldn't read all of " + chapterName + ".");
+            }
+        }
+        
+        return bytes;
+    }
 }
 

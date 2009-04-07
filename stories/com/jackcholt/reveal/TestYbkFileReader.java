@@ -1,6 +1,5 @@
 package com.jackcholt.reveal;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -27,17 +26,6 @@ public class TestYbkFileReader {
         assertTrue(ybkRdr.getBookTitle().startsWith("P<small>"));
     }*/
     
-    @Test
-    public void testGetBindingText() {
-        String bindingText = ybkRdr.getBindingText();
-        
-        Log.d("testGetBindingText", bindingText);
-    }
-    
-    /*@Test
-    public void testGetBookMetaData() {
-        Log.i("TestYbkReader", "Book meta data: " + ybkRdr.getBookMetaData());
-    }*/
 
     @Test
     public void testGetBindingFile() throws IOException {
@@ -106,13 +94,6 @@ public class TestYbkFileReader {
         Log.d("testGetFacsimile", text);
     }*/
 
-    @Test
-    public void testGetImage() throws IOException {
-        byte[] image = ybkRdr.readImage("pogp/images/facsimile3.gif");
-        
-        assertNotNull(image);
-        assertTrue(new String(image).startsWith("GIF89", 0));
-    }
 
     /*@Test
     public void testGetFormattedTitle() {

@@ -67,13 +67,14 @@ public class Main extends ListActivity implements OnGestureListener {
     private boolean BOOLshowFullScreen;
     private final Handler mUpdateLibHandler = new Handler();
     private static boolean mUpdating = false;
-    private YbkDAO mYbkDao;
+    //private YbkDAO mYbkDao;
     private List<Book> mBookTitleList;
     
     private final Runnable mUpdateBookList = new Runnable() {
         public void run() {
             
-            mBookTitleList = mYbkDao.getBookTitles().getList(null, null);
+            mBookTitleList = YbkDAO.getInstance(getBaseContext()).getBookTitles()
+                .getList(null, null);
             
             mUpdating = false;
         }
@@ -131,7 +132,7 @@ public class Main extends ListActivity implements OnGestureListener {
         SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     	
     	// Get the YanceyBook DAO 
-        mYbkDao = YbkDAO.getInstance(this);
+        //mYbkDao = YbkDAO.getInstance(this);
     	
         BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
 
@@ -186,7 +187,7 @@ public class Main extends ListActivity implements OnGestureListener {
         //Debug.stopMethodTracing();
         
         // Remove any references so it can be garbage collected.
-        mYbkDao = null;
+        //mYbkDao = null;
     }
     
     @Override
@@ -217,7 +218,7 @@ public class Main extends ListActivity implements OnGestureListener {
         // Notify that we are getting current list of eBooks
         //Log.i(Global.TAG,"Getting the list of books in the database");
    
-        YbkDAO ybkDao = mYbkDao;
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
         Iterator<Book> fileIterator = ybkDao.getBookTitles().iterator();
         
         if (!fileIterator.hasNext()) {
@@ -351,7 +352,7 @@ public class Main extends ListActivity implements OnGestureListener {
      */
     private void refreshBookList() {
         
-        YbkDAO ybkDao = mYbkDao;
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
         
         mBookTitleList = ybkDao.getBookTitles().getList(null, null);
         
@@ -551,9 +552,7 @@ public class Main extends ListActivity implements OnGestureListener {
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         Bundle extras;
         long histId;
-        History hist;
         Intent intent;
-        YbkDAO ybkDao = mYbkDao;
         
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
@@ -570,23 +569,6 @@ public class Main extends ListActivity implements OnGestureListener {
                 startActivity(intent);            
                 break;
 
-            /*case YbkViewActivity.CALL_BOOKMARK:
-                setProgressBarIndeterminateVisibility(true);  
-                
-                extras = data.getExtras();
-                int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
-                hist = ybkDao.getBookmark(bmId);
-                if (hist != null) {
-                    histId = hist.id;
-                    intent = new Intent(this, YbkViewActivity.class);
-                    intent.putExtra(YbkDAO.ID, hist.id);
-                    intent.putExtra(YbkDAO.FROM_HISTORY, true);
-                    startActivity(intent);
-                } else {
-                    Log.e(Global.TAG, "Couldn't load chapter from Bookmark. Bookmark id is: " + bmId);
-                }
-                break;*/
-                
             case ACTIVITY_SETTINGS:
                 extras = data.getExtras();
                 boolean libDirChanged = extras.getBoolean(Settings.EBOOK_DIR_CHANGED);

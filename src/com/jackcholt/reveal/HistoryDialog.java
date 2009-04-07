@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 

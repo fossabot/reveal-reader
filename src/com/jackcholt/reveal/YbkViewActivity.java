@@ -47,7 +47,7 @@ public class YbkViewActivity extends Activity {
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
-    private YbkDAO mYbkDao;
+    //private YbkDAO mYbkDao;
     //private String mLibraryDir;
     private SharedPreferences mSharedPref;
     private boolean mShowPictures;
@@ -92,7 +92,7 @@ public class YbkViewActivity extends Activity {
         
         setProgressBarIndeterminateVisibility(true);
 
-        YbkDAO ybkDao = mYbkDao = YbkDAO.getInstance(this);
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
 
         Long bookId = null;
         Boolean isFromHistory = null;
@@ -405,7 +405,7 @@ public class YbkViewActivity extends Activity {
         Bundle extras;
         long histId;
         
-        YbkDAO ybkDao = mYbkDao;
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
         
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
@@ -515,7 +515,7 @@ public class YbkViewActivity extends Activity {
         
         boolean bookLoaded = false;
         
-        YbkDAO ybkDao = mYbkDao;
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
         
         Chapter chap = ybkDao.getChapter(bookId, orderId);
         
@@ -532,59 +532,6 @@ public class YbkViewActivity extends Activity {
         return bookLoaded;
             
     }
-
-    /**
-     * Load a chapter as identified by the id field of the chapters table.
-     * 
-     * @param chapterId The record id of the chapter to load.
-     * @return Did the chapter load?
-     * @throws IOException If there is a problem reading the chapter.
-     */
-    /*private boolean loadChapter(final int chapterId) throws IOException {
-        boolean bookLoaded = false;
-                
-        YbkDAO ybkDao = mYbkDao;
-        
-        
-        Cursor c = managedQuery(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "chapter"), chapterId), 
-                new String[] {YbkProvider.FILE_NAME, YbkProvider.BOOK_ID}, null, null, null);
-        
-        if (c.getCount() == 1) {
-            c.moveToFirst();
-            String chapter = c.getString(0);
-            int bookId = c.getInt(1);
-            
-            c = managedQuery(ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), bookId), 
-                new String[] {YbkProvider.FILE_NAME}, null, null, null);
-            
-            if (c.getCount() == 1) {
-                c.moveToFirst();
-                String bookFileName = c.getString(0);
-                
-                String[] pathParts = bookFileName.split("/");
-                String[] fileNameParts = pathParts[pathParts.length - 1].split("\\.");
-                String shortTitle = fileNameParts[0];
-                
-                if (bookLoaded = loadChapter(bookFileName, chapter)) {
-                    setBookBtn(shortTitle, bookFileName, chapter);
-                }
-            
-            
-            } else if (c.getCount() == 0) {    
-                throw new IllegalStateException("No books found for id: " + bookId);
-            } else {
-                throw new IllegalStateException(
-                        "Too many rows returned from a query for one book (id: " + bookId + ")");
-            }
-        } else if (c.getCount() == 0) {    
-            throw new IllegalStateException("No chapters found for id: " + chapterId);
-        } else {
-            throw new IllegalStateException(
-                    "Too many rows returned from a query for one chapter (id: " + chapterId + ")");
-        }
-        
-        return bookLoaded;    
-    }*/
     
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the 
@@ -634,7 +581,7 @@ public class YbkViewActivity extends Activity {
                     ybkReader = mYbkReader = new YbkFileReader(this,filePath);
                 }    
              
-                YbkDAO ybkDao = mYbkDao;
+                YbkDAO ybkDao = YbkDAO.getInstance(this);
                 Book book = ybkDao.getBook(filePath.toLowerCase());
                 
                 bookId = book.id;
@@ -747,7 +694,7 @@ public class YbkViewActivity extends Activity {
                     String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
                             Settings.DEFAULT_EBOOK_DIRECTORY);
                     
-                    content = Util.processIfbook(content, getContentResolver(), libDir);
+                    content = Util.processIfbook(content, this, libDir);
                     
                     // Convert the ahtags
                     content = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>", 
@@ -842,10 +789,10 @@ public class YbkViewActivity extends Activity {
                     String bmName = (String) et.getText().toString();
                     
                     //Log.i(TAG, "Text entered " + bmName); 
+                    YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
+                    int bookmarkNumber = ybkDao.getMaxBookmarkNumber();
                     
-                    int bookmarkNumber = mYbkDao.getMaxBookmarkNumber();
-                    
-                    mYbkDao.insertHistory(mBookId, bmName, mChapFileName, 
+                    ybkDao.insertHistory(mBookId, bmName, mChapFileName, 
                             mYbkView.getScrollY(), bookmarkNumber);
 
                 }
@@ -894,7 +841,8 @@ public class YbkViewActivity extends Activity {
             endString = ".html.gz";
         }
         String verse = chap.substring(chap.lastIndexOf("\\") + 1, chap.lastIndexOf(endString));
-        //Log.d(TAG, "verse: " + verse);
+        
+        Log.d(TAG, "verse/concatChap: " + verse + "/" + concatChap);
         
         String content = ybkReader.readInternalFile(concatChap);
         
@@ -955,7 +903,7 @@ public class YbkViewActivity extends Activity {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             setProgressBarIndeterminateVisibility(true);
             
-            YbkDAO ybkDao = mYbkDao;
+            YbkDAO ybkDao = YbkDAO.getInstance(this);
             
             History hist = ybkDao.getPreviousHistory(++mHistoryPos);
             if (hist != null) {

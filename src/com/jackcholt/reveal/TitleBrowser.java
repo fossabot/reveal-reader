@@ -1,5 +1,6 @@
 package com.jackcholt.reveal;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -335,7 +336,7 @@ public class TitleBrowser extends ListActivity {
 				}
 			}
 
-			cursor.close();
+			//cursor.close();
 
 			Button cancel = (Button) findViewById(R.id.title_cancel_button);
 			cancel.setOnClickListener(new View.OnClickListener() {
@@ -358,18 +359,18 @@ public class TitleBrowser extends ListActivity {
 						Thread t = new Thread() {
 							public void run() {
 								String mLibraryDir = mSharedPref.getString(
-										"default_ebook_dir",
-										"/sdcard/reveal/ebooks/");
+										Settings.EBOOK_DIRECTORY_KEY,
+										Settings.DEFAULT_EBOOK_DIRECTORY);
+
 								try {
-									mDownloadSuccess = Util.fetchAndLoadTitle(
-											mFileLocation, mDownloadUrl, mLibraryDir,
-											context);
-								} catch (IllegalStateException e) {
-									mDownloadSuccess = false;
-									Log.e(TAG, e.getMessage());
-									e.printStackTrace();
-								}
-								
+                                    mDownloadSuccess = Util.fetchAndLoadTitle(
+                                    		mFileLocation, mDownloadUrl, mLibraryDir,
+                                    		context);
+                                } catch (IOException e) {
+                                    mDownloadSuccess = false;
+                                    Log.e(TAG, e.getMessage());
+                                    e.printStackTrace();
+                                }
 								
 								mHandler.post(mUpdateResults);
 							}

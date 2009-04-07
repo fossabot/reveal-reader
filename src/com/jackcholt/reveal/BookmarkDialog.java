@@ -2,24 +2,19 @@ package com.jackcholt.reveal;
 
 import java.util.List;
 
-import com.jackcholt.reveal.data.History;
-import com.jackcholt.reveal.data.YbkDAO;
-
 import android.app.ListActivity;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
+
+import com.jackcholt.reveal.data.History;
+import com.jackcholt.reveal.data.YbkDAO;
 
 public class BookmarkDialog extends ListActivity {
-    private Cursor mListCursor;
-	//private Button mAddBtn;
 	private final String TAG = "BookmarkDialog";
 	public static final String ADD_BOOKMARK = "add_bookmark";
 	
