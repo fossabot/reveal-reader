@@ -216,9 +216,16 @@ public class YbkFileReader {
         populateFileData();
         
         String bindingText = readBindingFile(FROM_INTERNAL);
-        long bookId = mBookId = ybkDao.insertBook(fileName, bindingText, Util.getBookTitleFromBindingText(bindingText), 
-                Util.getBookShortTitleFromBindingText(bindingText), 
-                mBookMetaData);
+        String bookTitle = null;
+        String shortTitle = null;
+        
+        if (bindingText != null) {
+            bookTitle = Util.getBookTitleFromBindingText(bindingText);
+            shortTitle = Util.getBookShortTitleFromBindingText(bindingText);
+        }
+        
+        long bookId = mBookId = ybkDao.insertBook(fileName, bindingText, bookTitle, 
+                shortTitle, mBookMetaData);
         
         if (bookId == 0) {
             // we'll assume the fileName is already in the db and continue
@@ -246,7 +253,7 @@ public class YbkFileReader {
                 Integer orderNbr = null;
                 InternalFile iFile = ifList.get(i);
                 if (iFile.fileName.length() == 0) {
-                    break;
+                    continue;
                 }
                 
                 if (orderList != null) {

@@ -33,9 +33,9 @@ public class YbkDAO {
 
     private Storage mDb;
 
-    //private static volatile YbkDAO mSelf = null;
+    // private static volatile YbkDAO mSelf = null;
 
-    // Add the volatile modifier to make sure that changes to mCtx are atomic 
+    // Add the volatile modifier to make sure that changes to mCtx are atomic
     private static volatile Context mCtx;
 
     private SharedPreferences mSharedPref;
@@ -78,7 +78,7 @@ public class YbkDAO {
     private static class YbkDaoHolder {
         static private YbkDAO instance = new YbkDAO(mCtx);
     }
-    
+
     /**
      * Disallow cloning to avoid getting around the singleton design pattern.
      */
@@ -200,7 +200,7 @@ public class YbkDAO {
         book.fileName = fileName.toLowerCase();
         book.active = true;
         book.bindingText = bindingText;
-        book.formattedTitle = Util.formatTitle(title);
+        book.formattedTitle = title == null ? null : Util.formatTitle(title);
         book.title = title;
         book.shortTitle = shortTitle;
         book.metaData = metaData;
@@ -209,8 +209,14 @@ public class YbkDAO {
 
         // Persistence-by-reachability causes objects to become persistent once
         // they are referred to by a persistent object.
-        if (root.bookIdIndex.put(book) && root.bookTitleIndex.put(book)
-                && root.bookFilenameIndex.put(book)) {
+        boolean b1 = root.bookIdIndex.put(book);
+        boolean b2 = root.bookFilenameIndex.put(book);
+        boolean b3 = true;
+        if (title != null) {
+            b3 = root.bookTitleIndex.put(book);
+        }
+
+        if (b1 && b2 && b3) {
 
             mDb.commit();
             return id;
@@ -379,14 +385,16 @@ public class YbkDAO {
      * 
      * @param book
      *            The book to be deleted.
-     * @return True if the book was deleted
+     * @return True if the book was deleted.
      */
     public boolean deleteBook(final Book book) {
         YbkRoot root = getRoot(mDb);
 
         if (root.bookFilenameIndex.remove(book)
                 && root.bookIdIndex.remove(book)
-                && root.bookTitleIndex.remove(book)) {
+                && root.bookTitleIndex.remove(book)
+                && deleteChapters(book.id, false)) {
+
             book.deallocate();
             root.modify();
             mDb.commit();
@@ -399,13 +407,29 @@ public class YbkDAO {
     }
 
     /**
-     * Remove the book from the database.
+     * Convenience method for calling deleteChapters with a default of
+     * useTransactions = true.
      * 
-     * @param book
-     *            The book to be deleted.
-     * @return True if the book was deleted
+     * @param bookId
+     *            The id of the book whose chapters we are deleting.
+     * @return True if the chapters were deleted.
      */
     public boolean deleteChapters(final long bookId) {
+        return deleteChapters(bookId, true);
+    }
+
+    /**
+     * Remove a book's chapters from the database.
+     * 
+     * @param bookId
+     *            The id of the book to be deleted.
+     * @param useTransaction
+     *            allow this to be called as part of an existing transaction by
+     *            turning off its commit and rollback statements.
+     * @return True if the book was deleted.
+     */
+    public boolean deleteChapters(final long bookId,
+            final boolean useTransaction) {
         YbkRoot root = getRoot(mDb);
         boolean success = true;
 
@@ -429,9 +453,13 @@ public class YbkDAO {
                 chapters[i].deallocate();
             }
             root.modify();
-            mDb.commit();
+            if (useTransaction) {
+                mDb.commit();
+            }
         } else {
-            mDb.rollback();
+            if (useTransaction) {
+                mDb.rollback();
+            }
         }
 
         return success;
