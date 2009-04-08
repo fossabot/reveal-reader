@@ -86,4 +86,6 @@
 <string name="refresh_title">Refreshing eBooks.  </string>
 <string name="error_reported">Reveal Error Reported.  Please check the forums for a fix.</string>
 <string name="error_title">Reporting Reveal Error</string>
+<string name="unknown">UNKNOWN</string>
+<string name="unloadable_chapter">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The eBook or chapter could not be opened.  Try refreshing the eBook library or getting a fresh copy of the book.&lt;/p&gt;&lt;dl&gt;&lt;dt&gt;Cause:&lt;/dt&gt;&lt;dd&gt;{0}&lt;/dd&gt;&lt;/dl&gt;&lt;/body&gt;&lt;/html&gt;</string>
 </resources>

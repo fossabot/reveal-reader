@@ -285,7 +285,7 @@ public class Util {
 
     public static final String htmlize(final String text, final SharedPreferences sharedPref) {
         if (text == null) {
-            throw new IllegalStateException("No text was passed.");
+            throw new IllegalArgumentException("No text was passed.");
         }
         
         boolean showPicture = sharedPref.getBoolean("show_pictures", true);
@@ -378,9 +378,10 @@ public class Util {
      * @param contRes Reference to the environment in which we are working.
      * @param libDir The directory which contains our ebooks.
      * @return The processed content.
+     * @throws InconsistentContentException 
      */
     public static String processIfbook(final String content, 
-            final ContentResolver contRes, final String libDir) {
+            final ContentResolver contRes, final String libDir) throws InconsistentContentException {
         StringBuilder newContent = new StringBuilder();
 
         // Use this to get the actual content
@@ -426,7 +427,7 @@ public class Util {
                         } else if (count == 0) {
                             newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
                         } else {
-                            throw new IllegalStateException("More than one record for the same book");
+                            throw new InconsistentContentException("More than one record for the same book");
                         }
                         
                         // remove just-parsed <ifbook> tag structure so we can find the next
@@ -526,8 +527,9 @@ public class Util {
      * 
      * @param content The content containing the ahtags to convert.
      * @return The converted content.
+     * @throws InvalidFileFormatException 
      */
-    public static String convertIfvar(final String content) {
+    public static String convertIfvar(final String content) throws InvalidFileFormatException {
         /*String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" +
         		"<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
         		"<elsevar=\\1>(.+)<[aA]\\s+href=['\"]\\+\\1=1['\"]>" +
@@ -799,6 +801,7 @@ public class Util {
 	 * @param file
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private static boolean shouldDownload(final Context context, final File file) {
 		new AlertDialog.Builder(context).setTitle(
 				R.string.ebook_exists_still_download).setPositiveButton(
@@ -824,9 +827,10 @@ public class Util {
 	}
 	
 	public static  void showSplashScreen(Context _this) {
-		boolean mShowSplashScreen;
+// sv - not sure what was intended here, but is has absolutely no effect
+//	    boolean mShowSplashScreen;
     //Toast Splash with image  :)
-	    if (mShowSplashScreen = true) {
+//	    if (mShowSplashScreen = true) {
 		   Toast toast = new Toast(_this);
 		   LinearLayout lay = new LinearLayout(_this);
 		   lay.setOrientation(LinearLayout.HORIZONTAL);
@@ -836,10 +840,10 @@ public class Util {
 		   toast.setView(lay);
 		   toast.setDuration(Toast.LENGTH_LONG); 
 		   toast.show();
-	   }
+//	   }
 	}	
 	
-	private void deleteFileOrFolder(File file, Context _this) {
+	public void deleteFileOrFolder(File file, Context _this) {
 		
 		if (file.delete()) {
 			// Delete was successful.
@@ -882,7 +886,7 @@ public class Util {
 	 */
 	public static void sendNotification(final Context ctx, final String text, 
 	        final int iconId, final String title, NotificationManager notifMgr, 
-	        final int notifId, final Class classToStart) {
+	        final int notifId, final Class<?> classToStart) {
 	    
 	    sendNotification(ctx, text, iconId, title, notifId, notifMgr, classToStart, 
 	            true);
@@ -903,7 +907,7 @@ public class Util {
 	 */
 	public static void sendNotification(final Context ctx, final String text, 
 	        final int iconId, final String title, final int notifId, 
-	        final NotificationManager notifMgr, final Class classToStart, 
+	        final NotificationManager notifMgr, final Class<?> classToStart, 
 	        final boolean autoCancel) {
 	    PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0,
                 new Intent(ctx, classToStart), 0);

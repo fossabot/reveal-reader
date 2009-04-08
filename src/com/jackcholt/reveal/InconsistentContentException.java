@@ -3,9 +3,10 @@ package com.jackcholt.reveal;
 import java.io.IOException;
 
 /**
- * Indicates that the YBK file format is invalid.
+ * Indicates some data inconstancy (used to replace most usages of
+ * IllegalStateException with a checked exception).
  */
-public class InvalidFileFormatException extends IOException {
+public class InconsistentContentException extends IOException {
     // updated to reflect new derivation which will likely change the
     // serialization format
     private static final long serialVersionUID = -1891636805598049308L;
@@ -15,7 +16,7 @@ public class InvalidFileFormatException extends IOException {
      * 
      * @param message
      */
-    public InvalidFileFormatException(final String message) {
+    public InconsistentContentException(final String message) {
         super(message);
 
     }

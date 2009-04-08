@@ -41,376 +41,373 @@ import android.widget.Toast;
  */
 public class TitleBrowser extends ListActivity {
 
-	private static final int UPDATE_ID = Menu.FIRST;
-	private static final int UPDATE_TOKEN = 12; // random number
-	private static String mDownloadServer = "http://www.thecoffeys.net/ebooks/default.asp?action=download&ID=";
-	private NotificationManager mNotifMgr;
-	private int mNotifId = 0;
-	private static final String TAG = "Reveal TitleBrowser";
-	private SimpleCursorAdapter mAdapter;
-	private Stack<Uri> mBreadCrumb;
-	private Cursor mListCursor;
-	private QueryHandler mQueryHandler;
-	private boolean mDownloadSuccess;
-	private URL mDownloadUrl = null;
-	private URL mFileLocation = null;
-	private SharedPreferences mSharedPref;
-	private boolean mBusy = false;
+    private static final int UPDATE_ID = Menu.FIRST;
+    private static final int UPDATE_TOKEN = 12; // random number
+    private static String mDownloadServer = "http://www.thecoffeys.net/ebooks/default.asp?action=download&ID=";
+    private NotificationManager mNotifMgr;
+    private int mNotifId = 0;
+    private static final String TAG = "Reveal TitleBrowser";
+    private SimpleCursorAdapter mAdapter;
+    private Stack<Uri> mBreadCrumb;
+    private Cursor mListCursor;
+    private QueryHandler mQueryHandler;
+    private boolean mDownloadSuccess;
+    private URL mDownloadUrl = null;
+    private URL mFileLocation = null;
+    private SharedPreferences mSharedPref;
+    private boolean mBusy = false;
     private boolean BOOLshowFullScreen;
 
+    final Handler mHandler = new Handler();
 
-	final Handler mHandler = new Handler();
+    /** Used after return from downloading new titles **/
+    final Runnable mUpdateResults = new Runnable() {
+        public void run() {
+            downloadComplete();
+        }
+    };
 
-	/** Used after return from downloading new titles **/
-	final Runnable mUpdateResults = new Runnable() {
-		public void run() {
-			downloadComplete();
-		}
-	};
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-	/** Called when the activity is first created. */
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		//Change this when building a RELEASE Version for the GOOGLE APP MARKET
-        //This allows for real usage stats and end user error reporting
-        
-        //Release Key for use of the END USERS
-        //FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
-        
-        //Development key for use of the DEVELOPMENT TEAM
+        // Change this when building a RELEASE Version for the GOOGLE APP MARKET
+        // This allows for real usage stats and end user error reporting
+
+        // Release Key for use of the END USERS
+        // FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
+
+        // Development key for use of the DEVELOPMENT TEAM
         FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
         FlurryAgent.onEvent("TitleBrowser");
-		
-		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  
-		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-		
-		mBreadCrumb = new Stack<Uri>();
 
-		mDownloadSuccess = false;
+        mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+
+        mBreadCrumb = new Stack<Uri>();
+
+        mDownloadSuccess = false;
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    	BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
-    	
+        BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
+
         if (BOOLshowFullScreen) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            requestWindowFeature(Window.FEATURE_NO_TITLE); 
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
         }
-   		
-		setContentView(R.layout.browser_main);
 
-		mQueryHandler = new QueryHandler(this);
+        setContentView(R.layout.browser_main);
 
-		// If this database doesn't have anything to display, let's load it from
-		// the embedded file
-		FlurryAgent.onEvent("TitleBrowser");
-		Map<String, String> flurryMap = new HashMap<String, String>();
-		flurryMap.put("eBook Downloaded", "eBookname"); 
+        mQueryHandler = new QueryHandler(this);
 
-		mListCursor = managedQuery(
-						Uri.withAppendedPath(TitleProvider.CONTENT_URI,
-								"category"),
-						new String[] { TitleProvider.Categories._ID }, null,
-						null, null);
+        // If this database doesn't have anything to display, let's load it from
+        // the embedded file
+        FlurryAgent.onEvent("TitleBrowser");
+        Map<String, String> flurryMap = new HashMap<String, String>();
+        flurryMap.put("eBook Downloaded", "eBookname");
 
-		if (mListCursor.getCount() == 0) {
-			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
-					.show();
+        mListCursor = managedQuery(Uri.withAppendedPath(
+                TitleProvider.CONTENT_URI, "category"),
+                new String[] { TitleProvider.Categories._ID }, null, null, null);
 
-			setProgressBarIndeterminateVisibility(true);
-			mBusy = true;
-			mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
-					TitleProvider.CONTENT_URI, "updatefile"), null, null, null);
-		}
+        if (mListCursor.getCount() == 0) {
+            Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
+                    .show();
 
-		// setup current location in stack
-		Object lastStack = getLastNonConfigurationInstance();
-		
-		if (lastStack != null) {
-			for (Object uri : (Stack<?>) lastStack) {
-				mBreadCrumb.push((Uri)uri);
-			}
-		} else {
-			Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
-			"categoryparent");
-			Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
-			mBreadCrumb.push(rootCategories);
-		}
-		
-		updateScreen();
+            setProgressBarIndeterminateVisibility(true);
+            mBusy = true;
+            mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
+                    TitleProvider.CONTENT_URI, "updatefile"), null, null, null);
+        }
 
-	}
-	
-	/** Called when the activity is going away. */
-	@Override
+        // setup current location in stack
+        Object lastStack = getLastNonConfigurationInstance();
+
+        if (lastStack != null) {
+            for (Object uri : (Stack<?>) lastStack) {
+                mBreadCrumb.push((Uri) uri);
+            }
+        } else {
+            Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+                    "categoryparent");
+            Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
+            mBreadCrumb.push(rootCategories);
+        }
+
+        updateScreen();
+
+    }
+
+    /** Called when the activity is going away. */
+    @Override
     protected void onStop() {
         super.onStop();
         FlurryAgent.onEndSession();
     }
-	
-	@Override
-	public Object onRetainNonConfigurationInstance() {
-		return mBreadCrumb;
-	}
 
-	protected void updateScreen() {
-		Uri currentUri = mBreadCrumb.peek();
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        return mBreadCrumb;
+    }
 
-		String[] projection;
-		String[] from;
-		int[] to  = new int[] { R.id.book_name };
+    protected void updateScreen() {
+        Uri currentUri = mBreadCrumb.peek();
 
-		if (currentUri.toString().contains("/category")) {
-			projection = new String[] { TitleProvider.Categories.NAME,
-					TitleProvider.Categories._ID };
-			from = new String[] { TitleProvider.Categories.NAME };
-		} else {
-			projection = new String[] { TitleProvider.Titles.BOOKNAME,
-					TitleProvider.Titles._ID };
-			from = new String[] { TitleProvider.Titles.BOOKNAME };
-		}
+        String[] projection;
+        String[] from;
+        int[] to = new int[] { R.id.book_name };
 
-		mListCursor = managedQuery(currentUri, projection, null, null, null);
-		
-		Log.d(TAG, "currentUri/mListCursor.getCount(): " + currentUri + " / " + mListCursor.getCount());
-		
-		mAdapter = new SimpleCursorAdapter(this, R.layout.browser_list_item,
-				mListCursor, from, to);
-		setListAdapter(mAdapter);
-	}
+        if (currentUri.toString().contains("/category")) {
+            projection = new String[] { TitleProvider.Categories.NAME,
+                    TitleProvider.Categories._ID };
+            from = new String[] { TitleProvider.Categories.NAME };
+        } else {
+            projection = new String[] { TitleProvider.Titles.BOOKNAME,
+                    TitleProvider.Titles._ID };
+            from = new String[] { TitleProvider.Titles.BOOKNAME };
+        }
 
-	@Override
-	public boolean onCreateOptionsMenu(final Menu menu) {
-		boolean success = super.onCreateOptionsMenu(menu);
+        mListCursor = managedQuery(currentUri, projection, null, null, null);
 
-		menu.add(Menu.NONE, UPDATE_ID, Menu.NONE, R.string.menu_update)
-				.setIcon(android.R.drawable.ic_menu_share);
+        Log.d(TAG, "currentUri/mListCursor.getCount(): " + currentUri + " / "
+                + mListCursor.getCount());
 
-		return success;
-	}
+        mAdapter = new SimpleCursorAdapter(this, R.layout.browser_list_item,
+                mListCursor, from, to);
+        setListAdapter(mAdapter);
+    }
 
-	@Override
-	public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
-		switch (item.getItemId()) {
-		case UPDATE_ID:
-			Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
-					.show();
+    @Override
+    public boolean onCreateOptionsMenu(final Menu menu) {
+        boolean success = super.onCreateOptionsMenu(menu);
 
-			setProgressBarIndeterminateVisibility(true);
-			mBusy = true;
-			mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
-					TitleProvider.CONTENT_URI, "update"), null, null, null);
-			return true;
-		}
+        menu.add(Menu.NONE, UPDATE_ID, Menu.NONE, R.string.menu_update)
+                .setIcon(android.R.drawable.ic_menu_share);
 
-		return super.onMenuItemSelected(featureId, item);
-	}
+        return success;
+    }
 
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
+    @Override
+    public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
+        switch (item.getItemId()) {
+        case UPDATE_ID:
+            Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT)
+                    .show();
 
-		if (mBreadCrumb.size() < 3) {
-			Uri baseUri;
+            setProgressBarIndeterminateVisibility(true);
+            mBusy = true;
+            mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(
+                    TitleProvider.CONTENT_URI, "update"), null, null, null);
+            return true;
+        }
 
-			if (mBreadCrumb.size() == 2) {
-				baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
-						"titlecategory");
-			} else {
-				baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
-						"categoryparent");
-			}
+        return super.onMenuItemSelected(featureId, item);
+    }
 
-			Uri lookupUri = ContentUris.withAppendedId(baseUri, id);
-			mBreadCrumb.push(lookupUri);
-			
-			updateScreen();
-		} else {
-			if (mBusy) {
-				Toast.makeText(this, R.string.ebook_download_busy, 
-						Toast.LENGTH_LONG).show();
-					FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
-			} else {
-				TitleDialog dialog = new TitleDialog(this, id);
-				dialog.show();
-			}
-		}
-	}
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
 
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent msg) {
-		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			if (mBreadCrumb.size() > 1) {
-				mBreadCrumb.pop();
+        if (mBreadCrumb.size() < 3) {
+            Uri baseUri;
 
-				updateScreen();
-			} else {
-				finish();
-			}
-		}
+            if (mBreadCrumb.size() == 2) {
+                baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+                        "titlecategory");
+            } else {
+                baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+                        "categoryparent");
+            }
 
-		return false;
-	}
+            Uri lookupUri = ContentUris.withAppendedId(baseUri, id);
+            mBreadCrumb.push(lookupUri);
 
-	private final class QueryHandler extends AsyncQueryHandler {
-		private Context mContext;
+            updateScreen();
+        } else {
+            if (mBusy) {
+                Toast.makeText(this, R.string.ebook_download_busy,
+                        Toast.LENGTH_LONG).show();
+                FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
+            } else {
+                TitleDialog dialog = new TitleDialog(this, id);
+                dialog.show();
+            }
+        }
+    }
 
-		public QueryHandler(Context context) {
-			super(context.getContentResolver());
-			mContext = context;
-		}
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent msg) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (mBreadCrumb.size() > 1) {
+                mBreadCrumb.pop();
 
-		@Override
-		protected void onUpdateComplete(int token, Object cookie, int result) {
-			super.onUpdateComplete(token, cookie, result);
-			FlurryAgent.onError("TitleBrowser", "Download New Catalog", "INFO");
-			// establish data connection
-			Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
-					"categoryparent");
-			Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
+                updateScreen();
+            } else {
+                finish();
+            }
+        }
 
-			// create adapters for view
-			mBreadCrumb.clear();
-			mBreadCrumb.push(rootCategories);
-			
-			updateScreen();
-			
-			setProgressBarIndeterminateVisibility(false);
-			mBusy = false;
+        return false;
+    }
 
-			Toast.makeText(mContext, R.string.ebook_update_complete,
-					Toast.LENGTH_SHORT).show();
-		}
-	}
+    private final class QueryHandler extends AsyncQueryHandler {
+        private Context mContext;
 
-	private class TitleDialog extends Dialog {
+        public QueryHandler(Context context) {
+            super(context.getContentResolver());
+            mContext = context;
+        }
 
-		public TitleDialog(final Context context, long titleId) {
-			super(context);
+        @Override
+        protected void onUpdateComplete(int token, Object cookie, int result) {
+            super.onUpdateComplete(token, cookie, result);
+            FlurryAgent.onError("TitleBrowser", "Download New Catalog", "INFO");
+            // establish data connection
+            Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+                    "categoryparent");
+            Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
 
-			setContentView(R.layout.browser_title);
+            // create adapters for view
+            mBreadCrumb.clear();
+            mBreadCrumb.push(rootCategories);
 
-			// Get the title information
-			Uri uri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "title/"
-					+ titleId);
-			String[] projection = new String[] { TitleProvider.Titles.BOOKNAME,
-					TitleProvider.Titles.SIZE,
-					TitleProvider.Titles.DESCRIPTION,
-					TitleProvider.Titles.UPDATED, TitleProvider.Titles.URL,
-					TitleProvider.Titles.SOURCE_ID };
+            updateScreen();
 
-			Cursor cursor = managedQuery(uri, projection, null, null, null);
+            setProgressBarIndeterminateVisibility(false);
+            mBusy = false;
 
-			if (cursor.moveToNext()) {
-				setTitle(R.string.title_browser_name);
+            Toast.makeText(mContext, R.string.ebook_update_complete,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
 
-				TextView information = (TextView) findViewById(R.id.title_information);
-				if (information != null) {
-					String name = cursor.getString(0);
-					String size = cursor.getString(1);
-					String description = cursor.getString(2);
-					String updated = cursor.getString(3);
+    private class TitleDialog extends Dialog {
 
-					try {
-						mFileLocation = new URL(cursor.getString(4));
-						mDownloadUrl = new URL(mDownloadServer
-								+ cursor.getString(5));
-					} catch (MalformedURLException e) {
-						Toast.makeText(context,
-								R.string.ebook_download_failed_url,
-								Toast.LENGTH_SHORT).show();
+        public TitleDialog(final Context context, long titleId) {
+            super(context);
 
-						dismiss();
-					}
+            setContentView(R.layout.browser_title);
 
-					if (name != null) {
-						information.append(name + "\n\n");
-					}
-					if (size != null) {
-						information.append("Size: " + size + " KB\n");
-					}
-					if (updated != null) {
-						information.append("Updated: " + updated + "\n");
-					}
-					if (description != null) {
-						information
-								.append("Description: " + description + "\n");
-					}
-					// Create a map and add the name of the downloaded eBook to it
-					Map<String, String> flurryMap = new HashMap<String, String>();
-					flurryMap.put("eBook Downloaded", name); 
-					FlurryAgent.onEvent("TitleBrowser", flurryMap);
-				}
-			}
+            // Get the title information
+            Uri uri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "title/"
+                    + titleId);
+            String[] projection = new String[] { TitleProvider.Titles.BOOKNAME,
+                    TitleProvider.Titles.SIZE,
+                    TitleProvider.Titles.DESCRIPTION,
+                    TitleProvider.Titles.UPDATED, TitleProvider.Titles.URL,
+                    TitleProvider.Titles.SOURCE_ID };
 
-			cursor.close();
+            Cursor cursor = managedQuery(uri, projection, null, null, null);
 
-			Button cancel = (Button) findViewById(R.id.title_cancel_button);
-			cancel.setOnClickListener(new View.OnClickListener() {
-				public void onClick(View view) {
-					dismiss();
-				}
-			});
+            if (cursor.moveToNext()) {
+                setTitle(R.string.title_browser_name);
 
-			Button download = (Button) findViewById(R.id.title_download_button);
-			download.setOnClickListener(new View.OnClickListener() {
-				public void onClick(View view) {
-					if (mFileLocation != null) {
-						Util.sendNotification(context, (String) getResources().getText(R.string.ebook_download_started), 
-						        R.drawable.ebooksmall, "Reveal Online eBook Download", 
-						        mNotifMgr, mNotifId++, Main.class);
-						Toast.makeText(context,
-								R.string.ebook_download_started,
-								Toast.LENGTH_SHORT).show();
+                TextView information = (TextView) findViewById(R.id.title_information);
+                if (information != null) {
+                    String name = cursor.getString(0);
+                    String size = cursor.getString(1);
+                    String description = cursor.getString(2);
+                    String updated = cursor.getString(3);
 
-						Thread t = new Thread() {
-							public void run() {
-								Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-								String mLibraryDir = mSharedPref.getString(
-										"default_ebook_dir",
-										"/sdcard/reveal/ebooks/");
-								try {
-									mDownloadSuccess = Util.fetchAndLoadTitle(
-											mFileLocation, mDownloadUrl, mLibraryDir,
-											context);
-								} catch (IllegalStateException e) {
-									mDownloadSuccess = false;
-									Log.e(TAG, e.getMessage());
-									e.printStackTrace();
-								}
-								
-								
-								mHandler.post(mUpdateResults);
-							}
-						};
-						t.start();
+                    try {
+                        mFileLocation = new URL(cursor.getString(4));
+                        mDownloadUrl = new URL(mDownloadServer
+                                + cursor.getString(5));
+                    } catch (MalformedURLException e) {
+                        Toast.makeText(context,
+                                R.string.ebook_download_failed_url,
+                                Toast.LENGTH_SHORT).show();
 
-					} else {
-						Toast.makeText(context,
-								R.string.ebook_download_failed_type,
-								Toast.LENGTH_SHORT).show();
-					}
+                        dismiss();
+                    }
 
-					dismiss();
-				}
-			});
-		}
-	}
+                    if (name != null) {
+                        information.append(name + "\n\n");
+                    }
+                    if (size != null) {
+                        information.append("Size: " + size + " KB\n");
+                    }
+                    if (updated != null) {
+                        information.append("Updated: " + updated + "\n");
+                    }
+                    if (description != null) {
+                        information
+                                .append("Description: " + description + "\n");
+                    }
+                    // Create a map and add the name of the downloaded eBook to
+                    // it
+                    Map<String, String> flurryMap = new HashMap<String, String>();
+                    flurryMap.put("eBook Downloaded", name);
+                    FlurryAgent.onEvent("TitleBrowser", flurryMap);
+                }
+            }
 
-	private void downloadComplete() {
-		mDownloadUrl = null;
+            cursor.close();
 
-		if (mDownloadSuccess) {
-			Util.sendNotification(this, (String) getResources().getText(R.string.ebook_download_complete), 
-			        R.drawable.ebooksmall, "Reveal Online eBook Download", 
-			        mNotifMgr, mNotifId++, Main.class);
-		} else {
-	        Util.sendNotification(this, (String) getResources().getText(R.string.ebook_download_failed), 
-                    R.drawable.ebooksmall, "Reveal Online eBook Download", 
-                    mNotifMgr, mNotifId++, TitleBrowser.class);
-		}
-		setProgressBarIndeterminateVisibility(false);
-		mBusy = false;
-	}
+            Button cancel = (Button) findViewById(R.id.title_cancel_button);
+            cancel.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    dismiss();
+                }
+            });
+
+            Button download = (Button) findViewById(R.id.title_download_button);
+            download.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    if (mFileLocation != null) {
+                        Util.sendNotification(context, (String) getResources()
+                                .getText(R.string.ebook_download_started),
+                                R.drawable.ebooksmall,
+                                "Reveal Online eBook Download", mNotifMgr,
+                                mNotifId++, Main.class);
+                        Toast.makeText(context,
+                                R.string.ebook_download_started,
+                                Toast.LENGTH_SHORT).show();
+
+                        Thread t = new Thread() {
+                            public void run() {
+                                Process
+                                        .setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                                String mLibraryDir = mSharedPref.getString(
+                                        "default_ebook_dir",
+                                        "/sdcard/reveal/ebooks/");
+                                mDownloadSuccess = Util.fetchAndLoadTitle(
+                                        mFileLocation, mDownloadUrl,
+                                        mLibraryDir, context);
+                                mHandler.post(mUpdateResults);
+                            }
+                        };
+                        t.start();
+
+                    } else {
+                        Toast.makeText(context,
+                                R.string.ebook_download_failed_type,
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    dismiss();
+                }
+            });
+        }
+    }
+
+    private void downloadComplete() {
+        mDownloadUrl = null;
+
+        if (mDownloadSuccess) {
+            Util.sendNotification(this, (String) getResources().getText(
+                    R.string.ebook_download_complete), R.drawable.ebooksmall,
+                    "Reveal Online eBook Download", mNotifMgr, mNotifId++,
+                    Main.class);
+        } else {
+            Util.sendNotification(this, (String) getResources().getText(
+                    R.string.ebook_download_failed), R.drawable.ebooksmall,
+                    "Reveal Online eBook Download", mNotifMgr, mNotifId++,
+                    TitleBrowser.class);
+        }
+        setProgressBarIndeterminateVisibility(false);
+        mBusy = false;
+    }
 }
