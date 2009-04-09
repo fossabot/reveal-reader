@@ -8,6 +8,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
+import android.app.AlertDialog.Builder;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -125,7 +126,6 @@ public class Main extends ListActivity implements OnGestureListener {
 
         mApplication = this;
 
-        FlurryAgent.setReportLocation(true);
         // Change this when building a RELEASE Version for the GOOGLE APP MARKET
         // This allows for real usage stats and end user error reporting
 
@@ -328,6 +328,14 @@ public class Main extends ListActivity implements OnGestureListener {
                                 "Reveal Library Refresh", mNotifMgr,
                                 mNotifId++, Main.class);
                         ReportError.reportError("BAD_EBOOK_FILE_" + bookName);
+                        
+                        //Builder builder = new AlertDialog.Builder(this);
+                        //builder.setTitle("eBook Error");
+                        //builder.setIcon(R.drawable.reveal);
+                        //builder.setMessage("Send Report??");
+                        //builder.setPositiveButton("YES", null);
+                        //builder.setNegativeButton("NO", null);
+                        //builder.show();
                     }
                 }
             }
