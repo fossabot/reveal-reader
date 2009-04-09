@@ -266,7 +266,7 @@ public class YbkFileReader {
                         "Couldn't read all of " + iFilename + ".");
             }
             
-            if (iFilename.toLowerCase().endsWith(".gz")) {
+            if (iFile.fileName.toLowerCase().endsWith(".gz")) {
                 fileText = Util.decompressGzip(text);
             } else {
                 fileText = new String(text, "ISO_8859-1");
