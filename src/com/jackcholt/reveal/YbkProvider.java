@@ -228,8 +228,6 @@ public class YbkProvider extends ContentProvider {
     }
 
     private DatabaseHelper mOpenHelper;
-    // private String mLibraryDir = "/sdcard/reveal/ebooks/";
-    // private File mImagesDir;
     private SharedPreferences mSharedPref;
     private String mHistoryEntryAmount;
     private String mBookmarkEntryAmount;

@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -54,65 +56,21 @@ public class YbkFileReader {
      * 
      */
     private class InternalFile {
-        private String mFileName;
-        private int mYbkOffset;
-        private int mYbkLen;
+        public String fileName;
+        public int offset;
+        public int len;
 
         InternalFile() {
             // do nothing
         }
-
-        InternalFile(final String fileName, final int ybkOffset,
-                final int ybkLen) {
-            mFileName = fileName;
-            mYbkOffset = ybkOffset;
-            mYbkLen = ybkLen;
+        
+        InternalFile(final String newFileName, final int newOffset, 
+                final int newLen) {
+            fileName = newFileName;
+            offset = newOffset;
+            len = newLen;
         }
 
-        /**
-         * @return the fileName
-         */
-        final String getFileName() {
-            return mFileName;
-        }
-
-        /**
-         * @return the ybkLen
-         */
-        final int getYbkLen() {
-            return mYbkLen;
-        }
-
-        /**
-         * @return the ybkOffset
-         */
-        final int getYbkOffset() {
-            return mYbkOffset;
-        }
-
-        /**
-         * @param fileName
-         *            the fileName to set
-         */
-        final void setFileName(final String fileName) {
-            mFileName = fileName;
-        }
-
-        /**
-         * @param ybkLen
-         *            the ybkLen to set
-         */
-        final void setYbkLen(final int ybkLen) {
-            mYbkLen = ybkLen;
-        }
-
-        /**
-         * @param ybkOffset
-         *            the ybkOffset to set
-         */
-        final void setYbkOffset(final int ybkOffset) {
-            mYbkOffset = ybkOffset;
-        }
     }
 
     /**
@@ -197,16 +155,14 @@ public class YbkFileReader {
                 fileNameSBuf.append((char) b);
             }
 
-            iFile.setFileName(fileNameSBuf.toString());
+            iFile.fileName = fileNameSBuf.toString();
 
             pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
-
-            iFile.setYbkOffset(Util.readVBInt(Util.makeVBIntArray(indexArray,
-                    pos)));
+            
+            iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
             pos += 4;
-
-            iFile.setYbkLen(Util
-                    .readVBInt(Util.makeVBIntArray(indexArray, pos)));
+            
+            iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
             pos += 4;
 
             // Add the internal file into the list
@@ -257,6 +213,18 @@ public class YbkFileReader {
         return fileText;
     }
 
+    Comparator iFileComp = new Comparator() {
+
+        public int compare(Object arg0, Object arg1) {
+            InternalFile if0 = (InternalFile) arg0;
+            InternalFile if1 = (InternalFile) arg1;
+            
+            return if0.fileName.compareToIgnoreCase(if1.fileName);
+        }
+        
+    };
+
+    @SuppressWarnings("unchecked")
     public String readInternalFile(final String iFilename) throws IOException {
         String fileText = null;
         int offset = 0;
@@ -266,30 +234,45 @@ public class YbkFileReader {
 
         ArrayList<InternalFile> internalFiles = mInternalFiles;
 
-        int ifLength = internalFiles.size();
-        for (int i = 0; i < ifLength; i++) {
-            InternalFile iFile = internalFiles.get(i);
-            if (iFile.getFileName().equalsIgnoreCase(iFilename)) {
-                offset = iFile.getYbkOffset();
-                len = iFile.getYbkLen();
-
-                byte[] text = new byte[len];
-                file.seek(offset);
-                int amountRead = file.read(text);
-                if (amountRead < len) {
-                    throw new InvalidFileFormatException(
-                            "Couldn't read all of " + iFilename + ".");
-                }
-
-                if (iFilename.toLowerCase().endsWith(".gz")) {
-                    fileText = Util.decompressGzip(text);
-                } else {
-                    fileText = new String(text, "ISO_8859-1");
-                }
-
-                break;
+        InternalFile iFile = new InternalFile();
+        iFile.fileName = iFilename;
+        Object[] ifArray = internalFiles.toArray();
+        Arrays.sort(ifArray, iFileComp);
+        int index = Arrays.binarySearch(ifArray, iFile, iFileComp);
+        if (index >= 0) {
+            offset = ((InternalFile) ifArray[index]).offset;
+            len = ((InternalFile) ifArray[index]).len;
+        } else {
+            if (iFilename.toLowerCase().endsWith(".gz")){
+                iFile.fileName = iFilename.substring(0, iFilename.length() - 3);
+                index = Arrays.binarySearch(ifArray, iFile, iFileComp);
+            } else {
+                iFile.fileName = iFilename + ".gz";
+                index = Arrays.binarySearch(ifArray, iFile, iFileComp);            
+            }
+            
+            if (index >= 0) {
+                offset = ((InternalFile) ifArray[index]).offset;
+                len = ((InternalFile) ifArray[index]).len;
+            } 
+        }
+        
+        if (index >= 0) {
+            byte[] text = new byte[len];
+            file.seek(offset);
+            int amountRead = file.read(text);
+            if (amountRead < len) {
+                throw new InvalidFileFormatException(
+                        "Couldn't read all of " + iFilename + ".");
+            }
+            
+            if (iFilename.toLowerCase().endsWith(".gz")) {
+                fileText = Util.decompressGzip(text);
+            } else {
+                fileText = new String(text, "ISO_8859-1");
             }
         }
+        
         return fileText;
     }
 
@@ -448,18 +431,10 @@ public class YbkFileReader {
 
         ArrayList<InternalFile> internalFiles = mInternalFiles;
         for (InternalFile iFile : internalFiles) {
-            if (iFile.getFileName().equalsIgnoreCase(fileName)) {
-                offset = iFile.getYbkOffset();
-                len = iFile.getYbkLen();
-
-                // DataInputStream dataInput = mDataInput;
-                /*
-                 * try { dataInput.reset(); } catch (IOException ioe) {
-                 * Log.w("YbkFileReader",
-                 * "YBK file's DataInputStream had to be closed and reopened. "
-                 * + ioe.getMessage()); dataInput.close(); initDataStream(); }
-                 */
-
+            if (iFile.fileName.equalsIgnoreCase(fileName)) {
+                offset = iFile.offset;
+                len = iFile.len;
+                     
                 image = new byte[len];
                 file.seek(offset);
                 int amountRead = file.read(image);
