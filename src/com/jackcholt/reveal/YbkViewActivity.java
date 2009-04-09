@@ -41,174 +41,201 @@ import com.flurry.android.FlurryAgent;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
+
     private long mBookId;
+
     private String mBookFileName;
+
     private String mChapFileName;
+
     private int mScrollYPos = 0;
+
     private Button mBookBtn;
+
     private Button mChapBtn;
+
     private YbkFileReader mYbkReader;
+
     // private String mLibraryDir;
     private SharedPreferences mSharedPref;
+
     @SuppressWarnings("unused")
     private boolean mShowPictures;
+
     private boolean BOOLshowFullScreen;
+
     private String mFragment;
+
     private String mDialogFilename = "Never set";
+
     private String mChapBtnText = "Not Set";
+
     private String mHistTitle = "";
+
     private int mChapOrderNbr = -1;
+
     private boolean mBackButtonPressed = false;
+
     private int mHistoryPos = 0;
+
     private static final String TAG = "YbkViewActivity";
+
     private static final int FILE_NONEXIST = 1;
+
     private static final int INVALID_CHAPTER = 2;
+
     private static final int ASK_BOOKMARK_NAME = 3;
+
     private static final int PREVIOUS_ID = Menu.FIRST;
+
     private static final int NEXT_ID = Menu.FIRST + 1;
+
     private static final int HISTORY_ID = Menu.FIRST + 2;
+
     private static final int BOOKMARK_ID = Menu.FIRST + 3;
+
     public static final int CALL_HISTORY = 1;
+
     public static final int CALL_BOOKMARK = 2;
 
     @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        try {
-
-            if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
-                Log.w(TAG, "Progress bar is not supported");
-            }
-
-            setProgressBarIndeterminateVisibility(true);
-
-            Long bookId = null;
-            Boolean isFromHistory = null;
-
-            HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
-            if (statusMap != null) {
-                mBookId = bookId = (Long) statusMap.get("bookId");
-                mBookFileName = (String) statusMap.get("bookFileName");
-                mChapFileName = (String) statusMap.get("chapFileName");
-                mHistTitle = (String) statusMap.get("histTitle");
-                mScrollYPos = (Integer) statusMap.get("scrollYPos");
-            } else {
-
-                if (savedInstanceState != null) {
-                    bookId = (Long) savedInstanceState.get(YbkProvider._ID);
-                    isFromHistory = (Boolean) savedInstanceState
-                            .get(YbkProvider.FROM_HISTORY);
-                } else {
-                    Bundle extras = getIntent().getExtras();
-                    if (extras != null) {
-                        isFromHistory = (Boolean) extras
-                                .get(YbkProvider.FROM_HISTORY);
-                        bookId = (Long) extras.get(YbkProvider._ID);
-                    }
-                }
-
-                if (isFromHistory != null) {
-                    // bookId is actually the history id
-                    Cursor histCurs = managedQuery(ContentUris.withAppendedId(
-                            Uri.withAppendedPath(YbkProvider.CONTENT_URI,
-                                    "history"), bookId), null, null, null, null);
-
-                    if (histCurs.moveToFirst()) {
-                        bookId = histCurs.getLong(histCurs
-                                .getColumnIndex(YbkProvider.BOOK_ID));
-                        mBookFileName = histCurs.getString(histCurs
-                                .getColumnIndex(YbkProvider.FILE_NAME));
-                        mChapFileName = histCurs.getString(histCurs
-                                .getColumnIndex(YbkProvider.CHAPTER_NAME));
-                        mHistTitle = histCurs.getString(histCurs
-                                .getColumnIndex(YbkProvider.HISTORY_TITLE));
-                    }
-                }
-            }
-
-            if (bookId == null) {
-                Toast.makeText(this, R.string.book_not_loaded,
-                        Toast.LENGTH_LONG).show();
-                finish();
-                return;
-            }
-
-            mBookId = bookId;
-
-            mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-            mShowPictures = mSharedPref.getBoolean("show_pictures", true);
-
-            BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen",
-                    false);
-
-            if (BOOLshowFullScreen) {
-                getWindow().setFlags(
-                        WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                requestWindowFeature(Window.FEATURE_NO_TITLE);
-            }
-
-            setContentView(R.layout.view_ybk);
-
-            final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
-            ybkView.getSettings().setJavaScriptEnabled(true);
-
-            final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
-
-            mBookBtn = (Button) findViewById(R.id.bookButton);
-
-            final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
-            chapBtn.setOnClickListener(new OnClickListener() {
-                /** set the chapter button so it scrolls the window to the top */
-                public void onClick(final View v) {
-                    mYbkView.loadUrl("javascript:location.href=\"#top\";");
-                }
-            });
-
-            mainBtn.setOnClickListener(new OnClickListener() {
-
-                public void onClick(final View view) {
-
-                    finish();
-                }
-
-            });
-
-            Cursor bookCursor = managedQuery(
-                    ContentUris.withAppendedId(Uri.withAppendedPath(
-                            YbkProvider.CONTENT_URI, "book"), bookId),
-                    new String[] { YbkProvider.FILE_NAME }, null, null, null);
-
-            if (bookCursor.getCount() == 1) {
-                bookCursor.moveToFirst();
-                mBookFileName = bookCursor.getString(0);
-            } else {
-                mBookFileName = "";
-            }
-
-            YbkFileReader ybkReader = mYbkReader = new YbkFileReader(
-                    mBookFileName);
-            String shortTitle = ybkReader.getBookShortTitle();
-            if (mChapFileName == null) {
-                String tryFileToOpen = "\\" + shortTitle + ".html.gz";
-
-                mChapFileName = tryFileToOpen;
-            }
-
-            if (loadChapter(mBookFileName, mChapFileName)) {
-                setBookBtn(shortTitle, mBookFileName, mChapFileName);
-            }
-
-            setWebViewClient(ybkView);
-
-            setProgressBarIndeterminateVisibility(false);
-        } catch (IOException ioe) {
-            setUnloadableChapter(ioe);
-            Log.e(TAG, mBookFileName + " could not be opened. "
-                    + ioe.getMessage());
+        
+        if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
+            Log.w(TAG, "Progress bar is not supported");
         }
+
+        setProgressBarIndeterminateVisibility(true);
+
+        Long bookId = null;
+        Boolean isFromHistory = null;
+
+        HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
+        if (statusMap != null) {
+            mBookId = bookId = (Long) statusMap.get("bookId");
+            mBookFileName = (String) statusMap.get("bookFileName");
+            mChapFileName = (String) statusMap.get("chapFileName");
+            mHistTitle = (String) statusMap.get("histTitle");
+            mScrollYPos = (Integer) statusMap.get("scrollYPos");
+        } else {
+
+            if (savedInstanceState != null) {
+                bookId = (Long) savedInstanceState.get(YbkProvider._ID);
+                isFromHistory = (Boolean) savedInstanceState
+                        .get(YbkProvider.FROM_HISTORY);
+            } else {
+                Bundle extras = getIntent().getExtras();
+                if (extras != null) {
+                    isFromHistory = (Boolean) extras
+                            .get(YbkProvider.FROM_HISTORY);
+                    bookId = (Long) extras.get(YbkProvider._ID);
+                }
+            }
+
+            if (isFromHistory != null) {
+                // bookId is actually the history id
+                Cursor histCurs = managedQuery(ContentUris.withAppendedId(
+                        Uri.withAppendedPath(YbkProvider.CONTENT_URI,
+                                "history"), bookId), null, null, null, null);
+
+                if (histCurs.moveToFirst()) {
+                    bookId = histCurs.getLong(histCurs
+                            .getColumnIndex(YbkProvider.BOOK_ID));
+                    mBookFileName = histCurs.getString(histCurs
+                            .getColumnIndex(YbkProvider.FILE_NAME));
+                    mChapFileName = histCurs.getString(histCurs
+                            .getColumnIndex(YbkProvider.CHAPTER_NAME));
+                    mHistTitle = histCurs.getString(histCurs
+                            .getColumnIndex(YbkProvider.HISTORY_TITLE));
+                }
+            }
+        }
+
+        if (bookId == null) {
+            Toast.makeText(this, R.string.book_not_loaded,
+                    Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        mBookId = bookId;
+
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+        mShowPictures = mSharedPref.getBoolean("show_pictures", true);
+
+        BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen",
+                false);
+
+        if (BOOLshowFullScreen) {
+            getWindow().setFlags(
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
+
+        setContentView(R.layout.view_ybk);
+
+        final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
+        ybkView.getSettings().setJavaScriptEnabled(true);
+
+        final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
+
+        mBookBtn = (Button) findViewById(R.id.bookButton);
+
+        final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
+        chapBtn.setOnClickListener(new OnClickListener() {
+            /** set the chapter button so it scrolls the window to the top */
+            public void onClick(final View v) {
+                mYbkView.loadUrl("javascript:location.href=\"#top\";");
+            }
+        });
+
+        mainBtn.setOnClickListener(new OnClickListener() {
+
+            public void onClick(final View view) {
+
+                finish();
+            }
+
+        });
+
+        Cursor bookCursor = managedQuery(
+                ContentUris.withAppendedId(Uri.withAppendedPath(
+                        YbkProvider.CONTENT_URI, "book"), bookId),
+                new String[] { YbkProvider.FILE_NAME }, null, null, null);
+
+        if (bookCursor.getCount() == 1) {
+            bookCursor.moveToFirst();
+            mBookFileName = bookCursor.getString(0);
+        } else {
+            mBookFileName = "";
+        }
+
+        String shortTitle ="";
+        if (mChapFileName == null) {
+            Cursor snCursor = managedQuery(
+                    ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
+                            bookId),
+                    new String[] {YbkProvider.SHORT_TITLE}, null, null, null);
+
+            if (snCursor.moveToFirst()) {
+                shortTitle = snCursor.getString(0);                
+            }
+
+            mChapFileName = "\\" + shortTitle + ".html.gz";
+        }
+        
+        if (loadChapter(mBookFileName, mChapFileName)) {
+            setBookBtn(shortTitle, mBookFileName, mChapFileName);
+        }
+
+        setWebViewClient(ybkView);
+
+        setProgressBarIndeterminateVisibility(false);
+        
     }
 
     /** Called when the activity is going away. */
@@ -712,7 +739,9 @@ public class YbkViewActivity extends Activity {
                 try {
                     // Only create a new YbkFileReader if we're opening a
                     // different book
-                    if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
+                    if (ybkReader == null
+                            || !ybkReader.getFilename().equalsIgnoreCase(
+                                    filePath)) {
                         ybkReader = mYbkReader = new YbkFileReader(filePath);
                     }
 
@@ -1154,7 +1183,8 @@ public class YbkViewActivity extends Activity {
 
     private void setUnloadableChapter(Throwable t) {
         String format = getResources().getString(R.string.unloadable_chapter);
-        String message = MessageFormat.format(format, Html.toHtml(new SpannableString(t.getMessage())));
+        String message = MessageFormat.format(format, Html
+                .toHtml(new SpannableString(t.getMessage())));
         mYbkView.loadData(message, "text/html", "utf-8");
     }
 }
