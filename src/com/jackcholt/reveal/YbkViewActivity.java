@@ -197,6 +197,32 @@ public class YbkViewActivity extends Activity {
 
             public void onClick(final View view) {
 
+                if (mChapFileName != null) {
+                    // Save the book and chapter to history if there
+                    // is one
+                    ContentValues values = new ContentValues();
+                    values.put(YbkProvider.BOOK_ID, mBookId);
+                    values.put(YbkProvider.HISTORY_TITLE, mChapBtnText);
+                    values.put(YbkProvider.CHAPTER_NAME, mChapFileName);
+                    values.put(YbkProvider.SCROLL_POS, mYbkView
+                            .getScrollY());
+
+                    // Log.d(TAG, "Saving history for: " + values);
+
+                    getContentResolver()
+                            .insert(
+                                    Uri.withAppendedPath(
+                                            YbkProvider.CONTENT_URI,
+                                            "history"), values);
+
+                    // remove the excess histories
+                    getContentResolver()
+                            .delete(
+                                    Uri.withAppendedPath(
+                                            YbkProvider.CONTENT_URI,
+                                            "history"), null, null);
+                }
+
                 finish();
             }
 
@@ -215,16 +241,19 @@ public class YbkViewActivity extends Activity {
         }
 
         String shortTitle ="";
+        
+        Cursor snCursor = managedQuery(
+                ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
+                        bookId),
+                new String[] {YbkProvider.SHORT_TITLE}, null, null, null);
+
+        if (snCursor.moveToFirst()) {
+            shortTitle = snCursor.getString(0);                
+        } else {
+            Log.w(TAG, "Book was not found for bookId '" + bookId + "' so shortTitle could not be set");
+        }
+            
         if (mChapFileName == null) {
-            Cursor snCursor = managedQuery(
-                    ContentUris.withAppendedId(Uri.withAppendedPath(YbkProvider.CONTENT_URI,"book"), 
-                            bookId),
-                    new String[] {YbkProvider.SHORT_TITLE}, null, null, null);
-
-            if (snCursor.moveToFirst()) {
-                shortTitle = snCursor.getString(0);                
-            }
-
             mChapFileName = "\\" + shortTitle + ".html.gz";
         }
         
@@ -418,25 +447,30 @@ public class YbkViewActivity extends Activity {
             setProgressBarIndeterminateVisibility(false);
             return true;
         case NEXT_ID:
-            setProgressBarIndeterminateVisibility(true);
+            int chapOrderNbr = mChapOrderNbr;
+            if (chapOrderNbr > -1) {
+                // the current chapter is part of a valid set of ordered chapters
+                setProgressBarIndeterminateVisibility(true);
 
-            Cursor c = managedQuery(Uri.withAppendedPath(
-                    YbkProvider.CONTENT_URI, "chapter"), new String[] { "max("
-                    + YbkProvider.CHAPTER_ORDER_NUMBER + ")" },
-                    YbkProvider.BOOK_ID + "=?", new String[] { Long
-                            .toString(mBookId) }, null);
-
-            int maxOrder = -1;
-
-            if (c.getCount() == 1) {
-                c.moveToFirst();
-                maxOrder = c.getInt(0);
+                Cursor c = managedQuery(Uri.withAppendedPath(
+                        YbkProvider.CONTENT_URI, "chapter"), new String[] { "max("
+                        + YbkProvider.CHAPTER_ORDER_NUMBER + ")" },
+                        YbkProvider.BOOK_ID + "=?", new String[] { Long
+                                .toString(mBookId) }, null);
+    
+                int maxOrder = -1;
+    
+                if (c.getCount() == 1) {
+                    c.moveToFirst();
+                    maxOrder = c.getInt(0);
+                }
+    
+                if (maxOrder > mChapOrderNbr) {
+                    loadChapterByOrderId(mBookId, ++mChapOrderNbr);
+                }
+            
+                setProgressBarIndeterminateVisibility(false);
             }
-
-            if (maxOrder > mChapOrderNbr) {
-                loadChapterByOrderId(mBookId, ++mChapOrderNbr);
-            }
-            setProgressBarIndeterminateVisibility(false);
             return true;
 
         case HISTORY_ID:
@@ -591,6 +625,8 @@ public class YbkViewActivity extends Activity {
      * @throws InconsistentContentException
      */
     private boolean loadChapterByOrderId(final long bookId, final int orderId) {
+        boolean chapLoaded = false;
+
         try {
             Cursor c = managedQuery(Uri.withAppendedPath(
                     YbkProvider.CONTENT_URI, "chapter"),
@@ -603,8 +639,10 @@ public class YbkViewActivity extends Activity {
             if (c.getCount() == 1) {
                 c.moveToFirst();
                 int chapterId = c.getInt(0);
-
-                return loadChapter(chapterId);
+                
+                if (chapLoaded = loadChapter(chapterId)) {
+                    mScrollYPos = 0;
+                }
 
             } else if (c.getCount() == 0) {
                 throw new InconsistentContentException(
@@ -620,7 +658,8 @@ public class YbkViewActivity extends Activity {
                     + ") could not be opened. " + e.getMessage());
 
         }
-        return false;
+
+        return chapLoaded;
 
     }
 
@@ -857,8 +896,8 @@ public class YbkViewActivity extends Activity {
                     Cursor chapCurs = managedQuery(Uri.withAppendedPath(
                             YbkProvider.CONTENT_URI, "chapter"),
                             new String[] { YbkProvider.CHAPTER_ORDER_NUMBER },
-                            "lower(" + YbkProvider.FILE_NAME + ")=?",
-                            new String[] { chap.toLowerCase() }, null);
+                            "lower(" + YbkProvider.FILE_NAME + ")=? OR lower(" + YbkProvider.FILE_NAME + ")=?",
+                            new String[] { chap.toLowerCase(), chap.toLowerCase() + ".gz" }, null);
 
                     if (chapCurs.getCount() == 1) {
                         chapCurs.moveToFirst();
@@ -937,7 +976,7 @@ public class YbkViewActivity extends Activity {
                         mHistoryPos = 0;
                         mBookId = bookId;
                         mChapFileName = chap;
-                        mScrollYPos = mYbkView.getScrollY();
+                        //mScrollYPos = mYbkView.getScrollY();
 
                     }
                 } catch (IOException e) {
