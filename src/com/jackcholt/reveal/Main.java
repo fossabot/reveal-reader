@@ -56,36 +56,35 @@ public class Main extends ListActivity implements OnGestureListener {
 	// private static final boolean DONT_ADD_BOOKS = false;
 	private static final boolean ADD_BOOKS = true;
 
-    // Gestures Stuff
-    private NotificationManager mNotifMgr;
+	// Gestures Stuff
+	private NotificationManager mNotifMgr;
 
-    @SuppressWarnings("unused")
-    private GestureDetector gestureScanner;
+	@SuppressWarnings("unused")
+	private GestureDetector gestureScanner;
 
-    @SuppressWarnings("unused")
-    private static final int INSERT_ID = Menu.FIRST + 8;
+	@SuppressWarnings("unused")
+	private static final int INSERT_ID = Menu.FIRST + 8;
 
-    private static final int DELETE_ID = Menu.FIRST + 9;
+	private static final int DELETE_ID = Menu.FIRST + 9;
 
-    private SharedPreferences mSharedPref;
+	private SharedPreferences mSharedPref;
 
-    private boolean BOOLshowSplashScreen;
+	private boolean BOOLshowSplashScreen;
 
-    private boolean BOOLshowFullScreen;
+	private boolean BOOLshowFullScreen;
 
-    private Uri mBookUri = Uri
-            .withAppendedPath(YbkProvider.CONTENT_URI, "book");
+	private Uri mBookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
 
-    @SuppressWarnings("unused")
-    private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/");
+	@SuppressWarnings("unused")
+	private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/");
 
-    private final Handler mUpdateLibHandler = new Handler();
+	private final Handler mUpdateLibHandler = new Handler();
 
-    private Cursor mListCursor;
+	private Cursor mListCursor;
 
-    private ContentResolver mContRes;
+	private ContentResolver mContRes;
 
-    private static boolean mUpdating = false;
+	private static boolean mUpdating = false;
 
 	private final Runnable mUpdateBookList = new Runnable() {
 		public void run() {
@@ -141,8 +140,9 @@ public class Main extends ListActivity implements OnGestureListener {
 			FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
 		} else {
 			// Development key for use of the DEVELOPMENT TEAM
-			FlurryAgent.onStartSession(this, "C9D5YMTMI5SPPTE8S4S4");
+			FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
 		}
+		FlurryAgent.onEvent("Main");
 
 		mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -204,46 +204,43 @@ public class Main extends ListActivity implements OnGestureListener {
 	@Override
 	protected void onStop() {
 		super.onStop();
-		FlurryAgent.onEndSession();
+		FlurryAgent.onEndSession(this);
 		// Debug.stopMethodTracing();
 
 	}
 
-    @Override
-    public boolean onContextItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-        case DELETE_ID:
-            AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
-                    .getMenuInfo();
-            
-            long bookId = menuInfo.id;
-            
-            ContentResolver res = getContentResolver();
-            
-            Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
-            
-            Cursor bookCurs = managedQuery(thisBookUri,
-                    new String[] { YbkProvider.FILE_NAME }, null, null, null);
+	@Override
+	public boolean onContextItemSelected(final MenuItem item) {
+		switch (item.getItemId()) {
+		case DELETE_ID:
+			AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
 
-            String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
+			long bookId = menuInfo.id;
 
-            File file = new File(fileName);
-            if (file.exists()) {
-                file.delete();
-            }
-            
-            res.delete(ContentUris.withAppendedId(mBookUri, bookId), null,
-                            null);
+			ContentResolver res = getContentResolver();
 
-            refreshBookList();
+			Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
 
-            return true;
-        default:
-            return super.onContextItemSelected(item);
-        }
+			Cursor bookCurs = managedQuery(thisBookUri, new String[] { YbkProvider.FILE_NAME },
+					null, null, null);
 
-    }
+			String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
 
+			File file = new File(fileName);
+			if (file.exists()) {
+				file.delete();
+			}
+
+			res.delete(ContentUris.withAppendedId(mBookUri, bookId), null, null);
+
+			refreshBookList();
+
+			return true;
+		default:
+			return super.onContextItemSelected(item);
+		}
+
+	}
 
 	/**
 	 * Convenience method to make calling refreshLibrary() without any
@@ -546,35 +543,34 @@ public class Main extends ListActivity implements OnGestureListener {
 			startActivityForResult(new Intent(this, HistoryDialog.class),
 					YbkViewActivity.CALL_HISTORY);
 			return true;
-        case DELETE_ID:
-            AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
-                    .getMenuInfo();
-            
-            long bookId = menuInfo.id;
-            
-            ContentResolver res = getContentResolver();
-            
-            Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
-            
-            Cursor bookCurs = managedQuery(thisBookUri,
-                    new String[] { YbkProvider.FILE_NAME }, null, null, null);
+		case DELETE_ID:
+			AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
 
-            String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
+			long bookId = menuInfo.id;
 
-            if (fileName != null) {
-                File file = new File(fileName);
-                if (file.exists()) {
-                    file.delete();
-                }
-                
-                res.delete(thisBookUri, null, null);
-    
-                refreshBookList();
-            
-            }
-            
-            return true;
-        }
+			ContentResolver res = getContentResolver();
+
+			Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
+
+			Cursor bookCurs = managedQuery(thisBookUri, new String[] { YbkProvider.FILE_NAME },
+					null, null, null);
+
+			String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
+
+			if (fileName != null) {
+				File file = new File(fileName);
+				if (file.exists()) {
+					file.delete();
+				}
+
+				res.delete(thisBookUri, null, null);
+
+				refreshBookList();
+
+			}
+
+			return true;
+		}
 
 		return super.onMenuItemSelected(featureId, item);
 	}
