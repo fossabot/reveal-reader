@@ -32,49 +32,87 @@ import android.util.Log;
 
 public class YbkProvider extends ContentProvider {
     public static final String KEY_MIMETYPE = "mimetype";
+
     public static final String AUTHORITY = "com.jackcholt.reveal";
+
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
             + "/ybk");
+
     public static final int BOOK = 0;
+
     public static final int BOOKS = 1;
+
     public static final int CHAPTER = 2;
+
     public static final int CHAPTERS = 3;
+
     public static final int HISTORY = 4;
+
     public static final int HISTORIES = 5;
+
     public static final int BOOKMARK = 6;
+
     public static final int BOOKMARKS = 7;
+
     public static final int BACK = 8;
+
     public static final String TAG = "YbkProvider";
+
     public static final String BOOK_TABLE_NAME = "books";
+
     public static final String DATABASE_NAME = "reveal_ybk.db";
+
     public static final int DATABASE_VERSION = 15;
+
     /** Unique id. Data type: INTEGER */
     public static final String _ID = "_id";
+
     public static final String BINDING_TEXT = "binding_text";
+
     public static final String BOOK_TITLE = "book_title";
+
     public static final String SHORT_TITLE = "short_title";
+
     public static final String FORMATTED_TITLE = "formatted_title";
+
     public static final String METADATA = "metadata";
+
     public static final String CHAPTER_TABLE_NAME = "chapters";
+
     public static final String CHAPTER_OFFSET = "offset";
+
     public static final String CHAPTER_LENGTH = "length";
+
     /** Foreign key to the books table. Data type: INTEGER */
     public static final String BOOK_ID = "book_id";
+
     public static final String FILE_NAME = "file_name";
+
     public static final String CHAPTER_ORDER_NAME = "order_name";
+
     public static final String CHAPTER_ORDER_NUMBER = "order_number";
+
     public static final String CHAPTER_NAVBAR_TITLE = "navbar_title";
+
     public static final String CHAPTER_HISTORY_TITLE = "history_title";
 
     /* Constants for the history table */
     public static final String HISTORY_TABLE_NAME = "history";
+
     public static final String HISTORY_TITLE = "title";
+
     public static final String CHAPTER_NAME = "chapter_name";
+
     public static final String BOOK_NAME = "book_name";
+
     public static final String SCROLL_POS = "scroll_position";
+
     public static final String CREATE_DATETIME = "create_datetime";
+
     public static final String BOOKMARK_NUMBER = "bookmark_id";
+
     public static final int GET_LAST_HISTORY = 0;
+
     public static final String FROM_HISTORY = "from history";
 
     /**
@@ -82,6 +120,7 @@ public class YbkProvider extends ContentProvider {
      * {@link CHAPTER_TYPE_NO_NAV} and {@link CHAPTER_TYPE_NAV} to set values.
      */
     public static final String CHAPTER_NAV_FILE = "nav_file";
+
     /**
      * Should the user be able to zoom the page? Data type: INTEGER. Used when
      * the chapter contains a picture. Use {@link CHAPTER_ZOOM_MENU_OFF} and
@@ -90,33 +129,52 @@ public class YbkProvider extends ContentProvider {
     public static final String CHAPTER_ZOOM_PICTURE = "zoom_picture";
 
     public static final String BOOK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.book";
+
     public static final String BOOK_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.book";
+
     public static final String CHAPTER_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.chapter";
+
     public static final String CHAPTER_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.chapter";
+
     public static final String HISTORY_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.history";
+
     public static final String HISTORY_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.history";
+
     public static final String BOOKMARK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.bookmark";
+
     public static final String BOOKMARK_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.bookmark";
+
     public static final String BACK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.back";
+
     /** Non navigation chapter */
     public static final int CHAPTER_TYPE_NONNAV = 0;
+
     /** Navigation chapter */
     public static final int CHAPTER_TYPE_NAV = 1;
+
     /** All links open according to Popup view settings */
     public static final int CHAPTER_TYPE_SETTINGS = 2;
+
     /** Zoom menu will not be available */
     public static final int CHAPTER_ZOOM_MENU_OFF = 0;
+
     /** Zoom menu will be available */
     public static final int CHAPTER_ZOOM_MENU_ON = 1;
 
     private static final int INDEX_FILENAME_STRING_LENGTH = 48;
+
     private static final String BINDING_FILENAME = "\\BINDING.HTML";
+
     private static final String BOOKMETADATA_FILENAME = "\\BOOKMETADATA.HTML.GZ";
+
     private static final String ORDER_CONFIG_FILENAME = "\\ORDER.CFG";
+
     private static final String BOOK_DEFAULT_SORT_ORDER = FORMATTED_TITLE
             + " ASC";
+
     private static final String HISTORY_DEFAULT_SORT_ORDER = CREATE_DATETIME
             + " DESC";
+
     private static final String BOOKMARK_DEFAULT_SORT_ORDER = HISTORY_TITLE
             + " ASC";
 
@@ -228,8 +286,11 @@ public class YbkProvider extends ContentProvider {
     }
 
     private DatabaseHelper mOpenHelper;
+
     private SharedPreferences mSharedPref;
+
     private String mHistoryEntryAmount;
+
     private String mBookmarkEntryAmount;
 
     /**
@@ -260,15 +321,27 @@ public class YbkProvider extends ContentProvider {
             db.beginTransaction();
             try {
                 try {
-                    recordsAffected = db.delete(YbkProvider.BOOK_TABLE_NAME,
-                            YbkProvider._ID
-                                    + "="
-                                    + bookId
-                                    + (!TextUtils.isEmpty(selection) ? " AND ("
-                                            + selection + ')' : ""), null);
+                    db.delete(CHAPTER_TABLE_NAME, BOOK_ID
+                            + "="
+                            + bookId
+                            + (!TextUtils.isEmpty(selection) ? " AND ("
+                                    + selection + ')' : ""), null);
+
+                    db.delete(HISTORY_TABLE_NAME, BOOK_ID
+                            + "="
+                            + bookId
+                            + (!TextUtils.isEmpty(selection) ? " AND ("
+                                    + selection + ')' : ""), null);
+
+                    db.delete(YbkProvider.BOOK_TABLE_NAME, _ID
+                            + "="
+                            + bookId
+                            + (!TextUtils.isEmpty(selection) ? " AND ("
+                                    + selection + ')' : ""), null);
+
                 } catch (SQLiteException sqle) {
-                    Log.i(TAG, YbkProvider.BOOK_TABLE_NAME
-                            + " probably doesn't exist.", sqle);
+                    Log.i(TAG, "Could not delete book with id " + bookId
+                            + "or its chapters and histories", sqle);
                 }
 
                 db.setTransactionSuccessful();
@@ -282,13 +355,6 @@ public class YbkProvider extends ContentProvider {
             if (selection == null) {
                 selectionString = DELETE_ALL;
             }
-
-            Cursor c = db.rawQuery("SELECT count(*) FROM " + BOOK_TABLE_NAME,
-                    null);
-            c.moveToFirst();
-            @SuppressWarnings("unused")
-            int bookRows = c.getInt(0);
-            c.close();
 
             db.beginTransaction();
             try {
@@ -305,10 +371,6 @@ public class YbkProvider extends ContentProvider {
                 db.endTransaction();
             }
 
-            /*
-             * if (bookRows > recordsAffected) { Log.w(TAG,
-             * "Not all the books could be deleted"); }
-             */
             break;
 
         case HISTORY:

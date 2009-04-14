@@ -2,7 +2,6 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
-import android.os.Process;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -19,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
@@ -33,6 +33,7 @@ import android.view.GestureDetector.OnGestureListener;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.flurry.android.FlurryAgent;
 
@@ -55,24 +56,36 @@ public class Main extends ListActivity implements OnGestureListener {
 	// private static final boolean DONT_ADD_BOOKS = false;
 	private static final boolean ADD_BOOKS = true;
 
-	// Gestures Stuff
-	private NotificationManager mNotifMgr;
-	@SuppressWarnings("unused")
-	private GestureDetector gestureScanner;
-	@SuppressWarnings("unused")
-	private static final int INSERT_ID = Menu.FIRST;
-	private static final int DELETE_ID = Menu.FIRST + 1;
+    // Gestures Stuff
+    private NotificationManager mNotifMgr;
 
-	private SharedPreferences mSharedPref;
-	private boolean BOOLshowSplashScreen;
-	private boolean BOOLshowFullScreen;
-	private Uri mBookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
-	@SuppressWarnings("unused")
-	private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/");
-	private final Handler mUpdateLibHandler = new Handler();
-	private Cursor mListCursor;
-	private ContentResolver mContRes;
-	private static boolean mUpdating = false;
+    @SuppressWarnings("unused")
+    private GestureDetector gestureScanner;
+
+    @SuppressWarnings("unused")
+    private static final int INSERT_ID = Menu.FIRST + 8;
+
+    private static final int DELETE_ID = Menu.FIRST + 9;
+
+    private SharedPreferences mSharedPref;
+
+    private boolean BOOLshowSplashScreen;
+
+    private boolean BOOLshowFullScreen;
+
+    private Uri mBookUri = Uri
+            .withAppendedPath(YbkProvider.CONTENT_URI, "book");
+
+    @SuppressWarnings("unused")
+    private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/");
+
+    private final Handler mUpdateLibHandler = new Handler();
+
+    private Cursor mListCursor;
+
+    private ContentResolver mContRes;
+
+    private static boolean mUpdating = false;
 
 	private final Runnable mUpdateBookList = new Runnable() {
 		public void run() {
@@ -196,10 +209,41 @@ public class Main extends ListActivity implements OnGestureListener {
 
 	}
 
-	@Override
-	public Object onRetainNonConfigurationInstance() {
-		return "configuration changed";
-	}
+    @Override
+    public boolean onContextItemSelected(final MenuItem item) {
+        switch (item.getItemId()) {
+        case DELETE_ID:
+            AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
+                    .getMenuInfo();
+            
+            long bookId = menuInfo.id;
+            
+            ContentResolver res = getContentResolver();
+            
+            Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
+            
+            Cursor bookCurs = managedQuery(thisBookUri,
+                    new String[] { YbkProvider.FILE_NAME }, null, null, null);
+
+            String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
+
+            File file = new File(fileName);
+            if (file.exists()) {
+                file.delete();
+            }
+            
+            res.delete(ContentUris.withAppendedId(mBookUri, bookId), null,
+                            null);
+
+            refreshBookList();
+
+            return true;
+        default:
+            return super.onContextItemSelected(item);
+        }
+
+    }
+
 
 	/**
 	 * Convenience method to make calling refreshLibrary() without any
@@ -502,14 +546,35 @@ public class Main extends ListActivity implements OnGestureListener {
 			startActivityForResult(new Intent(this, HistoryDialog.class),
 					YbkViewActivity.CALL_HISTORY);
 			return true;
+        case DELETE_ID:
+            AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
+                    .getMenuInfo();
+            
+            long bookId = menuInfo.id;
+            
+            ContentResolver res = getContentResolver();
+            
+            Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
+            
+            Cursor bookCurs = managedQuery(thisBookUri,
+                    new String[] { YbkProvider.FILE_NAME }, null, null, null);
 
-		case BOOKMARK_ID:
-			Intent bmIntent = new Intent(this, BookmarkDialog.class);
-			bmIntent.putExtra("fromMain", true);
-			startActivityForResult(bmIntent, YbkViewActivity.CALL_BOOKMARK);
-			return true;
+            String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
 
-		}
+            if (fileName != null) {
+                File file = new File(fileName);
+                if (file.exists()) {
+                    file.delete();
+                }
+                
+                res.delete(thisBookUri, null, null);
+    
+                refreshBookList();
+            
+            }
+            
+            return true;
+        }
 
 		return super.onMenuItemSelected(featureId, item);
 	}

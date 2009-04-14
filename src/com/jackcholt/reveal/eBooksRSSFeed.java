@@ -5,11 +5,6 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-
 import android.app.ListActivity;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -31,11 +26,11 @@ public class eBooksRSSFeed extends ListActivity {
 		GradientDrawable grad = new GradientDrawable(Orientation.TOP_BOTTOM, new int[] {
 				Color.GRAY, Color.WHITE });
 		try {
-			String xml = getXml("http://www.thecoffeys.net/ebooks/rss.asp");
+			//String xml = getXml("http://www.thecoffeys.net/ebooks/rss.asp");
 			this.getWindow().setBackgroundDrawable(grad);
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document doc = db.parse(xml);
+			//DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			//DocumentBuilder db = dbf.newDocumentBuilder();
+			//Document doc = db.parse(xml);
 			String[] items = { "hi" };
 			setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
 					items));
