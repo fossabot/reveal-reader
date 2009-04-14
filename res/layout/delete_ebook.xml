@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+>
+        <ScrollView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+        >
+                <LinearLayout
+                        android:id="@+id/delete_container"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:paddingLeft="5dip"
+                        android:paddingRight="5dip"
+                        android:orientation="vertical"
+                >
+                        <TextView
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/delete_ebook"
+                        android:layout_margin="5sp"/>
+                        
+                </LinearLayout>
+        </ScrollView>
+        <Button
+                android:id="@+id/delte_ebook_btn"
+                android:text="@string/delete"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+        android:padding="5sp"/>
+        <Button
+                android:id="@+id/dont_delte_ebook_btn"
+                android:text="@string/dont_delete"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+        android:padding="5sp"/>
+</LinearLayout>

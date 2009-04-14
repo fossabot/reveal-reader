@@ -47,12 +47,15 @@ public class Main extends ListActivity implements OnGestureListener {
 	private static final int HELP_ID = Menu.FIRST + 5;
 	private static final int ABOUT_ID = Menu.FIRST + 6;
 	private static final int REVELUPDATE_ID = Menu.FIRST + 7;
+	private static final int INSERT_ID = Menu.FIRST + 8;
+	private static final int DELETE_ID = Menu.FIRST + 9;
 
 	public static int mNotifId = 0;
 	public static Main mApplication;
 
 	private static final int ACTIVITY_SETTINGS = 0;
 	private static final int LIBRARY_NOT_CREATED = 0;
+
 	// private static final boolean DONT_ADD_BOOKS = false;
 	private static final boolean ADD_BOOKS = true;
 
@@ -61,68 +64,17 @@ public class Main extends ListActivity implements OnGestureListener {
 
 	@SuppressWarnings("unused")
 	private GestureDetector gestureScanner;
-
-	@SuppressWarnings("unused")
-	private static final int INSERT_ID = Menu.FIRST + 8;
-
-	private static final int DELETE_ID = Menu.FIRST + 9;
-
 	private SharedPreferences mSharedPref;
-
 	private boolean BOOLshowSplashScreen;
-
 	private boolean BOOLshowFullScreen;
-
 	private Uri mBookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book");
 
 	@SuppressWarnings("unused")
 	private File mCurrentDirectory = new File("/sdcard/reveal/ebooks/");
-
 	private final Handler mUpdateLibHandler = new Handler();
-
 	private Cursor mListCursor;
-
 	private ContentResolver mContRes;
-
 	private static boolean mUpdating = false;
-
-	private final Runnable mUpdateBookList = new Runnable() {
-		public void run() {
-
-			refreshBookList();
-
-			mUpdating = false;
-		}
-	};
-
-	/**
-	 * Updating the book list can be very time-consuming. To preserve snappiness
-	 * we're putting it in its own thread.
-	 */
-	protected void updateBookList() {
-		// Fire off the thread to update the book database and populate the Book
-		// Menu
-		if (mUpdating) {
-			Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_LONG).show();
-		} else {
-			mUpdating = true;
-			Thread t = new Thread() {
-
-				public void run() {
-					// Try to tame this from stealing all the interface CPU
-					Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-					Looper.prepare();
-					String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-							"/sdcard/reveal/ebooks");
-					refreshLibrary(ebookDir);
-					mUpdateLibHandler.post(mUpdateBookList);
-
-				}
-			};
-
-			t.start();
-		}
-	}
 
 	/** Called when the activity is first created. */
 	@Override
@@ -209,37 +161,38 @@ public class Main extends ListActivity implements OnGestureListener {
 
 	}
 
-	@Override
-	public boolean onContextItemSelected(final MenuItem item) {
-		switch (item.getItemId()) {
-		case DELETE_ID:
-			AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-
-			long bookId = menuInfo.id;
-
-			ContentResolver res = getContentResolver();
-
-			Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
-
-			Cursor bookCurs = managedQuery(thisBookUri, new String[] { YbkProvider.FILE_NAME },
-					null, null, null);
-
-			String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
-
-			File file = new File(fileName);
-			if (file.exists()) {
-				file.delete();
-			}
-
-			res.delete(ContentUris.withAppendedId(mBookUri, bookId), null, null);
-
+	private final Runnable mUpdateBookList = new Runnable() {
+		public void run() {
 			refreshBookList();
-
-			return true;
-		default:
-			return super.onContextItemSelected(item);
+			mUpdating = false;
 		}
+	};
 
+	/**
+	 * Updating the book list can be very time-consuming. To preserve snappiness
+	 * we're putting it in its own thread.
+	 */
+	protected void updateBookList() {
+		// Fire off the thread to update the book database and populate the Book
+		// Menu
+		if (mUpdating) {
+			Toast.makeText(this, R.string.update_in_progress, Toast.LENGTH_LONG).show();
+		} else {
+			mUpdating = true;
+			Thread t = new Thread() {
+
+				public void run() {
+					// Try to tame this from stealing all the interface CPU
+					Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+					Looper.prepare();
+					String ebookDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+							"/sdcard/reveal/ebooks");
+					refreshLibrary(ebookDir);
+					mUpdateLibHandler.post(mUpdateBookList);
+				}
+			};
+			t.start();
+		}
 	}
 
 	/**
@@ -456,15 +409,36 @@ public class Main extends ListActivity implements OnGestureListener {
 		}
 	}
 
+	@Override
+	public boolean onContextItemSelected(final MenuItem item) {
+		switch (item.getItemId()) {
+		case DELETE_ID:
+			AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
+			long bookId = menuInfo.id;
+			ContentResolver res = getContentResolver();
+			Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
+			Cursor bookCurs = managedQuery(thisBookUri, new String[] { YbkProvider.FILE_NAME },
+					null, null, null);
+
+			String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
+			File file = new File(fileName);
+			if (file.exists()) {
+				file.delete();
+			}
+			res.delete(ContentUris.withAppendedId(mBookUri, bookId), null, null);
+			refreshBookList();
+			return true;
+		default:
+			return super.onContextItemSelected(item);
+		}
+	}
+
 	// on main menu long press we go here to do stuff like delete
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
-		// AdapterContextMenuInfo info = (AdapterContextMenuInfo)
-		// item.getMenuInfo();
-		// Write Delete from DB Helper
-		// DeleteFileHere(info.id);
-		menu.add(0, DELETE_ID, 0, R.string.really_delete);
+		DeleteEbookDialog.create(this, DELETE_ID);
+		//menu.add(0, DELETE_ID, 0, R.string.really_delete);
 	}
 
 	@Override
@@ -543,15 +517,12 @@ public class Main extends ListActivity implements OnGestureListener {
 			startActivityForResult(new Intent(this, HistoryDialog.class),
 					YbkViewActivity.CALL_HISTORY);
 			return true;
+
 		case DELETE_ID:
 			AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-
 			long bookId = menuInfo.id;
-
 			ContentResolver res = getContentResolver();
-
 			Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
-
 			Cursor bookCurs = managedQuery(thisBookUri, new String[] { YbkProvider.FILE_NAME },
 					null, null, null);
 
@@ -564,14 +535,10 @@ public class Main extends ListActivity implements OnGestureListener {
 				}
 
 				res.delete(thisBookUri, null, null);
-
 				refreshBookList();
-
 			}
-
 			return true;
 		}
-
 		return super.onMenuItemSelected(featureId, item);
 	}
 
@@ -699,6 +666,8 @@ public class Main extends ListActivity implements OnGestureListener {
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
+	// used to give access to "this" in threads and other places
+	// DKP
 	public static Main getMainApplication() {
 		return mApplication;
 	}

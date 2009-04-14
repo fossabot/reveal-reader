@@ -40,11 +40,13 @@
 <dimen name="large_font_size">25sp</dimen>
 <string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
 <string name="ebook_update_complete">Finished Updating eBook Catalog</string>
-<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Adam Gessel</string>
+<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella</string>
 <string name="contact">Contact Info for our developers.  jackcholt@gmail.com dave@thepackhams.com</string>
-<string name="website">http://revealreader.thepackhams.com</string>
-<string name="donate">If you would like to donate via PayPal to our developers use the below addresses.  jackcholt@gmail.com, dave@thepackhams.com</string>
+<string name="website">Please Visit our website for HELP or More information  http://revealreader.thepackhams.com</string>
+<string name="donate">If you would like to donate via PayPal to our developers use the below address.  dave@thepackhams.com</string>
 <string name="close">Close</string>
+<string name="delete">Delete</string>
+<string name="dont_delete">Don't Delete</string>
 <string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
@@ -62,6 +64,7 @@
 <string name="splash">Splash Screen Here</string>
 <string name="invalid_chapter">There is a problem showing that.</string>
 <string name="file_deleted">eBook Deleted</string>
+<string name="delete_ebook">do you really want to delete the selected eBook?</string>
 <string name="error_deleting_file">Error Deleting eBook</string>
 <string name="really_delete">Really Delete eBook?</string>
 <string name="create_sd_card_reveal_dir">Create reveal dir on sdcard ok</string>
