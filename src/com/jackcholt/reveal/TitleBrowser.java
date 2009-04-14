@@ -80,7 +80,7 @@ public class TitleBrowser extends ListActivity {
 			FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
 		} else {
 			// Development key for use of the DEVELOPMENT TEAM
-			FlurryAgent.onStartSession(Main.getMainApplication(), "C9D5YMTMI5SPPTE8S4S4");
+			FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
 		}
 
 		FlurryAgent.onEvent("TitleBrowser");
@@ -144,7 +144,7 @@ public class TitleBrowser extends ListActivity {
 	@Override
 	protected void onStop() {
 		super.onStop();
-		FlurryAgent.onEndSession();
+		FlurryAgent.onEndSession(Main.getMainApplication());
 	}
 
 	@Override
@@ -222,6 +222,16 @@ public class TitleBrowser extends ListActivity {
 		} else {
 			if (mBusy) {
 				Toast.makeText(this, R.string.ebook_download_busy, Toast.LENGTH_LONG).show();
+				// Change DEBUG to "0" in Global.java when building a RELEASE Version
+				// for the GOOGLE APP MARKET
+				// This allows for real usage stats and end user error reporting
+				if (Global.DEBUG == 0) {
+					// Release Key for use of the END USERS
+					FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+				} else {
+					// Development key for use of the DEVELOPMENT TEAM
+					FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+				}
 				FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
 			} else {
 				TitleDialog dialog = new TitleDialog(this, id);
@@ -256,6 +266,16 @@ public class TitleBrowser extends ListActivity {
 		@Override
 		protected void onUpdateComplete(int token, Object cookie, int result) {
 			super.onUpdateComplete(token, cookie, result);
+			// Change DEBUG to "0" in Global.java when building a RELEASE Version
+			// for the GOOGLE APP MARKET
+			// This allows for real usage stats and end user error reporting
+			if (Global.DEBUG == 0) {
+				// Release Key for use of the END USERS
+				FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+			} else {
+				// Development key for use of the DEVELOPMENT TEAM
+				FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+			}
 			FlurryAgent.onError("TitleBrowser", "Download New Catalog", "INFO");
 			// establish data connection
 			Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
@@ -326,6 +346,16 @@ public class TitleBrowser extends ListActivity {
 					// it
 					Map<String, String> flurryMap = new HashMap<String, String>();
 					flurryMap.put("eBook Downloaded", name);
+					// Change DEBUG to "0" in Global.java when building a RELEASE Version
+					// for the GOOGLE APP MARKET
+					// This allows for real usage stats and end user error reporting
+					if (Global.DEBUG == 0) {
+						// Release Key for use of the END USERS
+						FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+					} else {
+						// Development key for use of the DEVELOPMENT TEAM
+						FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+					}
 					FlurryAgent.onEvent("TitleBrowser", flurryMap);
 				}
 			}

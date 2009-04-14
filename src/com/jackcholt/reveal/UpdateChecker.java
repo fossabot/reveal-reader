@@ -92,7 +92,7 @@ public class UpdateChecker {
 			FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
 		} else {
 			// Development key for use of the DEVELOPMENT TEAM
-			FlurryAgent.onStartSession(Main.getMainApplication(), "C9D5YMTMI5SPPTE8S4S4");
+			FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
 		}
 
 		Thread t = new Thread() {

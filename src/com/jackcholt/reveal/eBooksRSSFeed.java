@@ -5,6 +5,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.ListActivity;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -22,6 +24,18 @@ import android.widget.ArrayAdapter;
 public class eBooksRSSFeed extends ListActivity {
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+		// Change DEBUG to "0" in Global.java when building a RELEASE Version
+		// for the GOOGLE APP MARKET
+		// This allows for real usage stats and end user error reporting
+		if (Global.DEBUG == 0) {
+			// Release Key for use of the END USERS
+			FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
+		} else {
+			// Development key for use of the DEVELOPMENT TEAM
+			FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
+		}
+		FlurryAgent.onEvent("eBookRSSFeed");
+		
 		setContentView(R.layout.ebook_rss_feed);
 		GradientDrawable grad = new GradientDrawable(Orientation.TOP_BOTTOM, new int[] {
 				Color.GRAY, Color.WHITE });
@@ -57,5 +71,12 @@ public class eBooksRSSFeed extends ListActivity {
 		}
 
 		return xml.toString();
+	}
+	
+	/** Called when the activity is going away. */
+	@Override
+	protected void onStop() {
+		super.onStop();
+		FlurryAgent.onEndSession(this);
 	}
 }

@@ -89,4 +89,5 @@
 <string name="menu_rss_feed">New eBooks Updates</string>
 <string name="unknown">UNKNOWN</string>
 <string name="unloadable_chapter">UNLOADABLE CHAPTER</string>
+<string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
 </resources>

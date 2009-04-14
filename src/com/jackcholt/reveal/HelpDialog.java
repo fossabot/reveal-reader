@@ -40,8 +40,9 @@ public class HelpDialog extends Dialog {
 			FlurryAgent.onStartSession(_this, "BLRRZRSNYZ446QUWKSP4");
 		} else {
 			// Development key for use of the DEVELOPMENT TEAM
-			FlurryAgent.onStartSession(_this, "C9D5YMTMI5SPPTE8S4S4");
+			FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
 		}
+		FlurryAgent.onEvent("HelpDialog");
 
 		HelpDialog dlg = new HelpDialog(_this);
 		return dlg;
@@ -51,6 +52,6 @@ public class HelpDialog extends Dialog {
 	@Override
 	protected void onStop() {
 		super.onStop();
-		FlurryAgent.onEndSession();
+		FlurryAgent.onEndSession(Main.getMainApplication());
 	}
 };
