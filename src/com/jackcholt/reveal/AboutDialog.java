@@ -35,7 +35,6 @@ public class AboutDialog extends Dialog {
 			         
 			//Grab the Global updated version instead of a static one
 			title += String.format(" %d", Global.SVN_VERSION);
-			//Testing Flurry agent calls
 			FlurryAgent.onEvent("AboutScreen");
 			                                      
 		    setTitle(title);
