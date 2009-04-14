@@ -37,7 +37,8 @@
             android:label="@string/menu_bookmark" 
             android:screenOrientation="sensor"
             android:theme="@android:style/Theme.Dialog"/>
-    </application>
+    	<activity android:name="eBooksRSSFeed" android:theme="@android:style/Theme.Dialog" android:label="@string/menu_bookmark" android:multiprocess="true"></activity>
+</application>
 
 
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
