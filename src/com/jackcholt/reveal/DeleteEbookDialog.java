@@ -24,7 +24,7 @@ import com.flurry.android.FlurryAgent;
 public class DeleteEbookDialog extends Dialog {
     public DeleteEbookDialog(Context _this, int DELETE_ID) {
         super(_this);
-        setContentView(R.layout.delete_ebook);
+ /*       setContentView(R.layout.delete_ebook);
         
         final ContentResolver res = Main.getMainApplication().getContentResolver();
         
@@ -61,7 +61,7 @@ public class DeleteEbookDialog extends Dialog {
         setTitle(R.string.really_delete);
         
         //menu.add(0, DELETE_ID, 0, R.string.really_delete);
-        
+*/     
     }
 
     public static DeleteEbookDialog create(Context _this, int DELETE_ID) {
