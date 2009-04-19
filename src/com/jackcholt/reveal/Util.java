@@ -885,7 +885,7 @@ public class Util {
 	 */
 	public static void createDefaultDirs(final Context ctx) {
 	    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
-	    String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+	    String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 	    
 	    if (!strRevealDir.startsWith("/sdcard/")) {
 	    	String strRevealDirTemp = strRevealDir;

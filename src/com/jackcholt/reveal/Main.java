@@ -163,8 +163,6 @@ public class Main extends ListActivity implements OnGestureListener {
             UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
         }
   
-        refreshBookList();
-
         if (!configChanged) {
             //Check for SDcard presence
             //if we have one create the dirs and look fer ebooks
@@ -177,6 +175,8 @@ public class Main extends ListActivity implements OnGestureListener {
             	
              }
         }
+        
+        refreshBookList();
     }
 
     /** Called when the activity is going away. */
