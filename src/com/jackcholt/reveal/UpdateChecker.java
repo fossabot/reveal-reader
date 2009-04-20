@@ -15,13 +15,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.os.Looper;
+import android.os.Process;
 import android.webkit.WebView;
 import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
-
-
-
 
 /**
  * Checks for updates to the program
@@ -30,14 +28,12 @@ import com.flurry.android.FlurryAgent;
  */
 
 public class UpdateChecker {
-  public static String marketId;
-  
-  //@SuppressWarnings("finally")
-  @SuppressWarnings("finally")
-public static int getLatestVersionCode() {
-    int version = 0;
+	public static String marketId;
 
-    try {
+	public static int getLatestVersionCode() {
+		int version = 0;
+
+		try {
 			// Get the XML update Version to prompt user to get a new Update
 			// From the market
 			FlurryAgent.onEvent("UpdateCheck");
@@ -57,21 +53,18 @@ public static int getLatestVersionCode() {
 			WebView mWebView = new WebView(Main.getMainApplication());
 			mWebView.clearCache(true);
 			mWebView.getSettings().setJavaScriptEnabled(true);
-			mWebView
-					.loadUrl("http://revealreader.thepackhams.com/revealUpdate.html");
+			mWebView.loadUrl("http://revealreader.thepackhams.com/revealUpdate.html");
 
 			// Proceed parsing the info
-			DocumentBuilder docBuild = DocumentBuilderFactory.newInstance()
-					.newDocumentBuilder();
+			DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 			Document manifestDoc = docBuild.parse(streamVersion);
-			NodeList manifestNodeList = manifestDoc
-					.getElementsByTagName("manifest");
-			String versionStr = manifestNodeList.item(0).getAttributes()
-					.getNamedItem("android:versionCode").getNodeValue();
+			NodeList manifestNodeList = manifestDoc.getElementsByTagName("manifest");
+			String versionStr = manifestNodeList.item(0).getAttributes().getNamedItem(
+					"android:versionCode").getNodeValue();
 			version = Integer.parseInt(versionStr);
-			NodeList clcNodeList = manifestDoc.getElementsByTagName("clc");
-//			marketId = clcNodeList.item(0).getAttributes().getNamedItem(
-//					"marketId").getNodeValue();
+			// NodeList clcNodeList = manifestDoc.getElementsByTagName("clc");
+			// marketId = clcNodeList.item(0).getAttributes().getNamedItem(
+			// "marketId").getNodeValue();
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -85,16 +78,26 @@ public static int getLatestVersionCode() {
 			ex.printStackTrace();
 		} finally {
 			Global.NEW_VERSION = version;
-			return version;
 		}
-  }
-  
-  public static void checkForNewerVersion(int currentVersion) {
+		return version;
+	}
+
+	public static void checkForNewerVersion(int currentVersion) {
 		// Check here an XML file stored on our website for new version info
 
-		FlurryAgent.onStartSession(Main.getMainApplication(), "C9D5YMTMI5SPPTE8S4S4");
+		// Change DEBUG to "0" in Global.java when building a RELEASE Version for the GOOGLE APP MARKET
+		// This allows for real usage stats and end user error reporting
+		if (Global.DEBUG == 0 ) {
+			// Release Key for use of the END USERS
+			FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+		} else {
+			// Development key for use of the DEVELOPMENT TEAM
+			FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+		}
+
 		Thread t = new Thread() {
 			public void run() {
+				Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 				Looper.prepare();
 				Global.NEW_VERSION = getLatestVersionCode();
 			}
@@ -108,8 +111,5 @@ public static int getLatestVersionCode() {
 					.show();
 		}
 	}
-
-
-
 
 }

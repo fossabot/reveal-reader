@@ -23,7 +23,18 @@ public class Settings extends PreferenceActivity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+		
+        // Change DEBUG to "0" in Global.java when building a RELEASE Version
+		// for the GOOGLE APP MARKET
+		// This allows for real usage stats and end user error reporting
+		if (Global.DEBUG == 0) {
+			// Release Key for use of the END USERS
+			FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
+		} else {
+			// Development key for use of the DEVELOPMENT TEAM
+			FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
+		}
+		
         // Load the XML preferences file
         addPreferencesFromResource(R.xml.preferences);
         
@@ -95,7 +106,7 @@ public class Settings extends PreferenceActivity {
 
         // Don't forget to commit your edits!!!
         editor.commit();
-        FlurryAgent.onEndSession();
+        FlurryAgent.onEndSession(Main.getMainApplication());
 
     }
         

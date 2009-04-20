@@ -50,6 +50,7 @@ public class YbkViewActivity extends Activity {
     //private YbkDAO mYbkDao;
     //private String mLibraryDir;
     private SharedPreferences mSharedPref;
+    @SuppressWarnings("unused")
     private boolean mShowPictures;
     private boolean BOOLshowFullScreen;
     private String mFragment;
@@ -75,6 +76,19 @@ public class YbkViewActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        // Change DEBUG to "0" in Global.java when building a RELEASE Version
+        // for the GOOGLE APP MARKET
+        // This allows for real usage stats and end user error reporting
+        if (Global.DEBUG == 0) {
+            // Release Key for use of the END USERS
+            FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
+        } else {
+            // Development key for use of the DEVELOPMENT TEAM
+            FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
+        }
+
+        FlurryAgent.onEvent("YbkViewActivity");
+
         SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         
         mShowPictures = sharedPref.getBoolean("show_pictures", true);
@@ -83,8 +97,8 @@ public class YbkViewActivity extends Activity {
         
         if (BOOLshowFullScreen) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            requestWindowFeature(Window.FEATURE_NO_TITLE); 
-        }
+         }
+        requestWindowFeature(Window.FEATURE_NO_TITLE); 
 
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
@@ -190,7 +204,7 @@ public class YbkViewActivity extends Activity {
     }
     
     /** Called when the activity is going away. */
-	@Override
+    @Override
     protected void onStop() {
         super.onStop();
     }
@@ -316,17 +330,17 @@ public class YbkViewActivity extends Activity {
         
         bookBtn.setVisibility(View.VISIBLE);
         
-        /*	
+        /*  
             Checks to see if the title is too long for the button.
-        	This prevents the buttons becoming too large and the
-        	view window being smaller. - Adam Gessel 
+            This prevents the buttons becoming too large and the
+            view window being smaller. - Adam Gessel 
          */
         
         if ( mChapBtnText.length() > 20 ) {
-        	
-        	String mChapBtnTextSmall = mChapBtnText.substring(0, 20) + "...";
-        	chapBtn.setText(mChapBtnTextSmall);
-        	
+            
+            String mChapBtnTextSmall = mChapBtnText.substring(0, 20) + "...";
+            chapBtn.setText(mChapBtnTextSmall);
+            
         } else {
 
             chapBtn.setText(mChapBtnText);
@@ -729,8 +743,8 @@ public class YbkViewActivity extends Activity {
                     }
                 } catch (IOException e) {
                     ybkView.loadData("The chapter could not be opened.  " +
-                    		"The book may have a corrupted file.  " +
-                    		"You may want to get a new copy of the book.",
+                            "The book may have a corrupted file.  " +
+                            "You may want to get a new copy of the book.",
                             "text/plain","utf-8");
                     
                     Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
@@ -940,7 +954,7 @@ public class YbkViewActivity extends Activity {
     
     @Override
     public Object onRetainNonConfigurationInstance() {
-        HashMap<String, Comparable> stateMap = new HashMap<String, Comparable>();
+        HashMap<String, Comparable<?>> stateMap = new HashMap<String, Comparable<?>>();
         
         stateMap.put("bookFileName", mBookFileName);
         stateMap.put("chapFileName", mChapFileName);

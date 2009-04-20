@@ -46,6 +46,7 @@ public class Util {
 
 	public static final String NO_TITLE = "no_book_title";
 	
+	
 	/**
 	 * Dave Packham
 	 * Check for network connectivity before trying to go to the net and hanging :)
@@ -63,13 +64,16 @@ public class Util {
 				networkUpOrNot = true;    
 		}  else {
 				networkUpOrNot = false;    
-	        	Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
+	        	//Toast.makeText(_this, "Internet not available,  Please enable your preferred network", Toast.LENGTH_LONG).show();
 	  
         }
+		
 		 	 
 		return networkUpOrNot;
 	}
     
+	
+	
     /**
      * Remove HTML, surrounding quotes and Titlecase a book title.
      * 
@@ -280,7 +284,7 @@ public class Util {
 
     public static final String htmlize(final String text, final SharedPreferences sharedPref) {
         if (text == null) {
-            throw new IllegalStateException("No text was passed.");
+            throw new IllegalArgumentException("No text was passed.");
         }
         
         boolean showPicture = sharedPref.getBoolean("show_pictures", true);
@@ -373,6 +377,7 @@ public class Util {
      * @param contRes Reference to the environment in which we are working.
      * @param libDir The directory which contains our ebooks.
      * @return The processed content.
+     * @throws InconsistentContentException 
      */
     public static String processIfbook(final String content, 
             final Context ctx, final String libDir) {
@@ -785,6 +790,7 @@ public class Util {
 	 * @param file
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private static boolean shouldDownload(final Context context, final File file) {
 		new AlertDialog.Builder(context).setTitle(
 				R.string.ebook_exists_still_download).setPositiveButton(
@@ -821,7 +827,7 @@ public class Util {
 	   }
 	}	
 	
-	private void deleteFileOrFolder(File file, Context _this) {
+	public void deleteFileOrFolder(File file, Context _this) {
 		
 		if (file.delete()) {
 			// Delete was successful.
@@ -840,7 +846,7 @@ public class Util {
 	 */
 	public static void sendNotification(final Context ctx, final String text, 
 	        final int iconId, final String title, NotificationManager notifMgr, 
-	        final int notifId, final Class classToStart) {
+	        final int notifId, final Class<?> classToStart) {
 	    
 	    sendNotification(ctx, text, iconId, title, notifId, notifMgr, classToStart, 
 	            true);
@@ -861,7 +867,7 @@ public class Util {
 	 */
 	public static void sendNotification(final Context ctx, final String text, 
 	        final int iconId, final String title, final int notifId, 
-	        final NotificationManager notifMgr, final Class classToStart, 
+	        final NotificationManager notifMgr, final Class<?> classToStart, 
 	        final boolean autoCancel) {
 	    PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0,
                 new Intent(ctx, classToStart), 0);

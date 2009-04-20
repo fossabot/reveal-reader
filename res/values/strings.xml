@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="app_name">Reveal</string>
-<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks.</string>
+<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card.</string>
 <string name="no_books_xml">No eBook Information Downloaded. Please wait while we go online and refresh the eBook catalog...  eBook categories will appear on this screen once they are downloaded</string>
 <string name="menu_bookmark">Bookmarks</string>
 <string name="menu_history">eBook History</string>
@@ -40,11 +40,13 @@
 <dimen name="large_font_size">25sp</dimen>
 <string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
 <string name="ebook_update_complete">Finished Updating eBook Catalog</string>
-<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Adam Gessel</string>
+<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella</string>
 <string name="contact">Contact Info for our developers.  jackcholt@gmail.com dave@thepackhams.com</string>
-<string name="website">http://revealreader.thepackhams.com</string>
-<string name="donate">If you would like to donate via PayPal to our developers use the below addresses.  jackcholt@gmail.com, dave@thepackhams.com</string>
+<string name="website">Please Visit our website for HELP or More information  http://revealreader.thepackhams.com</string>
+<string name="donate">If you would like to donate via PayPal to our developers use the below address.  dave@thepackhams.com</string>
 <string name="close">Close</string>
+<string name="delete">Delete</string>
+<string name="dont_delete">Don't Delete</string>
 <string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
@@ -62,6 +64,7 @@
 <string name="splash">Splash Screen Here</string>
 <string name="invalid_chapter">There is a problem showing that.</string>
 <string name="file_deleted">eBook Deleted</string>
+<string name="delete_ebook">do you really want to delete the selected eBook?</string>
 <string name="error_deleting_file">Error Deleting eBook</string>
 <string name="really_delete">Really Delete eBook?</string>
 <string name="create_sd_card_reveal_dir">Create reveal dir on sdcard ok</string>
@@ -70,7 +73,7 @@
 <color name="translucent_red">#80ff0000</color>
 <string name="build_number">%1$d results for &lt;b>&amp;quot;%2$s&amp;quot;&lt;/b></string>
 <dimen name="button_font_size">12sp</dimen>
-<string name="helpdialog_no_ebooks">You have no eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks.</string>
+<string name="helpdialog_no_ebooks">You have no eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\'  to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card</string>
 <string name="helpdialog_if_you_need_help">If you need more help with Reveal Reader please visit the website and forums listed below.</string>
 <string name="label_fullscreen">Enable Fullscreen View</string>
 <string name="summary_on_fullscreen">Fullscreen will display</string>
@@ -82,4 +85,12 @@
 <string name="menu_help">Online Help</string>
 <string name="add_bookmark">Add Bookmark here</string>
 <string name="no_bookmark">No Bookmarks</string>
+<string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
+<string name="refresh_title">Refreshing eBooks.  </string>
+<string name="error_reported">Reveal Error Reported.  Please check the forums for a fix.</string>
+<string name="error_title">Reporting Reveal Error</string>
+<string name="menu_rss_feed">New eBooks Updates</string>
+<string name="unknown">UNKNOWN</string>
+<string name="unloadable_chapter">UNLOADABLE CHAPTER</string>
+<string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
 </resources>

@@ -2,6 +2,8 @@ package com.jackcholt.reveal;
 
 import java.util.List;
 
+import com.flurry.android.FlurryAgent;
+
 import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,18 +17,28 @@ import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class BookmarkDialog extends ListActivity {
-	private final String TAG = "BookmarkDialog";
-	public static final String ADD_BOOKMARK = "add_bookmark";
-	
-	
-	@Override
+    private final String TAG = "BookmarkDialog";
+    public static final String ADD_BOOKMARK = "add_bookmark";
+
+    @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+		
+        // Change DEBUG to "0" in Global.java when building a RELEASE Version for the GOOGLE APP MARKET
+		// This allows for real usage stats and end user error reporting
+		if (Global.DEBUG == 0 ) {
+			// Release Key for use of the END USERS
+			FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+		} else {
+			// Development key for use of the DEVELOPMENT TEAM
+			FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+		}
+		FlurryAgent.onEvent("BookMarkDialog");
         
-        Bundle extras = getIntent().getExtras();
-        
+		Bundle extras = getIntent().getExtras();
+
         setContentView(R.layout.dialog_bookmark);
-        
+
         Button addBtn = (Button) findViewById(R.id.addBMButton);
 
         if (extras != null && extras.getBoolean("fromMain") == true) {
@@ -37,7 +49,6 @@ public class BookmarkDialog extends ListActivity {
         
         List<History> data = ybkDao.getBookmarkList();
         
-        
         // Now create a simple cursor adapter and set it to display
         ArrayAdapter<History> histAdapter = 
                 new ArrayAdapter<History>(this, R.layout.history_list_row, data);
@@ -47,25 +58,25 @@ public class BookmarkDialog extends ListActivity {
         addBtn.setOnClickListener(new OnClickListener() {
 
             public void onClick(final View view) {
-                
+
                 Log.d(TAG, "Adding a bookmark");
-                
-                Intent intent = new Intent(getBaseContext(), YbkViewActivity.class);
+
+                Intent intent = new Intent(getBaseContext(),
+                        YbkViewActivity.class);
                 intent.putExtra(ADD_BOOKMARK, true);
                 setResult(RESULT_OK, intent);
-                
+
                 finish();
             }
-            
+
         });
 
-       
     }
-	
-	@Override
-    protected void onListItemClick(final ListView listView, final View view, 
+
+    @Override
+    protected void onListItemClick(final ListView listView, final View view,
             final int selectionRowId, final long id) {
-        
+
         Log.d(TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
         History hist = (History) listView.getItemAtPosition(selectionRowId);
 
@@ -73,13 +84,15 @@ public class BookmarkDialog extends ListActivity {
         intent.putExtra(YbkDAO.ID, hist.id);
         intent.putExtra(YbkDAO.FROM_HISTORY, true);
         setResult(RESULT_OK, intent);
-        
+
         finish();
     }
- 
-        
+    
+	/** Called when the activity is going away. */
+	@Override
+	protected void onStop() {
+		super.onStop();
+		FlurryAgent.onEndSession(Main.getMainApplication());
+	}
 
 }
-
-			
-			
