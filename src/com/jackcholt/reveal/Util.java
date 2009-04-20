@@ -18,20 +18,19 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.YbkDAO;
 
 /**
  * The purpose of this class is to hold general purpose methods.
@@ -381,7 +380,10 @@ public class Util {
      * @throws InconsistentContentException 
      */
     public static String processIfbook(final String content, 
-            final ContentResolver contRes, final String libDir) throws InconsistentContentException {
+            final Context ctx, final String libDir) {
+        
+        YbkDAO ybkDao = YbkDAO.getInstance(ctx);
+        
         StringBuilder newContent = new StringBuilder();
 
         // Use this to get the actual content
@@ -414,21 +416,14 @@ public class Util {
                         
                         fullIfBookFound = true;
                         
-                        Cursor c = contRes.query(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book"), 
-                                new String[] {YbkProvider.FILE_NAME}, "lower(" + YbkProvider.FILE_NAME + ") = lower(?)", 
-                                new String[] {libDir + bookName + ".ybk"}, null);
+                        Book book = ybkDao.getBook(libDir + bookName + ".ybk");
                         
-                        int count = c.getCount();
-                        c.close();
-                        
-                        if (count == 1) {
+                        if (book != null) {
                             newContent.append(oldContent.substring(gtPos + 1, elsePos));
                             //Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1, elsePos));
-                        } else if (count == 0) {
-                            newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
                         } else {
-                            throw new InconsistentContentException("More than one record for the same book");
-                        }
+                            newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
+                        } 
                         
                         // remove just-parsed <ifbook> tag structure so we can find the next
                         oldContent.delete(0, endPos + bookName.length() + 10);
@@ -527,7 +522,7 @@ public class Util {
      * 
      * @param content The content containing the ahtags to convert.
      * @return The converted content.
-     * @throws InvalidFileFormatException 
+     * @throws InvalidFileFormatException If content is in the wrong format.
      */
     public static String convertIfvar(final String content) throws InvalidFileFormatException {
         /*String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" +
@@ -690,13 +685,15 @@ public class Util {
 	 * @param downloadUrl
 	 *            Url from which we are downloading
 	 * @return true if the file was downloaded.
+     * @throws IOException When unable to read a downloaded file.
 	 */
 	public static boolean fetchAndLoadTitle(final URL fileLocation,
-			final URL downloadUrl, final String libDir, final Context context) {
+			final URL downloadUrl, final String libDir, final Context context) throws IOException {
 		
 		boolean success = false;
-		final ContentResolver resolver = context.getContentResolver();
 
+		YbkDAO ybkDao = YbkDAO.getInstance(context);
+		
 		final byte[] buffer = new byte[255];
 
 		ArrayList<File> files = new ArrayList<File>();
@@ -718,12 +715,8 @@ public class Util {
 					// if (file.exists() && !shouldDownload(context, file)) {
 					if (file.exists()) {
 						file.delete();
-						Uri bookUri = Uri.withAppendedPath(
-								YbkProvider.CONTENT_URI, "book");
-						context.getContentResolver().delete(
-								bookUri,
-								YbkProvider.FILE_NAME + " = '"
-										+ file.getAbsolutePath() + "'", null);
+						ybkDao.deleteBook(file.getAbsolutePath());
+						
 					}
 
 					out = new FileOutputStream(file);
@@ -745,12 +738,7 @@ public class Util {
 				// if (file.exists() && !shouldDownload(context, file)) {
 				if (file.exists()) {
 					file.delete();
-					Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI,
-							"book");
-					context.getContentResolver().delete(
-							bookUri,
-							YbkProvider.FILE_NAME + " = '"
-									+ file.getAbsolutePath() + "'", null);
+					ybkDao.deleteBook(file.getAbsolutePath());
 				}
 				out = new FileOutputStream(file);
 
@@ -763,7 +751,7 @@ public class Util {
 
 				in.close();
 			} else {
-				Log.w(resolver.getClass().getName(), "Unable to process file "
+				Log.w(TAG, "Unable to process file "
 						+ fileLocation.getFile());
 			}
 
@@ -781,11 +769,12 @@ public class Util {
 		if (success) {
 			for (File file : files) {
 				// The file was properly downloaded
-				Uri bookUri = Uri.withAppendedPath(YbkProvider.CONTENT_URI,
-						"book");
-				ContentValues values = new ContentValues();
-				values.put(YbkProvider.FILE_NAME, file.getAbsolutePath());
-				resolver.insert(bookUri, values);
+				
+                // Create an object for reading a ybk file;
+                YbkFileReader ybkRdr = new YbkFileReader(context, file.getAbsolutePath());
+                // Tell the YbkFileReader to populate the book info into the database;
+                ybkRdr.populateBook();
+
 			}
 		} 
 
@@ -809,12 +798,8 @@ public class Util {
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
 						file.delete();
-						Uri bookUri = Uri.withAppendedPath(
-								YbkProvider.CONTENT_URI, "book");
-						context.getContentResolver().delete(
-								bookUri,
-								YbkProvider.FILE_NAME + " = "
-										+ file.getAbsolutePath(), null);
+	                    YbkDAO ybkDao = YbkDAO.getInstance(context);
+						ybkDao.deleteBook(file.getAbsolutePath());
 					}
 				}).setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
@@ -827,10 +812,9 @@ public class Util {
 	}
 	
 	public static  void showSplashScreen(Context _this) {
-// sv - not sure what was intended here, but is has absolutely no effect
-//	    boolean mShowSplashScreen;
+		boolean mShowSplashScreen = true;
     //Toast Splash with image  :)
-//	    if (mShowSplashScreen = true) {
+	    if (mShowSplashScreen) {
 		   Toast toast = new Toast(_this);
 		   LinearLayout lay = new LinearLayout(_this);
 		   lay.setOrientation(LinearLayout.HORIZONTAL);
@@ -840,7 +824,7 @@ public class Util {
 		   toast.setView(lay);
 		   toast.setDuration(Toast.LENGTH_LONG); 
 		   toast.show();
-//	   }
+	   }
 	}	
 	
 	public void deleteFileOrFolder(File file, Context _this) {
@@ -855,30 +839,6 @@ public class Util {
 		}
 	}
 	
-	
-	/*	protected Dialog onCreateDialog(int id, Context _this) {
-
-		switch (id) {
-		case DIALOG_DELETE:
-			return new AlertDialog.Builder(_this).setTitle(getString(R.string.really_delete, mContextText))
-            	.setIcon(android.R.drawable.ic_dialog_alert).setPositiveButton(
-					android.R.string.ok, new OnClickListener() {
-						
-						public void onClick(DialogInterface dialog, int which) {
-							deleteFileOrFolder(mContextFile, _this);
-						}
-						
-					}).setNegativeButton(android.R.string.cancel, new OnClickListener() {
-						
-						public void onClick(DialogInterface dialog, int which) {
-							// Cancel should not do anything.
-						}
-						
-					}).create();
-		}
-		return null;
-	}
-*/
 	
 	/**
 	 * Convenience method to send a notification that autocancels.
@@ -931,7 +891,7 @@ public class Util {
 	 */
 	public static void createDefaultDirs(final Context ctx) {
 	    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
-	    String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
+	    String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 	    
 	    if (!strRevealDir.startsWith("/sdcard/")) {
 	    	String strRevealDirTemp = strRevealDir;

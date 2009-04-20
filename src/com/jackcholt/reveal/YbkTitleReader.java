@@ -86,7 +86,7 @@ public class YbkTitleReader {
 		byte[] indexArray = new byte[indexLength];
 
 		if (dataInput.read(indexArray) < indexLength) {
-			FlurryAgent.onError("YbkTitleReader", "Index Lenght Greater than length of file",
+			FlurryAgent.onError("YbkTitleReader", "Index Length Greater than length of file",
 					"WARNING");
 			throw new InvalidFileFormatException("Index Length is greater than length of file.");
 		}

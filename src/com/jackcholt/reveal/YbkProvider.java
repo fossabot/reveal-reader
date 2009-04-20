@@ -6,29 +6,20 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 
-import android.app.NotificationManager;
 import android.content.ContentProvider;
-import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.UriMatcher;
 import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteConstraintException;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.Log;
+
+import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.Chapter;
+import com.jackcholt.reveal.data.YbkDAO;
 
 public class YbkProvider extends ContentProvider {
     public static final String KEY_MIMETYPE = "mimetype";
@@ -58,14 +49,14 @@ public class YbkProvider extends ContentProvider {
 
     public static final String TAG = "YbkProvider";
 
-    public static final String BOOK_TABLE_NAME = "books";
+    /*public static final String BOOK_TABLE_NAME = "books";
 
     public static final String DATABASE_NAME = "reveal_ybk.db";
 
     public static final int DATABASE_VERSION = 15;
 
-    /** Unique id. Data type: INTEGER */
-    public static final String _ID = "_id";
+    *//** Unique id. Data type: INTEGER */
+    /*public static final String _ID = "_id";
 
     public static final String BINDING_TEXT = "binding_text";
 
@@ -83,8 +74,8 @@ public class YbkProvider extends ContentProvider {
 
     public static final String CHAPTER_LENGTH = "length";
 
-    /** Foreign key to the books table. Data type: INTEGER */
-    public static final String BOOK_ID = "book_id";
+    *//** Foreign key to the books table. Data type: INTEGER */
+    /*public static final String BOOK_ID = "book_id";
 
     public static final String FILE_NAME = "file_name";
 
@@ -95,7 +86,7 @@ public class YbkProvider extends ContentProvider {
     public static final String CHAPTER_NAVBAR_TITLE = "navbar_title";
 
     public static final String CHAPTER_HISTORY_TITLE = "history_title";
-
+    */
     /* Constants for the history table */
     public static final String HISTORY_TABLE_NAME = "history";
 
@@ -161,25 +152,15 @@ public class YbkProvider extends ContentProvider {
     /** Zoom menu will be available */
     public static final int CHAPTER_ZOOM_MENU_ON = 1;
 
-    private static final int INDEX_FILENAME_STRING_LENGTH = 48;
-
-    private static final String BINDING_FILENAME = "\\BINDING.HTML";
-
-    private static final String BOOKMETADATA_FILENAME = "\\BOOKMETADATA.HTML.GZ";
-
-    private static final String ORDER_CONFIG_FILENAME = "\\ORDER.CFG";
-
-    private static final String BOOK_DEFAULT_SORT_ORDER = FORMATTED_TITLE
-            + " ASC";
-
-    private static final String HISTORY_DEFAULT_SORT_ORDER = CREATE_DATETIME
-            + " DESC";
-
-    private static final String BOOKMARK_DEFAULT_SORT_ORDER = HISTORY_TITLE
-            + " ASC";
-
-    private static final UriMatcher sUriMatcher = new UriMatcher(
-            UriMatcher.NO_MATCH);
+    //private static final int INDEX_FILENAME_STRING_LENGTH = 48;
+    //private static final String BINDING_FILENAME = "\\BINDING.HTML";
+    //private static final String BOOKMETADATA_FILENAME = "\\BOOKMETADATA.HTML.GZ"; 
+    //private static final String ORDER_CONFIG_FILENAME = "\\ORDER.CFG";
+    //private static final String BOOK_DEFAULT_SORT_ORDER = FORMATTED_TITLE + " ASC";
+    //private static final String HISTORY_DEFAULT_SORT_ORDER = CREATE_DATETIME + " DESC";
+    //private static final String BOOKMARK_DEFAULT_SORT_ORDER = HISTORY_TITLE + " ASC";
+    
+    private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
         sUriMatcher.addURI(AUTHORITY, "ybk/chapter/#", CHAPTER);
         sUriMatcher.addURI(AUTHORITY, "ybk/chapter", CHAPTERS);
@@ -194,7 +175,7 @@ public class YbkProvider extends ContentProvider {
 
     private HashMap<Uri, File> mTempImgFiles = new HashMap<Uri, File>();
 
-    private static class DatabaseHelper extends SQLiteOpenHelper {
+    /*private static class DatabaseHelper extends SQLiteOpenHelper {
         Context mContext;
 
         DatabaseHelper(final Context context) {
@@ -241,25 +222,21 @@ public class YbkProvider extends ContentProvider {
                     + BOOK_ID + ") REFERENCES " + BOOK_TABLE_NAME + " (" + _ID
                     + ")" + " ON DELETE CASCADE" + "); ");
 
-            /*
-             * db.execSQL("CREATE INDEX " + HISTORY_TABLE_NAME + "_" +
-             * BOOKMARK_NUMBER + "_index ON " + HISTORY_TABLE_NAME + " (" +
-             * BOOKMARK_NUMBER + "); ");
-             */
+             db.execSQL("CREATE INDEX " + HISTORY_TABLE_NAME + "_" +
+             BOOKMARK_NUMBER + "_index ON " + HISTORY_TABLE_NAME + " (" +
+             BOOKMARK_NUMBER + "); ");
 
             // turns out they allow the cascade and foreign keys, but don't
             // enforce them!
-            /*
-             * db.execSQL("CREATE TRIGGER fkd_chapters_books_id \n" +
-             * "BEFORE DELETE ON " + BOOK_TABLE_NAME +
-             * " FOR EACH ROW BEGIN DELETE FROM " + CHAPTER_TABLE_NAME +
-             * " WHERE " + BOOK_ID + " = OLD." + _ID + "; END;");
-             * 
-             * db.execSQL("CREATE TRIGGER fkd_chapters_history_id \n" +
-             * "BEFORE DELETE ON " + BOOK_TABLE_NAME +
-             * " FOR EACH ROW BEGIN DELETE FROM " + HISTORY_TABLE_NAME +
-             * " WHERE " + BOOK_ID + " = OLD." + _ID + "; END;");
-             */
+             db.execSQL("CREATE TRIGGER fkd_chapters_books_id \n" +
+             "BEFORE DELETE ON " + BOOK_TABLE_NAME +
+             " FOR EACH ROW BEGIN DELETE FROM " + CHAPTER_TABLE_NAME +
+             " WHERE " + BOOK_ID + " = OLD." + _ID + "; END;");
+             
+             db.execSQL("CREATE TRIGGER fkd_chapters_history_id \n" +
+             "BEFORE DELETE ON " + BOOK_TABLE_NAME +
+             " FOR EACH ROW BEGIN DELETE FROM " + HISTORY_TABLE_NAME +
+             " WHERE " + BOOK_ID + " = OLD." + _ID + "; END;");
         }
 
         @Override
@@ -284,15 +261,13 @@ public class YbkProvider extends ContentProvider {
             onCreate(db);
         }
     }
-
-    private DatabaseHelper mOpenHelper;
+*/
+    //private DatabaseHelper mOpenHelper;
 
     private SharedPreferences mSharedPref;
-
-    private String mHistoryEntryAmount;
-
-    private String mBookmarkEntryAmount;
-
+    //private String mHistoryEntryAmount; 
+    //private String mBookmarkEntryAmount; 
+    
     /**
      * @see {@link ContentProvider.delete(Uri uri, String selection, String[]
      *      selectionArgs)}
@@ -300,17 +275,16 @@ public class YbkProvider extends ContentProvider {
     @Override
     public int delete(final Uri uri, final String selection,
             final String[] selectionArgs) {
-        final String DELETE_ALL = "1";
+        /*final String DELETE_ALL = "1";
         String selectionString = selection;
         int recordsAffected = 0;
 
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-        /*
-         * if (selectionArgs != null) {
-         * Log.w(TAG,"selectionArgs are not yet supported.  They will not be used."
-         * ); }
-         */
+        
+        if (selectionArgs != null) {
+            Log.w(TAG,"selectionArgs are not yet supported.  They will not be used.");
+        }
 
         int match = sUriMatcher.match(uri);
 
@@ -371,6 +345,9 @@ public class YbkProvider extends ContentProvider {
                 db.endTransaction();
             }
 
+            if (bookRows > recordsAffected) {
+                Log.w(TAG, "Not all the books could be deleted");
+            }
             break;
 
         case HISTORY:
@@ -454,31 +431,35 @@ public class YbkProvider extends ContentProvider {
             getContext().getContentResolver().notifyChange(uri, null);
 
             break;
+            
+        case BOOKMARKS:  
 
-        /*
-         * case BOOKMARKS:
-         * 
-         * Cursor bmkCurs = db.rawQuery("SELECT " + CREATE_DATETIME + " FROM " +
-         * HISTORY_TABLE_NAME + " ORDER BY " + CREATE_DATETIME + " ASC LIMIT ?"
-         * , new String[] {mHistoryEntryAmount});
-         * 
-         * 
-         * try { if (histCurs.getCount() ==
-         * Integer.parseInt(mHistoryEntryAmount)) { histCurs.moveToFirst();
-         * String oldestDate = histCurs.getString(0); recordsAffected =
-         * db.delete(HISTORY_TABLE_NAME, CREATE_DATETIME + " < ?", new String[]
-         * {oldestDate}); } } finally { histCurs.close(); }
-         * 
-         * getContext().getContentResolver().notifyChange(uri, null);
-         * 
-         * break;
-         */
+         case BOOKMARKS:
+         
+         Cursor bmkCurs = db.rawQuery("SELECT " + CREATE_DATETIME + " FROM " +
+         HISTORY_TABLE_NAME + " ORDER BY " + CREATE_DATETIME + " ASC LIMIT ?"
+         , new String[] {mHistoryEntryAmount});
+         
+         
+         try { if (histCurs.getCount() ==
+         Integer.parseInt(mHistoryEntryAmount)) { histCurs.moveToFirst();
+         String oldestDate = histCurs.getString(0); recordsAffected =
+         db.delete(HISTORY_TABLE_NAME, CREATE_DATETIME + " < ?", new String[]
+         {oldestDate}); } } finally { histCurs.close(); }
+         
+         getContext().getContentResolver().notifyChange(uri, null);
+         
+         break;
 
         default:
             throw new IllegalArgumentException("Unsupported URI: " + uri);
         }
 
-        return recordsAffected;
+        return recordsAffected;*/
+        
+        Log.e(TAG, "YbkProvider does not support deletion.");
+        
+        return 0;
     }
 
     /**
@@ -525,7 +506,7 @@ public class YbkProvider extends ContentProvider {
      */
     @Override
     public Uri insert(final Uri uri, final ContentValues initialValues) {
-        ContentValues values;
+        /*ContentValues values;
         if (initialValues != null) {
             values = new ContentValues(initialValues);
         } else {
@@ -651,20 +632,19 @@ public class YbkProvider extends ContentProvider {
             throw new IllegalArgumentException("Unsupported URI: " + uri);
         }
 
-        throw new SQLException("Failed to insert row into " + uri);
+        throw new SQLException("Failed to insert row into " + uri);*/
+        
+        Log.e(TAG, "The YbkProvider does not support inserts");
+        
+        return null;
     }
 
     @Override
     public boolean onCreate() {
-        mOpenHelper = new DatabaseHelper(getContext());
+        //mOpenHelper = new DatabaseHelper(getContext());
 
-        mSharedPref = PreferenceManager
-                .getDefaultSharedPreferences(getContext());
-
-        mHistoryEntryAmount = mSharedPref.getString(
-                "default_history_entry_amount", "30");
-        mBookmarkEntryAmount = mSharedPref.getString(
-                "default_bookmark_entry_amount", "20");
+        //mHistoryEntryAmount = mSharedPref.getString("default_history_entry_amount", "30");
+        //mBookmarkEntryAmount = mSharedPref.getString("default_bookmark_entry_amount", "20");
         return true;
     }
 
@@ -673,7 +653,7 @@ public class YbkProvider extends ContentProvider {
             final String selection, final String[] selectionArgs,
             String sortOrder) {
 
-        String orderBy = null;
+        /*String orderBy = null;
         String where = null;
         String limit = null;
 
@@ -828,7 +808,10 @@ public class YbkProvider extends ContentProvider {
         // Tell the cursor what uri to watch, so it knows when its source data
         // changes
         c.setNotificationUri(getContext().getContentResolver(), uri);
-        return c;
+        return c;*/
+        Log.e(TAG, "The YbkProvider does not support queries.");
+        
+        return null;
     }
 
     /**
@@ -837,7 +820,7 @@ public class YbkProvider extends ContentProvider {
     @Override
     public int update(final Uri uri, final ContentValues values,
             final String selection, final String[] selectionArgs) {
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        /*SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         int count;
 
         switch (sUriMatcher.match(uri)) {
@@ -855,7 +838,10 @@ public class YbkProvider extends ContentProvider {
         }
 
         getContext().getContentResolver().notifyChange(uri, null);
-        return count;
+        return count;*/
+        Log.e(TAG, "The YbkProvider does not support updates.");
+        
+        return 0;
     }
 
     /**
@@ -865,7 +851,7 @@ public class YbkProvider extends ContentProvider {
      *            The file name of the book.
      * @return The id of the book that was saved into the database.
      */
-    private long populateBook(final String fileName) {
+    /*private long populateBook(final String fileName) {
 
         long bookId = 0;
 
@@ -956,7 +942,7 @@ public class YbkProvider extends ContentProvider {
 
         return bookId;
     }
-
+*/        
     /**
      * Return the contents of BINDING.HTML internal file as a String.
      * 
@@ -966,8 +952,8 @@ public class YbkProvider extends ContentProvider {
      * @throws InvalidFileFormatException
      *             if there is no Binding internal file found.
      */
-    public String readBindingFile(final RandomAccessFile file, final long bookId)
-            throws IOException, InvalidFileFormatException {
+    /*private String readBindingFile(final RandomAccessFile file, final long bookId) 
+    throws IOException, InvalidFileFormatException {
         String fileText = null;
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
@@ -990,7 +976,7 @@ public class YbkProvider extends ContentProvider {
         }
 
         return fileText;
-    }
+    }*/
 
     /**
      * 
@@ -1004,41 +990,27 @@ public class YbkProvider extends ContentProvider {
             final String bookFileName, final String chapterName)
             throws IOException {
 
-        String bookId = "";
         int offset = 0;
         int len = 0;
-
-        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-        Cursor c = db.query(BOOK_TABLE_NAME, new String[] { _ID }, "lower("
-                + FILE_NAME + ")=?",
-                new String[] { bookFileName.toLowerCase() }, null, null, null);
-
-        try {
-            if (c.getCount() == 1) {
-                c.moveToFirst();
-                bookId = c.getString(0);
+        byte[] bytes = null;
+        
+        YbkDAO ybkDao = YbkDAO.getInstance(getContext());
+        
+        Book book = ybkDao.getBook(bookFileName);
+        Chapter chap = ybkDao.getChapter(book.id, chapterName);
+        
+        if (chap != null) {
+            offset = chap.offset;
+            len = chap.length;
+        
+        
+            bytes = new byte[len];
+            file.seek(offset);
+            int amountRead = file.read(bytes);
+            if (amountRead < len) {
+                throw new InvalidFileFormatException(
+                        "Couldn't read all of " + bookFileName + ".");
             }
-
-            c = db.query(CHAPTER_TABLE_NAME, new String[] { CHAPTER_OFFSET,
-                    CHAPTER_LENGTH }, "lower(" + FILE_NAME
-                    + ")=? AND BOOK_ID =?", new String[] {
-                    chapterName.toLowerCase(), bookId }, null, null, null);
-
-            if (c.getCount() == 1) {
-                c.moveToFirst();
-                offset = c.getInt(c.getColumnIndexOrThrow(CHAPTER_OFFSET));
-                len = c.getInt(c.getColumnIndexOrThrow(CHAPTER_LENGTH));
-            }
-        } finally {
-            c.close();
-        }
-
-        byte[] bytes = new byte[len];
-        file.seek(offset);
-        int amountRead = file.read(bytes);
-        if (amountRead < len) {
-            throw new InvalidFileFormatException("Couldn't read all of "
-                    + bookFileName + ".");
         }
 
         return bytes;
@@ -1057,8 +1029,9 @@ public class YbkProvider extends ContentProvider {
      * @throws IOException
      *             If the chapter cannot be read.
      */
-    public String readInternalFile(final RandomAccessFile file,
-            final long bookId, final int chapterId) throws IOException {
+    /*private String readInternalFile(final RandomAccessFile file, 
+            final long bookId, final int chapterId) 
+    throws IOException {
         String fileText = null;
         int offset = 0;
         int len = 0;
@@ -1103,7 +1076,7 @@ public class YbkProvider extends ContentProvider {
         }
 
         return fileText;
-    }
+    }*/
 
     /**
      * Return the uncompressed contents of Book Metadata internal file as a
@@ -1113,8 +1086,7 @@ public class YbkProvider extends ContentProvider {
      * @throws IOException
      *             if there is a problem reading the Book Metadata file.
      */
-    private String readMetaData(final RandomAccessFile file, final long bookId)
-            throws IOException {
+    /*private String readMetaData(final RandomAccessFile file, final long bookId) throws IOException {
         String fileText = null;
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
@@ -1133,7 +1105,7 @@ public class YbkProvider extends ContentProvider {
         }
 
         return fileText;
-    }
+    }*/
 
     /**
      * Read in the Order Config information which tells us in what order the
@@ -1148,8 +1120,7 @@ public class YbkProvider extends ContentProvider {
      * @throws IOException
      *             If the YBK cannot be read.
      */
-    private String readOrderCfg(final RandomAccessFile file, final long bookId)
-            throws IOException {
+    /*private String readOrderCfg(final RandomAccessFile file, final long bookId) {
         String fileText = null;
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
@@ -1169,7 +1140,7 @@ public class YbkProvider extends ContentProvider {
         }
 
         return fileText;
-    }
+    }*/
 
     /**
      * Analyze the YBK file and save file contents data for later reference.
@@ -1177,8 +1148,8 @@ public class YbkProvider extends ContentProvider {
      * @throws IOException
      *             If the YBK file is not readable.
      */
-    private void populateChapters(final RandomAccessFile file, final long bookId)
-            throws IOException {
+    /*private void populateChapters(final RandomAccessFile file, final long bookId) 
+    throws IOException {
         String iFileName = "";
         int iBookOffset = 0;
         int iBookLength = 0;
@@ -1261,7 +1232,7 @@ public class YbkProvider extends ContentProvider {
 
         }
 
-    }
+    }*/
 
     /**
      * Open a file and return a ParcelFileDescriptor reference to it.
@@ -1300,12 +1271,11 @@ public class YbkProvider extends ContentProvider {
                 for (int i = 1; i < fileParts.length; i++) {
                     tempFileName += fileParts[i] + "_";
                 }
-                tempFileName = tempFileName.substring(0,
-                        tempFileName.length() - 1);
-
-                String libDir = mSharedPref.getString(
-                        Settings.EBOOK_DIRECTORY_KEY, "/sdcard/reveal/ebooks/");
-
+                tempFileName = tempFileName.substring(0, tempFileName.length()-1);
+                
+                String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
+                        Settings.DEFAULT_EBOOK_DIRECTORY);
+                
                 outFile = new File(libDir + "images/", tempFileName);
                 outFile.deleteOnExit();
 
@@ -1317,12 +1287,12 @@ public class YbkProvider extends ContentProvider {
                     RandomAccessFile file = new RandomAccessFile(fileName, "r");
 
                     try {
-                        byte[] contents = readInternalBinaryFile(file,
-                                fileName, chapter);
-                        BufferedOutputStream out = new BufferedOutputStream(
-                                new FileOutputStream(outFile), BUFFER_SIZE);
-                        out.write(contents);
-                        out.flush();
+                        byte[] contents = readInternalBinaryFile(file, fileName, chapter);
+                        if (contents != null) {
+                            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),BUFFER_SIZE);
+                            out.write(contents);
+                            out.flush();
+                        }
                     } catch (IOException e) {
                         throw new FileNotFoundException(
                                 "Could not write internal file to temp file. "
@@ -1343,16 +1313,15 @@ public class YbkProvider extends ContentProvider {
         ParcelFileDescriptor pfd = ParcelFileDescriptor.open(outFile, m);
 
         return pfd;
-    }
-
-    /**
-     * Save the order configuration into the database.
-     * 
-     * @param orderString
-     *            A comma-delimited list of abbreviated chapter names.
-     */
-    private void populateOrder(final String orderString, long bookId) {
-        if (null != orderString) {
+   }
+    
+   /**
+    * Save the order configuration into the database.
+    * 
+    * @param orderString A comma-delimited list of abbreviated chapter names.
+    */
+   /*private void populateOrder(final String orderString, long bookId) {
+       if (null != orderString) {
             String[] orders = orderString.split(",");
 
             SQLiteDatabase db = mOpenHelper.getWritableDatabase();
@@ -1365,21 +1334,17 @@ public class YbkProvider extends ContentProvider {
                 if (chapter.indexOf(".html") == -1) {
                     chapter += ".html";
                 }
-                @SuppressWarnings("unused")
-                int recUpdated = db.update(CHAPTER_TABLE_NAME, values, BOOK_ID
-                        + "=? AND lower(" + FILE_NAME + ") like '%\\"
-                        + chapter.replace("'", "''") + "%'",
-                        new String[] { Long.toString(bookId) });
-
-                /*
-                 * if (recUpdated != 1) { Log.e(TAG,
-                 * "Order.cfg appears to contain a reference to a non-existent chapter.\n"
-                 * + "Records updated for " + chapter + " should be 1, Is: " +
-                 * recUpdated); }
-                 */
-
+                int recUpdated = db.update(CHAPTER_TABLE_NAME, values, 
+                        BOOK_ID + "=? AND lower(" + FILE_NAME + ") like '%\\" + chapter.replace("'", "''") + "%'",
+                        new String[] {Long.toString(bookId)});
+                
+                if (recUpdated != 1) {
+                    Log.e(TAG, "Order.cfg appears to contain a reference to a non-existent chapter.\n" +
+                    		"Records updated for " + chapter + " should be 1, Is: " + recUpdated);
+                }
+                
                 values.clear();
             }
         }
-    }
+    }*/
 }
