@@ -38,7 +38,7 @@ public class HistoryDialog extends ListActivity {
         
         List<History> data = ybkDao.getHistoryList();
         
-        // Now create a simple cursor adapter and set it to display
+        // Now create a simple array adapter and set it to display
         ArrayAdapter<History> histAdapter = 
                 new ArrayAdapter<History>(this, R.layout.history_list_row, data);
 

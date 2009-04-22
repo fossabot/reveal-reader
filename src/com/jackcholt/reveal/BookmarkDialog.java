@@ -49,7 +49,7 @@ public class BookmarkDialog extends ListActivity {
         
         List<History> data = ybkDao.getBookmarkList();
         
-        // Now create a simple cursor adapter and set it to display
+        // Now create a simple array adapter and set it to display
         ArrayAdapter<History> histAdapter = 
                 new ArrayAdapter<History>(this, R.layout.history_list_row, data);
 

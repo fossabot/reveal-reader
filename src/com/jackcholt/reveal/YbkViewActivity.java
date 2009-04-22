@@ -159,7 +159,7 @@ public class YbkViewActivity extends Activity {
         chapBtn.setOnClickListener(new OnClickListener() {
             /** set the chapter button so it scrolls the window to the top */
             public void onClick(final View v) {
-                mYbkView.loadUrl("javascript:location.href=\"#top\";");
+                mYbkView.scrollTo(0,0);
             }
         });
         
@@ -220,6 +220,8 @@ public class YbkViewActivity extends Activity {
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                 int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
                 
+                boolean success = true;
+                
                 if (url.length() > ContentUriLength + 1) {
                     setProgressBarIndeterminateVisibility(true);
                 
@@ -261,21 +263,30 @@ public class YbkViewActivity extends Activity {
                     //Log.i(TAG, "Loading chapter '" + chapter + "'");
                     
                     try {
-                        if (loadChapter(book, chapter)) {                    
+                        if (!chapter.toLowerCase().endsWith(".gz") 
+                                && loadChapter(book, chapter + ".gz")) {                    
                             setBookBtn(shortTitle,book,chapter);
+                        } else {
+                            if (loadChapter(book, chapter)) {
+                                setBookBtn(shortTitle,book,chapter);
+                            } else {
+                                success = false;
+                            }
                         }
                     } catch (IOException ioe) {
-                        return false;
+                        success = false;
                     }
                     
-                    //mScrollYPos = 0;
-                    
-                    return true;
                 } else {
-                    return false;
+                    success = false;
                 }
+                
+                mScrollYPos = 0;
+                
+                return success;
             }
             
+            @Override
             public void onPageFinished(final WebView view, final String url) {
                 // make it jump to the internal link
                 if (mFragment != null) {
@@ -370,30 +381,30 @@ public class YbkViewActivity extends Activity {
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         switch(item.getItemId()) {
         case PREVIOUS_ID:
-            setProgressBarIndeterminateVisibility(true);
             if (mChapOrderNbr > 0) {
+                setProgressBarIndeterminateVisibility(true);
                 try {
-                    loadChapterByOrderId(mBookId, --mChapOrderNbr);
+                    loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not move to the previous chapter. " 
                             + ioe.getMessage());
                 }
+                setProgressBarIndeterminateVisibility(false);
             }
-            setProgressBarIndeterminateVisibility(false);
             return true;
         case NEXT_ID:
-            setProgressBarIndeterminateVisibility(true);
-            
-            try {
-                if (loadChapterByOrderId(mBookId, mChapOrderNbr + 1)) {
-                    mChapOrderNbr++;
+            if (mChapOrderNbr != -1) {
+                setProgressBarIndeterminateVisibility(true);
+                
+                try {
+                    loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not move to the next chapter. " 
+                            + ioe.getMessage());
                 }
-            } catch (IOException ioe) {
-                Log.e(TAG, "Could not move to the next chapter. " 
-                        + ioe.getMessage());
+            
+                setProgressBarIndeterminateVisibility(false);
             }
-        
-            setProgressBarIndeterminateVisibility(false);
             return true;
         
         case HISTORY_ID: 
@@ -632,7 +643,11 @@ public class YbkViewActivity extends Activity {
                         // use the dreaded break <label> in order to simplify conditional nesting
                         label_get_content:
                         if (hashLoc != -1) {
-                            mFragment = fragment = chap.substring(hashLoc + 1);
+                            fragment = chap.substring(hashLoc + 1);
+                            if (fragment.indexOf(".") != -1) {
+                                fragment = fragment.substring(0, fragment.indexOf("."));
+                            }
+                            mFragment = fragment;
                             
                             if (!Util.isInteger(fragment)) {
                                 
@@ -695,7 +710,7 @@ public class YbkViewActivity extends Activity {
                     if (chapObj != null) {
                         mChapOrderNbr = chapObj.orderNumber;
                     } else {
-                        mChapOrderNbr = 0;
+                        mChapOrderNbr = -1;
                     } 
                     
                     // replace MS-Word "smartquotes" and other extended characters with spaces
@@ -851,9 +866,10 @@ public class YbkViewActivity extends Activity {
         //Log.d(TAG, "concat file: " + concatChap);
         
         String endString = ".";
-        if (chap.endsWith(".html.gz")) {
-            endString = ".html.gz";
-        }
+        if (chap.contains(".html")) {
+            endString = ".html";
+        } 
+        
         String verse = chap.substring(chap.lastIndexOf("\\") + 1, chap.lastIndexOf(endString));
         
         Log.d(TAG, "verse/concatChap: " + verse + "/" + concatChap);
