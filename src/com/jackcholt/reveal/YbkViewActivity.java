@@ -234,8 +234,7 @@ public class YbkViewActivity extends Activity {
                     String shortTitle = null;
                     
                     if (url.indexOf('@') != -1) {
-                        book = mBookFileName;
-                        chapter = mChapFileName;
+                        view.scrollTo(0, 0);
                     } else {
                     
                         String dataString; 
@@ -259,22 +258,23 @@ public class YbkViewActivity extends Activity {
                            chapter += "\\" + urlParts[i];
                         }
                         
-                    }
-                    //Log.i(TAG, "Loading chapter '" + chapter + "'");
                     
-                    try {
-                        if (!chapter.toLowerCase().endsWith(".gz") 
-                                && loadChapter(book, chapter + ".gz")) {                    
-                            setBookBtn(shortTitle,book,chapter);
-                        } else {
-                            if (loadChapter(book, chapter)) {
+                        //Log.i(TAG, "Loading chapter '" + chapter + "'");
+                        
+                        try {
+                            if (!chapter.toLowerCase().endsWith(".gz") 
+                                    && loadChapter(book, chapter + ".gz")) {                    
                                 setBookBtn(shortTitle,book,chapter);
                             } else {
-                                success = false;
+                                if (loadChapter(book, chapter)) {
+                                    setBookBtn(shortTitle,book,chapter);
+                                } else {
+                                    success = false;
+                                }
                             }
+                        } catch (IOException ioe) {
+                            success = false;
                         }
-                    } catch (IOException ioe) {
-                        success = false;
                     }
                     
                 } else {
@@ -294,7 +294,7 @@ public class YbkViewActivity extends Activity {
                     view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
                     mFragment = null;
                 } else if (url.indexOf('@') != -1) {
-                    view.loadUrl("javascript:location.href=\"#top\"");
+                    view.scrollTo(0,0);
                 } else if (mScrollYPos != 0){
                     view.scrollTo(0,mScrollYPos);
                 }

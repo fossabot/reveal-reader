@@ -34,7 +34,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
-import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class Main extends ListActivity implements OnGestureListener {
@@ -68,7 +67,6 @@ public class Main extends ListActivity implements OnGestureListener {
     private boolean BOOLshowFullScreen;
     private final Handler mUpdateLibHandler = new Handler();
     private static boolean mUpdating = false;
-    // private YbkDAO mYbkDao;
     private List<Book> mBookTitleList;
 
     /** Called when the activity is first created. */
@@ -454,7 +452,7 @@ public class Main extends ListActivity implements OnGestureListener {
         menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history)
                 .setIcon(android.R.drawable.ic_menu_recent_history);
         menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark)
-                .setIcon(android.R.drawable.ic_menu_compass);
+                .setIcon(android.R.drawable.ic_input_get);
         menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE,
                 R.string.menu_refresh_library).setIcon(
                 android.R.drawable.ic_menu_rotate);
@@ -507,6 +505,13 @@ public class Main extends ListActivity implements OnGestureListener {
         case HISTORY_ID:
             startActivityForResult(new Intent(this, HistoryDialog.class),
                     YbkViewActivity.CALL_HISTORY);
+            return true;
+
+        case BOOKMARK_ID: 
+            Intent bmIntent = new Intent(this, BookmarkDialog.class);
+            bmIntent.putExtra("fromMain", true);
+            startActivityForResult(bmIntent, 
+                    YbkViewActivity.CALL_BOOKMARK);
             return true;
 
         case DELETE_ID:

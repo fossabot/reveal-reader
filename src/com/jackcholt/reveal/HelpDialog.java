@@ -16,7 +16,7 @@ public class HelpDialog extends Dialog {
 	public HelpDialog(Context _this) {
 		super(_this);
 		// Is Network up or not?
-		if (Util.isNetworkUp(_this)) {
+		
 			FlurryAgent.onEvent("OnlineHelp");
 			setContentView(R.layout.help);
 			String title;
@@ -26,10 +26,14 @@ public class HelpDialog extends Dialog {
 			WebView wv = (WebView) findViewById(R.id.helpView);
 			wv.clearCache(true);
 			wv.getSettings().setJavaScriptEnabled(true);
-			wv.loadUrl("http://revealreader.thepackhams.com/revealHelp.html");
-
+			if (Util.isNetworkUp(_this)) {
+			    wv.loadUrl("http://revealreader.thepackhams.com/revealHelp.html");
+			} else {
+			    wv.loadData("Cannot get online help.  Your network is currently down.", 
+			            "text/plain", "utf-8");
+			}
 			show();
-		}
+		
 	}
 
 	public static HelpDialog create(Context _this) {

@@ -15,6 +15,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.jackcholt.reveal.data.Book;
@@ -177,6 +178,9 @@ public class YbkProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        mSharedPref = PreferenceManager
+            .getDefaultSharedPreferences(getContext());
+        
         return true;
     }
 
