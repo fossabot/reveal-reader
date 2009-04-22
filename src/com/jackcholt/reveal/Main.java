@@ -264,7 +264,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
                 boolean fileFoundInDb = false;
 
-                fileIterator = ybkDao.getBookTitles().iterator();
+                fileIterator = ybkDao.getBooks().iterator();
                 while (fileIterator.hasNext()) {
                     Book book = fileIterator.next();
 

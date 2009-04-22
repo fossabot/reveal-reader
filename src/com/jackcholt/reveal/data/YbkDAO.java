@@ -130,6 +130,14 @@ public class YbkDAO {
     }
 
     /**
+     * Get a list of books.
+     * @return A list of all books in the database.
+     */
+    public FieldIndex<Book> getBooks() {
+        return getRoot(mDb).bookIdIndex;
+    }
+    
+    /**
      * Get an Iterator for history records that are bookmarks sorted by title.
      * 
      * @return
