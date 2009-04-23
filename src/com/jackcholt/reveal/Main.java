@@ -50,7 +50,8 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int INSERT_ID = Menu.FIRST + 8;
     private static final int DELETE_ID = Menu.FIRST + 9;
 
-    public static int mNotifId = 0;
+    private static int mRefreshNotifId = 0;
+    public static int mNotifId = 1;
     public static Main mApplication;
 
     private static final int ACTIVITY_SETTINGS = 0;
@@ -163,9 +164,10 @@ public class Main extends ListActivity implements OnGestureListener {
     private final Runnable mUpdateBookList = new Runnable() {
         public void run() {
 
-            mBookTitleList = YbkDAO.getInstance(getBaseContext())
+            /*mBookTitleList = YbkDAO.getInstance(getBaseContext())
                     .getBookTitles().getList(null, null);
-
+*/
+            refreshBookList();
             mUpdating = false;
         }
     };
@@ -281,7 +283,7 @@ public class Main extends ListActivity implements OnGestureListener {
                         Util.sendNotification(this, "Refreshing the library",
                                 R.drawable.ebooksmall,
                                 "Reveal Library Refresh", mNotifMgr,
-                                mNotifId++, Main.class);
+                                mRefreshNotifId, Main.class);
                     }
 
                     int lastSlashPos = dirFilename.lastIndexOf('/');
@@ -318,7 +320,7 @@ public class Main extends ListActivity implements OnGestureListener {
                         Util.sendNotification(this, "Added '" + bookName
                                 + "' to the library", R.drawable.ebooksmall,
                                 "Reveal Library Refresh", mNotifMgr,
-                                mNotifId++, Main.class);
+                                mRefreshNotifId, Main.class);
                     } catch (IOException ioe) {
                         Util.sendNotification(this, "Could not add '"
                                 + bookName + "'. Bad file?",
@@ -366,7 +368,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
             Util.sendNotification(this, "Refreshing of library complete.",
                     R.drawable.ebooksmall, "Reveal Library Refresh", mNotifMgr,
-                    mNotifId++, Main.class);
+                    mRefreshNotifId, Main.class);
 
         }
 

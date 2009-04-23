@@ -156,33 +156,6 @@ public class YbkDAO {
         return bmList.iterator();
     }
 
-    /**
-     * Insert a book into the database.
-     * 
-     * @param fileName
-     *            The name of the file that contains the book.
-     * @return The record id of the book.
-     */
-    /*
-     * public long insertBook(final String fileName) { YbkFileReader ybkRdr;
-     * 
-     * long recordId = 0;
-     * 
-     * try { ybkRdr = new YbkFileReader(fileName); String bindingText =
-     * ybkRdr.getBindingText();
-     * 
-     * recordId = insertBook(fileName, bindingText,
-     * Util.getBookTitleFromBindingText(bindingText),
-     * Util.getBookShortTitleFromBindingText(bindingText),
-     * ybkRdr.getBookMetaData());
-     * 
-     * } catch (FileNotFoundException e) { Log.e(TAG, "No such file exists. " +
-     * fileName + " was not inserted into the library. " + e.getMessage()); }
-     * catch (IOException e) { Log.e(TAG, "Miscellaneous I/O error. " + fileName
-     * + " was not inserted into the library. " + e.getMessage()); }
-     * 
-     * return recordId; }
-     */
 
     /**
      * Insert a book into the database.
