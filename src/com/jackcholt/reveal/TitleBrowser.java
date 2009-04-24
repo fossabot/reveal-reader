@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import com.flurry.android.FlurryAgent;
+import com.nullwire.trace.ExceptionHandler;
 
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -73,6 +74,8 @@ public class TitleBrowser extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
+        
         // Change DEBUG to "0" in Global.java when building a RELEASE Version
         // for the GOOGLE APP MARKET
         // This allows for real usage stats and end user error reporting

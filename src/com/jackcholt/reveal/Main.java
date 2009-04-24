@@ -35,6 +35,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
+import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity implements OnGestureListener {
 
@@ -76,6 +77,8 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreate(savedInstanceState);
         // Debug.startMethodTracing("reveal");
 
+        ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php"); 
+        
         mApplication = this;
 
         // Change DEBUG to "0" in Global.java when building a RELEASE Version

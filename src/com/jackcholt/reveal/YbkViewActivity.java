@@ -37,6 +37,7 @@ import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
+import com.nullwire.trace.ExceptionHandler;
 
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
@@ -75,6 +76,8 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
         
         // Change DEBUG to "0" in Global.java when building a RELEASE Version
         // for the GOOGLE APP MARKET
