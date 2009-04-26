@@ -259,6 +259,8 @@ public class YbkProvider extends ContentProvider {
     public ParcelFileDescriptor openFile(final Uri uri, final String mode)
             throws FileNotFoundException {
         final int BUFFER_SIZE = 8096;
+        ParcelFileDescriptor pfd = null;
+        
         // Log.d(TAG,"In openFile. URI is: " + uri.toString());
 
         HashMap<Uri, File> tempImgFiles = mTempImgFiles;
@@ -311,15 +313,15 @@ public class YbkProvider extends ContentProvider {
                 tempImgFiles.put(uri, outFile);
 
             }
+
+            int m = ParcelFileDescriptor.MODE_READ_ONLY;
+            if (mode.equalsIgnoreCase("rw"))
+                m = ParcelFileDescriptor.MODE_READ_WRITE;
+
+            pfd = ParcelFileDescriptor.open(outFile, m);
         } else {
             Log.w(TAG, "openFile was called for non-image URI: " + uri);
         }
-
-        int m = ParcelFileDescriptor.MODE_READ_ONLY;
-        if (mode.equalsIgnoreCase("rw"))
-            m = ParcelFileDescriptor.MODE_READ_WRITE;
-
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(outFile, m);
 
         return pfd;
    }

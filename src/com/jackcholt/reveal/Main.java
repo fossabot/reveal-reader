@@ -39,37 +39,57 @@ import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity implements OnGestureListener {
 
-	private static final int HISTORY_ID = Menu.FIRST;
-	private static final int BOOKMARK_ID = Menu.FIRST + 1;
-	private static final int SETTINGS_ID = Menu.FIRST + 2;
-	private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
-	private static final int BROWSER_ID = Menu.FIRST + 4;
-	private static final int HELP_ID = Menu.FIRST + 5;
-	private static final int ABOUT_ID = Menu.FIRST + 6;
-	private static final int REVELUPDATE_ID = Menu.FIRST + 7;
-	@SuppressWarnings("unused")
-	private static final int INSERT_ID = Menu.FIRST + 8;
-	private static final int DELETE_ID = Menu.FIRST + 9;
+    private static final int HISTORY_ID = Menu.FIRST;
 
-	private static int mRefreshNotifId = 0;
-	public static int mNotifId = 1;
-	public static Main mApplication;
+    private static final int BOOKMARK_ID = Menu.FIRST + 1;
 
-	private static final int ACTIVITY_SETTINGS = 0;
-	private static final int LIBRARY_NOT_CREATED = 0;
-	// private static final boolean DONT_ADD_BOOKS = false;
-	private static final boolean ADD_BOOKS = true;
+    private static final int SETTINGS_ID = Menu.FIRST + 2;
 
-	// Gestures Stuff
-	private NotificationManager mNotifMgr;
-	@SuppressWarnings("unused")
-	private GestureDetector gestureScanner;
-	private SharedPreferences mSharedPref;
-	private boolean BOOLshowSplashScreen;
-	private boolean BOOLshowFullScreen;
-	private final Handler mUpdateLibHandler = new Handler();
-	private static boolean mUpdating = false;
-	private List<Book> mBookTitleList;
+    private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
+
+    private static final int BROWSER_ID = Menu.FIRST + 4;
+
+    private static final int HELP_ID = Menu.FIRST + 5;
+
+    private static final int ABOUT_ID = Menu.FIRST + 6;
+
+    private static final int REVELUPDATE_ID = Menu.FIRST + 7;
+
+    @SuppressWarnings("unused")
+    private static final int INSERT_ID = Menu.FIRST + 8;
+
+    private static final int DELETE_ID = Menu.FIRST + 9;
+
+    private static int mRefreshNotifId = 0;
+
+    public static int mNotifId = 1;
+
+    public static Main mApplication;
+
+    private static final int ACTIVITY_SETTINGS = 0;
+
+    private static final int LIBRARY_NOT_CREATED = 0;
+
+    // private static final boolean DONT_ADD_BOOKS = false;
+    private static final boolean ADD_BOOKS = true;
+
+    // Gestures Stuff
+    private NotificationManager mNotifMgr;
+
+    @SuppressWarnings("unused")
+    private GestureDetector gestureScanner;
+
+    private SharedPreferences mSharedPref;
+
+    private boolean BOOLshowSplashScreen;
+
+    private boolean BOOLshowFullScreen;
+
+    private final Handler mUpdateLibHandler = new Handler();
+
+    private static boolean mUpdating = false;
+
+    private List<Book> mBookTitleList;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -162,16 +182,15 @@ public class Main extends ListActivity implements OnGestureListener {
 
 	private final Runnable mUpdateBookList = new Runnable() {
 		public void run() {
-
-			/*
-			 * mBookTitleList = YbkDAO.getInstance(getBaseContext())
-			 * .getBookTitles().getList(null, null);
-			 */
-			refreshBookList();
-			mUpdating = false;
-		}
-	};
-
+            /*
+             * mBookTitleList = YbkDAO.getInstance(getBaseContext())
+             * .getBookTitles().getList(null, null);
+             */
+            refreshBookList();
+            mUpdating = false;
+        }
+    };
+    
 	/**
 	 * Updating the book list can be very time-consuming. To preserve snappiness
 	 * we're putting it in its own thread.
@@ -200,7 +219,7 @@ public class Main extends ListActivity implements OnGestureListener {
 		}
 	}
 
-	/**
+ 	/**
 	 * Convenience method to make calling refreshLibrary() without any
 	 * parameters retaining its original behavior.
 	 */
@@ -372,6 +391,7 @@ public class Main extends ListActivity implements OnGestureListener {
 		setListAdapter(bookAdapter);
 
 	}
+
 
 	/**
 	 * Class for filtering non-YBK files out of a list of files
