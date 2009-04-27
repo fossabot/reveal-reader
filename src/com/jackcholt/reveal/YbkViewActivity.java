@@ -106,8 +106,9 @@ public class YbkViewActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
-        
+        // ExceptionHandler.register(this,
+        // "http://revealreader.thepackhams.com/exception.php");
+
         // Change DEBUG to "0" in Global.java when building a RELEASE Version
         // for the GOOGLE APP MARKET
         // This allows for real usage stats and end user error reporting
@@ -297,11 +298,17 @@ public class YbkViewActivity extends Activity {
 
                         if (null != bookObj) {
                             // Log.i(TAG, "Loading chapter '" + chapter + "'");
-                            Chapter chapObj = ybkDao.getChapter(bookObj.id, chapter);
-                            Chapter chapGzObj = ybkDao.getChapter(bookObj.id, chapter + ".gz");
-                            String concatChap = chapter.substring(0, chapter.lastIndexOf("\\")) + "_.html.gz";
+
+                            String chap = chapter;
+                            int pos;
+                            if ((pos = chapter.indexOf("#")) != -1) {
+                                chap = chapter.substring(0, pos);
+                            }
+                            Chapter chapObj = ybkDao.getChapter(bookObj.id, chap);
+                            Chapter chapGzObj = ybkDao.getChapter(bookObj.id, chap + ".gz");
+                            String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
                             Chapter chapConcatObj = ybkDao.getChapter(bookObj.id, concatChap);
-                            
+
                             try {
                                 boolean bookLoaded = false;
                                 if (chapGzObj != null) {
@@ -324,7 +331,7 @@ public class YbkViewActivity extends Activity {
                             } catch (IOException ioe) {
                                 Log.w(TAG, "Couldn't load the chapter.");
                             }
-                                
+
                         } else {
                             mDialogFilename = book.substring(book.lastIndexOf("/") + 1);
                             showDialog(FILE_NONEXIST);
@@ -640,9 +647,7 @@ public class YbkViewActivity extends Activity {
 
             File testFile = new File(filePath);
             if (!testFile.exists()) {
-                // set the member property that holds the name of the book file
-                // we
-                // couldn't find
+                // set the member property that holds the name of the book file we couldn't find
                 if (TextUtils.isEmpty(filePath)) {
                     mDialogFilename = "No file";
                 } else {
@@ -652,8 +657,7 @@ public class YbkViewActivity extends Activity {
 
                 showDialog(FILE_NONEXIST);
             } else {
-                // Only create a new YbkFileReader if we're opening a different
-                // book
+                // Only create a new YbkFileReader if we're opening a different book
                 if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
                     ybkReader = mYbkReader = new YbkFileReader(this, filePath);
                 }
@@ -691,16 +695,17 @@ public class YbkViewActivity extends Activity {
                             chap = chap.substring(0, chap.length() - 1);
                         }
 
-                        // use the dreaded break <label> in order to simplify
-                        // conditional nesting
+                        // use the dreaded break <label> in order to simplify conditional nesting
                         label_get_content: if (hashLoc != -1) {
                             fragment = chap.substring(hashLoc + 1);
                             if (fragment.indexOf(".") != -1) {
                                 fragment = fragment.substring(0, fragment.indexOf("."));
                             }
+                            
                             mFragment = fragment;
 
-                            if (!Util.isInteger(fragment)) {
+                            
+                            if (!ybkDao.chapterExists(bookId,chap.substring(0, hashLoc))) {
 
                                 // need to read a special footnote chapter
                                 content = readConcatFile(chap, mYbkReader);
@@ -952,10 +957,14 @@ public class YbkViewActivity extends Activity {
 
         String content = ybkReader.readInternalFile(concatChap);
 
-        content = content.substring(content.indexOf('\002' + verse + '\002') + verse.length() + 2);
+        if (content != null) {
+            content = content.substring(content.indexOf('\002' + verse + '\002') + verse.length() + 2);
 
-        if (content.indexOf('\002') != -1) {
-            content = content.substring(0, content.indexOf('\002'));
+            if (content.indexOf('\002') != -1) {
+                content = content.substring(0, content.indexOf('\002'));
+            }
+        } else {
+            Log.e(TAG, "Couldn't find a concatenated chapter for: " + chap);
         }
 
         return content;

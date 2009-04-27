@@ -599,6 +599,17 @@ public class YbkDAO {
     }
 
     /**
+     * Check whether a chapter exists in a book.
+     * 
+     * @param bookId The id of the book.
+     * @param fileName The name of the chapter (or internal file) that we're checking for.
+     * @return True if the book has a chapter of that name, false otherwise.
+     */
+    public boolean chapterExists(final long bookId, final String fileName) {
+        return (null != getChapter(bookId, fileName)) || (null != getChapter(bookId, fileName + ".gz"));
+    }
+    
+    /**
      * clean up the object.
      */
     public void finalize() throws Throwable {

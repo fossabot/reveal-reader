@@ -98,7 +98,7 @@ public class Main extends ListActivity implements OnGestureListener {
 		// Debug.startMethodTracing("reveal");
 
 		// send an exception email via this URL
-		ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
+		//ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
 
 		mApplication = this;
 
