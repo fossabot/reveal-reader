@@ -93,5 +93,5 @@
 <string name="unknown">UNKNOWN</string>
 <string name="unloadable_chapter">UNLOADABLE CHAPTER</string>
 <string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
-<string name="chapter_not_found">Chapter ({0}) cannot be found.</string>
+<string name="chapter_not_found">\&quot;{0}\&quot; cannot be found.</string>
 </resources>

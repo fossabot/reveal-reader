@@ -299,28 +299,32 @@ public class YbkViewActivity extends Activity {
                             // Log.i(TAG, "Loading chapter '" + chapter + "'");
                             Chapter chapObj = ybkDao.getChapter(bookObj.id, chapter);
                             Chapter chapGzObj = ybkDao.getChapter(bookObj.id, chapter + ".gz");
+                            String concatChap = chapter.substring(0, chapter.lastIndexOf("\\")) + "_.html.gz";
+                            Chapter chapConcatObj = ybkDao.getChapter(bookObj.id, concatChap);
                             
-                            if (null == chapObj && null == chapGzObj) {
-                                mDialogChapter = chapter.substring(chapter.lastIndexOf("\\"));
-                                showDialog(CHAPTER_NONEXIST);
-                                
-                            } else {
-                                try {
-                                    if (!chapter.toLowerCase().endsWith(".gz") && loadChapter(book, chapter + ".gz")) {
-                                        setBookBtn(shortTitle, book, chapter);
-                                        mScrollYPos = 0;
-                                    } else {
-                                        if (loadChapter(book, chapter)) {
-                                            setBookBtn(shortTitle, book, chapter);
-                                            mScrollYPos = 0;
-                                        }
-                                    }
-
-                                } catch (IOException ioe) {
-                                    Log.w(TAG, "Couldn't load the chapter.");
+                            try {
+                                boolean bookLoaded = false;
+                                if (chapGzObj != null) {
+                                    bookLoaded = loadChapter(book, chapter + ".gz");
+                                } else if (chapObj != null || chapConcatObj != null) {
+                                    bookLoaded = loadChapter(book, chapter);
+                                } else {
+                                    mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
+                                    showDialog(CHAPTER_NONEXIST);
                                 }
-                                
+
+                                if (bookLoaded) {
+                                    setBookBtn(shortTitle, book, chapter);
+                                    mScrollYPos = 0;
+                                } else {
+                                    mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
+                                    showDialog(CHAPTER_NONEXIST);
+                                }
+
+                            } catch (IOException ioe) {
+                                Log.w(TAG, "Couldn't load the chapter.");
                             }
+                                
                         } else {
                             mDialogFilename = book.substring(book.lastIndexOf("/") + 1);
                             showDialog(FILE_NONEXIST);
