@@ -62,8 +62,10 @@ public class YbkFileReader {
 
     private String mBindingText = "No Binding Text";
 
+    @SuppressWarnings("unused")
     private String mBookTitle = "Couldn't get the title of this book";
 
+    @SuppressWarnings("unused")
     private String mBookShortTitle = "No Short Title";
 
     private String mBookMetaData = null;
@@ -236,7 +238,6 @@ public class YbkFileReader {
     @SuppressWarnings("unchecked")
     public long populateBook() throws IOException {
         String fileName = mFilename;
-        boolean success = true;
         YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
         populateFileData();
 
@@ -249,88 +250,83 @@ public class YbkFileReader {
             shortTitle = Util.getBookShortTitleFromBindingText(bindingText);
         }
 
-        long bookId = mBookId = ybkDao.insertBook(fileName, bindingText, bookTitle, shortTitle, mBookMetaData);
+        List<Chapter> chapters = new ArrayList();
+        List<InternalFile> ifList = mInternalFiles;
+        ArrayList<Order> orderList = mOrderList;
 
-        if (bookId == 0) {
-            // we'll assume the fileName is already in the db and continue
-            Log.w(TAG, "Unable to insert book (" + fileName + ") into the database.  Must already be in the database.");
-        } else {
+        Order[] orderArray = orderList.toArray(new Order[orderList.size()]);
 
-            List<InternalFile> ifList = mInternalFiles;
-            ArrayList<Order> orderList = mOrderList;
+        Comparator orderComp = new Comparator<Order>() {
 
-            Order[] orderArray = orderList.toArray(new Order[orderList.size()]);
+            public int compare(Order arg0, Order arg1) {
+                return arg0.chapter.compareToIgnoreCase(arg1.chapter);
+            }
 
-            Comparator orderComp = new Comparator<Order>() {
+        };
 
-                public int compare(Order arg0, Order arg1) {
-                    return arg0.chapter.compareToIgnoreCase(arg1.chapter);
-                }
+        Arrays.sort(orderArray, orderComp);
 
-            };
+        for (int i = 0, chapAmount = ifList.size(); i < chapAmount; i++) {
+            Integer orderNbr = null;
+            InternalFile iFile = ifList.get(i);
+            if (iFile.fileName.length() == 0) {
+                continue;
+            }
 
-            Arrays.sort(orderArray, orderComp);
+            if (orderList != null) {
 
-            for (int i = 0, chapAmount = ifList.size(); i < chapAmount; i++) {
-                Integer orderNbr = null;
-                InternalFile iFile = ifList.get(i);
-                if (iFile.fileName.length() == 0) {
-                    continue;
-                }
+                String iFileOrderString = "";
+                String[] iFileOrderParts = iFile.fileName.toLowerCase().split("\\\\");
+                int partLength = iFileOrderParts.length;
 
-                if (orderList != null) {
-
-                    String iFileOrderString = "";
-                    String[] iFileOrderParts = iFile.fileName.toLowerCase().split("\\\\");
-                    int partLength = iFileOrderParts.length;
-
-                    if (partLength > 2) {
-                        for (int k = 2; k < partLength; k++) {
-                            iFileOrderString += iFileOrderParts[k] + "\\";
-                        }
-
-                        if (iFileOrderString.length() > 0) {
-                            iFileOrderString = iFileOrderString.substring(0, iFileOrderString.length() - 1);
-                        }
-
-                    } else {
-                        Log.d(TAG, "Internal File Name: " + iFile.fileName);
-                        iFileOrderString = iFile.fileName.toLowerCase().substring(1);
+                if (partLength > 2) {
+                    for (int k = 2; k < partLength; k++) {
+                        iFileOrderString += iFileOrderParts[k] + "\\";
                     }
 
-                    int dotPos = iFileOrderString.indexOf(".");
-                    if (dotPos != -1) {
-                        iFileOrderString = iFileOrderString.substring(0, dotPos);
-                        int orderNumber = Arrays.binarySearch(orderArray, new Order(iFileOrderString, 0), orderComp);
-
-                        if (orderNumber >= 0) {
-                            orderNbr = orderArray[orderNumber].order;
-                        }
-                    } else {
-                        Log.w(TAG, "Chapter is missing file extension. '" + iFileOrderString + "'");
+                    if (iFileOrderString.length() > 0) {
+                        iFileOrderString = iFileOrderString.substring(0, iFileOrderString.length() - 1);
                     }
 
+                } else {
+                    Log.d(TAG, "Internal File Name: " + iFile.fileName);
+                    iFileOrderString = iFile.fileName.toLowerCase().substring(1);
                 }
 
-                if (!ybkDao.insertChapter(bookId, iFile.fileName, null, iFile.len, null, null, iFile.offset, null,
-                        orderNbr, null)) {
+                int dotPos = iFileOrderString.indexOf(".");
+                if (dotPos != -1) {
+                    iFileOrderString = iFileOrderString.substring(0, dotPos);
+                    int orderNumber = Arrays.binarySearch(orderArray, new Order(iFileOrderString, 0), orderComp);
 
-                    success = false;
-                    break;
+                    if (orderNumber >= 0) {
+                        orderNbr = orderArray[orderNumber].order;
+                    }
+                } else {
+                    Log.w(TAG, "Chapter is missing file extension. '" + iFileOrderString + "'");
                 }
 
             }
 
-            if (success) {
-                ybkDao.commit();
-            } else {
-                ybkDao.rollback();
-                bookId = 0;
-                Log.e(TAG, "The book and all its chapters could not be inserted.");
-            }
-
+            long id = Util.getUniqueTimeStamp();
+            Chapter chap = new Chapter();
+            chap.id = id;
+            chap.fileName = iFile.fileName;
+            chap.length = iFile.len;
+            chap.offset = iFile.offset;
+            if (orderNbr != null)
+                chap.orderNumber = orderNbr;
+            chapters.add(chap);
         }
 
+        long bookId = 0;
+        try {
+            bookId = mBookId = ybkDao.insertBook(fileName, bindingText, bookTitle, shortTitle, mBookMetaData, chapters);
+        } finally {
+            if (bookId == 0) {
+                // we'll assume the fileName is already in the db and continue
+                Log.w(TAG, "Unable to insert book (" + fileName + ") into the database.");
+            }
+        }
         return bookId;
     }
 
@@ -394,7 +390,7 @@ public class YbkFileReader {
         return readInternalFile(chapName, FROM_DB);
     }
 
-    Comparator iFileComp = new Comparator() {
+    Comparator<Object> iFileComp = new Comparator<Object>() {
 
         public int compare(Object arg0, Object arg1) {
             InternalFile if0 = (InternalFile) arg0;
@@ -418,7 +414,6 @@ public class YbkFileReader {
      * @throws IOException
      *             If the chapter cannot be read.
      */
-    @SuppressWarnings("unchecked")
     public String readInternalFile(String chapName, final int source) throws IOException {
         String fileText = null;
         int offset = 0;
@@ -504,90 +499,6 @@ public class YbkFileReader {
      */
     public final String getFilename() {
         return mFilename;
-    }
-
-    /**
-     * Analyze the YBK file and save file contents data for later reference.
-     * 
-     * @param bookId
-     *            The id of the book these chapters belong in.
-     * @throws InvalidFileFormatException
-     *             If the YBK file is not readable.
-     */
-    public boolean populateChapters(final long bookId) throws IOException {
-        String iFileName = "";
-        int iBookOffset = 0;
-        int iBookLength = 0;
-        boolean success = true;
-
-        RandomAccessFile file = mFile;
-        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
-
-        String orderString = readOrderCfg(FROM_INTERNAL);
-        String[] orders = null;
-        if (orderString != null) {
-            orders = orderString.split(",");
-        }
-
-        int indexLength = Util.readVBInt(file);
-        // Log.d(TAG,"Index Length: " + indexLength);
-
-        byte[] indexArray = new byte[indexLength];
-
-        if (file.read(indexArray) < indexLength) {
-            throw new InvalidFileFormatException("Index Length is greater than length of file.");
-        }
-
-        if (!ybkDao.deleteChapters(bookId)) {
-            Log.e(TAG, "Could not delete the chapters for book with id " + bookId);
-        } else {
-
-            // Read the index information into the internalFiles list
-            int pos = 0;
-
-            // Read the index and create chapter records
-            while (pos < indexLength) {
-                Integer orderNumber = null;
-
-                StringBuffer fileNameSBuf = new StringBuffer();
-
-                byte b;
-                int fileNameStartPos = pos;
-
-                while ((b = indexArray[pos++]) != 0 && pos < indexLength) {
-                    fileNameSBuf.append((char) b);
-                }
-
-                iFileName = fileNameSBuf.toString();
-
-                pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
-
-                iBookOffset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-                pos += 4;
-
-                iBookLength = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-                pos += 4;
-
-                if (orders != null) {
-                    int orderNbr = Arrays.binarySearch(orders, iFileName, new Comparator<String>() {
-
-                        public int compare(String arg0, String arg1) {
-                            return arg0.compareToIgnoreCase(arg1);
-                        }
-
-                    });
-
-                    if (orderNbr >= 0) {
-                        orderNumber = orderNbr;
-                    }
-                }
-
-                ybkDao.insertChapter(bookId, iFileName, null, iBookLength, null, null, iBookOffset, null, orderNumber,
-                        null);
-
-            }
-        }
-        return success;
     }
 
     /**

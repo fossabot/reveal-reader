@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.jackcholt.reveal.data.History;
+import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 import com.nullwire.trace.ExceptionHandler;
 
@@ -24,21 +25,22 @@ public class BookmarkDialog extends ListActivity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		
+
         ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
-        
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version for the GOOGLE APP MARKET
-		// This allows for real usage stats and end user error reporting
-		if (Global.DEBUG == 0 ) {
-			// Release Key for use of the END USERS
-			FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-		} else {
-			// Development key for use of the DEVELOPMENT TEAM
-			FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-		}
-		FlurryAgent.onEvent("BookMarkDialog");
-        
-		Bundle extras = getIntent().getExtras();
+
+        // Change DEBUG to "0" in Global.java when building a RELEASE Version
+        // for the GOOGLE APP MARKET
+        // This allows for real usage stats and end user error reporting
+        if (Global.DEBUG == 0) {
+            // Release Key for use of the END USERS
+            FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+        } else {
+            // Development key for use of the DEVELOPMENT TEAM
+            FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+        }
+        FlurryAgent.onEvent("BookMarkDialog");
+
+        Bundle extras = getIntent().getExtras();
 
         setContentView(R.layout.dialog_bookmark);
 
@@ -48,37 +50,39 @@ public class BookmarkDialog extends ListActivity {
             addBtn.setVisibility(View.GONE);
         }
 
-        YbkDAO ybkDao = YbkDAO.getInstance(this);
-        
-        List<History> data = ybkDao.getBookmarkList();
-        
-        // Now create a simple array adapter and set it to display
-        ArrayAdapter<History> histAdapter = 
-                new ArrayAdapter<History>(this, R.layout.history_list_row, data);
+        try {
+            YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-        setListAdapter(histAdapter);
-        
-        addBtn.setOnClickListener(new OnClickListener() {
+            List<History> data = ybkDao.getBookmarkList();
 
-            public void onClick(final View view) {
+            // Now create a simple array adapter and set it to display
+            ArrayAdapter<History> histAdapter = new ArrayAdapter<History>(this, R.layout.history_list_row, data);
 
-                Log.d(TAG, "Adding a bookmark");
+            setListAdapter(histAdapter);
 
-                Intent intent = new Intent(getBaseContext(),
-                        YbkViewActivity.class);
-                intent.putExtra(ADD_BOOKMARK, true);
-                setResult(RESULT_OK, intent);
+            addBtn.setOnClickListener(new OnClickListener() {
 
-                finish();
-            }
+                public void onClick(final View view) {
 
-        });
+                    Log.d(TAG, "Adding a bookmark");
+
+                    Intent intent = new Intent(getBaseContext(), YbkViewActivity.class);
+                    intent.putExtra(ADD_BOOKMARK, true);
+                    setResult(RESULT_OK, intent);
+
+                    finish();
+                }
+
+            });
+        } catch (StorageException se) {
+            // TODO - add friendly message
+            Util.displayError(this, se, null);
+        }
 
     }
 
     @Override
-    protected void onListItemClick(final ListView listView, final View view,
-            final int selectionRowId, final long id) {
+    protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
 
         Log.d(TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
         History hist = (History) listView.getItemAtPosition(selectionRowId);
@@ -90,12 +94,12 @@ public class BookmarkDialog extends ListActivity {
 
         finish();
     }
-    
-	/** Called when the activity is going away. */
-	@Override
-	protected void onStop() {
-		super.onStop();
-		FlurryAgent.onEndSession(Main.getMainApplication());
-	}
+
+    /** Called when the activity is going away. */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        FlurryAgent.onEndSession(Main.getMainApplication());
+    }
 
 }

@@ -5,10 +5,14 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.io.StringWriter;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -19,7 +23,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -30,6 +33,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 
 /**
@@ -39,6 +43,8 @@ import com.jackcholt.reveal.data.YbkDAO;
  * 
  */
 public class Util {
+    private static final String TMP_EXTENSION = ".tmp";
+
     private static final String TAG = "Util";
 
     // private static final int DIALOG_DELETE = 1;
@@ -51,17 +57,15 @@ public class Util {
      * Dave Packham Check for network connectivity before trying to go to the
      * net and hanging :) hitting F8 in the emulator will turn network on/off
      */
-    //@SuppressWarnings("static-access")
+    // @SuppressWarnings("static-access")
     public static boolean isNetworkUp(Context _this) {
         boolean networkUp;
 
         ConnectivityManager connectivityManager = (ConnectivityManager) _this
-                .getSystemService(_this.CONNECTIVITY_SERVICE);
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        NetworkInfo mobNetInfo = connectivityManager
-                .getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        NetworkInfo wifiNetInfo = connectivityManager
-                .getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        NetworkInfo mobNetInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        NetworkInfo wifiNetInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 
         if (mobNetInfo.getState() == NetworkInfo.State.CONNECTED
                 || wifiNetInfo.getState() == NetworkInfo.State.CONNECTED) {
@@ -82,8 +86,7 @@ public class Util {
      */
     public static final String formatTitle(final String title) {
         StringBuffer sb = new StringBuffer();
-        Scanner scan = new Scanner(title.toLowerCase().replaceAll(
-                "<[^>]*(small|b|)[^<]*>", ""));
+        Scanner scan = new Scanner(title.toLowerCase().replaceAll("<[^>]*(small|b|)[^<]*>", ""));
 
         while (scan.hasNext()) {
             String word = scan.next();
@@ -99,8 +102,7 @@ public class Util {
                         // actual first letter
                         capLength = 2;
                     }
-                    word = word.substring(0, capLength).toUpperCase()
-                            + word.substring(capLength, word.length());
+                    word = word.substring(0, capLength).toUpperCase() + word.substring(capLength, word.length());
                 }
             }
 
@@ -200,8 +202,7 @@ public class Util {
 
             int bytesRead = 0;
             while (-1 != (bytesRead = zip.read(newBuf, 0, BUF_SIZE))) {
-                decomp.append(new String(newBuf, "ISO_8859-1").substring(0,
-                        bytesRead));
+                decomp.append(new String(newBuf, "ISO_8859-1").substring(0, bytesRead));
             }
         } catch (IOException ioe) {
             Log.e(TAG, "Error decompressing file: " + ioe.getMessage());
@@ -224,13 +225,11 @@ public class Util {
      * @throws IOException
      *             When the DataInputStream &quot;is&quot; cannot be read from.
      */
-    public static final int[] makeVBIntArray(final byte[] ba, final int pos)
-            throws IOException {
+    public static final int[] makeVBIntArray(final byte[] ba, final int pos) throws IOException {
         int[] iArray = new int[4];
 
         if (pos > ba.length) {
-            throw new IllegalArgumentException(
-                    "The pos parameter is larger than the size of the byte array.");
+            throw new IllegalArgumentException("The pos parameter is larger than the size of the byte array.");
         }
 
         // Need to use some bit manipulation to make the bytes be treated as
@@ -253,8 +252,7 @@ public class Util {
      * @throws IOException
      *             When the DataInputStream &quot;is&quot; cannot be read from.
      */
-    public static final int[] makeVBIntArray(final RandomAccessFile is)
-            throws IOException {
+    public static final int[] makeVBIntArray(final RandomAccessFile is) throws IOException {
         int[] iArray = new int[4];
 
         iArray[0] = (0x000000FF & (int) is.readByte());
@@ -299,8 +297,7 @@ public class Util {
         return i;
     }
 
-    public static final String htmlize(final String text,
-            final SharedPreferences sharedPref) {
+    public static final String htmlize(final String text, final SharedPreferences sharedPref) {
         if (text == null) {
             throw new IllegalArgumentException("No text was passed.");
         }
@@ -315,28 +312,24 @@ public class Util {
             content = content.substring(pos + 5);
         }
 
-        String style = "<style>" + "._showpicture {"
-                + (showPicture ? "display:inline;" : "display:none") + "}"
-                + "._hidepicture {"
-                + (showPicture ? "display:none;" : "display:inline") + "}"
-                + "._showtoc {display:inline}" + "._hidetoc {display:none}"
-                + ".ah {" + (showAH ? "display:inline;" : "display:none") + "}"
-                + "</style>";
+        String style = "<style>" + "._showpicture {" + (showPicture ? "display:inline;" : "display:none") + "}"
+                + "._hidepicture {" + (showPicture ? "display:none;" : "display:inline") + "}"
+                + "._showtoc {display:inline}" + "._hidetoc {display:none}" + ".ah {"
+                + (showAH ? "display:inline;" : "display:none") + "}" + "</style>";
 
         // Log.d(TAG, "style: " + style);
 
-        return "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
-                + style + "</head><body>" + content + "</body></html>";
+        return "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">" + style
+                + "</head><body>" + content + "</body></html>";
     }
 
-    public static final HashMap<String, String> getFileNameChapterFromUri(
-            final String uri, final String libDir, final boolean isGzipped) {
+    public static final HashMap<String, String> getFileNameChapterFromUri(final String uri, final String libDir,
+            final boolean isGzipped) {
 
         HashMap<String, String> map = new HashMap<String, String>();
 
         int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
-        String dataString = uri.substring(ContentUriLength + 1).replace("%20",
-                " ");
+        String dataString = uri.substring(ContentUriLength + 1).replace("%20", " ");
 
         String[] urlParts = dataString.split("/");
 
@@ -400,10 +393,10 @@ public class Util {
      * @param libDir
      *            The directory which contains our ebooks.
      * @return The processed content.
-     * @throws InconsistentContentException
+     * @throws StorageException
      */
-    public static String processIfbook(final String content, final Context ctx,
-            final String libDir) {
+    public static String processIfbook(final String content, final Context ctx, final String libDir)
+            throws StorageException {
 
         YbkDAO ybkDao = YbkDAO.getInstance(ctx);
 
@@ -431,12 +424,10 @@ public class Util {
                 String bookName = oldContent.substring(8, gtPos);
                 String lowerBookName = bookName.toLowerCase();
 
-                int elsePos = oldLowerContent.indexOf("<elsebook="
-                        + lowerBookName + ">");
+                int elsePos = oldLowerContent.indexOf("<elsebook=" + lowerBookName + ">");
                 if (elsePos != -1 && elsePos > gtPos) {
 
-                    int endPos = oldLowerContent.indexOf("<endbook="
-                            + lowerBookName + ">");
+                    int endPos = oldLowerContent.indexOf("<endbook=" + lowerBookName + ">");
                     if (endPos != -1 && endPos > elsePos) {
 
                         fullIfBookFound = true;
@@ -444,20 +435,17 @@ public class Util {
                         Book book = ybkDao.getBook(libDir + bookName + ".ybk");
 
                         if (book != null) {
-                            newContent.append(oldContent.substring(gtPos + 1,
-                                    elsePos));
+                            newContent.append(oldContent.substring(gtPos + 1, elsePos));
                             // Log.d(TAG, "Appending: " +
                             // oldContent.substring(gtPos + 1, elsePos));
                         } else {
-                            newContent.append(oldContent.substring(elsePos
-                                    + bookName.length() + 11, endPos));
+                            newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
                         }
 
                         // remove just-parsed <ifbook> tag structure so we can
                         // find the next
                         oldContent.delete(0, endPos + bookName.length() + 10);
-                        oldLowerContent.delete(0, endPos + bookName.length()
-                                + 10);
+                        oldLowerContent.delete(0, endPos + bookName.length() + 10);
                     }
                 }
             }
@@ -485,8 +473,7 @@ public class Util {
      * @return The converted content.
      */
     public static String convertAhtag(final String content) {
-        String fixedContent = content.replaceAll(
-                "<ahtag num=(\\d+)>(.+)</ahtag>",
+        String fixedContent = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>",
                 "<span class=\"ah\" id=\"ah$1\">$2</span>");
 
         // Log.d(TAG, "Fixed Content" + fixedContent);
@@ -518,6 +505,7 @@ public class Util {
          * endPos > gtPos) {
          * 
          * fullAhtagFound = true;
+         * 
          * 
          * 
          * newContent.append("<span class=\"ah\" id=\"ah").append(number).append(
@@ -554,8 +542,7 @@ public class Util {
      * @throws InvalidFileFormatException
      *             If content is in the wrong format.
      */
-    public static String convertIfvar(final String content)
-            throws InvalidFileFormatException {
+    public static String convertIfvar(final String content) throws InvalidFileFormatException {
         /*
          * String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" +
          * "<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
@@ -602,33 +589,26 @@ public class Util {
                 String variable = oldContent.substring(7, gtPos);
                 String lowerVariable = variable.toLowerCase();
 
-                int elsePos = oldLowerContent.indexOf("<elsevar="
-                        + lowerVariable + ">");
+                int elsePos = oldLowerContent.indexOf("<elsevar=" + lowerVariable + ">");
                 if (elsePos != -1 && elsePos > gtPos) {
 
-                    int endPos = oldLowerContent.indexOf("<endvar="
-                            + lowerVariable + ">");
+                    int endPos = oldLowerContent.indexOf("<endvar=" + lowerVariable + ">");
                     if (endPos != -1 && endPos > elsePos) {
 
                         fullIfvarFound = true;
 
-                        newContent.append("<span class=\"_show").append(
-                                variable).append("\">");
+                        newContent.append("<span class=\"_show").append(variable).append("\">");
 
-                        StringBuilder showText = new StringBuilder(oldContent
-                                .substring(gtPos + 1, elsePos));
-                        StringBuilder showLowerText = new StringBuilder(
-                                oldContent.substring(gtPos + 1, elsePos)
-                                        .toLowerCase());
+                        StringBuilder showText = new StringBuilder(oldContent.substring(gtPos + 1, elsePos));
+                        StringBuilder showLowerText = new StringBuilder(oldContent.substring(gtPos + 1, elsePos)
+                                .toLowerCase());
                         StringBuilder newShowText = new StringBuilder();
 
                         int varPos = showLowerText.indexOf("+" + variable);
                         if (varPos != -1) {
-                            int anchorPos = showLowerText.substring(0, varPos)
-                                    .lastIndexOf("<a");
+                            int anchorPos = showLowerText.substring(0, varPos).lastIndexOf("<a");
                             if (anchorPos != -1) {
-                                newShowText.append(showText.substring(0,
-                                        anchorPos));
+                                newShowText.append(showText.substring(0, anchorPos));
 
                                 showText.delete(0, anchorPos);
                                 showLowerText.delete(0, anchorPos);
@@ -636,26 +616,19 @@ public class Util {
                                 int closeAnchorPos = showLowerText.indexOf(">");
                                 int endAnchorPos = 0;
                                 if (closeAnchorPos != -1) {
-                                    endAnchorPos = showLowerText.substring(
-                                            closeAnchorPos).indexOf("</a>");
+                                    endAnchorPos = showLowerText.substring(closeAnchorPos).indexOf("</a>");
                                     if (endAnchorPos == -1) {
-                                        throw new InvalidFileFormatException(
-                                                "Show anchor tag is not properly closed");
+                                        throw new InvalidFileFormatException("Show anchor tag is not properly closed");
                                     }
                                 }
 
+                                newShowText.append("<a href=\"javascript:hideSpan('").append(variable).append("')\">");
                                 newShowText.append(
-                                        "<a href=\"javascript:hideSpan('")
-                                        .append(variable).append("')\">");
-                                newShowText.append(
-                                        showText.substring(closeAnchorPos + 1,
-                                                closeAnchorPos + endAnchorPos))
-                                        .append("</a>");
+                                        showText.substring(closeAnchorPos + 1, closeAnchorPos + endAnchorPos)).append(
+                                        "</a>");
 
-                                showText.delete(0, closeAnchorPos
-                                        + endAnchorPos + 4);
-                                showLowerText.delete(0, closeAnchorPos
-                                        + endAnchorPos + 4);
+                                showText.delete(0, closeAnchorPos + endAnchorPos + 4);
+                                showLowerText.delete(0, closeAnchorPos + endAnchorPos + 4);
 
                                 newShowText.append(showText);
                             }
@@ -665,32 +638,24 @@ public class Util {
                         // Log.d(TAG, "Appending: " + newShowText);
 
                         oldContent.delete(0, elsePos + variable.length() + 10);
-                        oldLowerContent.delete(0, elsePos + variable.length()
-                                + 10);
+                        oldLowerContent.delete(0, elsePos + variable.length() + 10);
 
-                        newContent.append("</span><span class=\"_hide").append(
-                                variable).append("\">");
+                        newContent.append("</span><span class=\"_hide").append(variable).append("\">");
 
-                        endPos = oldLowerContent.indexOf("<endvar="
-                                + lowerVariable + ">");
+                        endPos = oldLowerContent.indexOf("<endvar=" + lowerVariable + ">");
                         if (endPos == -1) {
-                            throw new InvalidFileFormatException(
-                                    "Endvar tag now missing");
+                            throw new InvalidFileFormatException("Endvar tag now missing");
                         }
 
-                        StringBuilder hideText = new StringBuilder(oldContent
-                                .substring(0, endPos));
-                        StringBuilder hideLowerText = new StringBuilder(
-                                oldContent.substring(0, endPos).toLowerCase());
+                        StringBuilder hideText = new StringBuilder(oldContent.substring(0, endPos));
+                        StringBuilder hideLowerText = new StringBuilder(oldContent.substring(0, endPos).toLowerCase());
                         StringBuilder newHideText = new StringBuilder();
 
                         varPos = hideLowerText.indexOf("+" + variable);
                         if (varPos != -1) {
-                            int anchorPos = hideLowerText.substring(0, varPos)
-                                    .lastIndexOf("<a");
+                            int anchorPos = hideLowerText.substring(0, varPos).lastIndexOf("<a");
                             if (anchorPos != -1) {
-                                newHideText.append(hideText.substring(0,
-                                        anchorPos));
+                                newHideText.append(hideText.substring(0, anchorPos));
 
                                 hideText.delete(0, anchorPos);
                                 hideLowerText.delete(0, anchorPos);
@@ -698,26 +663,19 @@ public class Util {
                                 int closeAnchorPos = hideLowerText.indexOf(">");
                                 int endAnchorPos = 0;
                                 if (closeAnchorPos != -1) {
-                                    endAnchorPos = hideLowerText.substring(
-                                            closeAnchorPos).indexOf("</a>");
+                                    endAnchorPos = hideLowerText.substring(closeAnchorPos).indexOf("</a>");
                                     if (endAnchorPos == -1) {
-                                        throw new InvalidFileFormatException(
-                                                "Hide anchor tag is not properly closed");
+                                        throw new InvalidFileFormatException("Hide anchor tag is not properly closed");
                                     }
                                 }
 
+                                newHideText.append("<a href=\"javascript:showSpan('").append(variable).append("')\">");
                                 newHideText.append(
-                                        "<a href=\"javascript:showSpan('")
-                                        .append(variable).append("')\">");
-                                newHideText.append(
-                                        hideText.substring(closeAnchorPos + 1,
-                                                closeAnchorPos + endAnchorPos))
-                                        .append("</a>");
+                                        hideText.substring(closeAnchorPos + 1, closeAnchorPos + endAnchorPos)).append(
+                                        "</a>");
 
-                                hideText.delete(0, closeAnchorPos
-                                        + endAnchorPos + 4);
-                                hideLowerText.delete(0, closeAnchorPos
-                                        + endAnchorPos + 4);
+                                hideText.delete(0, closeAnchorPos + endAnchorPos + 4);
+                                hideLowerText.delete(0, closeAnchorPos + endAnchorPos + 4);
 
                                 newHideText.append(hideText);
                             }
@@ -729,8 +687,7 @@ public class Util {
                         // remove just-parsed <ifvar> tag structure so we can
                         // find the next
                         oldContent.delete(0, endPos + variable.length() + 9);
-                        oldLowerContent.delete(0, endPos + variable.length()
-                                + 9);
+                        oldLowerContent.delete(0, endPos + variable.length() + 9);
                     }
                 }
             }
@@ -753,15 +710,20 @@ public class Util {
      * Download and install title into library. Used by the title browser
      * thread.
      * 
+     * @param fileLocation
+     *            Url of target file
      * @param downloadUrl
      *            Url from which we are downloading
-     * @return true if the file was downloaded.
+     * @param libDir
+     *            library directory
+     * @param context
+     *            the caller's context
+     * @return list of file paths to add to library
      * @throws IOException
-     *             When unable to read a downloaded file.
+     *             if download fails
      */
-    public static boolean fetchAndLoadTitle(final URL fileLocation,
-            final URL downloadUrl, final String libDir, final Context context)
-            throws IOException {
+    public static List<String> fetchTitle(final URL fileLocation, final URL downloadUrl, final String libDir,
+            final Context context) throws IOException {
 
         boolean success = false;
 
@@ -770,19 +732,18 @@ public class Util {
         final byte[] buffer = new byte[255];
 
         ArrayList<File> files = new ArrayList<File>();
+        ArrayList<String> downloaded = new ArrayList<String>();
 
         try {
             FileOutputStream out = null;
 
-            if (fileLocation.getFile().endsWith("zip")
-                    || fileLocation.getFile().contains("?")) {
-                ZipInputStream zip = new ZipInputStream(downloadUrl
-                        .openStream());
+            if (fileLocation.getFile().endsWith("zip") || fileLocation.getFile().contains("?")) {
+                ZipInputStream zip = new ZipInputStream(downloadUrl.openStream());
 
                 ZipEntry entry;
                 while ((entry = zip.getNextEntry()) != null) {
                     // unpack all the files
-                    File file = new File(libDir + entry.getName());
+                    File file = new File(libDir + entry.getName() + TMP_EXTENSION);
 
                     // check to see if they already have this title
                     // if (file.exists() && !shouldDownload(context, file)) {
@@ -793,66 +754,64 @@ public class Util {
                     }
 
                     out = new FileOutputStream(file);
-
-                    int bytesRead = 0;
-                    while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-
                     files.add(file);
+                    try {
+                        int bytesRead = 0;
+                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    } finally {
+                        out.close();
+                    }
                 }
                 zip.close();
             } else if (fileLocation.getFile().endsWith("ybk")) {
-                BufferedInputStream in = new BufferedInputStream(downloadUrl
-                        .openStream());
+                BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
+                try {
 
-                File file = new File(libDir + fileLocation.getFile());
+                    File file = new File(libDir + fileLocation.getFile() + TMP_EXTENSION);
 
-                // if (file.exists() && !shouldDownload(context, file)) {
-                if (file.exists()) {
-                    file.delete();
-                    ybkDao.deleteBook(file.getAbsolutePath());
+                    // if (file.exists() && !shouldDownload(context, file)) {
+                    if (file.exists()) {
+                        file.delete();
+                        ybkDao.deleteBook(file.getAbsolutePath());
+                    }
+                    out = new FileOutputStream(file);
+                    files.add(file);
+
+                    int bytesRead = 0;
+                    try {
+                        while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    } finally {
+                        out.close();
+                    }
+                } finally {
+                    in.close();
                 }
-                out = new FileOutputStream(file);
-
-                int bytesRead = 0;
-                while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
-                    out.write(buffer, 0, bytesRead);
-                }
-
-                files.add(file);
-
-                in.close();
             } else {
                 Log.w(TAG, "Unable to process file " + fileLocation.getFile());
             }
 
-            if (out != null) {
-                out.flush();
-                out.close();
-            }
-
             success = true;
-        } catch (IOException e) {
-            Log.w(TAG, e.getMessage());
-        }
-
-        // add this book to the list
-        if (success) {
+        } finally {
             for (File file : files) {
-                // The file was properly downloaded
+                if (success) {
 
-                // Create an object for reading a ybk file;
-                YbkFileReader ybkRdr = new YbkFileReader(context, file
-                        .getAbsolutePath());
-                // Tell the YbkFileReader to populate the book info into the
-                // database;
-                ybkRdr.populateBook();
-
+                    // rename from tmp
+                    String realNameString = file.getAbsolutePath();
+                    realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
+                    File realName = new File(realNameString);
+                    file.renameTo(realName);
+                    downloaded.add(realNameString);
+                } else {
+                    // delete partially downloaded files
+                    file.delete();
+                }
             }
         }
-
-        return success;
+        return downloaded;
     }
 
     /**
@@ -864,27 +823,26 @@ public class Util {
      * @param file
      * @return
      */
-    @SuppressWarnings("unused")
-    private static boolean shouldDownload(final Context context, final File file) {
-        new AlertDialog.Builder(context).setTitle(
-                R.string.ebook_exists_still_download).setPositiveButton(
-                R.string.alert_dialog_ok,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        file.delete();
-                        YbkDAO ybkDao = YbkDAO.getInstance(context);
-                        ybkDao.deleteBook(file.getAbsolutePath());
-                    }
-                }).setNegativeButton(R.string.cancel,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        /* Do absolutely nothing */
-                    }
-                }).create();
-
-        return !file.exists();
-    }
-
+    // @SuppressWarnings("unused")
+    // private static boolean shouldDownload(final Context context, final File
+    // file) {
+    // new AlertDialog.Builder(context).setTitle(
+    // R.string.ebook_exists_still_download).setPositiveButton(
+    // R.string.alert_dialog_ok,
+    // new DialogInterface.OnClickListener() {
+    // public void onClick(DialogInterface dialog, int whichButton) {
+    // file.delete();
+    // YbkService.requestRemoveBook(context, file.getAbsolutePath());
+    // }
+    // }).setNegativeButton(R.string.cancel,
+    // new DialogInterface.OnClickListener() {
+    // public void onClick(DialogInterface dialog, int whichButton) {
+    // /* Do absolutely nothing */
+    // }
+    // }).create();
+    //
+    // return !file.exists();
+    // }
     public static void showSplashScreen(Context _this) {
         boolean mShowSplashScreen = true;
         // Toast Splash with image :)
@@ -906,11 +864,9 @@ public class Util {
         if (file.delete()) {
             // Delete was successful.
             // refreshList();
-            Toast.makeText(_this, R.string.file_deleted, Toast.LENGTH_SHORT)
-                    .show();
+            Toast.makeText(_this, R.string.file_deleted, Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(_this, R.string.error_deleting_file,
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(_this, R.string.error_deleting_file, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -921,12 +877,10 @@ public class Util {
      *      sendNotification(Context,String,int,String,int,NotificationManager,Class
      *      ,boolean)
      */
-    public static void sendNotification(final Context ctx, final String text,
-            final int iconId, final String title, NotificationManager notifMgr,
-            final int notifId, final Class<?> classToStart) {
+    public static void sendNotification(final Context ctx, final String text, final int iconId, final String title,
+            NotificationManager notifMgr, final int notifId, final Class<?> classToStart) {
 
-        sendNotification(ctx, text, iconId, title, notifId, notifMgr,
-                classToStart, true);
+        sendNotification(ctx, text, iconId, title, notifId, notifMgr, classToStart, true);
     }
 
     /**
@@ -952,15 +906,11 @@ public class Util {
      *            True if the notification should automatically disappear from
      *            the queue when tapped on.
      */
-    public static void sendNotification(final Context ctx, final String text,
-            final int iconId, final String title, final int notifId,
-            final NotificationManager notifMgr, final Class<?> classToStart,
-            final boolean autoCancel) {
-        PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0,
-                new Intent(ctx, classToStart), 0);
+    public static void sendNotification(final Context ctx, final String text, final int iconId, final String title,
+            final int notifId, final NotificationManager notifMgr, final Class<?> classToStart, final boolean autoCancel) {
+        PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0, new Intent(ctx, classToStart), 0);
 
-        Notification notif = new Notification(iconId, text, System
-                .currentTimeMillis());
+        Notification notif = new Notification(iconId, text, System.currentTimeMillis());
 
         if (autoCancel) {
             notif.flags = notif.flags | Notification.FLAG_AUTO_CANCEL;
@@ -978,10 +928,8 @@ public class Util {
      *            The context in which we are running.
      */
     public static void createDefaultDirs(final Context ctx) {
-        SharedPreferences sharedPref = PreferenceManager
-                .getDefaultSharedPreferences(ctx);
-        String strRevealDir = sharedPref.getString(
-                Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
         if (!strRevealDir.startsWith("/sdcard/")) {
             String strRevealDirTemp = strRevealDir;
@@ -1005,6 +953,60 @@ public class Util {
             imagesDir.mkdirs();
             // Log.i(Global.TAG, "Create images dir on sdcard ok");
         }
+    }
+
+    /**
+     * Displays an error message and optionally the associated exception that
+     * caused it in an alert dialog
+     * 
+     * @param ctx
+     *            context
+     * @param t
+     *            exception (can be null)
+     * @param messageFormat
+     *            the message format string
+     * @param messageArgs
+     *            (optional) arguments to the message format string
+     */
+    public static void displayError(final Context ctx, final Throwable t, final String messageFormat,
+            final Object... messageArgs) {
+        String message = MessageFormat.format(messageFormat, messageArgs);
+        if (t != null) {
+            message += "\n\n" + getStackTrace(t);
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        builder.setTitle(ctx.getResources().getString(R.string.error_title));
+        builder.setMessage(message);
+        builder.show();
+    }
+
+    private volatile static long lastTimeStamp = System.currentTimeMillis();
+
+    /**
+     * Get a timestamp that is different than any other that we have seen since
+     * the process started.
+     * 
+     * @return unique timestamp
+     */
+    public static synchronized long getUniqueTimeStamp() {
+        long timeStamp = System.currentTimeMillis();
+        if (timeStamp <= lastTimeStamp)
+            timeStamp = lastTimeStamp + 1;
+        lastTimeStamp = timeStamp;
+        return timeStamp;
+    }
+
+    /**
+     * Gets the stack trace from a thrown object as a string
+     * 
+     * @param t
+     *            the thrown object
+     * @return the stack trace string
+     */
+    public static String getStackTrace(Throwable t) {
+        StringWriter sw = new StringWriter();
+        t.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
     }
 
 }

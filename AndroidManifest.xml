@@ -38,6 +38,8 @@
             android:screenOrientation="sensor"
             android:theme="@android:style/Theme.Dialog"/>
     	<activity android:name="eBooksRSSFeed" android:theme="@android:style/Theme.Dialog" android:label="@string/menu_bookmark" android:multiprocess="true"></activity>
+    	<service  android:name=".YbkService" android:exported="false"/>
+ 
 </application>
 
 

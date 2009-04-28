@@ -1,7 +1,6 @@
 package com.jackcholt.reveal.data;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -10,6 +9,7 @@ import org.garret.perst.GenericIndex;
 import org.garret.perst.IterableIterator;
 import org.garret.perst.Key;
 import org.garret.perst.Storage;
+import org.garret.perst.StorageError;
 import org.garret.perst.StorageFactory;
 
 import android.content.Context;
@@ -35,9 +35,6 @@ public class YbkDAO {
 
     // private static volatile YbkDAO mSelf = null;
 
-    // Add the volatile modifier to make sure that changes to mCtx are atomic
-    private static volatile Context mCtx;
-
     private SharedPreferences mSharedPref;
 
     private static final String TAG = "YbkDAO";
@@ -49,6 +46,8 @@ public class YbkDAO {
     public static final String FROM_HISTORY = "from history";
 
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
+
+    public static final boolean useSerializableTransactions = false;
 
     /**
      * Is the chapter a navigation chapter? Data type: INTEGER. Use
@@ -63,20 +62,19 @@ public class YbkDAO {
      */
     public static final String CHAPTER_ZOOM_PICTURE = "zoom_picture";
 
+    private static YbkDAO instance = null;
+
     /**
      * Allow the user to get the one and only instance of the YbkDAO.
      * 
-     * @param ctx
-     *            The Android instance.
      * @return The YbkDAO singleton.
+     * @throws StorageException
      */
-    public static YbkDAO getInstance(final Context ctx) {
-        mCtx = ctx;
-        return YbkDaoHolder.instance;
-    }
-
-    private static class YbkDaoHolder {
-        static private YbkDAO instance = new YbkDAO(mCtx);
+    public static YbkDAO getInstance(final Context ctx) throws StorageException {
+        if (instance == null) {
+            instance = new YbkDAO(ctx);
+        }
+        return instance;
     }
 
     /**
@@ -89,17 +87,25 @@ public class YbkDAO {
     /**
      * Make this a singleton by blocking direct access to the constructor.
      * 
-     * @param ctx
-     *            The Android context.
+     * @throws StorageException
      */
-    private YbkDAO(final Context ctx) {
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
-        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                Settings.DEFAULT_EBOOK_DIRECTORY);
+    private YbkDAO(final Context ctx) throws StorageException {
+        try {
+            mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
+            String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
-        mDb = StorageFactory.getInstance().createStorage();
-        mDb.open(libDir + DATABASE_NAME, PAGE_POOL_SIZE);
-        Log.d(TAG, "Opened the database");
+            mDb = StorageFactory.getInstance().createStorage();
+            if (useSerializableTransactions) {
+                // have to use alternate btree implementation for serializable
+                // transactions to work
+                // transactions to work correctly
+                mDb.setProperty("perst.alternative.btree", Boolean.TRUE);
+            }
+            mDb.open(libDir + DATABASE_NAME, PAGE_POOL_SIZE);
+            Log.d(TAG, "Opened the database");
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        }
     }
 
     /**
@@ -108,54 +114,100 @@ public class YbkDAO {
      * @param db
      *            The database for which we want the root object.
      * @return The root object.
+     * @throws StorageException
      */
-    private YbkRoot getRoot(final Storage db) {
-        YbkRoot root = (YbkRoot) db.getRoot();
+    private YbkRoot getRoot(final Storage db) throws StorageException {
+        try {
+            YbkRoot root = (YbkRoot) db.getRoot();
 
-        if (root == null) {
-            root = new YbkRoot(db);
-            db.setRoot(root);
+            if (root == null) {
+                startTransaction();
+                boolean done = false;
+                try {
+                    root = new YbkRoot(db);
+                    db.setRoot(root);
+                    done = true;
+                } finally {
+                    endTransaction(done);
+                }
+            }
+            return root;
+        } catch (StorageError se) {
+            throw new StorageException(se);
         }
-
-        return root;
     }
 
     /**
      * Get a list of book titles.
      * 
-     * @return The list of book titles as a field index.
+     * @return The list of book titles as a field index or null if couldn't get
+     *         list.
+     * @throws StorageException
      */
-    public FieldIndex<Book> getBookTitles() {
-        return getRoot(mDb).bookTitleIndex;
+    public List<Book> getBookTitles() throws StorageException {
+        FieldIndex<Book> bookTitleIndex = getRoot(mDb).bookTitleIndex;
+        if (useSerializableTransactions)
+            bookTitleIndex.sharedLock();
+        try {
+            return new ArrayList<Book>(bookTitleIndex);
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                bookTitleIndex.unlock();
+        }
     }
 
     /**
      * Get a list of books.
-     * @return A list of all books in the database.
+     * 
+     * @return The list of book titles as a field index or null if couldn't get
+     *         list.
+     * @throws StorageException
      */
-    public FieldIndex<Book> getBooks() {
-        return getRoot(mDb).bookIdIndex;
+    public List<Book> getBooks() throws StorageException {
+        FieldIndex<Book> bookIdIndex = getRoot(mDb).bookIdIndex;
+        if (useSerializableTransactions)
+            bookIdIndex.sharedLock();
+        try {
+            return new ArrayList<Book>(bookIdIndex);
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                bookIdIndex.unlock();
+        }
     }
-    
+
+    /**
+     * Get a List for history records that are bookmarks sorted by title.
+     * 
+     * @return
+     * @throws StorageException
+     */
+    public List<History> getBookmarks() throws StorageException {
+        FieldIndex<History> historyTitleIndex = getRoot(mDb).historyTitleIndex;
+        if (useSerializableTransactions)
+            historyTitleIndex.sharedLock();
+        try {
+            return new ArrayList<History>(historyTitleIndex);
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                historyTitleIndex.unlock();
+        }
+    }
+
     /**
      * Get an Iterator for history records that are bookmarks sorted by title.
      * 
      * @return
+     * @throws StorageException
      */
-    public Iterator<History> getBookmarkIterator() {
-        Iterator<History> iter = getRoot(mDb).historyTitleIndex.iterator();
-        List<History> bmList = new ArrayList<History>();
-
-        while (iter.hasNext()) {
-            History hist = iter.next();
-            if (hist.bookmarkNumber != 0) {
-                bmList.add(hist);
-            }
-        }
-
-        return bmList.iterator();
+    public Iterator<History> getBookmarkIterator() throws StorageException {
+        return getBookmarks().iterator();
     }
-
 
     /**
      * Insert a book into the database.
@@ -170,11 +222,14 @@ public class YbkDAO {
      *            the abbreviated title.
      * @param metaData
      *            Descriptive information.
+     * @param chapters
+     *            the list of chapters
+     * @throws StorageException
      */
-    public long insertBook(final String fileName, final String bindingText,
-            final String title, final String shortTitle, final String metaData) {
+    public long insertBook(final String fileName, final String bindingText, final String title,
+            final String shortTitle, final String metaData, final List<Chapter> chapters) throws StorageException {
 
-        long id = System.currentTimeMillis();
+        long id = Util.getUniqueTimeStamp();
 
         Book book = new Book();
         book.id = id;
@@ -187,70 +242,62 @@ public class YbkDAO {
         book.metaData = metaData;
 
         YbkRoot root = getRoot(mDb);
-
-        // Persistence-by-reachability causes objects to become persistent once
-        // they are referred to by a persistent object.
-        boolean b1 = root.bookIdIndex.put(book);
-        boolean b2 = root.bookFilenameIndex.put(book);
-        boolean b3 = true;
-        if (title != null) {
-            b3 = root.bookTitleIndex.put(book);
+        startTransaction();
+        boolean success = false;
+        try {
+            if (useSerializableTransactions) {
+                root.bookIdIndex.exclusiveLock();
+                root.bookFilenameIndex.exclusiveLock();
+                root.bookTitleIndex.exclusiveLock();
+            }
+            // Persistence-by-reachability causes objects to become persistent
+            // once
+            // they are referred to by a persistent object.
+            success = root.bookIdIndex.put(book) && root.bookFilenameIndex.put(book)
+                    && (book.formattedTitle == null || root.bookTitleIndex.put(book))
+                    && insertChapters(root, id, chapters);
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            endTransaction(success);
+            if (!success) {
+                Log.e(TAG, "Could not insert " + fileName);
+                id = 0;
+            }
         }
-
-        if (b1 && b2 && b3) {
-
-            mDb.commit();
-            return id;
-
-        } else {
-
-            // one of the puts failed
-            mDb.rollback();
-            Log.e(TAG, "Could not insert " + fileName
-                    + ". It already exists in the database.");
-            return 0;
-        }
+        return id;
 
     }
 
-    public boolean insertChapter(final long bookId, final String fileName,
-            final String historyTitle, final Integer length,
-            final String navbarTitle, final Integer navFile, final int offset,
-            final String orderName, final Integer orderNumber,
-            final Integer zoomPicture) {
-
-        long id = System.currentTimeMillis();
-
-        Chapter chap = new Chapter();
-        chap.id = id;
-        chap.bookId = bookId;
-        chap.fileName = fileName;
-        chap.historyTitle = historyTitle;
-        chap.length = length;
-        chap.navbarTitle = navbarTitle;
-        if (navFile != null)
-            chap.navFile = navFile;
-        chap.offset = offset;
-        chap.orderName = orderName;
-        if (orderNumber != null)
-            chap.orderNumber = orderNumber;
-        if (zoomPicture != null)
-            chap.zoomPicture = zoomPicture;
-
-        YbkRoot root = getRoot(mDb);
-
-        // Persistence-by-reachability causes objects to become persistent once
-        // they are referred to by a persistent object.
-        boolean b1 = root.chapterBookIdIndex.put(chap);
-        boolean b2 = root.chapterIdIndex.put(chap);
-        boolean b3 = root.chapterNameIndex.put(chap);
-        boolean b4 = true;
-        if (chap.orderNumber != 0) {
-            b4 = root.chapterOrderNbrIndex.put(chap);
+    /**
+     * Insert a list of chapters (must already be within a transaction)
+     * 
+     * @param chapters
+     *            the list of chapters
+     * @return true if successful
+     * @throws StorageException
+     */
+    private boolean insertChapters(YbkRoot root, long bookId, List<Chapter> chapters) {
+        if (useSerializableTransactions) {
+            root.chapterBookIdIndex.exclusiveLock();
+            root.chapterIdIndex.exclusiveLock();
+            root.chapterNameIndex.exclusiveLock();
+            root.chapterOrderNbrIndex.exclusiveLock();
         }
 
-        return (b1 && b2 && b3 && b4);
-
+        int i = 0;
+        for (Chapter chap : chapters) {
+            chap.bookId = bookId;
+            boolean success = root.chapterBookIdIndex.put(chap) && root.chapterIdIndex.put(chap)
+                    && root.chapterNameIndex.put(chap)
+                    && (chap.orderNumber == 0 || root.chapterOrderNbrIndex.put(chap));
+            i++;
+            if (!success) {
+                Log.e(TAG, "Could not insert chapter (" + i + "): " + chap);
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -266,9 +313,10 @@ public class YbkDAO {
      * @param scrollPos
      *            The position in the chapter that was being read.
      * @return
+     * @throws StorageException
      */
-    public boolean insertHistory(final long bookId, final String title,
-            final String chapterName, final int scrollYPos) {
+    public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos)
+            throws StorageException {
 
         return insertHistory(bookId, title, chapterName, scrollYPos, 0);
     }
@@ -287,11 +335,11 @@ public class YbkDAO {
      * @param bookmarkNumber
      *            The number of the bookmark to save.
      * @return True if the insert succeeded, False otherwise.
+     * @throws StorageException
      */
-    public boolean insertHistory(final long bookId, final String title,
-            final String chapterName, final int scrollYPos,
-            final int bookmarkNumber) {
-        boolean success = true;
+    public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos,
+            final int bookmarkNumber) throws StorageException {
+        boolean success;
 
         History hist = new History();
         hist.bookId = bookId;
@@ -304,47 +352,63 @@ public class YbkDAO {
 
         // Persistence-by-reachability causes objects to become persistent once
         // they are referred to by a persistent object.
-        boolean b1 = root.historyIdIndex.put(hist);
-        boolean b2 = root.historyTitleIndex.put(hist);
+        startTransaction();
+        boolean b1 = false;
+        boolean b2 = false;
         boolean b3 = true;
+        try {
+            b1 = root.historyIdIndex.put(hist);
+            b2 = root.historyTitleIndex.put(hist);
+            b3 = true;
 
-        if (bookmarkNumber != 0) {
-            b3 = root.historyBookmarkNumberIndex.put(hist);
+            if (bookmarkNumber != 0) {
+                b3 = root.historyBookmarkNumberIndex.put(hist);
+            }
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            success = b1 && b2 && b3;
+            endTransaction(success);
         }
-
-        if (b1 && b2 && b3) {
-            mDb.commit();
-        } else {
-            mDb.rollback();
-            success = false;
-        }
-
         return success;
     }
 
     /**
      * Remove all histories that have a timestamp earlier than the milliseconds
      * passed in.
+     * 
+     * @throws StorageException
      */
-    public void deleteHistories() {
+    public void deleteHistories() throws StorageException {
         SharedPreferences sharedPref = mSharedPref;
-        int histToKeep = sharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY,
-                Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
+        int histToKeep = sharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
 
         List<History> historyList = getHistoryList();
         if (historyList.size() > histToKeep) {
-            List<History> delHistList = historyList.subList(histToKeep,
-                    historyList.size());
+            List<History> delHistList = historyList.subList(histToKeep, historyList.size());
             YbkRoot root = getRoot(mDb);
 
-            for (int i = 0; i < delHistList.size(); i++) {
-                History hist = delHistList.get(i);
-                root.historyIdIndex.removeKey(hist);
-                root.historyTitleIndex.removeKey(hist);
-                hist.deallocate();
+            if (delHistList.size() != 0) {
+                startTransaction();
+                try {
+                    if (useSerializableTransactions) {
+                        root.historyIdIndex.exclusiveLock();
+                        root.historyTitleIndex.exclusiveLock();
+                    }
+                    for (int i = 0; i < delHistList.size(); i++) {
+                        History hist = delHistList.get(i);
+                        root.historyIdIndex.removeKey(hist);
+                        root.historyTitleIndex.removeKey(hist);
+                        hist.deallocate();
+                    }
+                } catch (StorageError se) {
+                    throw new StorageException(se);
+                } finally {
+                    // why would we need this?
+                    // root.modify();
+                    endTransaction(true);
+                }
             }
-            root.modify();
-            mDb.commit();
         }
     }
 
@@ -354,11 +418,11 @@ public class YbkDAO {
      * @param fileName
      *            The absolute file path of the book.
      * @return True if the book was deleted.
+     * @throws StorageException
      */
-    public boolean deleteBook(final String fileName) {
+    public boolean deleteBook(final String fileName) throws StorageException {
         Book book = getRoot(mDb).bookFilenameIndex.get(new Key(fileName));
-
-        return deleteBook(book);
+        return book != null ? deleteBook(book) : null;
     }
 
     /**
@@ -367,82 +431,62 @@ public class YbkDAO {
      * @param book
      *            The book to be deleted.
      * @return True if the book was deleted.
+     * @throws StorageException
      */
-    public boolean deleteBook(final Book book) {
+    public boolean deleteBook(final Book book) throws StorageException {
         YbkRoot root = getRoot(mDb);
 
-        if (root.bookFilenameIndex.remove(book)
-                && root.bookIdIndex.remove(book)
-                && root.bookTitleIndex.remove(book)
-                && deleteChapters(book.id, false)) {
-
+        startTransaction();
+        boolean done = false;
+        try {
+            if (useSerializableTransactions) {
+                root.historyIdIndex.exclusiveLock();
+                root.historyTitleIndex.exclusiveLock();
+            }
+            done = root.bookFilenameIndex.remove(book) && root.bookIdIndex.remove(book)
+                    && (book.title == null || root.bookTitleIndex.remove(book)) && deleteChapters(book.id);
             book.deallocate();
-            root.modify();
-            mDb.commit();
-            return true;
-        } else {
-            mDb.rollback();
-            return false;
+            // why?
+            // root.modify();
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            endTransaction(done);
         }
-
+        return done;
     }
 
     /**
-     * Convenience method for calling deleteChapters with a default of
-     * useTransactions = true.
+     * Remove a book's chapters from the database. This is private because it is
+     * assumed to be within a transaction
      * 
      * @param bookId
-     *            The id of the book whose chapters we are deleting.
-     * @return True if the chapters were deleted.
+     *            The id of the book whose chapters are to be deleted.
+     * @return True if the book chapters were deleted.
+     * @throws StorageException
      */
-    public boolean deleteChapters(final long bookId) {
-        return deleteChapters(bookId, true);
-    }
-
-    /**
-     * Remove a book's chapters from the database.
-     * 
-     * @param bookId
-     *            The id of the book to be deleted.
-     * @param useTransaction
-     *            allow this to be called as part of an existing transaction by
-     *            turning off its commit and rollback statements.
-     * @return True if the book was deleted.
-     */
-    public boolean deleteChapters(final long bookId,
-            final boolean useTransaction) {
+    private boolean deleteChapters(final long bookId) throws StorageException {
         YbkRoot root = getRoot(mDb);
         boolean success = true;
 
-        Chapter[] chapters = (Chapter[]) root.chapterBookIdIndex.get(new Key(
-                bookId), null);
+        if (useSerializableTransactions) {
+            root.chapterBookIdIndex.exclusiveLock();
+            root.chapterIdIndex.exclusiveLock();
+            root.chapterNameIndex.exclusiveLock();
+            root.chapterOrderNbrIndex.exclusiveLock();
+        }
+        Chapter[] chapters = (Chapter[]) root.chapterBookIdIndex.get(new Key(bookId), null);
 
         for (int i = 0, size = chapters.length; i < size; i++) {
-            if (root.chapterBookIdIndex.remove(chapters[i])
-                    && root.chapterIdIndex.remove(chapters[i])
+            if (root.chapterBookIdIndex.remove(chapters[i]) && root.chapterIdIndex.remove(chapters[i])
                     && root.chapterNameIndex.remove(chapters[i])
-                    && root.chapterOrderNbrIndex.remove(chapters[i])) {
+                    && (chapters[i].orderNumber == 0 || root.chapterOrderNbrIndex.remove(chapters[i]))) {
                 // do nothing
             } else {
                 success = false;
                 break;
             }
         }
-
-        if (success) {
-            for (int i = 0, size = chapters.length; i < size; i++) {
-                chapters[i].deallocate();
-            }
-            root.modify();
-            if (useTransaction) {
-                mDb.commit();
-            }
-        } else {
-            if (useTransaction) {
-                mDb.rollback();
-            }
-        }
-
         return success;
     }
 
@@ -453,20 +497,22 @@ public class YbkDAO {
      *            The book to change the active state of.
      * @return True if the Book is already in the database indexes and the
      *         update occurred successfully.
+     * @throws StorageException
      */
-    public boolean toggleBookActivity(final Book book) {
-        YbkRoot root = getRoot(mDb);
+    public boolean toggleBookActivity(final Book book) throws StorageException {
+        boolean done = false;
+        startTransaction();
+        try {
+            book.active ^= true;
+            book.modify();
+            done = true;
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            endTransaction(done);
+        }
 
-        book.active = !book.active;
-
-        boolean result = (null == root.bookFilenameIndex.set(book)
-                || null == root.bookIdIndex.set(book) || null == root.bookTitleIndex
-                .set(book));
-
-        root.modify();
-        mDb.commit();
-
-        return result;
+        return done;
 
     }
 
@@ -476,9 +522,20 @@ public class YbkDAO {
      * @param bookId
      *            The key of the book to get.
      * @return The book object identified by bookId.
+     * @throws StorageException
      */
-    public Book getBook(final long bookId) {
-        return getRoot(mDb).bookIdIndex.get(new Key(bookId));
+    public Book getBook(final long bookId) throws StorageException {
+        FieldIndex<Book> bookIdIndex = getRoot(mDb).bookIdIndex;
+        if (useSerializableTransactions)
+            bookIdIndex.sharedLock();
+        try {
+            return bookIdIndex.get(new Key(bookId));
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                bookIdIndex.unlock();
+        }
     }
 
     /**
@@ -487,11 +544,20 @@ public class YbkDAO {
      * @param histId
      *            The key of the history to get.
      * @return The history object identified by histId.
+     * @throws StorageException
      */
-    public History getHistory(final long histId) {
-        // History hist = new History();
-        // hist.id = histId;
-        return getRoot(mDb).historyIdIndex.get(new Key(histId));
+    public History getHistory(final long histId) throws StorageException {
+        FieldIndex<History> historyIdIndex = getRoot(mDb).historyIdIndex;
+        if (useSerializableTransactions)
+            historyIdIndex.sharedLock();
+        try {
+            return historyIdIndex.get(new Key(histId));
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                historyIdIndex.unlock();
+        }
     }
 
     /**
@@ -500,9 +566,20 @@ public class YbkDAO {
      * @param bmId
      *            the bookmark id.
      * @return The History object that contains the bookmark.
+     * @throws StorageException
      */
-    public History getBookmark(final int bmId) {
-        return getRoot(mDb).historyBookmarkNumberIndex.get(new Key(bmId));
+    public History getBookmark(final int bmId) throws StorageException {
+        FieldIndex<History> historyBookmarkNumberIndex = getRoot(mDb).historyBookmarkNumberIndex;
+        if (useSerializableTransactions)
+            historyBookmarkNumberIndex.sharedLock();
+        try {
+            return historyBookmarkNumberIndex.get(new Key(bmId));
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                historyBookmarkNumberIndex.unlock();
+        }
     }
 
     /**
@@ -510,54 +587,82 @@ public class YbkDAO {
      * ArrayAdapter for showing histories in a ListActivity.
      * 
      * @return the List of History objects.
+     * @throws StorageException
      */
-    public List<History> getHistoryList() {
-        IterableIterator<History> iter = getRoot(mDb).historyIdIndex.iterator(
-                null, null, GenericIndex.DESCENT_ORDER);
+    public List<History> getHistoryList() throws StorageException {
+        FieldIndex<History> historyIdIndex = getRoot(mDb).historyIdIndex;
+        if (useSerializableTransactions)
+            historyIdIndex.sharedLock();
+        try {
+            IterableIterator<History> iter = historyIdIndex.iterator(null, null, GenericIndex.DESCENT_ORDER);
 
-        List<History> histList = new ArrayList<History>();
+            List<History> histList = new ArrayList<History>();
 
-        int maxHistories = mSharedPref.getInt(
-                Settings.HISTORY_ENTRY_AMOUNT_KEY,
-                Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
+            int maxHistories = mSharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY,
+                    Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
 
-        int histCount = 0;
-        while (iter.hasNext() && histCount < maxHistories) {
-            History hist = iter.next();
-            if (hist.bookmarkNumber == 0) {
-                histList.add(hist);
-                histCount++;
+            int histCount = 0;
+            while (iter.hasNext() && histCount < maxHistories) {
+                History hist = iter.next();
+                if (hist.bookmarkNumber == 0) {
+                    histList.add(hist);
+                    histCount++;
+                }
             }
+            return histList;
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                historyIdIndex.unlock();
         }
-
-        return histList;
     }
 
-    public List<History> getBookmarkList() {
+    /**
+     * Get list of bookmarks.
+     * 
+     * @return
+     * @throws StorageException
+     */
+    public List<History> getBookmarkList() throws StorageException {
         FieldIndex<History> historyBookmarkNumberIndex = getRoot(mDb).historyBookmarkNumberIndex;
-        History[] array = historyBookmarkNumberIndex
-                .toArray(new History[historyBookmarkNumberIndex.size()]);
-
-        return Arrays.asList(array);
-
+        if (useSerializableTransactions)
+            historyBookmarkNumberIndex.sharedLock();
+        try {
+            return new ArrayList<History>(historyBookmarkNumberIndex);
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            historyBookmarkNumberIndex.unlock();
+        }
     }
 
     /**
      * Get the last bookmark in the list.
      * 
      * @return The highest numbered bookmark.
+     * @throws StorageException
      */
-    public int getMaxBookmarkNumber() {
+    public int getMaxBookmarkNumber() throws StorageException {
         int bmNbr = 1;
-        FieldIndex<History> bmNbrIndex = getRoot(mDb).historyBookmarkNumberIndex;
+        FieldIndex<History> historyBookmarkNumberIndex = getRoot(mDb).historyBookmarkNumberIndex;
+        if (useSerializableTransactions)
+            historyBookmarkNumberIndex.sharedLock();
+        try {
+            int indexSize = historyBookmarkNumberIndex.size();
+            if (indexSize > 0) {
+                History hist = historyBookmarkNumberIndex.getAt(indexSize - 1);
+                bmNbr = hist.bookmarkNumber + 1;
+            }
 
-        int indexSize = bmNbrIndex.size();
-        if (indexSize > 0) {
-            History hist = bmNbrIndex.getAt(indexSize - 1);
-            bmNbr = hist.bookmarkNumber + 1;
+            return bmNbr;
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                historyBookmarkNumberIndex.unlock();
         }
 
-        return bmNbr;
     }
 
     /**
@@ -566,10 +671,20 @@ public class YbkDAO {
      * @param fileName
      *            the filename we're looking for.
      * @return A Book object identified by the passed in filename.
+     * @throws StorageException
      */
-    public Book getBook(final String fileName) {
-        return getRoot(mDb).bookFilenameIndex.get(new Key(fileName
-                .toLowerCase()));
+    public Book getBook(final String fileName) throws StorageException {
+        FieldIndex<Book> bookFilenameIndex = getRoot(mDb).bookFilenameIndex;
+        if (useSerializableTransactions)
+            bookFilenameIndex.sharedLock();
+        try {
+            return bookFilenameIndex.get(new Key(fileName.toLowerCase()));
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                bookFilenameIndex.unlock();
+        }
     }
 
     /**
@@ -578,10 +693,18 @@ public class YbkDAO {
      * @param fileName
      *            the name of the internal chapter file.
      * @return the chapter
+     * @throws StorageException
      */
-    public Chapter getChapter(final long bookId, final String fileName) {
-        return getRoot(mDb).chapterNameIndex.get(new Key(new Object[] { bookId,
-                fileName.toLowerCase() }));
+    public Chapter getChapter(final long bookId, final String fileName) throws StorageException {
+        FieldIndex<Chapter> chapterNameIndex = getRoot(mDb).chapterNameIndex;
+        chapterNameIndex.sharedLock();
+        try {
+            return chapterNameIndex.get(new Key(new Object[] { bookId, fileName.toLowerCase() }));
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            chapterNameIndex.unlock();
+        }
     }
 
     /**
@@ -592,23 +715,37 @@ public class YbkDAO {
      * @param orderId
      *            The number of the chapter in the order of chapters.
      * @return The chapter we're look for.
+     * @throws StorageException
      */
-    public Chapter getChapter(final long bookId, final int orderId) {
-        return getRoot(mDb).chapterOrderNbrIndex.get(new Key(new Object[] {
-                bookId, orderId }));
+    public Chapter getChapter(final long bookId, final int orderId) throws StorageException {
+        FieldIndex<Chapter> chapterOrderNbrIndex = getRoot(mDb).chapterOrderNbrIndex;
+        if (useSerializableTransactions)
+            chapterOrderNbrIndex.sharedLock();
+        try {
+            return chapterOrderNbrIndex.get(new Key(new Object[] { bookId, orderId }));
+        } catch (StorageError se) {
+            throw new StorageException(se);
+        } finally {
+            if (useSerializableTransactions)
+                chapterOrderNbrIndex.unlock();
+        }
     }
 
     /**
      * Check whether a chapter exists in a book.
      * 
-     * @param bookId The id of the book.
-     * @param fileName The name of the chapter (or internal file) that we're checking for.
+     * @param bookId
+     *            The id of the book.
+     * @param fileName
+     *            The name of the chapter (or internal file) that we're checking
+     *            for.
      * @return True if the book has a chapter of that name, false otherwise.
+     * @throws StorageException
      */
-    public boolean chapterExists(final long bookId, final String fileName) {
+    public boolean chapterExists(final long bookId, final String fileName) throws StorageException {
         return (null != getChapter(bookId, fileName)) || (null != getChapter(bookId, fileName + ".gz"));
     }
-    
+
     /**
      * clean up the object.
      */
@@ -624,12 +761,48 @@ public class YbkDAO {
 
     }
 
-    public void commit() {
-        mDb.commit();
+    public void startTransaction() throws StorageException {
+        try {
+            mDb.beginThreadTransaction(useSerializableTransactions ? Storage.SERIALIZABLE_TRANSACTION
+                    : Storage.EXCLUSIVE_TRANSACTION);
+        } catch (StorageError se) {
+            throw new StorageException(se);
+
+        }
     }
 
-    public void rollback() {
-        mDb.rollback();
+    public void endTransaction(boolean commit) throws StorageException {
+        if (commit) {
+            try {
+                mDb.endThreadTransaction();
+            } catch (StorageError se) {
+                throw new StorageException(se);
+
+            }
+        } else {
+            try {
+                mDb.rollbackThreadTransaction();
+                if (useSerializableTransactions) {
+
+                    // it appears that the indexes get left in a funny state
+                    // after rollback of a serialized thread transaction, so
+                    // reload them.
+                    YbkRoot root = getRoot(mDb);
+                    root.bookFilenameIndex.load();
+                    root.bookIdIndex.load();
+                    root.bookTitleIndex.load();
+                    root.chapterBookIdIndex.load();
+                    root.chapterIdIndex.load();
+                    root.chapterNameIndex.load();
+                    root.chapterOrderNbrIndex.load();
+                    root.historyBookmarkNumberIndex.load();
+                    root.historyIdIndex.load();
+                    root.historyTitleIndex.load();
+                }
+            } catch (StorageError se) {
+                throw new StorageException(se);
+            }
+        }
     }
 
     /**
@@ -639,8 +812,9 @@ public class YbkDAO {
      * @param historyPos
      *            The position in the history list that we're getting the
      *            history at.
+     * @throws StorageException
      */
-    public History getPreviousHistory(int historyPos) {
+    public History getPreviousHistory(int historyPos) throws StorageException {
         History hist = null;
 
         if (historyPos >= 0) {
