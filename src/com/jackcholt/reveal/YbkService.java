@@ -2,13 +2,11 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 
 import android.app.NotificationManager;
@@ -25,9 +23,8 @@ import android.os.Process;
 import android.preference.PreferenceManager;
 
 /**
- * Service that initiates and coordinates all the background activities of
- * downloading books and updating the library so the don't step on each other's
- * feet.
+ * Service that initiates and coordinates all the background activities of downloading books and updating the library so
+ * the don't step on each other's feet.
  * 
  * @author Shon Vella
  * 
@@ -149,9 +146,9 @@ public class YbkService extends Service {
                                 message = "Failed to remove book '" + bookName + "'.";
                                 succeeded = true;
                             }
-                        } catch (StorageException se) {
+                        } catch (IOException ioe) {
                             succeeded = false;
-                            message = "Failed to remove book '" + bookName + "'.: " + se.toString();
+                            message = "Failed to remove book '" + bookName + "'.: " + ioe.toString();
                             ReportError.reportError("BAD_EBOOK_FILE_" + target);
                         }
                         if (succeeded)

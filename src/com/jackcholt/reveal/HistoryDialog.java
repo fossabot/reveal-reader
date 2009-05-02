@@ -1,5 +1,6 @@
 package com.jackcholt.reveal;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.flurry.android.FlurryAgent;
@@ -12,7 +13,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.jackcholt.reveal.data.History;
-import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class HistoryDialog extends ListActivity {
@@ -46,9 +46,9 @@ public class HistoryDialog extends ListActivity {
             ArrayAdapter<History> histAdapter = new ArrayAdapter<History>(this, R.layout.history_list_row, data);
 
             setListAdapter(histAdapter);
-        } catch (StorageException se) {
+        } catch (IOException ioe) {
             // TODO - add friendly message
-            Util.displayError(this, se, null);
+            Util.displayError(this, ioe, null);
         }
     }
 

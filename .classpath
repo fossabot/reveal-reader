@@ -7,11 +7,12 @@
 	<classpathentry kind="lib" path="lib/positron-rc2.jar"/>
 	<classpathentry kind="lib" path="lib/FlurryAgent.jar"/>
 	<classpathentry kind="lib" path="lib/trace-0.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/perst.jar" sourcepath="perst-405.zip">
+	<classpathentry kind="lib" path="lib/jdbm-1.0-SNAPSHOT.jar" sourcepath="/jdbm-trunk/src/main/java">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/RevealPerst/perstdoc.zip!/doc"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/Reveal_JDBM/lib/jdbm-1.0-SNAPSHOT-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

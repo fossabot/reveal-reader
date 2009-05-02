@@ -1,5 +1,6 @@
 package com.jackcholt.reveal;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.flurry.android.FlurryAgent;
@@ -14,7 +15,6 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.jackcholt.reveal.data.History;
-import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 import com.nullwire.trace.ExceptionHandler;
 
@@ -74,9 +74,9 @@ public class BookmarkDialog extends ListActivity {
                 }
 
             });
-        } catch (StorageException se) {
+        } catch (IOException ioe) {
             // TODO - add friendly message
-            Util.displayError(this, se, null);
+            Util.displayError(this, ioe, null);
         }
 
     }

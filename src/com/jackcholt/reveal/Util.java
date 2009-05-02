@@ -33,7 +33,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.jackcholt.reveal.data.Book;
-import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 
 /**
@@ -54,8 +53,8 @@ public class Util {
     public static final String NO_TITLE = "no_book_title";
 
     /**
-     * Dave Packham Check for network connectivity before trying to go to the
-     * net and hanging :) hitting F8 in the emulator will turn network on/off
+     * Dave Packham Check for network connectivity before trying to go to the net and hanging :) hitting F8 in the
+     * emulator will turn network on/off
      */
     // @SuppressWarnings("static-access")
     public static boolean isNetworkUp(Context _this) {
@@ -187,8 +186,7 @@ public class Util {
      * 
      * @param buf
      *            The byte array that contains the GZip file contents.
-     * @return The uncompressed String. Returns null if there was an
-     *         IOException.
+     * @return The uncompressed String. Returns null if there was an IOException.
      */
     public static final String decompressGzip(final byte[] buf) {
         StringBuilder decomp = null;
@@ -213,15 +211,14 @@ public class Util {
     }
 
     /**
-     * Make an array of ints from the next four bytes in the byte array
-     * <code>ba</code> starting at position <code>pos</code> in <code>ba</code>.
+     * Make an array of ints from the next four bytes in the byte array <code>ba</code> starting at position
+     * <code>pos</code> in <code>ba</code>.
      * 
      * @param ba
      *            The byte array to read from.
      * @param pos
      *            The position in <code>ba</code> to start from.
-     * @return An array of four bytes which are in least to greatest
-     *         significance order.
+     * @return An array of four bytes which are in least to greatest significance order.
      * @throws IOException
      *             When the DataInputStream &quot;is&quot; cannot be read from.
      */
@@ -247,8 +244,7 @@ public class Util {
      * 
      * @param is
      *            the InputStream from which to read.
-     * @return An array of four bytes which are in least to greatest
-     *         significance order.
+     * @return An array of four bytes which are in least to greatest significance order.
      * @throws IOException
      *             When the DataInputStream &quot;is&quot; cannot be read from.
      */
@@ -264,8 +260,8 @@ public class Util {
     }
 
     /**
-     * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are
-     * stored as bytes in least significant byte to most significant byte order.
+     * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
+     * byte to most significant byte order.
      * 
      * @param is
      *            The DataInputStream to read from.
@@ -278,9 +274,8 @@ public class Util {
     }
 
     /**
-     * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are
-     * stored as bytes in least significant byte (LSB) &quot;little endian&quot;
-     * order.
+     * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
+     * byte (LSB) &quot;little endian&quot; order.
      * 
      * @param bytes
      *            byte array to read from.
@@ -367,9 +362,8 @@ public class Util {
      *            The text to shorten.
      * @param length
      *            The maximum length of the string to return.
-     * @return The tail end of the <code>text</code> passed in if it is longer
-     *         than <code>length</code>. The entire <code>text</code> passed if
-     *         it is shorter than <code>length</code>.
+     * @return The tail end of the <code>text</code> passed in if it is longer than <code>length</code>. The entire
+     *         <code>text</code> passed if it is shorter than <code>length</code>.
      */
     public static String tail(final String text, final int length) {
         int start = 0;
@@ -383,8 +377,8 @@ public class Util {
     }
 
     /**
-     * Process ifbook tags to not show links to books that don't exist in the
-     * ebook directory. Remove ifbook tags to clean up the HTML.
+     * Process ifbook tags to not show links to books that don't exist in the ebook directory. Remove ifbook tags to
+     * clean up the HTML.
      * 
      * @param content
      *            HTML to process.
@@ -393,10 +387,9 @@ public class Util {
      * @param libDir
      *            The directory which contains our ebooks.
      * @return The processed content.
-     * @throws StorageException
+     * @throws IOException
      */
-    public static String processIfbook(final String content, final Context ctx, final String libDir)
-            throws StorageException {
+    public static String processIfbook(final String content, final Context ctx, final String libDir) throws IOException {
 
         YbkDAO ybkDao = YbkDAO.getInstance(ctx);
 
@@ -465,8 +458,8 @@ public class Util {
     }
 
     /**
-     * Convert ahtags into span tags using &quot;ah&quot; as the class and
-     * making the id &quot;ah&quot; appended by the number of the ahtag.
+     * Convert ahtags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by the
+     * number of the ahtag.
      * 
      * @param content
      *            The content containing the ahtags to convert.
@@ -482,46 +475,37 @@ public class Util {
         /*
          * StringBuilder newContent = new StringBuilder();
          * 
-         * // Use this to get the actual content StringBuilder oldContent = new
-         * StringBuilder(content);
+         * // Use this to get the actual content StringBuilder oldContent = new StringBuilder(content);
          * 
-         * // Use this for case-insensitive comparison StringBuilder
-         * oldLowerContent = new StringBuilder(content.toLowerCase()); int pos =
-         * 0;
+         * // Use this for case-insensitive comparison StringBuilder oldLowerContent = new
+         * StringBuilder(content.toLowerCase()); int pos = 0;
          * 
-         * while ((pos = oldLowerContent.indexOf("<ahtag num=")) != -1) {
-         * boolean fullAhtagFound = false;
+         * while ((pos = oldLowerContent.indexOf("<ahtag num=")) != -1) { boolean fullAhtagFound = false;
          * 
-         * // copy text before <ahtag> tag to new content and remove from old
-         * newContent.append(oldContent.substring(0, pos)); oldContent.delete(0,
-         * pos); oldLowerContent.delete(0, pos);
+         * // copy text before <ahtag> tag to new content and remove from old newContent.append(oldContent.substring(0,
+         * pos)); oldContent.delete(0, pos); oldLowerContent.delete(0, pos);
          * 
          * int gtPos = oldContent.indexOf(">"); if (gtPos != -1) {
          * 
-         * // grab the number by skipping the beginning of the ahtag tag String
-         * number = oldContent.substring(11, gtPos);
+         * // grab the number by skipping the beginning of the ahtag tag String number = oldContent.substring(11,
+         * gtPos);
          * 
-         * int endPos = oldLowerContent.indexOf("</ahtag>"); if (endPos != -1 &&
-         * endPos > gtPos) {
+         * int endPos = oldLowerContent.indexOf("</ahtag>"); if (endPos != -1 && endPos > gtPos) {
          * 
          * fullAhtagFound = true;
          * 
          * 
          * 
-         * newContent.append("<span class=\"ah\" id=\"ah").append(number).append(
-         * "\">"); newContent.append(oldContent.substring(gtPos + 1, endPos));
-         * //Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1,
-         * endPos)); newContent.append("</span>");
+         * newContent.append("<span class=\"ah\" id=\"ah").append(number).append( "\">");
+         * newContent.append(oldContent.substring(gtPos + 1, endPos)); //Log.d(TAG, "Appending: " +
+         * oldContent.substring(gtPos + 1, endPos)); newContent.append("</span>");
          * 
-         * //Log.d(TAG, newContent.substring(newContent.length() - 200,
-         * newContent.length()+1));
+         * //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
          * 
-         * // remove just-parsed <ahtag> tag structure so we can find the next
-         * oldContent.delete(0, endPos + 8); oldLowerContent.delete(0, endPos +
-         * 8); } }
+         * // remove just-parsed <ahtag> tag structure so we can find the next oldContent.delete(0, endPos + 8);
+         * oldLowerContent.delete(0, endPos + 8); } }
          * 
-         * // remove just-parsed <ahtag> tag so we can find the next if
-         * (!fullAhtagFound) { oldContent.delete(0,11);
+         * // remove just-parsed <ahtag> tag so we can find the next if (!fullAhtagFound) { oldContent.delete(0,11);
          * oldLowerContent.delete(0,11); }
          * 
          * }
@@ -533,8 +517,8 @@ public class Util {
     }
 
     /**
-     * Convert ifvar tags into span tags using &quot;ah&quot; as the class and
-     * making the id &quot;ah&quot; appended by the number of the ahtag.
+     * Convert ifvar tags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by
+     * the number of the ahtag.
      * 
      * @param content
      *            The content containing the ahtags to convert.
@@ -544,17 +528,13 @@ public class Util {
      */
     public static String convertIfvar(final String content) throws InvalidFileFormatException {
         /*
-         * String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" +
-         * "<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
-         * "<elsevar=\\1>(.+)<[aA]\\s+href=['\"]\\+\\1=1['\"]>" +
-         * "(.+)</[aA]>(.+)<endvar=\\1>";
+         * String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" + "<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
+         * "<elsevar=\\1>(.+)<[aA]\\s+href=['\"]\\+\\1=1['\"]>" + "(.+)</[aA]>(.+)<endvar=\\1>";
          * 
          * Log.d(TAG, "findString: " + findString);
          * 
-         * String replaceString =
-         * "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">" +
-         * "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>"
-         * ;
+         * String replaceString = "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">" +
+         * "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>" ;
          * 
          * Log.d(TAG, "replaceString: " + replaceString);
          * 
@@ -707,8 +687,7 @@ public class Util {
     }
 
     /**
-     * Download and install title into library. Used by the title browser
-     * thread.
+     * Download and install title into library. Used by the title browser thread.
      * 
      * @param fileLocation
      *            Url of target file
@@ -815,9 +794,8 @@ public class Util {
     }
 
     /**
-     * This should ask the user whether they want to overwrite the title in
-     * question... It's causing crashes because it is called from a new thread.
-     * This may be fixed or we may just scrap it.
+     * This should ask the user whether they want to overwrite the title in question... It's causing crashes because it
+     * is called from a new thread. This may be fixed or we may just scrap it.
      * 
      * @param context
      * @param file
@@ -873,9 +851,7 @@ public class Util {
     /**
      * Convenience method to send a notification that autocancels.
      * 
-     * @see 
-     *      sendNotification(Context,String,int,String,int,NotificationManager,Class
-     *      ,boolean)
+     * @see sendNotification(Context,String,int,String,int,NotificationManager,Class ,boolean)
      */
     public static void sendNotification(final Context ctx, final String text, final int iconId, final String title,
             NotificationManager notifMgr, final int notifId, final Class<?> classToStart) {
@@ -887,8 +863,7 @@ public class Util {
      * Encapsulation of the code needed to send a notification.
      * 
      * @param ctx
-     *            The context in which this notification is being sent. Usually
-     *            the Activity.
+     *            The context in which this notification is being sent. Usually the Activity.
      * @param text
      *            The text of the notification.
      * @param iconId
@@ -896,15 +871,13 @@ public class Util {
      * @param title
      *            The header title of the notification.
      * @param notifId
-     *            The number you would like to use to identify this
-     *            notification.
+     *            The number you would like to use to identify this notification.
      * @param notifMgr
      *            The NotificationManager to send the notification through.
      * @param classToStart
      *            The class to start when the notification is tapped on.
      * @param autoCancel
-     *            True if the notification should automatically disappear from
-     *            the queue when tapped on.
+     *            True if the notification should automatically disappear from the queue when tapped on.
      */
     public static void sendNotification(final Context ctx, final String text, final int iconId, final String title,
             final int notifId, final NotificationManager notifMgr, final Class<?> classToStart, final boolean autoCancel) {
@@ -956,8 +929,7 @@ public class Util {
     }
 
     /**
-     * Displays an error message and optionally the associated exception that
-     * caused it in an alert dialog
+     * Displays an error message and optionally the associated exception that caused it in an alert dialog
      * 
      * @param ctx
      *            context
@@ -983,8 +955,7 @@ public class Util {
     private volatile static long lastTimeStamp = System.currentTimeMillis();
 
     /**
-     * Get a timestamp that is different than any other that we have seen since
-     * the process started.
+     * Get a timestamp that is different than any other that we have seen since the process started.
      * 
      * @return unique timestamp
      */

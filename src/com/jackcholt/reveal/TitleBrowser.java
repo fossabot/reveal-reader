@@ -1,6 +1,5 @@
 package com.jackcholt.reveal;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -22,7 +21,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Process;
 import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.Menu;

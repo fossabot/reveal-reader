@@ -94,4 +94,7 @@
 <string name="unloadable_chapter">UNLOADABLE CHAPTER</string>
 <string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
 <string name="chapter_not_found">\&quot;{0}\&quot; cannot be found.</string>
+<string name="powered_by_jdbm">Powered by JDBM (http://jdbm.sourceforge.net/)</string>
+<string name="menu_license">License</string>
+<string name="title_license">Reveal License</string>
 </resources>

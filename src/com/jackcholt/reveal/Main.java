@@ -2,6 +2,7 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +36,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
-import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 
 //import com.nullwire.trace.ExceptionHandler;
@@ -56,7 +56,9 @@ public class Main extends ListActivity implements OnGestureListener {
 
     private static final int ABOUT_ID = Menu.FIRST + 6;
 
-    private static final int REVELUPDATE_ID = Menu.FIRST + 7;
+    private static final int LICENSE_ID = Menu.FIRST + 7;
+
+    private static final int REVELUPDATE_ID = Menu.FIRST + 8;
 
     @SuppressWarnings("unused")
     private static final int INSERT_ID = Menu.FIRST + 8;
@@ -206,9 +208,9 @@ public class Main extends ListActivity implements OnGestureListener {
     /**
      * Updates the book list.
      * 
-     * @throws StorageException
+     * @throws IOException
      */
-    protected void updateBookList() throws StorageException {
+    protected void updateBookList() throws IOException {
         // if (mUpdating) {
         // Toast
         // .makeText(this, R.string.update_in_progress,
@@ -220,12 +222,11 @@ public class Main extends ListActivity implements OnGestureListener {
     }
 
     /**
-     * Convenience method to make calling refreshLibrary() without any
-     * parameters retaining its original behavior.
+     * Convenience method to make calling refreshLibrary() without any parameters retaining its original behavior.
      * 
-     * @throws StorageException
+     * @throws IOException
      */
-    private void refreshLibrary(final String strLibDir) throws StorageException {
+    private void refreshLibrary(final String strLibDir) throws IOException {
         refreshLibrary(strLibDir, ADD_BOOKS);
     }
 
@@ -235,12 +236,11 @@ public class Main extends ListActivity implements OnGestureListener {
      * @param strLibDir
      *            the path to the library directory.
      * @param addNewBooks
-     *            If true, run the code that will add new books to the database
-     *            as well as the code that removes missing books from the
-     *            database (which runs regardless).
-     * @throws StorageException
+     *            If true, run the code that will add new books to the database as well as the code that removes missing
+     *            books from the database (which runs regardless).
+     * @throws IOException
      */
-    private void refreshLibrary(final String strLibDir, final boolean addNewBooks) throws StorageException {
+    private void refreshLibrary(final String strLibDir, final boolean addNewBooks) throws IOException {
 
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
@@ -328,7 +328,7 @@ public class Main extends ListActivity implements OnGestureListener {
             ArrayAdapter<Book> bookAdapter = new ArrayAdapter<Book>(this, R.layout.book_list_row, mBookTitleList);
 
             setListAdapter(bookAdapter);
-        } catch (StorageException e) {
+        } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -347,35 +347,55 @@ public class Main extends ListActivity implements OnGestureListener {
     public boolean onContextItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
         case DELETE_ID:
-            try {
-                AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-                long bookId = menuInfo.id;
-                YbkDAO ybkDAO = YbkDAO.getInstance(this);
-                Book book = ybkDAO.getBook(bookId);
-
-                String fileName = book.fileName;
-                File file = new File(fileName);
-                if (file.exists()) {
-                    if (!file.delete()) {
-                        // TODO - should tell user about this
-                    }
-                }
-                YbkService.requestRemoveBook(this, fileName);
-                refreshBookList();
-            } catch (StorageException se) {
-                // TODO - add friendly message
-                Util.displayError(this, se, null);
-            }
-            return true;
+            return onDeleteBook(item);
         default:
             return super.onContextItemSelected(item);
         }
+    }
+    
+    @SuppressWarnings("unchecked")
+   private boolean onDeleteBook(MenuItem item) {
+        AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
+        // TODO - there's got to be a better way to find the item that was long clicked
+        // but haven't found it so far
+        Book book = null;
+        View selectedView = menuInfo.targetView;
+        ListView listView = getListView();
+        for (int i = 0; i < listView.getChildCount(); i++) {
+            View child = listView.getChildAt(i);
+            if (child == selectedView) {
+                book = (Book) listView.getItemAtPosition(i);
+                break;
+            }
+        }
+
+        if (book != null) {
+            final String fileName = book.fileName;
+            File file = new File(fileName);
+            if (file.exists()) {
+                if (!file.delete()) {
+                    // TODO - should tell user about this
+                }
+            }
+//            Completion callback = new Completion() {
+//                @Override
+//                public void completed(boolean succeeded, String message) {
+//                    scheduleRefreshBookList();
+//                }
+//            };
+            YbkService.requestRemoveBook(this, fileName);
+            ((ArrayAdapter<Book>)listView.getAdapter()).remove(book);
+        }
+        return true;
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        DeleteEbookDialog.create(this, DELETE_ID);
+
+        // sv - get this working as quickly as possible to test deletion code in JDBM
+        menu.add(0, DELETE_ID, 0, R.string.really_delete);
+        // DeleteEbookDialog.create(this, DELETE_ID);
     }
 
     @Override
@@ -406,6 +426,7 @@ public class Main extends ListActivity implements OnGestureListener {
         menu.add(Menu.NONE, BROWSER_ID, Menu.NONE, R.string.menu_browser).setIcon(android.R.drawable.ic_menu_set_as);
         menu.add(Menu.NONE, HELP_ID, Menu.NONE, R.string.menu_help).setIcon(android.R.drawable.ic_menu_info_details);
         menu.add(Menu.NONE, ABOUT_ID, Menu.NONE, R.string.menu_about).setIcon(android.R.drawable.ic_menu_info_details);
+        menu.add(Menu.NONE, LICENSE_ID, Menu.NONE, R.string.menu_license).setIcon(android.R.drawable.ic_menu_info_details);
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE, R.string.menu_settings).setIcon(
                 android.R.drawable.ic_menu_preferences);
         menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(android.R.drawable.ic_menu_share);
@@ -420,9 +441,9 @@ public class Main extends ListActivity implements OnGestureListener {
             RefreshDialog.create(this);
             try {
                 updateBookList();
-            } catch (StorageException se) {
+            } catch (IOException ioe) {
                 // TODO - add friendly message
-                Util.displayError(this, se, null);
+                Util.displayError(this, ioe, null);
             }
             return true;
 
@@ -445,6 +466,10 @@ public class Main extends ListActivity implements OnGestureListener {
             AboutDialog.create(this);
             return true;
 
+        case LICENSE_ID:
+            LicenseDialog.create(this);
+            return true;
+
         case HELP_ID:
             HelpDialog.create(this);
             return true;
@@ -460,28 +485,8 @@ public class Main extends ListActivity implements OnGestureListener {
             return true;
 
         case DELETE_ID:
-            try {
-                AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-                long bookId = menuInfo.id;
-                YbkDAO ybkDAO = YbkDAO.getInstance(this);
-                Book book = ybkDAO.getBook(bookId);
-
-                String fileName = book.fileName;
-                File file = new File(fileName);
-                if (file.exists()) {
-                    if (!file.delete()) {
-                        // TODO - should tell user about this
-                    }
-                }
-                YbkService.requestRemoveBook(this, fileName);
-                refreshBookList();
-            } catch (StorageException se) {
-                // TODO - add friendly message
-                Util.displayError(this, se, null);
-            }
-            return true;
+            return onDeleteBook(item);
         }
-
         return super.onMenuItemSelected(featureId, item);
     }
 
@@ -578,10 +583,11 @@ public class Main extends ListActivity implements OnGestureListener {
                             Settings.DEFAULT_EBOOK_DIRECTORY);
 
                     try {
+                        YbkDAO.getInstance(this).reopen(this);
                         refreshLibrary(libDir, ADD_BOOKS);
-                    } catch (StorageException se) {
+                    } catch (IOException ioe) {
                         // TODO - add friendly message
-                        Util.displayError(this, se, null);
+                        Util.displayError(this, ioe, null);
                     }
                     refreshBookList();
                 }

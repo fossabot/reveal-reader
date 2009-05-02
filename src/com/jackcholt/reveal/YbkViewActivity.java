@@ -36,7 +36,6 @@ import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
-import com.jackcholt.reveal.data.StorageException;
 import com.jackcholt.reveal.data.YbkDAO;
 
 //import com.nullwire.trace.ExceptionHandler;
@@ -205,9 +204,9 @@ public class YbkViewActivity extends Activity {
             setWebViewClient(ybkView);
 
             setProgressBarIndeterminateVisibility(false);
-        } catch (StorageException se) {
+        } catch (IOException ioe) {
             // TODO - add a friendly message
-            Util.displayError(this, se, null);
+            Util.displayError(this, ioe, null);
         }
     }
 
@@ -378,9 +377,8 @@ public class YbkViewActivity extends Activity {
         bookBtn.setVisibility(View.VISIBLE);
 
         /*
-         * Checks to see if the title is too long for the button. This prevents
-         * the buttons becoming too large and the view window being smaller. -
-         * Adam Gessel
+         * Checks to see if the title is too long for the button. This prevents the buttons becoming too large and the
+         * view window being smaller. - Adam Gessel
          */
 
         if (mChapBtnText.length() > 20) {
@@ -558,16 +556,15 @@ public class YbkViewActivity extends Activity {
 
                 }
             }
-        } catch (StorageException se) {
+        } catch (IOException ioe) {
             // TODO - add a friendly message
-            Util.displayError(this, se, null);
+            Util.displayError(this, ioe, null);
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
     /**
-     * Load a chapter as identified by the id field of the book table and the
-     * order id.
+     * Load a chapter as identified by the id field of the book table and the order id.
      * 
      * @param bookId
      *            The record id of the chapter to load.
@@ -598,8 +595,7 @@ public class YbkViewActivity extends Activity {
     }
 
     /**
-     * Uses a YbkFileReader to get the content of a chapter and loads into the
-     * WebView.
+     * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
      * 
      * @param filePath
      *            The path to the YBK file from which to read the chapter.
@@ -883,9 +879,9 @@ public class YbkViewActivity extends Activity {
 
                                 ybkDao.insertHistory(mBookId, bmName, mChapFileName, mYbkView.getScrollY(),
                                         bookmarkNumber);
-                            } catch (StorageException se) {
+                            } catch (IOException ioe) {
                                 // TODO - add a friendly message
-                                Util.displayError(YbkViewActivity.this, se, null);
+                                Util.displayError(YbkViewActivity.this, ioe, null);
                             }
                         }
                     }).create();
@@ -1036,9 +1032,9 @@ public class YbkViewActivity extends Activity {
                 } else {
                     Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
                 }
-            } catch (StorageException se) {
+            } catch (IOException ioe) {
                 // TODO - add a friendly message
-                Util.displayError(this, se, null);
+                Util.displayError(this, ioe, null);
             }
 
             return true;
