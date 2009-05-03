@@ -1,71 +1,64 @@
 package com.jackcholt.reveal;
 
 import java.io.File;
+import java.text.MessageFormat;
 
 import android.app.Dialog;
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.TextView;
 
 import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.data.Book;
 
 /**
  * RefreshDialog for asking people to please wait for refresh
  * 
- * by Dave Packham
+ * @author Dave Packham
+ * @author Shon Vella
  */
 
 
 public class DeleteEbookDialog extends Dialog {
-    public DeleteEbookDialog(Context _this, int DELETE_ID) {
+    public DeleteEbookDialog(final Context _this, final Book book, final ArrayAdapter<Book>bookListAdapter) {
         super(_this);
- /*       setContentView(R.layout.delete_ebook);
-        
-        final ContentResolver res = Main.getMainApplication().getContentResolver();
-        
+        setContentView(R.layout.delete_ebook);
+ 
         Button delete = (Button) findViewById(R.id.delte_ebook_btn);
         delete.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //Delete the book
-    			AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-    			long bookId = menuInfo.id;
-    			Uri thisBookUri = ContentUris.withAppendedId(mBookUri, bookId);
-    			Cursor bookCurs = managedQuery(thisBookUri, new String[] { YbkProvider.FILE_NAME },
-    					null, null, null);
-
-    			String fileName = bookCurs.moveToFirst() ? bookCurs.getString(0) : null;
-
-    			if (fileName != null) {
-    				File file = new File(fileName);
-    				if (file.exists()) {
-    					file.delete();
-    				}
-
-    				res.delete(thisBookUri, null, null);
-    				//refreshBookList();
-    			}
+                File file = new File(book.fileName);
+                if (file.exists()) {
+                    if (!file.delete()) {
+                        // TODO - should tell user about this
+                    }
+                }
+                YbkService.requestRemoveBook(_this, book.fileName);
+                bookListAdapter.remove(book);
+                dismiss();
             }
         });
+        
         Button close = (Button) findViewById(R.id.dont_delte_ebook_btn);
         close.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 dismiss();
             }
         });
-        FlurryAgent.onEvent("DeleteEbook");
-        setTitle(R.string.really_delete);
         
-        //menu.add(0, DELETE_ID, 0, R.string.really_delete);
-*/     
+        TextView titleView = (TextView) findViewById(R.id.confirm_delete_ebook);
+        String title = _this.getResources().getString(R.string.confirm_delete_ebook);
+        title = MessageFormat.format(title, book.title, new File(book.fileName).getName());
+        titleView.setText(title);
+
+        FlurryAgent.onEvent("DeleteEbook");
+        setTitle(R.string.really_delete_title);
     }
 
-    public static DeleteEbookDialog create(Context _this, int DELETE_ID) {
-    	DeleteEbookDialog dlg = new DeleteEbookDialog(_this, DELETE_ID);
+    public static DeleteEbookDialog create(final Context _this, final Book book, final ArrayAdapter<Book>bookListAdapter) {
+    	DeleteEbookDialog dlg = new DeleteEbookDialog(_this, book, bookListAdapter);
         dlg.show();
         return dlg;
     }

@@ -18,23 +18,19 @@
                         android:orientation="vertical"
                 >
                         <TextView
+		                        android:id="@+id/confirm_delete_ebook"
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/delete_ebook"
+                                android:text="@string/confirm_delete_ebook"
                         android:layout_margin="5sp"/>
-                        
                 </LinearLayout>
         </ScrollView>
-        <Button
-                android:id="@+id/delte_ebook_btn"
-                android:text="@string/delete"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-        android:padding="5sp"/>
-        <Button
-                android:id="@+id/dont_delte_ebook_btn"
-                android:text="@string/dont_delete"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-        android:padding="5sp"/>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="horizontal" android:layout_height="wrap_content"
+		android:layout_gravity="center" android:layout_width="fill_parent" android:gravity="center_horizontal">
+			<Button android:layout_height="wrap_content" android:id="@+id/delte_ebook_btn"
+			android:text="@string/delete" android:layout_width="wrap_content" android:padding="10dip"/>
+			<Button android:layout_height="wrap_content" android:id="@+id/dont_delte_ebook_btn"
+			android:text="@string/cancel" android:layout_width="wrap_content" android:padding="10dip"/>
+	</LinearLayout>      
 </LinearLayout>

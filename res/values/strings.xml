@@ -46,7 +46,6 @@
 <string name="donate">If you would like to donate via PayPal to our developers use the below address.  dave@thepackhams.com</string>
 <string name="close">Close</string>
 <string name="delete">Delete</string>
-<string name="dont_delete">Don't Delete</string>
 <string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
@@ -64,9 +63,9 @@
 <string name="splash">Splash Screen Here</string>
 <string name="invalid_chapter">There is a problem showing that.</string>
 <string name="file_deleted">eBook Deleted</string>
-<string name="delete_ebook">do you really want to delete the selected eBook?</string>
+<string name="confirm_delete_ebook">Do you really want to delete the selected eBook?\n\nTitle: {0}\nFilename: {1}\n\</string>
 <string name="error_deleting_file">Error Deleting eBook</string>
-<string name="really_delete">Really Delete eBook?</string>
+<string name="really_delete_title">Really Delete eBook?</string>
 <string name="create_sd_card_reveal_dir">Create reveal dir on sdcard ok</string>
 <string name="create_sd_card_ebook_dir">Create ebooks dir on sdcard ok</string>
 <color name="opaque_red">#f00</color>
@@ -97,4 +96,6 @@
 <string name="powered_by_jdbm">Powered by JDBM (http://jdbm.sourceforge.net/)</string>
 <string name="menu_license">License</string>
 <string name="title_license">Reveal License</string>
+<string name="menu_delete_ebook">Delete eBook</string>
+<string name="menu_open_ebook">Open eBook</string>
 </resources>

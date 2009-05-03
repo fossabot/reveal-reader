@@ -60,10 +60,9 @@ public class Main extends ListActivity implements OnGestureListener {
 
     private static final int REVELUPDATE_ID = Menu.FIRST + 8;
 
-    @SuppressWarnings("unused")
-    private static final int INSERT_ID = Menu.FIRST + 8;
-
     private static final int DELETE_ID = Menu.FIRST + 9;
+
+    private static final int OPEN_ID = Menu.FIRST + 10;
 
     private static int mRefreshNotifId = 0;
 
@@ -346,47 +345,48 @@ public class Main extends ListActivity implements OnGestureListener {
     @Override
     public boolean onContextItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
+        case OPEN_ID:
+            return onOpenBookMenuItem(item);
+
         case DELETE_ID:
-            return onDeleteBook(item);
+            return onDeleteBookMenuItem(item);
         default:
             return super.onContextItemSelected(item);
         }
     }
-    
+
+    protected boolean onOpenBookMenuItem(MenuItem item) {
+        Book book = getContextMenuBook(item);
+        setProgressBarIndeterminateVisibility(true);
+        Intent intent = new Intent(this, YbkViewActivity.class);
+        intent.putExtra(YbkDAO.ID, book.id);
+        startActivity(intent);
+        return true;
+
+    }
+
     @SuppressWarnings("unchecked")
-   private boolean onDeleteBook(MenuItem item) {
+    private boolean onDeleteBookMenuItem(MenuItem item) {
+        Book book = getContextMenuBook(item);
+        if (book != null) {
+            DeleteEbookDialog.create(this, book, (ArrayAdapter<Book>) getListView().getAdapter());
+        }
+        return true;
+    }
+
+    private Book getContextMenuBook(MenuItem item) {
         AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
         // TODO - there's got to be a better way to find the item that was long clicked
         // but haven't found it so far
-        Book book = null;
         View selectedView = menuInfo.targetView;
         ListView listView = getListView();
         for (int i = 0; i < listView.getChildCount(); i++) {
             View child = listView.getChildAt(i);
             if (child == selectedView) {
-                book = (Book) listView.getItemAtPosition(i);
-                break;
+                return (Book) listView.getItemAtPosition(i);
             }
         }
-
-        if (book != null) {
-            final String fileName = book.fileName;
-            File file = new File(fileName);
-            if (file.exists()) {
-                if (!file.delete()) {
-                    // TODO - should tell user about this
-                }
-            }
-//            Completion callback = new Completion() {
-//                @Override
-//                public void completed(boolean succeeded, String message) {
-//                    scheduleRefreshBookList();
-//                }
-//            };
-            YbkService.requestRemoveBook(this, fileName);
-            ((ArrayAdapter<Book>)listView.getAdapter()).remove(book);
-        }
-        return true;
+        return null;
     }
 
     @Override
@@ -394,8 +394,8 @@ public class Main extends ListActivity implements OnGestureListener {
         super.onCreateContextMenu(menu, v, menuInfo);
 
         // sv - get this working as quickly as possible to test deletion code in JDBM
-        menu.add(0, DELETE_ID, 0, R.string.really_delete);
-        // DeleteEbookDialog.create(this, DELETE_ID);
+        menu.add(0, OPEN_ID, 0, R.string.menu_open_ebook);
+        menu.add(0, DELETE_ID, 0, R.string.menu_delete_ebook);
     }
 
     @Override
@@ -426,7 +426,8 @@ public class Main extends ListActivity implements OnGestureListener {
         menu.add(Menu.NONE, BROWSER_ID, Menu.NONE, R.string.menu_browser).setIcon(android.R.drawable.ic_menu_set_as);
         menu.add(Menu.NONE, HELP_ID, Menu.NONE, R.string.menu_help).setIcon(android.R.drawable.ic_menu_info_details);
         menu.add(Menu.NONE, ABOUT_ID, Menu.NONE, R.string.menu_about).setIcon(android.R.drawable.ic_menu_info_details);
-        menu.add(Menu.NONE, LICENSE_ID, Menu.NONE, R.string.menu_license).setIcon(android.R.drawable.ic_menu_info_details);
+        menu.add(Menu.NONE, LICENSE_ID, Menu.NONE, R.string.menu_license).setIcon(
+                android.R.drawable.ic_menu_info_details);
         menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE, R.string.menu_settings).setIcon(
                 android.R.drawable.ic_menu_preferences);
         menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(android.R.drawable.ic_menu_share);
@@ -484,8 +485,11 @@ public class Main extends ListActivity implements OnGestureListener {
             startActivityForResult(bmIntent, YbkViewActivity.CALL_BOOKMARK);
             return true;
 
+        case OPEN_ID:
+            return onOpenBookMenuItem(item);
+
         case DELETE_ID:
-            return onDeleteBook(item);
+            return onDeleteBookMenuItem(item);
         }
         return super.onMenuItemSelected(featureId, item);
     }
