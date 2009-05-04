@@ -6,10 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import com.flurry.android.FlurryAgent;
-import com.jackcholt.reveal.YbkService.Completion;
-import com.nullwire.trace.ExceptionHandler;
-
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
@@ -33,6 +29,10 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.YbkService.Completion;
+import com.nullwire.trace.ExceptionHandler;
 
 /**
  * List activity to show categories and titles under those categories
@@ -377,7 +377,7 @@ public class TitleBrowser extends ListActivity {
                 public void onClick(View view) {
                     if (mFileLocation != null) {
                         Completion callback = new Completion() {
-                            @Override
+                            //@Override
                             public void completed(boolean succeeded, String message) {
                                 Main main = Main.getMainApplication();
                                 if (main != null) {

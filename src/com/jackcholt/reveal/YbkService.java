@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.jackcholt.reveal.data.YbkDAO;
-
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
@@ -21,6 +19,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Process;
 import android.preference.PreferenceManager;
+
+import com.jackcholt.reveal.data.YbkDAO;
 
 /**
  * Service that initiates and coordinates all the background activities of downloading books and updating the library so

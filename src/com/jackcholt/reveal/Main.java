@@ -284,7 +284,7 @@ public class Main extends ListActivity implements OnGestureListener {
             Completion callback = new Completion() {
                 volatile int remaining = count;
 
-                @Override
+                //@Override
                 public void completed(boolean succeeded, String message) {
                     if (succeeded) {
                         refreshNotify(message);

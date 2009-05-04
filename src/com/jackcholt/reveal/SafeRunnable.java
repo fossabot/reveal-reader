@@ -19,7 +19,7 @@ public abstract class SafeRunnable implements Runnable {
     public SafeRunnable() {
     }
 
-    @Override
+    //@Override
     final public void run() {
     	// keep it smooth
     	Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);

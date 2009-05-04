@@ -946,6 +946,7 @@ public class Util {
         if (t != null) {
             message += "\n\n" + getStackTrace(t);
         }
+        
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
         builder.setTitle(ctx.getResources().getString(R.string.error_title));
         builder.setMessage(message);
