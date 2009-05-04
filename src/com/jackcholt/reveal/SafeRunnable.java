@@ -3,6 +3,8 @@
  */
 package com.jackcholt.reveal;
 
+import android.os.Process;
+
 /**
  * Abstract base class for safe runnable objects that don't let exceptions get back to the OS.
  * 
@@ -19,6 +21,8 @@ public abstract class SafeRunnable implements Runnable {
 
     @Override
     final public void run() {
+    	// keep it smooth
+    	Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         try {
            protectedRun(); 
         }
