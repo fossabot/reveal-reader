@@ -376,17 +376,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
     private Book getContextMenuBook(MenuItem item) {
         AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-        // TODO - there's got to be a better way to find the item that was long clicked
-        // but haven't found it so far
-        View selectedView = menuInfo.targetView;
-        ListView listView = getListView();
-        for (int i = 0; i < listView.getChildCount(); i++) {
-            View child = listView.getChildAt(i);
-            if (child == selectedView) {
-                return (Book) listView.getItemAtPosition(i);
-            }
-        }
-        return null;
+        return (Book)getListView().getItemAtPosition(menuInfo.position);
     }
 
     @Override
