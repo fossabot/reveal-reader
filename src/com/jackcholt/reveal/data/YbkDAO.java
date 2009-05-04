@@ -14,6 +14,7 @@ import jdbm.helper.TupleBrowser;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+//import android.os.Debug;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -45,6 +46,7 @@ public class YbkDAO {
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
 
     public static final boolean useJournaledTransactions = true;
+    public static final String CACHE_SIZE = "5000";
 
     /**
      * Is the chapter a navigation chapter? Data type: INTEGER. Use {@link CHAPTER_TYPE_NO_NAV} and
@@ -116,6 +118,7 @@ public class YbkDAO {
         // options.put(RecordManagerOptions.THREAD_SAFE, "true");
         if (!useJournaledTransactions)
             options.put(RecordManagerOptions.DISABLE_TRANSACTIONS, "true");
+        options.put(RecordManagerOptions.CACHE_SIZE, CACHE_SIZE);
         mDb = RecordManagerFactory.createRecordManager(dbFile.getAbsolutePath(), options);
         Log.d(TAG, "Opened the database");
         root = YbkRoot.load(mDb);
@@ -226,6 +229,7 @@ public class YbkDAO {
      */
     public synchronized long insertBook(final String fileName, final String bindingText, final String title,
             final String shortTitle, final String metaData, final List<Chapter> chapters) throws IOException {
+        // Debug.startMethodTracing("profiler", 20 * 1024 * 1024);
         try {
             Log.d(TAG, "Inserting book: " + fileName);
             long id = Util.getUniqueTimeStamp();
@@ -254,6 +258,7 @@ public class YbkDAO {
                     Log.i(TAG, "Inserted book: " + fileName);
                 }
             }
+            // Debug.stopMethodTracing();
             return id;
         } catch (RuntimeException rte) {
             throw new RTIOException(rte);
@@ -530,7 +535,7 @@ public class YbkDAO {
      * Delete all the histories/bookmarks associated with a book that is being deleted
      * 
      * @param bookId
-     * @throws IOException 
+     * @throws IOException
      */
     private void deleteBookHistories(long bookId) throws IOException {
         List<History> histList = new ArrayList<History>();
@@ -546,10 +551,11 @@ public class YbkDAO {
             root.historyIdIndex.remove(hist.id);
             root.historyTitleIndex.remove(hist.title);
             if (hist.bookmarkNumber != 0)
-                root.historyBookmarkNumberIndex.remove((long)hist.bookmarkNumber);
-            hist.delete(mDb);           
+                root.historyBookmarkNumberIndex.remove((long) hist.bookmarkNumber);
+            hist.delete(mDb);
         }
     }
+
     /**
      * Get a list if Histories sorted from newest to oldest
      * 

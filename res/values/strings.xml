@@ -86,8 +86,8 @@
 <string name="no_bookmark">No Bookmarks</string>
 <string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
 <string name="refresh_title">Refreshing eBooks.  </string>
-<string name="error_reported">Reveal Error Reported.  Please check the forums for a fix.</string>
-<string name="error_title">Reporting Reveal Error</string>
+<string name="error_reporting">An unexpected error has occurred. Would you like to help improve Reveal by anonymously sending the following information to the Reveal developers?</string>
+<string name="error_title">Report Reveal Error</string>
 <string name="menu_rss_feed">New eBooks Updates</string>
 <string name="unknown">UNKNOWN</string>
 <string name="unloadable_chapter">UNLOADABLE CHAPTER</string>
@@ -98,4 +98,6 @@
 <string name="title_license">Reveal License</string>
 <string name="menu_delete_ebook">Delete eBook</string>
 <string name="menu_open_ebook">Open eBook</string>
+<string name="send_btn">Send</string>
+
 </resources>

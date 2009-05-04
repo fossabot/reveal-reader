@@ -58,6 +58,7 @@ public class LicenseDialog extends Dialog {
                 // ignore
             }
 	    }
+	    findViewById(R.id.content_layout).forceLayout();
 	}
 
 	public static LicenseDialog create(Context _this) {

@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.flurry.android.FlurryAgent;
 
@@ -11,11 +12,12 @@ import com.flurry.android.FlurryAgent;
 /**
  * ErrorDialog for informing users of something that happening
  * 
- * by Dave Packham
+ * @author Dave Packham
+ * @author Shon Vella
  */
 
 public class ErrorDialog extends Dialog {
-	public ErrorDialog(Context _this) {
+	public ErrorDialog(Context _this, Throwable t, String ...strings) {
         super(_this);
         // Change DEBUG to "0" in Global.java when building a RELEASE Version for the GOOGLE APP MARKET
 		// This allows for real usage stats and end user error reporting
@@ -28,9 +30,34 @@ public class ErrorDialog extends Dialog {
 		}
 		FlurryAgent.onEvent("ErrorDialog");
         setContentView(R.layout.error_dialog);
+        
+        StringBuilder sb = new StringBuilder();
+        
+        if (strings != null && strings.length > 0) {
+            for (String string : strings) {
+                sb.append(string);
+                sb.append('\n');
+            }
+        }
+        if (t != null) {
+            sb.append("stacktrace:\n");
+            sb.append(Util.getStackTrace(t));
+        }
+        final String info = sb.toString();
 
-        Button close = (Button) findViewById(R.id.close_about_btn);
-        close.setOnClickListener(new View.OnClickListener() {
+        TextView confirmTextView = (TextView) findViewById(R.id.confirm_error_send_stacktrace);
+        confirmTextView.setText(info);
+
+        Button sendButton = (Button) findViewById(R.id.send_error_btn);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    ReportError.reportError("UNCAUGHT_EXCEPTION_" + info);
+                    dismiss();
+                }
+        });
+
+        Button dontSendButton = (Button) findViewById(R.id.dont_send_error_btn);
+        dontSendButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                         dismiss();
                 }
@@ -39,8 +66,8 @@ public class ErrorDialog extends Dialog {
         setTitle(R.string.error_title);
     }
 
-	public static ErrorDialog create(Context _this) {
-		ErrorDialog dlg = new ErrorDialog(_this);
+	public static ErrorDialog create(Context _this, Throwable t, String ...strings) {
+		ErrorDialog dlg = new ErrorDialog(_this, t, strings);
 		dlg.show();
         return dlg;
 	}

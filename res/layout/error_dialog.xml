@@ -7,7 +7,7 @@
 >
         <ScrollView
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="200sp"
         >
                 <LinearLayout
                         android:id="@+id/error_container"
@@ -18,17 +18,26 @@
                         android:orientation="vertical"
                 >
                         <TextView
+                                android:id="@+id/confirm_error_send"
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/error_reported"
+                                android:text="@string/error_reporting"
                         android:layout_margin="5sp"/>
-                        
+                        <TextView
+                                android:id="@+id/confirm_error_send_stacktrace"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:textSize="8sp"
+                                android:textStyle="italic"
+                        		android:layout_margin="5sp"/>
                 </LinearLayout>
         </ScrollView>
-        <Button
-                android:id="@+id/close_about_btn"
-                android:text="@string/close"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-        android:padding="5sp"/>
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="horizontal" android:layout_height="wrap_content"
+		android:layout_gravity="center" android:layout_width="fill_parent" android:gravity="center_horizontal">
+			<Button android:layout_height="wrap_content" android:id="@+id/send_error_btn"
+			android:text="@string/send_btn" android:layout_width="wrap_content" android:padding="10dip"/>
+			<Button android:layout_height="wrap_content" android:id="@+id/dont_send_error_btn"
+			android:text="@string/cancel" android:layout_width="wrap_content" android:padding="10dip"/>
+	    </LinearLayout>      
 </LinearLayout>
