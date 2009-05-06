@@ -3,6 +3,9 @@ package com.jackcholt.reveal.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -13,13 +16,14 @@ import jdbm.helper.Tuple;
 import jdbm.helper.TupleBrowser;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-//import android.os.Debug;
+import android.content.SharedPreferences; //import android.os.Debug;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.jackcholt.reveal.Main;
 import com.jackcholt.reveal.Settings;
 import com.jackcholt.reveal.Util;
+import com.jackcholt.reveal.YbkService;
 
 /**
  * A class for managing all the database accesses for the Perst OODB.
@@ -45,8 +49,7 @@ public class YbkDAO {
 
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
 
-    public static final boolean useJournaledTransactions = true;
-    public static final String CACHE_SIZE = "5000";
+    public static final String CACHE_SIZE = "1000";
 
     /**
      * Is the chapter a navigation chapter? Data type: INTEGER. Use {@link CHAPTER_TYPE_NO_NAV} and
@@ -63,6 +66,11 @@ public class YbkDAO {
     private static YbkDAO instance = null;
 
     private YbkRoot root = null;
+
+    private Object writeGate = new Object();
+
+    private List<History> historyList;
+    private List<History> bookmarkList;
 
     /**
      * Allow the user to get the one and only instance of the YbkDAO.
@@ -114,14 +122,17 @@ public class YbkDAO {
 
         // Apparently this option is experimental and has bugs, but could help performance a lot
         // options.put(RecordManagerOptions.BUFFERED_INSTALLS, "true");
+
         // Apparently this option is not yet implemented
         // options.put(RecordManagerOptions.THREAD_SAFE, "true");
-        if (!useJournaledTransactions)
-            options.put(RecordManagerOptions.DISABLE_TRANSACTIONS, "true");
+
         options.put(RecordManagerOptions.CACHE_SIZE, CACHE_SIZE);
+
         mDb = RecordManagerFactory.createRecordManager(dbFile.getAbsolutePath(), options);
         Log.d(TAG, "Opened the database");
         root = YbkRoot.load(mDb);
+        historyList = getStoredHistoryList();
+        bookmarkList = getStoredBookmarkList();
     }
 
     /**
@@ -141,10 +152,12 @@ public class YbkDAO {
      * @param ctx
      * @throws IOException
      */
-    public synchronized void reopen(Context ctx) throws IOException {
+    public void reopen(Context ctx) throws IOException {
         try {
-            close();
-            open(ctx);
+            synchronized (writeGate) {
+                close();
+                open(ctx);
+            }
         } catch (RuntimeException rte) {
             throw new RTIOException(rte);
         }
@@ -156,7 +169,7 @@ public class YbkDAO {
      * @return The (possibly empty) list of book titles as a field index.
      * @throws IOException
      */
-    public synchronized List<Book> getBookTitles() throws IOException {
+    public List<Book> getBookTitles() throws IOException {
         try {
             List<Book> books = new ArrayList<Book>();
             TupleBrowser<String, Long> browser = root.bookTitleIndex.browse();
@@ -176,7 +189,7 @@ public class YbkDAO {
      * @return The list of books
      * @throws IOException
      */
-    public synchronized List<Book> getBooks() throws IOException {
+    public List<Book> getBooks() throws IOException {
         try {
             List<Book> books = new ArrayList<Book>();
             TupleBrowser<Long, Long> browser = root.bookIdIndex.browse();
@@ -196,19 +209,22 @@ public class YbkDAO {
      * @return
      * @throws IOException
      */
-    public synchronized List<History> getBookmarks() throws IOException {
-        try {
-            List<History> bookmarks = new ArrayList<History>();
-            TupleBrowser<String, Long> browser = root.historyTitleIndex.browse();
-            Tuple<String, Long> tuple = new Tuple<String, Long>();
-            while (browser.getNext(tuple)) {
-                bookmarks.add(History.load(mDb, tuple.getValue()));
-            }
+    public List<History> getBookmarks() throws IOException {
+        synchronized (bookmarkList) {
+            List<History> bookmarks = new ArrayList<History>(bookmarkList);
+            Collections.sort(bookmarks, bookmarkTitleComparator);
             return bookmarks;
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
         }
     }
+    
+    private static final Comparator<History> bookmarkTitleComparator = new Comparator<History>() {
+
+        @Override
+        public int compare(History hist1, History hist2) {
+            return hist1.title.compareTo(hist2.title);
+        }
+        
+    };
 
     /**
      * Insert a book into the database.
@@ -227,41 +243,45 @@ public class YbkDAO {
      *            the list of chapters
      * @throws IOException
      */
-    public synchronized long insertBook(final String fileName, final String bindingText, final String title,
+    public long insertBook(final String fileName, final String bindingText, final String title,
             final String shortTitle, final String metaData, final List<Chapter> chapters) throws IOException {
         // Debug.startMethodTracing("profiler", 20 * 1024 * 1024);
-        try {
-            Log.d(TAG, "Inserting book: " + fileName);
-            long id = Util.getUniqueTimeStamp();
-            Book book = new Book();
-            book.id = id;
-            book.fileName = fileName.toLowerCase();
-            book.active = true;
-            book.bindingText = bindingText;
-            book.formattedTitle = title == null ? null : Util.formatTitle(title);
-            book.title = title;
-            book.shortTitle = shortTitle;
-            book.metaData = metaData;
+        synchronized (writeGate) {
 
-            boolean done = false;
             try {
-                book.create(mDb);
-                done = root.bookIdIndex.put(book.id, book) && root.bookFilenameIndex.put(book.fileName, book)
-                        && (book.formattedTitle == null || root.bookTitleIndex.put(book.formattedTitle, book))
-                        && insertChapters(id, chapters);
-            } finally {
-                endTransaction(done);
-                if (!done) {
-                    Log.e(TAG, "Could not insert book: " + fileName);
-                    id = 0;
-                } else {
-                    Log.i(TAG, "Inserted book: " + fileName);
+                Log.d(TAG, "Inserting book: " + fileName);
+                long id = Util.getUniqueTimeStamp();
+                Book book = new Book();
+                book.id = id;
+                book.fileName = fileName.toLowerCase();
+                book.active = true;
+                book.bindingText = bindingText;
+                book.formattedTitle = title == null ? null : Util.formatTitle(title);
+                book.title = title;
+                book.shortTitle = shortTitle;
+                book.metaData = metaData;
+
+                boolean done = false;
+                try {
+                    book.create(mDb);
+                    // make sure the book is put into the title index last so it won't show up in the list prematurely
+                    done = insertChapters(id, chapters) && root.bookIdIndex.put(book.id, book)
+                            && root.bookFilenameIndex.put(book.fileName, book)
+                            && (book.formattedTitle == null || root.bookTitleIndex.put(book.formattedTitle, book));
+                } finally {
+                    endTransaction(done);
+                    if (!done) {
+                        Log.e(TAG, "Could not insert book: " + fileName);
+                        id = 0;
+                    } else {
+                        Log.i(TAG, "Inserted book: " + fileName);
+                    }
                 }
+                // Debug.stopMethodTracing();
+                return id;
+            } catch (RuntimeException rte) {
+                throw new RTIOException(rte);
             }
-            // Debug.stopMethodTracing();
-            return id;
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
         }
     }
 
@@ -299,8 +319,8 @@ public class YbkDAO {
      * @return
      * @throws IOException
      */
-    public synchronized boolean insertHistory(final long bookId, final String title, final String chapterName,
-            final int scrollYPos) throws IOException {
+    public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos)
+            throws IOException {
         try {
             return insertHistory(bookId, title, chapterName, scrollYPos, 0);
         } catch (RuntimeException rte) {
@@ -324,61 +344,91 @@ public class YbkDAO {
      * @return True if the insert succeeded, False otherwise.
      * @throws IOException
      */
-    public synchronized boolean insertHistory(final long bookId, final String title, final String chapterName,
-            final int scrollYPos, final int bookmarkNumber) throws IOException {
-        try {
-            History hist = new History();
-            hist.bookId = bookId;
-            hist.bookmarkNumber = bookmarkNumber;
-            hist.chapterName = chapterName;
-            hist.scrollYPos = scrollYPos;
-            hist.title = title;
-
-            boolean done = false;
-            try {
-                hist.create(mDb);
-                done = root.historyIdIndex.put(hist.id, hist)
-                        && root.historyTitleIndex.put(hist.title, hist)
-                        && (bookmarkNumber == 0 || root.historyBookmarkNumberIndex
-                                .put((long) hist.bookmarkNumber, hist));
-            } finally {
-                endTransaction(done);
+    public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos,
+            final int bookmarkNumber) {
+        History hist = new History();
+        hist.bookId = bookId;
+        hist.bookmarkNumber = bookmarkNumber;
+        hist.chapterName = chapterName;
+        hist.scrollYPos = scrollYPos;
+        hist.title = title;
+        YbkService.requestAddHistory(Main.getMainApplication(), hist);
+        if (bookmarkNumber == 0) {
+            synchronized (historyList) {
+                historyList.add(0, hist);
             }
-            return done;
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
+        } else {
+            synchronized (bookmarkList) {
+                bookmarkList.add(hist);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Insert a history (should only be called by YbkService).
+     * 
+     * @param hist
+     *            the history to insert
+     * @return True if the insert succeeded, False otherwise.
+     * @throws IOException
+     */
+    public boolean insertHistory(final History hist) throws IOException {
+        synchronized (writeGate) {
+            try {
+                boolean done = false;
+                try {
+                    hist.create(mDb);
+                    done = root.historyIdIndex.put(hist.id, hist)
+                            && root.historyTitleIndex.put(hist.title, hist)
+                            && (hist.bookmarkNumber == 0 || root.historyBookmarkNumberIndex.put(
+                                    (long) hist.bookmarkNumber, hist));
+                } finally {
+                    endTransaction(done);
+                }
+                return done;
+            } catch (RuntimeException rte) {
+                throw new RTIOException(rte);
+            }
         }
     }
 
     /**
-     * Remove all histories that have a timestamp earlier than the milliseconds passed in.
+     * Delete a history (should only be called by YbkService).
+     * 
+     * @param hist
+     *            the history to insert
+     * @return True if the insert succeeded, False otherwise.
+     * @throws IOException
+     */
+    public void deleteHistory(History hist) throws IOException {
+        synchronized (writeGate) {
+            try {
+                root.historyIdIndex.remove(hist.id);
+                root.historyTitleIndex.remove(hist.title);
+                hist.delete(mDb);
+            } catch (RuntimeException rte) {
+                throw new RTIOException(rte);
+            } finally {
+                endTransaction(true);
+            }
+        }
+    }
+
+    /**
+     * Remove all histories beyond the maximum.
      * 
      * @throws IOException
      */
-    public synchronized void deleteHistories() throws IOException {
-        try {
-            SharedPreferences sharedPref = mSharedPref;
-            int histToKeep = sharedPref
-                    .getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
+    public void deleteHistories() {
+        SharedPreferences sharedPref = mSharedPref;
+        int histToKeep = sharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
 
-            List<History> historyList = getHistoryList(Integer.MAX_VALUE);
-            if (historyList.size() > histToKeep) {
-                List<History> delHistList = historyList.subList(histToKeep, historyList.size());
-                if (delHistList.size() != 0) {
-                    try {
-                        for (int i = 0; i < delHistList.size(); i++) {
-                            History hist = delHistList.get(i);
-                            root.historyIdIndex.remove(hist.id);
-                            root.historyTitleIndex.remove(hist.title);
-                            hist.delete(mDb);
-                        }
-                    } finally {
-                        endTransaction(true);
-                    }
-                }
+        synchronized (historyList) {
+            while (historyList.size() > histToKeep) {
+                History hist = historyList.remove(historyList.size() - 1);
+                YbkService.requestRemoveHistory(Main.getMainApplication(), hist);
             }
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
         }
     }
 
@@ -390,7 +440,7 @@ public class YbkDAO {
      * @return True if the book was deleted.
      * @throws IOException
      */
-    public synchronized boolean deleteBook(final String fileName) throws IOException {
+    public boolean deleteBook(final String fileName) throws IOException {
         try {
             Book book = root.bookFilenameIndex.get(fileName.toLowerCase());
             return book != null ? deleteBook(book) : false;
@@ -407,24 +457,26 @@ public class YbkDAO {
      * @return True if the book was deleted.
      * @throws IOException
      */
-    public synchronized boolean deleteBook(final Book book) throws IOException {
-        try {
-            boolean done = false;
+    public boolean deleteBook(final Book book) throws IOException {
+        synchronized (writeGate) {
             try {
-                root.bookFilenameIndex.remove(book.fileName);
-                root.bookIdIndex.remove(book.id);
-                if (book.formattedTitle != null)
-                    root.bookTitleIndex.remove(book.formattedTitle);
-                deleteChapters(book.id);
-                deleteBookHistories(book.id);
-                book.delete(mDb);
-                done = true;
-            } finally {
-                endTransaction(done);
+                boolean done = false;
+                try {
+                    root.bookFilenameIndex.remove(book.fileName);
+                    root.bookIdIndex.remove(book.id);
+                    if (book.formattedTitle != null)
+                        root.bookTitleIndex.remove(book.formattedTitle);
+                    deleteChapters(book.id);
+                    deleteBookHistories(book.id);
+                    book.delete(mDb);
+                    done = true;
+                } finally {
+                    endTransaction(done);
+                }
+                return done;
+            } catch (RuntimeException rte) {
+                throw new RTIOException(rte);
             }
-            return done;
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
         }
     }
 
@@ -454,20 +506,23 @@ public class YbkDAO {
      * @return True if the Book is already in the database indexes and the update occurred successfully.
      * @throws IOException
      */
-    public synchronized boolean toggleBookActivity(final Book book) throws IOException {
-        try {
-            boolean done = false;
-            try {
-                book.active ^= true;
-                book.update(mDb);
-                done = true;
-            } finally {
-                endTransaction(done);
-            }
+    public boolean toggleBookActivity(final Book book) throws IOException {
+        synchronized (writeGate) {
 
-            return done;
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
+            try {
+                boolean done = false;
+                try {
+                    book.active ^= true;
+                    book.update(mDb);
+                    done = true;
+                } finally {
+                    endTransaction(done);
+                }
+
+                return done;
+            } catch (RuntimeException rte) {
+                throw new RTIOException(rte);
+            }
         }
     }
 
@@ -479,7 +534,7 @@ public class YbkDAO {
      * @return The book object identified by bookId.
      * @throws IOException
      */
-    public synchronized Book getBook(final long bookId) throws IOException {
+    public Book getBook(final long bookId) throws IOException {
         try {
             return root.bookIdIndex.get(bookId);
         } catch (RuntimeException rte) {
@@ -495,11 +550,19 @@ public class YbkDAO {
      * @return The history object identified by histId.
      * @throws IOException
      */
-    public synchronized History getHistory(final long histId) throws IOException {
-        try {
-            return root.historyIdIndex.get(histId);
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
+    public History getHistory(final long histId) {
+        synchronized (historyList) {
+            for (History hist : historyList) {
+                if (hist.id == histId) {
+                    return hist;
+                }
+            }
+            for (History hist : bookmarkList) {
+                if (hist.id == histId) {
+                    return hist;
+                }
+            }
+            return null;
         }
     }
 
@@ -511,11 +574,14 @@ public class YbkDAO {
      * @return The History object that contains the bookmark.
      * @throws IOException
      */
-    public synchronized History getBookmark(final int bmId) throws IOException {
-        try {
-            return root.historyBookmarkNumberIndex.get((long) bmId);
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
+    public History getBookmark(final int bmId) {
+        synchronized (bookmarkList) {
+            for (History hist : historyList) {
+                if (hist.bookmarkNumber == bmId) {
+                    return hist;
+                }
+            }
+            return null;
         }
     }
 
@@ -526,7 +592,7 @@ public class YbkDAO {
      * @return the List of History objects.
      * @throws IOException
      */
-    public synchronized List<History> getHistoryList() throws IOException {
+    public List<History> getHistoryList() throws IOException {
         int maxHistories = mSharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
         return getHistoryList(maxHistories);
     }
@@ -554,6 +620,17 @@ public class YbkDAO {
                 root.historyBookmarkNumberIndex.remove((long) hist.bookmarkNumber);
             hist.delete(mDb);
         }
+        for (List<History> list : new List[] { historyList, bookmarkList }) {
+            synchronized (list) {
+                Iterator<History> it = list.iterator();
+                while (it.hasNext()) {
+                    History hist = it.next();
+                    if (hist.bookId == bookId) {
+                        it.remove();
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -564,7 +641,25 @@ public class YbkDAO {
      * @return the List of History objects.
      * @throws IOException
      */
-    private synchronized List<History> getHistoryList(int maxHistories) throws IOException {
+    private synchronized List<History> getHistoryList(int maxHistories) {
+        synchronized (historyList) {
+            ArrayList<History> retList = new ArrayList<History>(maxHistories);
+            for (int i = 0; i < maxHistories && i < historyList.size(); i++) {
+                retList.add(historyList.get(i));
+            }
+            return retList;
+        }
+    }
+
+    /**
+     * Get a list if Histories sorted from newest to oldest
+     * 
+     * @param maxHistories
+     *            the maximum number of histories to return
+     * @return the List of History objects.
+     * @throws IOException
+     */
+    private synchronized List<History> getStoredHistoryList() throws IOException {
         try {
             List<History> histList = new ArrayList<History>();
             int histCount = 0;
@@ -572,7 +667,7 @@ public class YbkDAO {
             // start at the
             // end
             Tuple<Long, Long> tuple = new Tuple<Long, Long>();
-            while (histCount < maxHistories && browser.getPrevious(tuple)) {
+            while (browser.getPrevious(tuple)) {
                 History hist = History.load(mDb, tuple.getValue());
                 if (hist.bookmarkNumber == 0) {
                     histList.add(hist);
@@ -586,12 +681,14 @@ public class YbkDAO {
     }
 
     /**
-     * Get list of bookmarks.
+     * Get a list if Histories sorted from newest to oldest
      * 
-     * @return
+     * @param maxHistories
+     *            the maximum number of histories to return
+     * @return the List of History objects.
      * @throws IOException
      */
-    public synchronized List<History> getBookmarkList() throws IOException {
+    private synchronized List<History> getStoredBookmarkList() throws IOException {
         try {
             List<History> bookmarks = new ArrayList<History>();
             TupleBrowser<Long, Long> browser = root.historyBookmarkNumberIndex.browse();
@@ -606,24 +703,32 @@ public class YbkDAO {
     }
 
     /**
+     * Get list of bookmarks.
+     * 
+     * @return
+     * @throws IOException
+     */
+    public List<History> getBookmarkList() {
+        synchronized (bookmarkList) {
+            return new ArrayList<History>(bookmarkList);
+        }
+    }
+
+    /**
      * Get the last bookmark in the list.
      * 
      * @return The highest numbered bookmark.
      * @throws IOException
      */
-    public synchronized int getMaxBookmarkNumber() throws IOException {
-        try {
+    public int getMaxBookmarkNumber() throws IOException {
+        synchronized (bookmarkList) {
             int bmNbr = 1;
-            TupleBrowser<Long, Long> browser = root.historyBookmarkNumberIndex.browse(null); // null means start at the
-            // end
-            Tuple<Long, Long> tuple = new Tuple<Long, Long>();
-            if (browser.getPrevious(tuple)) {
-                History hist = History.load(mDb, tuple.getValue());
-                bmNbr = hist.bookmarkNumber + 1;
+            for (History hist : bookmarkList) {
+                if (hist.bookmarkNumber > bmNbr) {
+                    bmNbr = hist.bookmarkNumber;
+                }
             }
-            return bmNbr;
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
+            return bmNbr + 1;
         }
     }
 
@@ -635,7 +740,7 @@ public class YbkDAO {
      * @return A Book object identified by the passed in filename.
      * @throws IOException
      */
-    public synchronized Book getBook(final String fileName) throws IOException {
+    public Book getBook(final String fileName) throws IOException {
         try {
             return root.bookFilenameIndex.get(fileName.toLowerCase());
         } catch (RuntimeException rte) {
@@ -651,7 +756,7 @@ public class YbkDAO {
      * @return the chapter
      * @throws IOException
      */
-    public synchronized Chapter getChapter(final long bookId, final String fileName) throws IOException {
+    public Chapter getChapter(final long bookId, final String fileName) throws IOException {
         try {
             return root.chapterNameIndex.get(makeKey(bookId, fileName.toLowerCase()));
         } catch (RuntimeException rte) {
@@ -669,7 +774,7 @@ public class YbkDAO {
      * @return The chapter we're look for.
      * @throws IOException
      */
-    public synchronized Chapter getChapter(final long bookId, final int orderId) throws IOException {
+    public Chapter getChapter(final long bookId, final int orderId) throws IOException {
         try {
             return root.chapterOrderNbrIndex.get(makeKey(bookId, orderId));
         } catch (RuntimeException rte) {
@@ -687,7 +792,7 @@ public class YbkDAO {
      * @return True if the book has a chapter of that name, false otherwise.
      * @throws IOException
      */
-    public synchronized boolean chapterExists(final long bookId, final String fileName) throws IOException {
+    public boolean chapterExists(final long bookId, final String fileName) throws IOException {
         try {
             return (null != getChapter(bookId, fileName)) || (null != getChapter(bookId, fileName + ".gz"));
         } catch (RuntimeException rte) {
@@ -726,20 +831,16 @@ public class YbkDAO {
      *            The position in the history list that we're getting the history at.
      * @throws IOException
      */
-    public synchronized History getPreviousHistory(int historyPos) throws IOException {
-        try {
-            History hist = null;
-
+    public History getPreviousHistory(int historyPos) throws IOException {
+        History hist = null;
+        synchronized (historyList) {
             if (historyPos >= 0) {
-                List<History> historyList = getHistoryList();
                 if (historyList.size() - 1 >= historyPos) {
                     hist = historyList.get(historyPos);
                 }
             }
-            return hist;
-        } catch (RuntimeException rte) {
-            throw new RTIOException(rte);
         }
+        return hist;
     }
 
     String makeKey(Object key1, Object key2) {
