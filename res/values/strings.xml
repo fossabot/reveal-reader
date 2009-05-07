@@ -99,5 +99,6 @@
 <string name="menu_delete_ebook">Delete eBook</string>
 <string name="menu_open_ebook">Open eBook</string>
 <string name="send_btn">Send</string>
+<string name="exit_reveal_btn">Exit Reveal</string>
 
 </resources>

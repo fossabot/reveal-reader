@@ -88,107 +88,126 @@ public class Main extends ListActivity implements OnGestureListener {
 
     private boolean BOOLshowSplashScreen;
 
+    private static boolean BOOLsplashed = false;
+
     private boolean BOOLshowFullScreen;
 
-    private final Handler mUpdateLibHandler = new Handler();
+    private final Handler mHandler = new Handler();
 
     // private static boolean mUpdating = false;
 
     private List<Book> mBookTitleList;
+    
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // Debug.startMethodTracing("reveal");
+        try {
+            super.onCreate(savedInstanceState);
+            // Debug.startMethodTracing("reveal");
 
-        // send an exception email via this URL
-        // ExceptionHandler.register(this,
-        // "http://revealreader.thepackhams.com/exception.php");
+            // send an exception email via this URL
+            // ExceptionHandler.register(this,
+            // "http://revealreader.thepackhams.com/exception.php");
 
-        mApplication = this;
+            mApplication = this;
 
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version
-        // for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
-        }
-        FlurryAgent.onEvent("Main");
-
-        mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-
-        SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // Get the YanceyBook DAO
-        // mYbkDao = YbkDAO.getInstance(this);
-
-        BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
-
-        if (BOOLshowFullScreen) {
-            getWindow()
-                    .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
-        }
-
-        setContentView(R.layout.main);
-
-        // To capture LONG_PRESS gestures
-        gestureScanner = new GestureDetector(this);
-        registerForContextMenu(getListView());
-
-        boolean configChanged = (getLastNonConfigurationInstance() != null);
-
-        if (!configChanged) {
-            BOOLshowSplashScreen = mSharedPref.getBoolean("show_splash_screen", true);
-
-            if (BOOLshowSplashScreen) {
-                Util.showSplashScreen(this);
-            }
-        }
-
-        // Is Network up or not?
-        if (Util.isNetworkUp(this)) {
-            // Actually go ONLINE and check... duhhhh
-            UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
-        }
-
-        if (!configChanged) {
-            // Check for SDcard presence
-            // if we have one create the dirs and look fer ebooks
-            if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
-                // Log.e(Global.TAG, "sdcard not installed");
-                Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
-                return;
+            // Change DEBUG to "0" in Global.java when building a RELEASE Version
+            // for the GOOGLE APP MARKET
+            // This allows for real usage stats and end user error reporting
+            if (Global.DEBUG == 0) {
+                // Release Key for use of the END USERS
+                FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
             } else {
-                Util.createDefaultDirs(this);
-                // updateBookList();
-
+                // Development key for use of the DEVELOPMENT TEAM
+                FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
             }
-        }
+            FlurryAgent.onEvent("Main");
 
-        refreshBookList();
+            mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+
+            SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+            BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+
+            if (BOOLshowFullScreen) {
+                getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                requestWindowFeature(Window.FEATURE_NO_TITLE);
+            }
+
+            setContentView(R.layout.main);
+
+            // To capture LONG_PRESS gestures
+            gestureScanner = new GestureDetector(this);
+            registerForContextMenu(getListView());
+
+            boolean configChanged = (getLastNonConfigurationInstance() != null);
+
+            if (!configChanged) {
+                BOOLshowSplashScreen = mSharedPref.getBoolean("show_splash_screen", true);
+
+                if (BOOLshowSplashScreen && !BOOLsplashed) {
+                    Util.showSplashScreen(this);
+                    // only show splash screen once per process instantiation
+                    BOOLsplashed = true;
+                }
+            }
+
+            // Is Network up or not?
+            if (Util.isNetworkUp(this)) {
+                // Actually go ONLINE and check... duhhhh
+                UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+            }
+
+            if (!configChanged) {
+                // Check for SDcard presence
+                // if we have one create the dirs and look fer ebooks
+                if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
+                    // Log.e(Global.TAG, "sdcard not installed");
+                    Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
+                    return;
+                } else {
+                    Util.createDefaultDirs(this);
+                    // updateBookList();
+
+                }
+            }
+
+            refreshBookList();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
     }
 
     /** Called when the activity is going away. */
     @Override
     protected void onStop() {
-        super.onStop();
-        FlurryAgent.onEndSession(this);
-        // Debug.stopMethodTracing();
-
-        // Remove any references so it can be garbage collected.
-        // mYbkDao = null;
+        try {
+            super.onStop();
+            YbkService.stop(this);
+            FlurryAgent.onEndSession(this);
+            // Debug.stopMethodTracing();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
     }
 
     private final Runnable mUpdateBookList = new Runnable() {
         public void run() {
-            refreshBookList();
+            try {
+                refreshBookList();
+            } catch (RuntimeException rte) {
+                Util.unexpectedError(Main.this, rte);
+            } catch (Error e) {
+                Util.unexpectedError(Main.this, e);
+            }
+
         }
     };
 
@@ -196,7 +215,7 @@ public class Main extends ListActivity implements OnGestureListener {
      * Schedule update refresh of the book list on the main thread.
      */
     public void scheduleRefreshBookList() {
-        mUpdateLibHandler.post(mUpdateBookList);
+        mHandler.post(mUpdateBookList);
     }
 
     void refreshNotify(String message) {
@@ -284,7 +303,7 @@ public class Main extends ListActivity implements OnGestureListener {
             Completion callback = new Completion() {
                 volatile int remaining = count;
 
-                //@Override
+                // @Override
                 public void completed(boolean succeeded, String message) {
                     if (succeeded) {
                         refreshNotify(message);
@@ -344,15 +363,22 @@ public class Main extends ListActivity implements OnGestureListener {
 
     @Override
     public boolean onContextItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-        case OPEN_ID:
-            return onOpenBookMenuItem(item);
+        try {
+            switch (item.getItemId()) {
+            case OPEN_ID:
+                return onOpenBookMenuItem(item);
 
-        case DELETE_ID:
-            return onDeleteBookMenuItem(item);
-        default:
-            return super.onContextItemSelected(item);
+            case DELETE_ID:
+                return onDeleteBookMenuItem(item);
+            default:
+                return super.onContextItemSelected(item);
+            }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
+        return true;
     }
 
     protected boolean onOpenBookMenuItem(MenuItem item) {
@@ -376,125 +402,157 @@ public class Main extends ListActivity implements OnGestureListener {
 
     private Book getContextMenuBook(MenuItem item) {
         AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-        return (Book)getListView().getItemAtPosition(menuInfo.position);
+        return (Book) getListView().getItemAtPosition(menuInfo.position);
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-
-        // sv - get this working as quickly as possible to test deletion code in JDBM
-        menu.add(0, OPEN_ID, 0, R.string.menu_open_ebook);
-        menu.add(0, DELETE_ID, 0, R.string.menu_delete_ebook);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        setProgressBarIndeterminateVisibility(false);
-
-        // Set preferences from Setting screen
-        SharedPreferences sharedPref = mSharedPref;
-
-        String libDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
-
-        if (!libDir.endsWith("/")) {
-            libDir = libDir + "/";
+        try {
+            super.onCreateContextMenu(menu, v, menuInfo);
+            menu.add(0, OPEN_ID, 0, R.string.menu_open_ebook);
+            menu.add(0, DELETE_ID, 0, R.string.menu_delete_ebook);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
 
     }
 
     @Override
+    public void onResume() {
+        try {
+            super.onResume();
+
+            setProgressBarIndeterminateVisibility(false);
+
+            // Set preferences from Setting screen
+            SharedPreferences sharedPref = mSharedPref;
+
+            String libDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
+
+            if (!libDir.endsWith("/")) {
+                libDir = libDir + "/";
+            }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
-        super.onCreateOptionsMenu(menu);
-        menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history).setIcon(
-                android.R.drawable.ic_menu_recent_history);
-        menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark).setIcon(android.R.drawable.ic_input_get);
-        menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE, R.string.menu_refresh_library).setIcon(
-                android.R.drawable.ic_menu_rotate);
-        menu.add(Menu.NONE, BROWSER_ID, Menu.NONE, R.string.menu_browser).setIcon(android.R.drawable.ic_menu_set_as);
-        menu.add(Menu.NONE, HELP_ID, Menu.NONE, R.string.menu_help).setIcon(android.R.drawable.ic_menu_info_details);
-        menu.add(Menu.NONE, ABOUT_ID, Menu.NONE, R.string.menu_about).setIcon(android.R.drawable.ic_menu_info_details);
-        menu.add(Menu.NONE, LICENSE_ID, Menu.NONE, R.string.menu_license).setIcon(
-                android.R.drawable.ic_menu_info_details);
-        menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE, R.string.menu_settings).setIcon(
-                android.R.drawable.ic_menu_preferences);
-        menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(android.R.drawable.ic_menu_share);
+        try {
+            super.onCreateOptionsMenu(menu);
+            menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history).setIcon(
+                    android.R.drawable.ic_menu_recent_history);
+            menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark)
+                    .setIcon(android.R.drawable.ic_input_get);
+            menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE, R.string.menu_refresh_library).setIcon(
+                    android.R.drawable.ic_menu_rotate);
+            menu.add(Menu.NONE, BROWSER_ID, Menu.NONE, R.string.menu_browser)
+                    .setIcon(android.R.drawable.ic_menu_set_as);
+            menu.add(Menu.NONE, HELP_ID, Menu.NONE, R.string.menu_help)
+                    .setIcon(android.R.drawable.ic_menu_info_details);
+            menu.add(Menu.NONE, ABOUT_ID, Menu.NONE, R.string.menu_about).setIcon(
+                    android.R.drawable.ic_menu_info_details);
+            menu.add(Menu.NONE, LICENSE_ID, Menu.NONE, R.string.menu_license).setIcon(
+                    android.R.drawable.ic_menu_info_details);
+            menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE, R.string.menu_settings).setIcon(
+                    android.R.drawable.ic_menu_preferences);
+            menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(
+                    android.R.drawable.ic_menu_share);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
 
         return true;
     }
 
     @Override
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
-        switch (item.getItemId()) {
-        case REFRESH_LIB_ID:
-            RefreshDialog.create(this);
-            try {
-                updateBookList();
-            } catch (IOException ioe) {
-                // TODO - add friendly message
-                Util.displayError(this, ioe, null);
+        try {
+            switch (item.getItemId()) {
+            case REFRESH_LIB_ID:
+                RefreshDialog.create(this);
+                try {
+                    updateBookList();
+                } catch (IOException ioe) {
+                    // TODO - add friendly message
+                    Util.displayError(this, ioe, null);
+                }
+                return true;
+
+            case SETTINGS_ID:
+                Intent intent = new Intent(this, Settings.class);
+                startActivityForResult(intent, ACTIVITY_SETTINGS);
+                return true;
+
+            case BROWSER_ID:
+                Intent browserIntent = new Intent(this, TitleBrowser.class);
+                startActivity(browserIntent);
+                return true;
+
+            case REVELUPDATE_ID:
+                Toast.makeText(this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
+                UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+                return true;
+
+            case ABOUT_ID:
+                AboutDialog.create(this);
+                return true;
+
+            case LICENSE_ID:
+                LicenseDialog.create(this);
+                return true;
+
+            case HELP_ID:
+                HelpDialog.create(this);
+                return true;
+
+            case HISTORY_ID:
+                startActivityForResult(new Intent(this, HistoryDialog.class), YbkViewActivity.CALL_HISTORY);
+                return true;
+
+            case BOOKMARK_ID:
+                Intent bmIntent = new Intent(this, BookmarkDialog.class);
+                bmIntent.putExtra("fromMain", true);
+                startActivityForResult(bmIntent, YbkViewActivity.CALL_BOOKMARK);
+                return true;
+
+            case OPEN_ID:
+                return onOpenBookMenuItem(item);
+
+            case DELETE_ID:
+                return onDeleteBookMenuItem(item);
             }
-            return true;
-
-        case SETTINGS_ID:
-            Intent intent = new Intent(this, Settings.class);
-            startActivityForResult(intent, ACTIVITY_SETTINGS);
-            return true;
-
-        case BROWSER_ID:
-            Intent browserIntent = new Intent(this, TitleBrowser.class);
-            startActivity(browserIntent);
-            return true;
-
-        case REVELUPDATE_ID:
-            Toast.makeText(this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
-            UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
-            return true;
-
-        case ABOUT_ID:
-            AboutDialog.create(this);
-            return true;
-
-        case LICENSE_ID:
-            LicenseDialog.create(this);
-            return true;
-
-        case HELP_ID:
-            HelpDialog.create(this);
-            return true;
-
-        case HISTORY_ID:
-            startActivityForResult(new Intent(this, HistoryDialog.class), YbkViewActivity.CALL_HISTORY);
-            return true;
-
-        case BOOKMARK_ID:
-            Intent bmIntent = new Intent(this, BookmarkDialog.class);
-            bmIntent.putExtra("fromMain", true);
-            startActivityForResult(bmIntent, YbkViewActivity.CALL_BOOKMARK);
-            return true;
-
-        case OPEN_ID:
-            return onOpenBookMenuItem(item);
-
-        case DELETE_ID:
-            return onDeleteBookMenuItem(item);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
+
         return super.onMenuItemSelected(featureId, item);
     }
 
     @Override
     protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
+        try {
+            setProgressBarIndeterminateVisibility(true);
 
-        setProgressBarIndeterminateVisibility(true);
-
-        // Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
-        Book book = (Book) listView.getItemAtPosition(selectionRowId);
-        Intent intent = new Intent(this, YbkViewActivity.class);
-        intent.putExtra(YbkDAO.ID, book.id);
-        startActivity(intent);
-
+            // Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
+            Book book = (Book) listView.getItemAtPosition(selectionRowId);
+            Intent intent = new Intent(this, YbkViewActivity.class);
+            intent.putExtra(YbkDAO.ID, book.id);
+            startActivity(intent);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
     }
 
     /**
@@ -502,17 +560,22 @@ public class Main extends ListActivity implements OnGestureListener {
      */
     @Override
     protected Dialog onCreateDialog(int id) {
+        try {
+            switch (id) {
+            case LIBRARY_NOT_CREATED:
+                return new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_alert).setTitle(
+                        R.string.library_not_created).setPositiveButton(R.string.alert_dialog_ok,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
 
-        switch (id) {
-        case LIBRARY_NOT_CREATED:
-            return new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_alert).setTitle(
-                    R.string.library_not_created).setPositiveButton(R.string.alert_dialog_ok,
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-
-                            /* User clicked OK so do some stuff */
-                        }
-                    }).create();
+                                /* User clicked OK so do some stuff */
+                            }
+                        }).create();
+            }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
         return null;
     }
@@ -551,41 +614,46 @@ public class Main extends ListActivity implements OnGestureListener {
         Bundle extras;
         long histId;
         Intent intent;
+        try {
+            if (resultCode == RESULT_OK) {
+                switch (requestCode) {
+                case YbkViewActivity.CALL_HISTORY:
+                case YbkViewActivity.CALL_BOOKMARK:
+                    setProgressBarIndeterminateVisibility(true);
 
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-            case YbkViewActivity.CALL_HISTORY:
-            case YbkViewActivity.CALL_BOOKMARK:
-                setProgressBarIndeterminateVisibility(true);
+                    extras = data.getExtras();
+                    histId = extras.getLong(YbkDAO.ID);
 
-                extras = data.getExtras();
-                histId = extras.getLong(YbkDAO.ID);
+                    intent = new Intent(this, YbkViewActivity.class);
+                    intent.putExtra(YbkDAO.ID, histId);
+                    intent.putExtra(YbkDAO.FROM_HISTORY, true);
+                    startActivity(intent);
+                    break;
 
-                intent = new Intent(this, YbkViewActivity.class);
-                intent.putExtra(YbkDAO.ID, histId);
-                intent.putExtra(YbkDAO.FROM_HISTORY, true);
-                startActivity(intent);
-                break;
+                case ACTIVITY_SETTINGS:
+                    extras = data.getExtras();
+                    boolean libDirChanged = extras.getBoolean(Settings.EBOOK_DIR_CHANGED);
 
-            case ACTIVITY_SETTINGS:
-                extras = data.getExtras();
-                boolean libDirChanged = extras.getBoolean(Settings.EBOOK_DIR_CHANGED);
+                    if (libDirChanged) {
 
-                if (libDirChanged) {
+                        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                                Settings.DEFAULT_EBOOK_DIRECTORY);
 
-                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                            Settings.DEFAULT_EBOOK_DIRECTORY);
-
-                    try {
-                        YbkDAO.getInstance(this).reopen(this);
-                        refreshLibrary(libDir, ADD_BOOKS);
-                    } catch (IOException ioe) {
-                        // TODO - add friendly message
-                        Util.displayError(this, ioe, null);
+                        try {
+                            YbkDAO.getInstance(this).reopen(this);
+                            refreshLibrary(libDir, ADD_BOOKS);
+                        } catch (IOException ioe) {
+                            // TODO - add friendly message
+                            Util.displayError(this, ioe, null);
+                        }
+                        refreshBookList();
                     }
-                    refreshBookList();
                 }
             }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
 
         super.onActivityResult(requestCode, resultCode, data);
@@ -596,5 +664,4 @@ public class Main extends ListActivity implements OnGestureListener {
     public static Main getMainApplication() {
         return mApplication;
     }
-
 }

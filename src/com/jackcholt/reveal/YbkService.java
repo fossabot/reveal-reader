@@ -62,227 +62,243 @@ public class YbkService extends Service {
 
     @Override
     public void onCreate() {
-        mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        HandlerThread libThread = new HandlerThread("YbkUpdateWorker");
-        libThread.start();
-        libThread.setPriority(Process.THREAD_PRIORITY_BACKGROUND);
-        mLibLooper = libThread.getLooper();
-        mLibHandler = new Handler(mLibLooper);
+        try {
+            mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            HandlerThread libThread = new HandlerThread("YbkUpdateWorker");
+            libThread.start();
+            libThread.setPriority(Process.THREAD_PRIORITY_BACKGROUND);
+            mLibLooper = libThread.getLooper();
+            mLibHandler = new Handler(mLibLooper);
 
-        HandlerThread downloadThread = new HandlerThread("YbkDownloadWorker");
-        downloadThread.start();
-        libThread.setPriority(Process.THREAD_PRIORITY_BACKGROUND);
-        mDownloadLooper = downloadThread.getLooper();
-        mDownloadHandler = new Handler(mDownloadLooper);
+            HandlerThread downloadThread = new HandlerThread("YbkDownloadWorker");
+            downloadThread.start();
+            libThread.setPriority(Process.THREAD_PRIORITY_BACKGROUND);
+            mDownloadLooper = downloadThread.getLooper();
+            mDownloadHandler = new Handler(mDownloadLooper);
 
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+            mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
     }
 
     @Override
     public void onStart(Intent intent, int startId) {
-        Bundle extras = intent.getExtras();
-        int action = extras.getInt(ACTION_KEY);
-        final String target = extras.getString(TARGET_KEY);
-        final String source = extras.getString(SOURCE_KEY);
-        final History hist = (History)extras.getSerializable(HISTORY_KEY);
-        final long callbacksID = Long.valueOf(extras.getLong(CALLBACKS_KEY));
+        try {
+            Bundle extras = intent.getExtras();
+            int action = extras.getInt(ACTION_KEY);
+            final String target = extras.getString(TARGET_KEY);
+            final String source = extras.getString(SOURCE_KEY);
+            final History hist = (History) extras.getSerializable(HISTORY_KEY);
+            final long callbacksID = Long.valueOf(extras.getLong(CALLBACKS_KEY));
 
-        switch (action) {
-        case ADD_BOOK:
-            Log.i(TAG, "Received request to add book: " + target);
-            if (target != null) {
-                Runnable job = new SafeRunnable() {
+            switch (action) {
+            case ADD_BOOK:
+                Log.i(TAG, "Received request to add book: " + target);
+                if (target != null) {
+                    Runnable job = new SafeRunnable() {
 
-                    @Override
-                    public void protectedRun() {
-                        String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
-                        boolean succeeded;
-                        String message;
-                        try {
-                            // Create an object for reading a ybk file;
-                            YbkFileReader ybkRdr = new YbkFileReader(YbkService.this, target);
-                            // Tell the YbkFileReader to populate the book info
-                            // into
-                            // the database;
-                            if (ybkRdr.populateBook() != 0) {
-                                succeeded = true;
-                                message = "Added '" + bookName + "' to the library";
-                            } else {
+                        @Override
+                        public void protectedRun() {
+                            String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
+                            boolean succeeded;
+                            String message;
+                            try {
+                                // Create an object for reading a ybk file;
+                                YbkFileReader ybkRdr = new YbkFileReader(YbkService.this, target);
+                                // Tell the YbkFileReader to populate the book info
+                                // into
+                                // the database;
+                                if (ybkRdr.populateBook() != 0) {
+                                    succeeded = true;
+                                    message = "Added '" + bookName + "' to the library";
+                                } else {
+                                    succeeded = false;
+                                    message = "Could not add '" + bookName;
+                                }
+                            } catch (IOException ioe) {
                                 succeeded = false;
-                                message = "Could not add '" + bookName;
+                                message = "Could not add '" + bookName + "'.: " + ioe.toString();
+                                Util.unexpectedError(YbkService.this, ioe, "book: " + target);
                             }
-                        } catch (IOException ioe) {
-                            succeeded = false;
-                            message = "Could not add '" + bookName + "'.: " + ioe.toString();
-                            ReportError.reportError("BAD_EBOOK_FILE_" + bookName);
+                            if (succeeded)
+                                Log.i(TAG, message);
+                            else
+                                Log.e(TAG, message);
+                            if (callbacksID != 0) {
+                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                                    callback.completed(succeeded, message);
+                                }
+                            }
+                        }
+                    };
+                    mLibHandler.post(job);
+                } else {
+                    Log.e(TAG, "Add book request missing target.");
+                }
+                break;
+            case REMOVE_BOOK:
+                Log.i(TAG, "Received request to remove book: " + target);
+                if (target != null) {
+                    Runnable job = new SafeRunnable() {
+                        @Override
+                        public void protectedRun() {
+                            String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
+                            boolean succeeded;
+                            String message;
+                            try {
+                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
+                                if (ybkDAO.deleteBook(target)) {
+                                    succeeded = true;
+                                    message = "Removed '" + bookName + "' from the library";
+                                } else {
+                                    message = "Could not remove book '" + bookName + "'.";
+                                    succeeded = true;
+                                }
+                            } catch (IOException ioe) {
+                                succeeded = false;
+                                message = "Could not remove book '" + bookName + "'.: " + ioe.toString();
+                            }
+                            if (succeeded)
+                                Log.i(TAG, message);
+                            else
+                                Log.e(TAG, message);
+                            if (callbacksID != 0) {
+                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                                    callback.completed(succeeded, message);
+                                }
+                            }
+                        }
+                    };
+                    mLibHandler.post(job);
+                } else {
+                    Log.e(TAG, "Remove book request missing target.");
+                }
+                break;
+            case DOWNLOAD_BOOK:
+                Log.i(TAG, "Received request to download book: " + source + " to: " + target);
 
-                        }
-                        if (succeeded)
-                            Log.i(TAG, message);
-                        else
-                            Log.e(TAG, message);
-                        if (callbacksID != 0) {
-                            for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                callback.completed(succeeded, message);
+                if (target != null && source != null) {
+                    final String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                            Settings.DEFAULT_EBOOK_DIRECTORY);
+                    final Context context = this;
+                    Runnable job = new SafeRunnable() {
+                        @Override
+                        public void protectedRun() {
+                            try {
+                                List<String> downloads = Util.fetchTitle(new URL(target), new URL(source), libDir,
+                                        context);
+                                for (String download : downloads) {
+                                    requestAddBook(context, download, callbackMap.get(Long.valueOf(callbacksID)));
+                                }
+                            } catch (IOException ioe) {
+                                Log.e(TAG, "Unable to download '" + source + "': " + ioe.toString());
+                                Util.sendNotification(YbkService.this, "Could not download '" + source + "'. "
+                                        + ioe.toString(), android.R.drawable.stat_sys_warning, "Reveal Library",
+                                        mNotifMgr, mNotifId++, Main.class);
                             }
                         }
-                    }
-                };
-                mLibHandler.post(job);
-            } else {
-                Log.e(TAG, "Add book request missing target.");
-            }
-            break;
-        case REMOVE_BOOK:
-            Log.i(TAG, "Received request to remove book: " + target);
-            if (target != null) {
-                Runnable job = new SafeRunnable() {
-                    @Override
-                    public void protectedRun() {
-                        String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
-                        boolean succeeded;
-                        String message;
-                        try {
-                            YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                            if (ybkDAO.deleteBook(target)) {
-                                succeeded = true;
-                                message = "Removed '" + bookName + "' from the library";
-                            } else {
-                                message = "Could not remove book '" + bookName + "'.";
-                                succeeded = true;
-                            }
-                        } catch (IOException ioe) {
-                            succeeded = false;
-                            message = "Could not remove book '" + bookName + "'.: " + ioe.toString();
-                            ReportError.reportError("BAD_EBOOK_FILE_" + target);
-                        }
-                        if (succeeded)
-                            Log.i(TAG, message);
-                        else
-                            Log.e(TAG, message);
-                        if (callbacksID != 0) {
-                            for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                callback.completed(succeeded, message);
-                            }
-                        }
-                    }
-                };
-                mLibHandler.post(job);
-            } else {
-                Log.e(TAG, "Remove book request missing target.");
-            }
-            break;
-        case DOWNLOAD_BOOK:
-            Log.i(TAG, "Received request to download book: " + source + " to: " + target);
+                    };
+                    mDownloadHandler.post(job);
+                } else {
+                    Log.e(TAG, "Download book request missing target or filename.");
+                }
+                break;
+            case ADD_HISTORY:
+                Log.d(TAG, "Received request to add history: " + target);
+                if (hist != null) {
+                    Runnable job = new SafeRunnable() {
 
-            if (target != null && source != null) {
-                // FIXME - these strings should come from shared constants
-                // somewhere
-                final String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                        Settings.DEFAULT_EBOOK_DIRECTORY);
-                final Context context = this;
-                Runnable job = new SafeRunnable() {
-                    @Override
-                    public void protectedRun() {
-                        try {
-                            List<String> downloads = Util.fetchTitle(new URL(target), new URL(source), libDir, context);
-                            for (String download : downloads) {
-                                requestAddBook(context, download, callbackMap.get(Long.valueOf(callbacksID)));
-                            }
-                        } catch (IOException ioe) {
-                            Log.e(TAG, "Unable to download '" + source + "': " + ioe.toString());
-                            Util.sendNotification(YbkService.this, "Could not download '" + source + "'. "
-                                    + ioe.toString(), android.R.drawable.stat_sys_warning, "Reveal Library", mNotifMgr,
-                                    mNotifId++, Main.class);
-                        }
-                    }
-                };
-                mDownloadHandler.post(job);
-            } else {
-                Log.e(TAG, "Download book request missing target or filename.");
-            }
-            break;
-        case ADD_HISTORY:
-            Log.d(TAG, "Received request to add history: " + target);
-            if (hist != null) {
-                Runnable job = new SafeRunnable() {
-
-                    @Override
-                    public void protectedRun() {
-                        boolean succeeded;
-                        String message;
-                        try {
-                            YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                            if (ybkDAO.insertHistory(hist)) {
-                                succeeded = true;
-                                message = "Added history: '" + hist;
-                            } else {
+                        @Override
+                        public void protectedRun() {
+                            boolean succeeded;
+                            String message;
+                            try {
+                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
+                                if (ybkDAO.insertHistory(hist)) {
+                                    succeeded = true;
+                                    message = "Added history: '" + hist;
+                                } else {
+                                    message = "Could not add history: '" + hist;
+                                    succeeded = true;
+                                }
+                            } catch (IOException ioe) {
+                                succeeded = false;
                                 message = "Could not add history: '" + hist;
-                                succeeded = true;
                             }
-                        } catch (IOException ioe) {
-                            succeeded = false;
-                            message = "Could not add history: '" + hist;
-                        }
-                        if (succeeded)
-                            Log.i(TAG, message);
-                        else
-                            Log.e(TAG, message);
-                        if (callbacksID != 0) {
-                            for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                callback.completed(succeeded, message);
+                            if (succeeded)
+                                Log.i(TAG, message);
+                            else
+                                Log.e(TAG, message);
+                            if (callbacksID != 0) {
+                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                                    callback.completed(succeeded, message);
+                                }
                             }
                         }
-                    }
-                };
-                mLibHandler.post(job);
-            } else {
-                Log.e(TAG, "Add history request missing target.");
-            }
-            break;
-        case REMOVE_HISTORY:
-            Log.d(TAG, "Received request to remove history: " + target);
-            if (hist != null) {
-                Runnable job = new SafeRunnable() {
-                    @Override
-                    public void protectedRun() {
-                        boolean succeeded;
-                        String message;
-                        try {
-                            YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
+                    };
+                    mLibHandler.post(job);
+                } else {
+                    Log.e(TAG, "Add history request missing target.");
+                }
+                break;
+            case REMOVE_HISTORY:
+                Log.d(TAG, "Received request to remove history: " + target);
+                if (hist != null) {
+                    Runnable job = new SafeRunnable() {
+                        @Override
+                        public void protectedRun() {
+                            boolean succeeded;
+                            String message;
+                            try {
+                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
                                 ybkDAO.deleteHistory(hist);
                                 succeeded = true;
                                 message = "Removed history: '" + hist;
-                        } catch (IOException ioe) {
-                            succeeded = false;
-                            message = "Could not remove history: '" + hist;
-                        }
-                        if (succeeded)
-                            Log.i(TAG, message);
-                        else
-                            Log.e(TAG, message);
-                        if (callbacksID != 0) {
-                            for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                callback.completed(succeeded, message);
+                            } catch (IOException ioe) {
+                                succeeded = false;
+                                message = "Could not remove history: '" + hist;
+                            }
+                            if (succeeded)
+                                Log.i(TAG, message);
+                            else
+                                Log.e(TAG, message);
+                            if (callbacksID != 0) {
+                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                                    callback.completed(succeeded, message);
+                                }
                             }
                         }
-                    }
-                };
-                mLibHandler.post(job);
-            } else {
-                Log.e(TAG, "Remove history request missing target.");
+                    };
+                    mLibHandler.post(job);
+                } else {
+                    Log.e(TAG, "Remove history request missing target.");
+                }
+                break;
+            default:
+                Log.w(TAG, "Received request to perform unrecognized action: " + action);
+                return;
             }
-            break;
-        default:
-            Log.w(TAG, "Received request to perform unrecognized action: " + action);
-            return;
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
     }
 
     @Override
     public void onDestroy() {
-        mLibLooper.quit();
-        mDownloadLooper.quit();
+        try {
+            mLibLooper.quit();
+            mDownloadLooper.quit();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+
     }
 
     @Override
@@ -395,6 +411,10 @@ public class YbkService extends Service {
             intent.putExtra(CALLBACKS_KEY, callbackID);
         }
         context.startService(intent);
+    }
+
+    public static void stop(Context ctx) {
+        ctx.stopService(new Intent(ctx, YbkService.class));
     }
 
     /**

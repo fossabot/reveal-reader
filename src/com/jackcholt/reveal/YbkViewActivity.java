@@ -209,8 +209,14 @@ public class YbkViewActivity extends Activity {
         }
     }
 
+    /**
+     * Handle unexpected error.
+     * 
+     * @param t
+     */
     private void unexpectedError(Throwable t) {
-        ErrorDialog.create(this, t, "book: " + mBookFileName, "chapter: " + mChapFileName);
+        finish();
+        Util.unexpectedError(this, t, "book: " + mBookFileName, "chapter: " + mChapFileName);
     }
 
     /** Called when the activity is going away. */

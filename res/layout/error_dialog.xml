@@ -4,6 +4,7 @@
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:gravity="center_horizontal"
 >
         <ScrollView
                 android:layout_width="fill_parent"
@@ -32,12 +33,43 @@
                         		android:layout_margin="5sp"/>
                 </LinearLayout>
         </ScrollView>
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		android:orientation="horizontal" android:layout_height="wrap_content"
-		android:layout_gravity="center" android:layout_width="fill_parent" android:gravity="center_horizontal">
-			<Button android:layout_height="wrap_content" android:id="@+id/send_error_btn"
-			android:text="@string/send_btn" android:layout_width="wrap_content" android:padding="10dip"/>
-			<Button android:layout_height="wrap_content" android:id="@+id/dont_send_error_btn"
-			android:text="@string/cancel" android:layout_width="wrap_content" android:padding="10dip"/>
+		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:orientation="horizontal"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center"
+			android:layout_width="fill_parent"
+			android:gravity="center_horizontal"
+		>
+			<CheckBox
+				android:id="@+id/exit_reveal_btn"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:padding="10dip"/>
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:text="@string/exit_reveal_btn"/>
+	    </LinearLayout>
+	    <LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:orientation="horizontal"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center"
+			android:layout_width="fill_parent"
+			android:gravity="center_horizontal"
+		>
+			<Button
+				android:layout_height="wrap_content"
+				android:id="@+id/send_error_btn"
+				android:text="@string/send_btn"
+				android:layout_width="wrap_content"
+				android:padding="10dip"/>
+			<Button
+				android:layout_height="wrap_content"
+				android:id="@+id/dont_send_error_btn"
+				android:text="@string/cancel"
+				android:layout_width="wrap_content"
+				android:padding="10dip"/>
 	    </LinearLayout>      
 </LinearLayout>

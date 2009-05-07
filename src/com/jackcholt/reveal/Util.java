@@ -18,6 +18,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -946,7 +948,7 @@ public class Util {
         if (t != null) {
             message += "\n\n" + getStackTrace(t);
         }
-        
+
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
         builder.setTitle(ctx.getResources().getString(R.string.error_title));
         builder.setMessage(message);
@@ -979,6 +981,28 @@ public class Util {
         StringWriter sw = new StringWriter();
         t.printStackTrace(new PrintWriter(sw));
         return sw.toString();
+    }
+
+    /**
+     * Handle unexpected errors and runtime exceptions
+     * 
+     * @param t
+     *            the exception
+     */
+    public static void unexpectedError(final Context ctx, final Throwable t, final String... strings) {
+        Activity activity;
+        if (ctx instanceof Activity) {
+            activity = (Activity) ctx;
+        } else {
+            activity = Main.getMainApplication();
+        }
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ErrorDialog.start(ctx, t, strings);
+            }
+
+        });
     }
 
 }

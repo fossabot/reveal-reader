@@ -26,11 +26,11 @@ public abstract class SafeRunnable implements Runnable {
         try {
            protectedRun(); 
         }
-        catch (Throwable t)
+        catch (final Throwable t)
         {
             String message = "Uncaught exception: " + Util.getStackTrace(t);
             Log.e(getClass().getSimpleName(), message);
-            ReportError.reportError("UNCAUGHT_EXCEPTION_" + message);
+            Util.unexpectedError(Main.getMainApplication(), t);
         }
     }
     

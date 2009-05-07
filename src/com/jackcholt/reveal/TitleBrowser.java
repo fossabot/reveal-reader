@@ -64,90 +64,109 @@ public class TitleBrowser extends ListActivity {
     /** Used after return from downloading new titles **/
     final Runnable mUpdateResults = new Runnable() {
         public void run() {
-            downloadComplete();
+            try {
+                downloadComplete();
+            } catch (RuntimeException rte) {
+                Util.unexpectedError(TitleBrowser.this, rte);
+            } catch (Error e) {
+                Util.unexpectedError(TitleBrowser.this, e);
+            }
         }
     };
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        try {
+            super.onCreate(savedInstanceState);
 
-        ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
+            ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
 
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version
-        // for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-        }
-
-        FlurryAgent.onEvent("TitleBrowser");
-
-        Map<String, String> flurryMap = new HashMap<String, String>();
-        flurryMap.put("eBook Downloaded", "eBookname");
-
-        mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-
-        mBreadCrumb = new Stack<Uri>();
-
-        mDownloadSuccess = false;
-
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
-
-        if (BOOLshowFullScreen) {
-            getWindow()
-                    .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
-        }
-
-        setContentView(R.layout.browser_main);
-
-        mQueryHandler = new QueryHandler(this);
-
-        // If this database doesn't have anything to display, let's load it from
-        // the embedded file
-
-        mListCursor = managedQuery(Uri.withAppendedPath(TitleProvider.CONTENT_URI, "category"),
-                new String[] { TitleProvider.Categories._ID }, null, null, null);
-
-        if (mListCursor.getCount() == 0) {
-            Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
-
-            setProgressBarIndeterminateVisibility(true);
-            mBusy = true;
-            mQueryHandler.startUpdate(UPDATE_TOKEN, null,
-                    Uri.withAppendedPath(TitleProvider.CONTENT_URI, "updatefile"), null, null, null);
-        }
-
-        // setup current location in stack
-        Object lastStack = getLastNonConfigurationInstance();
-
-        if (lastStack != null) {
-            for (Object uri : (Stack<?>) lastStack) {
-                mBreadCrumb.push((Uri) uri);
+            // Change DEBUG to "0" in Global.java when building a RELEASE Version
+            // for the GOOGLE APP MARKET
+            // This allows for real usage stats and end user error reporting
+            if (Global.DEBUG == 0) {
+                // Release Key for use of the END USERS
+                FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+            } else {
+                // Development key for use of the DEVELOPMENT TEAM
+                FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
             }
-        } else {
-            Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
-            Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
-            mBreadCrumb.push(rootCategories);
-        }
 
-        updateScreen();
+            FlurryAgent.onEvent("TitleBrowser");
+
+            Map<String, String> flurryMap = new HashMap<String, String>();
+            flurryMap.put("eBook Downloaded", "eBookname");
+
+            mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+
+            mBreadCrumb = new Stack<Uri>();
+
+            mDownloadSuccess = false;
+
+            mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+            BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
+
+            if (BOOLshowFullScreen) {
+                getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                requestWindowFeature(Window.FEATURE_NO_TITLE);
+            }
+
+            setContentView(R.layout.browser_main);
+
+            mQueryHandler = new QueryHandler(this);
+
+            // If this database doesn't have anything to display, let's load it from
+            // the embedded file
+
+            mListCursor = managedQuery(Uri.withAppendedPath(TitleProvider.CONTENT_URI, "category"),
+                    new String[] { TitleProvider.Categories._ID }, null, null, null);
+
+            if (mListCursor.getCount() == 0) {
+                Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
+
+                setProgressBarIndeterminateVisibility(true);
+                mBusy = true;
+                mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(TitleProvider.CONTENT_URI,
+                        "updatefile"), null, null, null);
+            }
+
+            // setup current location in stack
+            Object lastStack = getLastNonConfigurationInstance();
+
+            if (lastStack != null) {
+                for (Object uri : (Stack<?>) lastStack) {
+                    mBreadCrumb.push((Uri) uri);
+                }
+            } else {
+                Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
+                Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
+                mBreadCrumb.push(rootCategories);
+            }
+
+            updateScreen();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
 
     }
 
     /** Called when the activity is going away. */
     @Override
     protected void onStop() {
-        super.onStop();
-        FlurryAgent.onEndSession(Main.getMainApplication());
+        try {
+            super.onStop();
+            FlurryAgent.onEndSession(Main.getMainApplication());
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+
     }
 
     @Override
@@ -180,24 +199,37 @@ public class TitleBrowser extends ListActivity {
 
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
-        boolean success = super.onCreateOptionsMenu(menu);
+        try {
+            boolean success = super.onCreateOptionsMenu(menu);
 
-        menu.add(Menu.NONE, UPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(android.R.drawable.ic_menu_share);
+            menu.add(Menu.NONE, UPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(android.R.drawable.ic_menu_share);
 
-        return success;
+            return success;
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+        return false;
     }
 
     @Override
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
-        switch (item.getItemId()) {
-        case UPDATE_ID:
-            Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
+        try {
+            switch (item.getItemId()) {
+            case UPDATE_ID:
+                Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
 
-            setProgressBarIndeterminateVisibility(true);
-            mBusy = true;
-            mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(TitleProvider.CONTENT_URI, "update"),
-                    null, null, null);
-            return true;
+                setProgressBarIndeterminateVisibility(true);
+                mBusy = true;
+                mQueryHandler.startUpdate(UPDATE_TOKEN, null,
+                        Uri.withAppendedPath(TitleProvider.CONTENT_URI, "update"), null, null, null);
+                return true;
+            }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
 
         return super.onMenuItemSelected(featureId, item);
@@ -205,53 +237,65 @@ public class TitleBrowser extends ListActivity {
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        super.onListItemClick(l, v, position, id);
+        try {
+            super.onListItemClick(l, v, position, id);
 
-        if (mBreadCrumb.size() < 3) {
-            Uri baseUri;
+            if (mBreadCrumb.size() < 3) {
+                Uri baseUri;
 
-            if (mBreadCrumb.size() == 2) {
-                baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "titlecategory");
-            } else {
-                baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
-            }
-
-            Uri lookupUri = ContentUris.withAppendedId(baseUri, id);
-            mBreadCrumb.push(lookupUri);
-
-            updateScreen();
-        } else {
-            if (mBusy) {
-                Toast.makeText(this, R.string.ebook_download_busy, Toast.LENGTH_LONG).show();
-                // Change DEBUG to "0" in Global.java when building a RELEASE
-                // Version
-                // for the GOOGLE APP MARKET
-                // This allows for real usage stats and end user error reporting
-                if (Global.DEBUG == 0) {
-                    // Release Key for use of the END USERS
-                    FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+                if (mBreadCrumb.size() == 2) {
+                    baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "titlecategory");
                 } else {
-                    // Development key for use of the DEVELOPMENT TEAM
-                    FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+                    baseUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
                 }
-                FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
+
+                Uri lookupUri = ContentUris.withAppendedId(baseUri, id);
+                mBreadCrumb.push(lookupUri);
+
+                updateScreen();
             } else {
-                TitleDialog dialog = new TitleDialog(this, id);
-                dialog.show();
+                if (mBusy) {
+                    Toast.makeText(this, R.string.ebook_download_busy, Toast.LENGTH_LONG).show();
+                    // Change DEBUG to "0" in Global.java when building a RELEASE
+                    // Version
+                    // for the GOOGLE APP MARKET
+                    // This allows for real usage stats and end user error reporting
+                    if (Global.DEBUG == 0) {
+                        // Release Key for use of the END USERS
+                        FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+                    } else {
+                        // Development key for use of the DEVELOPMENT TEAM
+                        FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+                    }
+                    FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
+                } else {
+                    TitleDialog dialog = new TitleDialog(this, id);
+                    dialog.show();
+                }
             }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent msg) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (mBreadCrumb.size() > 1) {
-                mBreadCrumb.pop();
+        try {
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                if (mBreadCrumb.size() > 1) {
+                    mBreadCrumb.pop();
 
-                updateScreen();
-            } else {
-                finish();
+                    updateScreen();
+                } else {
+                    finish();
+                }
             }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
         }
 
         return false;
@@ -267,33 +311,39 @@ public class TitleBrowser extends ListActivity {
 
         @Override
         protected void onUpdateComplete(int token, Object cookie, int result) {
-            super.onUpdateComplete(token, cookie, result);
-            // Change DEBUG to "0" in Global.java when building a RELEASE
-            // Version
-            // for the GOOGLE APP MARKET
-            // This allows for real usage stats and end user error reporting
-            if (Global.DEBUG == 0) {
-                // Release Key for use of the END USERS
-                FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-            } else {
-                // Development key for use of the DEVELOPMENT TEAM
-                FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+            try {
+                super.onUpdateComplete(token, cookie, result);
+                // Change DEBUG to "0" in Global.java when building a RELEASE
+                // Version
+                // for the GOOGLE APP MARKET
+                // This allows for real usage stats and end user error reporting
+                if (Global.DEBUG == 0) {
+                    // Release Key for use of the END USERS
+                    FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+                } else {
+                    // Development key for use of the DEVELOPMENT TEAM
+                    FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+                }
+                FlurryAgent.onError("TitleBrowser", "Download New Catalog", "INFO");
+                // establish data connection
+                Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
+                Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
+
+                // create adapters for view
+                mBreadCrumb.clear();
+                mBreadCrumb.push(rootCategories);
+
+                updateScreen();
+
+                setProgressBarIndeterminateVisibility(false);
+                mBusy = false;
+
+                Toast.makeText(mContext, R.string.ebook_update_complete, Toast.LENGTH_SHORT).show();
+            } catch (RuntimeException rte) {
+                Util.unexpectedError(TitleBrowser.this, rte);
+            } catch (Error e) {
+                Util.unexpectedError(TitleBrowser.this, e);
             }
-            FlurryAgent.onError("TitleBrowser", "Download New Catalog", "INFO");
-            // establish data connection
-            Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
-            Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
-
-            // create adapters for view
-            mBreadCrumb.clear();
-            mBreadCrumb.push(rootCategories);
-
-            updateScreen();
-
-            setProgressBarIndeterminateVisibility(false);
-            mBusy = false;
-
-            Toast.makeText(mContext, R.string.ebook_update_complete, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -375,32 +425,38 @@ public class TitleBrowser extends ListActivity {
             Button download = (Button) findViewById(R.id.title_download_button);
             download.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View view) {
-                    if (mFileLocation != null) {
-                        Completion callback = new Completion() {
-                            //@Override
-                            public void completed(boolean succeeded, String message) {
-                                Main main = Main.getMainApplication();
-                                if (main != null) {
-                                    if (succeeded) {
-                                        main.refreshNotify(message);
-                                        main.scheduleRefreshBookList();
-                                    } else {
-                                        Util.sendNotification(TitleBrowser.this, message,
-                                                android.R.drawable.stat_sys_warning, "Reveal Library", mNotifMgr,
-                                                mNotifId++, Main.class);
+                    try {
+                        if (mFileLocation != null) {
+                            Completion callback = new Completion() {
+                                // @Override
+                                public void completed(boolean succeeded, String message) {
+                                    Main main = Main.getMainApplication();
+                                    if (main != null) {
+                                        if (succeeded) {
+                                            main.refreshNotify(message);
+                                            main.scheduleRefreshBookList();
+                                        } else {
+                                            Util.sendNotification(TitleBrowser.this, message,
+                                                    android.R.drawable.stat_sys_warning, "Reveal Library", mNotifMgr,
+                                                    mNotifId++, Main.class);
+                                        }
                                     }
                                 }
-                            }
-                        };
-                        YbkService.requestDownloadBook(TitleBrowser.this, mDownloadUrl.toExternalForm(), mFileLocation
-                                .toExternalForm(), callback);
-                        Toast.makeText(context, R.string.ebook_download_started, Toast.LENGTH_SHORT).show();
+                            };
+                            YbkService.requestDownloadBook(TitleBrowser.this, mDownloadUrl.toExternalForm(),
+                                    mFileLocation.toExternalForm(), callback);
+                            Toast.makeText(context, R.string.ebook_download_started, Toast.LENGTH_SHORT).show();
 
-                    } else {
-                        Toast.makeText(context, R.string.ebook_download_failed_type, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(context, R.string.ebook_download_failed_type, Toast.LENGTH_SHORT).show();
+                        }
+
+                        dismiss();
+                    } catch (RuntimeException rte) {
+                        Util.unexpectedError(context, rte);
+                    } catch (Error e) {
+                        Util.unexpectedError(context, e);
                     }
-
-                    dismiss();
                 }
             });
         }
