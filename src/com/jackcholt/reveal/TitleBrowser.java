@@ -32,7 +32,7 @@ import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
-import com.nullwire.trace.ExceptionHandler;
+
 
 /**
  * List activity to show categories and titles under those categories
@@ -79,8 +79,6 @@ public class TitleBrowser extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-
-            ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
 
             // Change DEBUG to "0" in Global.java when building a RELEASE Version
             // for the GOOGLE APP MARKET

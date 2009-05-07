@@ -16,7 +16,6 @@ import android.widget.ListView;
 
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
-import com.nullwire.trace.ExceptionHandler;
 
 public class BookmarkDialog extends ListActivity {
     private final String TAG = "BookmarkDialog";
@@ -26,8 +25,6 @@ public class BookmarkDialog extends ListActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-    
-            ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
     
             // Change DEBUG to "0" in Global.java when building a RELEASE Version
             // for the GOOGLE APP MARKET
