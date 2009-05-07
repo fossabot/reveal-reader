@@ -794,7 +794,8 @@ public class YbkViewActivity extends Activity {
                     // characters with spaces
                     content = content.replace('\u0093', '"').replace('\u0094', '"');
 
-                    String header = content.substring(0, content.toLowerCase().indexOf("<end>"));
+                    int headerEndIndex = content.toLowerCase().indexOf("<end>");
+                    String header = headerEndIndex != -1 ? content.substring(0, headerEndIndex) : getResources().getString(R.string.unknown);
                     String headerLower = header.toLowerCase();
 
                     Log.d(TAG, "Chapter header: " + header);
@@ -1014,39 +1015,51 @@ public class YbkViewActivity extends Activity {
      *            The content of the chapter.
      */
     private void setChapBtnText(final String content) {
-        int endPos = content.indexOf("<end>");
-        if (-1 == endPos) {
-            throw new IllegalStateException("Chapter has no header");
+        try {
+            int endPos = content.indexOf("<end>");
+            if (-1 == endPos) {
+                throw new IllegalStateException("Chapter has no header");
+            }
+            String header = content.substring(0, endPos);
+            int startFN = header.toLowerCase().indexOf("<fn>");
+            if (-1 == startFN) {
+                throw new IllegalStateException("Chapter has no full name");
+            }
+    
+            // get past the <fn> tag
+            startFN += 4;
+    
+            int endFN = header.substring(startFN).indexOf("<");
+            if (-1 == endFN) {
+                throw new IllegalStateException("full name does not end properly");
+            }
+    
+            // Set endFN to the position in the header;
+            endFN += startFN;
+    
+            String chapBtnText = header.substring(startFN, endFN);
+    
+            if ((chapBtnText.indexOf(":")) != -1) {
+                String[] textParts = chapBtnText.split(":");
+                chapBtnText = textParts[1].trim();
+            }
+    
+            if (chapBtnText.length() > 30) {
+                chapBtnText = chapBtnText.substring(0, 30);
+            }
+            mChapBtnText = chapBtnText;
+        } catch (IllegalStateException ise) {
+            // does no on any good to percolate this exception, so log it, use a default and move on 
+            Log.e(TAG, ise.toString());
+            // try getting the first line
+            String lines[] = content.split("\n", 1);
+            String chapBtnText = "";
+            if (lines.length != 0) {
+                chapBtnText = Util.formatTitle(lines[0]);
+            }
+            // if still nothing, use a default
+            mChapBtnText = chapBtnText.length() > 0 ? chapBtnText : getResources().getString(R.string.unknown);
         }
-        String header = content.substring(0, endPos);
-        int startFN = header.toLowerCase().indexOf("<fn>");
-        if (-1 == startFN) {
-            throw new IllegalStateException("Chapter has no full name");
-        }
-
-        // get past the <fn> tag
-        startFN += 4;
-
-        int endFN = header.substring(startFN).indexOf("<");
-        if (-1 == endFN) {
-            throw new IllegalStateException("full name does not end properly");
-        }
-
-        // Set endFN to the position in the header;
-        endFN += startFN;
-
-        String chapBtnText = header.substring(startFN, endFN);
-
-        if ((chapBtnText.indexOf(":")) != -1) {
-            String[] textParts = chapBtnText.split(":");
-            chapBtnText = textParts[1].trim();
-        }
-
-        if (chapBtnText.length() > 30) {
-            chapBtnText = chapBtnText.substring(0, 30);
-        }
-
-        mChapBtnText = chapBtnText;
     }
 
     @Override
