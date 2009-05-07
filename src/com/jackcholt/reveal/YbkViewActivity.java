@@ -1069,32 +1069,38 @@ public class YbkViewActivity extends Activity {
                 setProgressBarIndeterminateVisibility(true);
                 try {
                     YbkDAO ybkDao = YbkDAO.getInstance(this);
-
-                    History hist = ybkDao.getPreviousHistory(++mHistoryPos);
-                    if (hist != null) {
-                        Book book = ybkDao.getBook(hist.bookId);
-                        String bookFileName = book.fileName;
-                        String chapFileName = hist.chapterName;
-                        mScrollYPos = hist.scrollYPos;
-
-                        // Log.d(TAG,"Going back to: " + bookFileName + ", " +
-                        // chapFileName);
-
-                        mBackButtonPressed = true;
-                        try {
-                            if (loadChapter(bookFileName, chapFileName)) {
-
-                                setBookBtn(book.shortTitle, bookFileName, chapFileName);
-
+                    // loop until we can open something or run out of history
+                    for (;;) {
+                        History hist = ybkDao.getPreviousHistory(++mHistoryPos);
+                        if (hist != null) {
+                            Book book = ybkDao.getBook(hist.bookId);
+                            if (book == null)
+                                continue;
+                            String bookFileName = book.fileName;
+                            String chapFileName = hist.chapterName;
+                            mScrollYPos = hist.scrollYPos;
+    
+                            // Log.d(TAG,"Going back to: " + bookFileName + ", " +
+                            // chapFileName);
+    
+                            mBackButtonPressed = true;
+                            try {
+                                if (loadChapter(bookFileName, chapFileName)) {
+    
+                                    setBookBtn(book.shortTitle, bookFileName, chapFileName);
+    
+                                }
+                            } catch (IOException ioe) {
+                                Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
+                                continue;
                             }
-                        } catch (IOException ioe) {
-                            Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
+    
+                            mBackButtonPressed = false;
+    
+                        } else {
+                            Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
                         }
-
-                        mBackButtonPressed = false;
-
-                    } else {
-                        Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
+                        break;
                     }
                 } catch (IOException ioe) {
                     // TODO - add a friendly message
