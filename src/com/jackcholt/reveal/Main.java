@@ -97,7 +97,6 @@ public class Main extends ListActivity implements OnGestureListener {
     // private static boolean mUpdating = false;
 
     private List<Book> mBookTitleList;
-    
 
     /** Called when the activity is first created. */
     @Override
@@ -188,7 +187,6 @@ public class Main extends ListActivity implements OnGestureListener {
     protected void onStop() {
         try {
             super.onStop();
-            YbkService.stop(this);
             FlurryAgent.onEndSession(this);
             // Debug.stopMethodTracing();
         } catch (RuntimeException rte) {
@@ -663,5 +661,23 @@ public class Main extends ListActivity implements OnGestureListener {
     // DKP
     public static Main getMainApplication() {
         return mApplication;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.app.Activity#onDestroy()
+     */
+    @Override
+    protected void onDestroy() {
+        try {
+            YbkService.stop(this);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+
+        super.onDestroy();
     }
 }
