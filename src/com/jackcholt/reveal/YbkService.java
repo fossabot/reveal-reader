@@ -121,7 +121,7 @@ public class YbkService extends Service {
                             } catch (IOException ioe) {
                                 succeeded = false;
                                 message = "Could not add '" + bookName + "'.: " + ioe.toString();
-                                Util.unexpectedError(YbkService.this, ioe, "book: " + target);
+                                Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
                             }
                             if (succeeded)
                                 Log.i(TAG, message);
