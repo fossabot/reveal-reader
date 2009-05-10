@@ -40,8 +40,7 @@ public class TitleProvider extends ContentProvider {
 	private static final String mSourceURL = "http://www.thecoffeys.net/ebooks/xmlbooks.asp";
 	public static final String AUTHORITY = "com.jackcholt.reveal.titles";
 	public static final String TAG = "TitleProvider";
-	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
-			+ "/titles");
+	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/titles");
 	public static final String UPDATE_TYPE = "text/plain";
 
 	/**
@@ -108,12 +107,10 @@ public class TitleProvider extends ContentProvider {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 		sUriMatcher.addURI(AUTHORITY, "titles/category/#", CATEGORY);
 		sUriMatcher.addURI(AUTHORITY, "titles/category", CATEGORIES);
-		sUriMatcher.addURI(AUTHORITY, "titles/categoryparent/#",
-				CATEGORIES_PARENT);
+		sUriMatcher.addURI(AUTHORITY, "titles/categoryparent/#", CATEGORIES_PARENT);
 		sUriMatcher.addURI(AUTHORITY, "titles/title/#", TITLE);
 		sUriMatcher.addURI(AUTHORITY, "titles/title", TITLES);
-		sUriMatcher
-				.addURI(AUTHORITY, "titles/titlecategory/#", TITLES_CATEGORY);
+		sUriMatcher.addURI(AUTHORITY, "titles/titlecategory/#", TITLES_CATEGORY);
 		sUriMatcher.addURI(AUTHORITY, "titles/update", UPDATE);
 		sUriMatcher.addURI(AUTHORITY, "titles/updatefile", UPDATE_FILE);
 	}
@@ -129,38 +126,33 @@ public class TitleProvider extends ContentProvider {
 			Log.i(TAG, "Creating database " + DATABASE_NAME);
 
 			db.execSQL("CREATE TABLE " + Titles.TABLE_NAME + " (" + Titles._ID
-					+ " INTEGER PRIMARY KEY, " + Titles.SOURCE_ID
-					+ " INTEGER, " + Titles.FILENAME
-					+ " TEXT DEFAULT NULL, " + Titles.BOOKNAME + " TEXT, "
-					+ Titles.URL + " TEXT, " + Titles.UPDATED + " TEXT, "
-					+ Titles.SIZE + " INTEGER, " + Titles.DESCRIPTION
-					+ " TEXT, " + Titles.CATEGORY_ID + " INTEGER, "
-					+ "FOREIGN KEY (" + Titles.CATEGORY_ID + ") REFERENCES "
-					+ Categories.TABLE_NAME + "(" + Categories._ID + ")"
-					+ "); ");
+					+ " INTEGER PRIMARY KEY, " + Titles.SOURCE_ID + " INTEGER, " + Titles.FILENAME
+					+ " TEXT DEFAULT NULL, " + Titles.BOOKNAME + " TEXT, " + Titles.URL + " TEXT, "
+					+ Titles.UPDATED + " TEXT, " + Titles.SIZE + " INTEGER, " + Titles.DESCRIPTION
+					+ " TEXT, " + Titles.CATEGORY_ID + " INTEGER, " + "FOREIGN KEY ("
+					+ Titles.CATEGORY_ID + ") REFERENCES " + Categories.TABLE_NAME + "("
+					+ Categories._ID + ")" + "); ");
 
-			db.execSQL("CREATE INDEX " + Titles.CATEGORY_ID + " ON "
-					+ Titles.TABLE_NAME + "(" + Titles.CATEGORY_ID + ");");
+			db.execSQL("CREATE INDEX " + Titles.CATEGORY_ID + " ON " + Titles.TABLE_NAME + "("
+					+ Titles.CATEGORY_ID + ");");
 
-			db.execSQL("CREATE TABLE " + Categories.TABLE_NAME + " ("
-					+ Categories._ID + " INTEGER PRIMARY KEY, "
-					+ Categories.NAME + " TEXT, " + Categories.PARENT_ID
-					+ " INTEGER, " + "FOREIGN KEY (" + Categories.PARENT_ID
-					+ ") REFERENCES " + Categories.TABLE_NAME + "("
-					+ Categories._ID + ")" + ");");
+			db.execSQL("CREATE TABLE " + Categories.TABLE_NAME + " (" + Categories._ID
+					+ " INTEGER PRIMARY KEY, " + Categories.NAME + " TEXT, " + Categories.PARENT_ID
+					+ " INTEGER, " + "FOREIGN KEY (" + Categories.PARENT_ID + ") REFERENCES "
+					+ Categories.TABLE_NAME + "(" + Categories._ID + ")" + ");");
 
-			db.execSQL("CREATE INDEX " + Categories.NAME + " ON "
-					+ Categories.TABLE_NAME + "(" + Categories.NAME + ");");
+			db.execSQL("CREATE INDEX " + Categories.NAME + " ON " + Categories.TABLE_NAME + "("
+					+ Categories.NAME + ");");
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
-					+ newVersion + ", which will destroy all old data");
-			
+			Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion
+					+ ", which will destroy all old data");
+
 			db.execSQL("DROP TABLE IF EXISTS " + Titles.TABLE_NAME);
 			db.execSQL("DROP TABLE IF EXISTS " + Categories.TABLE_NAME);
-			
+
 			onCreate(db);
 		}
 	}
@@ -194,7 +186,7 @@ public class TitleProvider extends ContentProvider {
 
 		case TITLE:
 			return Titles.CONTENT_ITEM_TYPE;
-			
+
 		case UPDATE:
 			return UPDATE_TYPE;
 
@@ -216,47 +208,37 @@ public class TitleProvider extends ContentProvider {
 	}
 
 	@Override
-	public Uri insert(Uri uri, ContentValues values)
-			throws IllegalArgumentException, SQLException {
+	public Uri insert(Uri uri, ContentValues values) throws IllegalArgumentException, SQLException {
 
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 		long rowId;
 		switch (sUriMatcher.match(uri)) {
 		case CATEGORIES:
-			if (!values.containsKey(Categories.NAME)
-					|| !values.containsKey(Categories.PARENT_ID)) {
+			if (!values.containsKey(Categories.NAME) || !values.containsKey(Categories.PARENT_ID)) {
 				throw new IllegalArgumentException(
-						"Missing required information while adding category: \n"
-								+ Categories.NAME + ": "
-								+ values.getAsString(Categories.NAME) + ", "
+						"Missing required information while adding category: \n" + Categories.NAME
+								+ ": " + values.getAsString(Categories.NAME) + ", "
 								+ Categories.PARENT_ID + ": "
 								+ values.getAsString(Categories.PARENT_ID));
 			}
 
 			rowId = db.insert(Categories.TABLE_NAME, Categories.NAME, values);
 			if (rowId > 0) {
-				Uri categoryUri = ContentUris
-						.withAppendedId(CONTENT_URI, rowId);
-				getContext().getContentResolver().notifyChange(categoryUri,
-						null);
+				Uri categoryUri = ContentUris.withAppendedId(CONTENT_URI, rowId);
+				getContext().getContentResolver().notifyChange(categoryUri, null);
 				return categoryUri;
 			}
 			break;
 		case TITLES:
-			if (!values.containsKey(Titles.BOOKNAME)
-					|| !values.containsKey(Titles.CATEGORY_ID)
-					|| !values.containsKey(Titles.URL)
-					|| !values.containsKey(Titles.SOURCE_ID)) {
+			if (!values.containsKey(Titles.BOOKNAME) || !values.containsKey(Titles.CATEGORY_ID)
+					|| !values.containsKey(Titles.URL) || !values.containsKey(Titles.SOURCE_ID)) {
 				throw new IllegalArgumentException(
-						"Missing required information while adding new title: \n"
-								+ Titles.BOOKNAME + ": "
-								+ values.getAsString(Titles.BOOKNAME) + ", "
+						"Missing required information while adding new title: \n" + Titles.BOOKNAME
+								+ ": " + values.getAsString(Titles.BOOKNAME) + ", "
 								+ Titles.CATEGORY_ID + ": "
-								+ values.getAsString(Titles.CATEGORY_ID) + ", "
-								+ Titles.SOURCE_ID + ": "
-								+ values.getAsString(Titles.SOURCE_ID) + ", "
-								+ Titles.URL + ": "
-								+ values.getAsString(Titles.URL));
+								+ values.getAsString(Titles.CATEGORY_ID) + ", " + Titles.SOURCE_ID
+								+ ": " + values.getAsString(Titles.SOURCE_ID) + ", " + Titles.URL
+								+ ": " + values.getAsString(Titles.URL));
 			}
 
 			rowId = db.insert(Titles.TABLE_NAME, Titles.BOOKNAME, values);
@@ -274,9 +256,8 @@ public class TitleProvider extends ContentProvider {
 	}
 
 	@Override
-	public Cursor query(Uri uri, String[] projection, String selection,
-			String[] selectionArgs, String sortOrder)
-			throws IllegalArgumentException {
+	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+			String sortOrder) throws IllegalArgumentException {
 
 		Log.d(TAG, "Performing query on uri: " + uri);
 
@@ -287,46 +268,39 @@ public class TitleProvider extends ContentProvider {
 		switch (sUriMatcher.match(uri)) {
 		case CATEGORIES:
 			builder.setTables(Categories.TABLE_NAME);
-			orderBy = (sortOrder == null) ? Categories.DEFAULT_SORT_ORDER
-					: sortOrder;
+			orderBy = (sortOrder == null) ? Categories.DEFAULT_SORT_ORDER : sortOrder;
 			break;
 		case CATEGORY:
 			builder.setTables(Categories.TABLE_NAME);
 			where = Categories._ID + " = " + uri.getPathSegments().get(2);
-			orderBy = (sortOrder == null) ? Categories.DEFAULT_SORT_ORDER
-					: sortOrder;
+			orderBy = (sortOrder == null) ? Categories.DEFAULT_SORT_ORDER : sortOrder;
 			break;
 		case CATEGORIES_PARENT:
 			builder.setTables(Categories.TABLE_NAME);
 			where = Categories.PARENT_ID + " = " + uri.getPathSegments().get(2);
 			Log.d(TAG, where);
-			orderBy = (sortOrder == null) ? Categories.DEFAULT_SORT_ORDER
-					: sortOrder;
+			orderBy = (sortOrder == null) ? Categories.DEFAULT_SORT_ORDER : sortOrder;
 			break;
 		case TITLES:
 			builder.setTables(Titles.TABLE_NAME);
-			orderBy = (sortOrder == null) ? Titles.DEFAULT_SORT_ORDER
-					: sortOrder;
+			orderBy = (sortOrder == null) ? Titles.DEFAULT_SORT_ORDER : sortOrder;
 			break;
 		case TITLE:
 			builder.setTables(Titles.TABLE_NAME);
 			where = Titles._ID + " = " + uri.getPathSegments().get(2);
-			orderBy = (sortOrder == null) ? Titles.DEFAULT_SORT_ORDER
-					: sortOrder;
+			orderBy = (sortOrder == null) ? Titles.DEFAULT_SORT_ORDER : sortOrder;
 			break;
 		case TITLES_CATEGORY:
 			builder.setTables(Titles.TABLE_NAME);
 			where = Titles.CATEGORY_ID + " = " + uri.getPathSegments().get(2);
-			orderBy = (sortOrder == null) ? Titles.DEFAULT_SORT_ORDER
-					: sortOrder;
+			orderBy = (sortOrder == null) ? Titles.DEFAULT_SORT_ORDER : sortOrder;
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 
 		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-		Cursor c = builder.query(db, projection, where, null, null, null,
-				orderBy);
+		Cursor c = builder.query(db, projection, where, null, null, null, orderBy);
 
 		Log.d(TAG, "Query yeilded " + c.getCount() + " results");
 		// Tell the cursor what uri to watch, so it knows when its source data
@@ -336,8 +310,7 @@ public class TitleProvider extends ContentProvider {
 	}
 
 	@Override
-	public int update(Uri uri, ContentValues values, String selection,
-			String[] selectionArgs) {
+	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		switch (sUriMatcher.match(uri)) {
 		case UPDATE:
 			populate(true);
@@ -362,7 +335,7 @@ public class TitleProvider extends ContentProvider {
 		InputSource source;
 
 		Log.d(TAG, "Populating database from " + (fromWeb ? "web" : "file"));
-		
+
 		// clear the database first
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 		{
@@ -376,8 +349,13 @@ public class TitleProvider extends ContentProvider {
 				URL bookUrl = new URL(mSourceURL);
 				source = new InputSource(bookUrl.openStream());
 			} else {
-				source = new InputSource(getContext().getResources()
-						.openRawResource(R.raw.xmlbooks));
+				// source = new InputSource(getContext().getResources()
+				// .openRawResource(R.raw.xmlbooks));
+
+				// get from the internet either way...
+				URL bookUrl = new URL(mSourceURL);
+				source = new InputSource(bookUrl.openStream());
+
 			}
 
 			SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -427,8 +405,8 @@ public class TitleProvider extends ContentProvider {
 		private Integer mCategoryID;
 		private Uri mInsertUri;
 
-		public void startElement(String namespaceURI, String tagName,
-				String qName, Attributes attributes) throws SAXException {
+		public void startElement(String namespaceURI, String tagName, String qName,
+				Attributes attributes) throws SAXException {
 			String lowerTag = tagName.toLowerCase();
 
 			if (lowerTag.equals(mBookTag)) {
@@ -465,11 +443,10 @@ public class TitleProvider extends ContentProvider {
 							|| mCurrentTag.equals(Titles.DESCRIPTION)
 							|| mCurrentTag.equals(Titles.FILENAME)
 							|| mCurrentTag.equals(Titles.SIZE)
-							|| mCurrentTag.equals(Titles.UPDATED)
-							|| mCurrentTag.equals(Titles.URL)
+							|| mCurrentTag.equals(Titles.UPDATED) || mCurrentTag.equals(Titles.URL)
 							|| mCurrentTag.equals(Titles.SOURCE_ID)
-							|| mCurrentTag.equals(mCategoryTag + "1") 
-							|| mCurrentTag.equals(mCategoryTag + "2"))) {
+							|| mCurrentTag.equals(mCategoryTag + "1") || mCurrentTag
+							.equals(mCategoryTag + "2"))) {
 				String content = mCurrentValues.getAsString(mCurrentTag);
 				if (content == null) {
 					content = new String(inCharacters, start, length).trim();
@@ -503,28 +480,23 @@ public class TitleProvider extends ContentProvider {
 			while (mCount < 4) {
 				if (mCategory != null && !mCategory.equals("")) {
 					mCategoryValues.put(Categories.NAME, mCategory);
-					mCategoryValues
-							.put(Categories.PARENT_ID, mParentCategoryID);
+					mCategoryValues.put(Categories.PARENT_ID, mParentCategoryID);
 
-					mCategoryID = mCategories
-							.get(mCategory + mParentCategoryID);
+					mCategoryID = mCategories.get(mCategory + mParentCategoryID);
 
 					if (mCategoryID == null) {
-						mInsertUri = insert(Uri.withAppendedPath(CONTENT_URI,
-								"category"), mCategoryValues);
-						mCategoryID = new Integer(mInsertUri.getPathSegments()
-								.get(1));
-						mCategories.put(mCategory + mParentCategoryID,
-								mCategoryID);
+						mInsertUri = insert(Uri.withAppendedPath(CONTENT_URI, "category"),
+								mCategoryValues);
+						mCategoryID = new Integer(mInsertUri.getPathSegments().get(1));
+						mCategories.put(mCategory + mParentCategoryID, mCategoryID);
 					}
 
 					mParentCategoryID = mCategoryID;
-				} else if (mCount == 3) { 
+				} else if (mCount == 3) {
 					// we have some titles (standard works) that don't fit a 2
 					// category setup let's try to place them in an English
 					// category
-					mCategoryID = mCategories
-							.get("English" + mParentCategoryID);
+					mCategoryID = mCategories.get("English" + mParentCategoryID);
 
 					if (mCategoryID == null) {
 						Log.w(TAG, "Found title without needed categories: "
@@ -541,9 +513,8 @@ public class TitleProvider extends ContentProvider {
 
 			mCurrentValues.put(Titles.CATEGORY_ID, mCategoryID);
 
-			mInsertUri = insert(Uri.withAppendedPath(CONTENT_URI, "title"),
-					mCurrentValues);
-//			Log.d(TAG, "Inserted: " + mInsertUri.toString());
+			mInsertUri = insert(Uri.withAppendedPath(CONTENT_URI, "title"), mCurrentValues);
+			// Log.d(TAG, "Inserted: " + mInsertUri.toString());
 		}
 	}
 }
