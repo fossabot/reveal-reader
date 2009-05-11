@@ -128,7 +128,7 @@ public class TitleBrowser extends ListActivity {
                 setProgressBarIndeterminateVisibility(true);
                 mBusy = true;
                 mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(TitleProvider.CONTENT_URI,
-                        "updatefile"), null, null, null);
+                        "update"), null, null, null);
             }
 
             // setup current location in stack

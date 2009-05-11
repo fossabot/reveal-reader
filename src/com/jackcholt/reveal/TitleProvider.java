@@ -100,7 +100,6 @@ public class TitleProvider extends ContentProvider {
 	public static final int TITLES = 4;
 	public static final int TITLES_CATEGORY = 5;
 	public static final int UPDATE = 6;
-	public static final int UPDATE_FILE = 7;
 
 	private static final UriMatcher sUriMatcher;
 	static {
@@ -112,7 +111,6 @@ public class TitleProvider extends ContentProvider {
 		sUriMatcher.addURI(AUTHORITY, "titles/title", TITLES);
 		sUriMatcher.addURI(AUTHORITY, "titles/titlecategory/#", TITLES_CATEGORY);
 		sUriMatcher.addURI(AUTHORITY, "titles/update", UPDATE);
-		sUriMatcher.addURI(AUTHORITY, "titles/updatefile", UPDATE_FILE);
 	}
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
@@ -188,9 +186,6 @@ public class TitleProvider extends ContentProvider {
 			return Titles.CONTENT_ITEM_TYPE;
 
 		case UPDATE:
-			return UPDATE_TYPE;
-
-		case UPDATE_FILE:
 			return UPDATE_TYPE;
 
 		default:
@@ -313,10 +308,7 @@ public class TitleProvider extends ContentProvider {
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		switch (sUriMatcher.match(uri)) {
 		case UPDATE:
-			populate(true);
-			break;
-		case UPDATE_FILE:
-			populate(false);
+			populate();
 			break;
 		}
 		return 0;
@@ -331,10 +323,10 @@ public class TitleProvider extends ContentProvider {
 	 *            Whether to populate from a web connection or the (possibly
 	 *            out-dated) packaged set of titles.
 	 */
-	public void populate(boolean fromWeb) {
+	public void populate() {
 		InputSource source;
 
-		Log.d(TAG, "Populating database from " + (fromWeb ? "web" : "file"));
+		Log.d(TAG, "Populating database from web");
 
 		// clear the database first
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
@@ -345,18 +337,8 @@ public class TitleProvider extends ContentProvider {
 		}
 
 		try {
-			if (fromWeb) {
-				URL bookUrl = new URL(mSourceURL);
-				source = new InputSource(bookUrl.openStream());
-			} else {
-				// source = new InputSource(getContext().getResources()
-				// .openRawResource(R.raw.xmlbooks));
-
-				// get from the internet either way...
-				URL bookUrl = new URL(mSourceURL);
-				source = new InputSource(bookUrl.openStream());
-
-			}
+			URL bookUrl = new URL(mSourceURL);
+			source = new InputSource(bookUrl.openStream());
 
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			SAXParser parser = factory.newSAXParser();
