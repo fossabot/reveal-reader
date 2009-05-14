@@ -207,7 +207,7 @@ public class YbkService extends Service {
                 }
                 break;
             case ADD_HISTORY:
-                Log.d(TAG, "Received request to add history: " + target);
+                Log.d(TAG, "Received request to add history: " + hist);
                 if (hist != null) {
                     Runnable job = new SafeRunnable() {
 
@@ -245,7 +245,7 @@ public class YbkService extends Service {
                 }
                 break;
             case REMOVE_HISTORY:
-                Log.d(TAG, "Received request to remove history: " + target);
+                Log.d(TAG, "Received request to remove history: " + hist);
                 if (hist != null) {
                     Runnable job = new SafeRunnable() {
                         @Override

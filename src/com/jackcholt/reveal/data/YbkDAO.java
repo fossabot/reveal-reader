@@ -403,9 +403,9 @@ public class YbkDAO {
     public void deleteHistory(History hist) throws IOException {
         synchronized (writeGate) {
             try {
-                root.historyIdIndex.remove(hist.id);
+                History removedHist = root.historyIdIndex.remove(hist.id);
                 root.historyTitleIndex.remove(hist.title);
-                hist.delete(mDb);
+                removedHist.delete(mDb);
             } catch (RuntimeException rte) {
                 throw new RTIOException(rte);
             } finally {
