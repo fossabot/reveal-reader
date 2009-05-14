@@ -19,7 +19,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -48,17 +47,12 @@ public class Util {
 
     private static final String TAG = "Util";
 
-    // private static final int DIALOG_DELETE = 1;
-    // private static final int DIALOG_RENAME = 2;
-    // private File mContextFile = new File("");
-
     public static final String NO_TITLE = "no_book_title";
 
     /**
      * Dave Packham Check for network connectivity before trying to go to the net and hanging :) hitting F8 in the
      * emulator will turn network on/off
      */
-    // @SuppressWarnings("static-access")
     public static boolean isNetworkUp(Context _this) {
         boolean networkUp;
 
@@ -991,13 +985,15 @@ public class Util {
      */
     public static void unexpectedError(final Context ctx, final Throwable t, final String... strings) {
         Activity activity;
+        
+        Log.e(TAG, Util.getStackTrace(t));
+        
         if (ctx instanceof Activity) {
             activity = (Activity) ctx;
         } else {
             activity = Main.getMainApplication();
         }
         activity.runOnUiThread(new Runnable() {
-            @Override
             public void run() {
                 ErrorDialog.start(ctx, t, strings);
             }

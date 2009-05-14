@@ -219,7 +219,6 @@ public class YbkDAO {
     
     private static final Comparator<History> bookmarkTitleComparator = new Comparator<History>() {
 
-        @Override
         public int compare(History hist1, History hist2) {
             return hist1.title.compareTo(hist2.title);
         }

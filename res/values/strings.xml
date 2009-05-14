@@ -14,7 +14,7 @@
 <string name="summary_off_show_splash_screen">Splash Screen disabled</string>
 <string name="up_one_level">..</string>
 <string name="reveal_ybk_view">Reveal :: Read eBook</string>
-<string name="reference_not_found">The referenced eBook ({0}) cannot be found.</string>
+<string name="reference_not_found">Referenced eBook ({0}) not found.</string>
 <string name="alert_dialog_ok">OK</string>
 <string name="title_browser_name">Reveal :: Online eBook Browser</string>
 <string name="menu_update">Check For Update</string>

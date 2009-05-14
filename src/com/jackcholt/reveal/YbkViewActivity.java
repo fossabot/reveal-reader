@@ -30,6 +30,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
@@ -61,7 +62,9 @@ public class YbkViewActivity extends Activity {
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
     private int mHistoryPos = 0;
-    private Object mDialogChapter;
+    private String mDialogChapter;
+    private String mNavFile = "1";
+    private boolean mThemeIsDialog = false;
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
@@ -112,6 +115,9 @@ public class YbkViewActivity extends Activity {
 
                 Long bookId = null;
                 Boolean isFromHistory = null;
+                Boolean popup = null;
+                String content = null;
+                String strUrl = null;
 
                 HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
                 if (statusMap != null) {
@@ -120,6 +126,10 @@ public class YbkViewActivity extends Activity {
                     mChapFileName = (String) statusMap.get("chapFileName");
                     mHistTitle = (String) statusMap.get("histTitle");
                     mScrollYPos = (Integer) statusMap.get("scrollYPos");
+                    popup = (Boolean) savedInstanceState.get("popup");
+                    content = (String) savedInstanceState.get("content");
+                    strUrl = (String) savedInstanceState.getString("strUrl");
+
                 } else {
 
                     if (savedInstanceState != null) {
@@ -131,6 +141,9 @@ public class YbkViewActivity extends Activity {
                             isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
                             bookId = (Long) extras.get(YbkDAO.ID);
                         }
+                        popup = (Boolean) extras.get("popup");
+                        content = (String) extras.get("content");
+                        strUrl = (String) extras.getString("strUrl");
                     }
 
                     if (isFromHistory != null) {
@@ -151,28 +164,49 @@ public class YbkViewActivity extends Activity {
 
                 mBookId = bookId;
 
-                setContentView(R.layout.view_ybk);
+                if (popup != null) {
+                    setTheme(android.R.style.Theme_Dialog);
+                    mThemeIsDialog = true;
+                } else {
 
+                }
+
+                setContentView(R.layout.view_ybk);
+                
+                if (popup != null) {
+                    LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
+                    breadCrumb.setVisibility(View.GONE);
+                }
+                
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
-                final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
-                mBookBtn = (Button) findViewById(R.id.bookButton);
-                final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
-                chapBtn.setOnClickListener(new OnClickListener() {
-                    /** set the chapter button so it scrolls the window to the top */
-                    public void onClick(final View v) {
-                        mYbkView.scrollTo(0, 0);
-                    }
-                });
 
-                mainBtn.setOnClickListener(new OnClickListener() {
+                if (popup != null) {
+                    ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
+                } else {
+                    final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
+                    mBookBtn = (Button) findViewById(R.id.bookButton);
+                    final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
+                    chapBtn.setOnClickListener(new OnClickListener() {
+                        /**
+                         * set the chapter button so it scrolls the window to
+                         * the top
+                         */
+                        public void onClick(final View v) {
+                            mYbkView.scrollTo(0, 0);
+                        }
+                    });
 
-                    public void onClick(final View view) {
+                    mainBtn.setOnClickListener(new OnClickListener() {
 
-                        finish();
-                    }
+                        public void onClick(final View view) {
 
-                });
+                            finish();
+                        }
+
+                    });
+
+                }
 
                 try {
                     Book book = ybkDao.getBook(bookId);
@@ -185,8 +219,10 @@ public class YbkViewActivity extends Activity {
                         mChapFileName = "\\" + shortTitle + ".html";
                     }
 
-                    if (loadChapter(mBookFileName, mChapFileName)) {
-                        setBookBtn(shortTitle, mBookFileName, mChapFileName);
+                    if (popup == null) {
+                        if (loadChapter(mBookFileName, mChapFileName)) {
+                            setBookBtn(shortTitle, mBookFileName, mChapFileName);
+                        }
                     }
 
                 } catch (IOException ioe) {
@@ -265,7 +301,8 @@ public class YbkViewActivity extends Activity {
 
                             String[] urlParts = dataString.split("/");
 
-                            // get rid of the book indicator since it is only used
+                            // get rid of the book indicator since it is only
+                            // used
                             // in some cases.
                             book = shortTitle = urlParts[0];
                             if (book.charAt(0) == '!' || book.charAt(0) == '^') {
@@ -284,7 +321,8 @@ public class YbkViewActivity extends Activity {
                                 Book bookObj = ybkDao.getBook(book);
 
                                 if (null != bookObj) {
-                                    // Log.i(TAG, "Loading chapter '" + chapter +
+                                    // Log.i(TAG, "Loading chapter '" + chapter
+                                    // +
                                     // "'");
 
                                     String chap = chapter;
@@ -375,47 +413,52 @@ public class YbkViewActivity extends Activity {
         Button bookBtn = mBookBtn;
         Button chapBtn = mChapBtn;
 
-        if (shortTitle != null) {
-            bookBtn.setText(shortTitle);
-        }
-
-        bookBtn.setOnClickListener(new OnClickListener() {
-
-            public void onClick(final View v) {
-                setProgressBarIndeterminateVisibility(true);
-
-                try {
-                    if (loadChapter(filePath, "index")) {
-                        setBookBtn(shortTitle, filePath, fileToOpen);
-                        // Log.d(TAG, "Book loaded");
-                    }
-                } catch (IOException ioe) {
-                    Log.w(TAG, "Could not load index page of " + filePath);
-                    setProgressBarIndeterminateVisibility(false);
-                }
+        if (bookBtn != null) {
+            if (shortTitle != null) {
+                bookBtn.setText(shortTitle);
             }
 
-        });
+            bookBtn.setOnClickListener(new OnClickListener() {
 
-        bookBtn.setVisibility(View.VISIBLE);
+                public void onClick(final View v) {
+                    setProgressBarIndeterminateVisibility(true);
 
-        /*
-         * Checks to see if the title is too long for the button. This prevents the buttons becoming too large and the
-         * view window being smaller. - Adam Gessel
-         */
+                    try {
+                        if (loadChapter(filePath, "index")) {
+                            setBookBtn(shortTitle, filePath, fileToOpen);
+                            // Log.d(TAG, "Book loaded");
+                        }
+                    } catch (IOException ioe) {
+                        Log.w(TAG, "Could not load index page of " + filePath);
+                        setProgressBarIndeterminateVisibility(false);
+                    }
+                }
 
-        if (mChapBtnText.length() > 20) {
+            });
 
-            String mChapBtnTextSmall = mChapBtnText.substring(0, 20) + "...";
-            chapBtn.setText(mChapBtnTextSmall);
-
-        } else {
-
-            chapBtn.setText(mChapBtnText);
-
+            bookBtn.setVisibility(View.VISIBLE);
         }
 
-        chapBtn.setVisibility(View.VISIBLE);
+        if (chapBtn != null) {
+            /*
+             * Checks to see if the title is too long for the button. This
+             * prevents the buttons becoming too large and the view window being
+             * smaller. - Adam Gessel
+             */
+
+            if (mChapBtnText.length() > 20) {
+
+                String mChapBtnTextSmall = mChapBtnText.substring(0, 20) + "...";
+                chapBtn.setText(mChapBtnTextSmall);
+
+            } else {
+
+                chapBtn.setText(mChapBtnText);
+
+            }
+
+            chapBtn.setVisibility(View.VISIBLE);
+        }
 
     }
 
@@ -603,7 +646,8 @@ public class YbkViewActivity extends Activity {
     }
 
     /**
-     * Load a chapter as identified by the id field of the book table and the order id.
+     * Load a chapter as identified by the id field of the book table and the
+     * order id.
      * 
      * @param bookId
      *            The record id of the chapter to load.
@@ -634,7 +678,8 @@ public class YbkViewActivity extends Activity {
     }
 
     /**
-     * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
+     * Uses a YbkFileReader to get the content of a chapter and loads into the
+     * WebView.
      * 
      * @param filePath
      *            The path to the YBK file from which to read the chapter.
@@ -689,6 +734,7 @@ public class YbkViewActivity extends Activity {
 
                 try {
                     if (chap.equals("index")) {
+                        mNavFile = "1";
                         String shortTitle = book.shortTitle;
                         String tryFileToOpen = "\\" + shortTitle + ".html.gz";
                         content = ybkReader.readInternalFile(tryFileToOpen);
@@ -794,31 +840,33 @@ public class YbkViewActivity extends Activity {
                     // characters with spaces
                     content = content.replace('\u0093', '"').replace('\u0094', '"');
 
-                    // TODO- this is apparently dead code because none of it's results are actually used
-                    //
-                    // int headerEndIndex = content.toLowerCase().indexOf("<end>");
-                    // String header = headerEndIndex != -1 ? content.substring(0, headerEndIndex) :
-                    // getResources().getString(R.string.unknown);
-                    // String headerLower = header.toLowerCase();
-                    //
-                    // Log.d(TAG, "Chapter header: " + header);
-                    //
-                    // int nfLoc = headerLower.indexOf("<nf>");
-                    // int nfEndLoc = headerLower.length();
-                    // String nf = "0";
-                    // if (nfLoc != -1) {
-                    // int temp1 = 0;
-                    // if (-1 != (temp1 = headerLower.substring(nfLoc + 5).indexOf('<'))) {
-                    // nfEndLoc = nfLoc + temp1;
-                    // }
-                    //
-                    // nf = header.substring(nfLoc, nfEndLoc);
-                    // }
-
                     String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
-                    mHistTitle = mChapBtnText;
-                    setChapBtnText(content);
 
+                    int posEnd = content.toLowerCase().indexOf("<end>");
+
+                    String nf = "1";
+                    if (!mBackButtonPressed  && posEnd != -1) {
+                        String header = content.substring(0, posEnd);
+                        String headerLower = header.toLowerCase();
+    
+                        Log.d(TAG, "Chapter header: " + header);
+    
+                        int nfLoc = headerLower.indexOf("<nf>");
+                        int nfEndLoc = headerLower.length();
+                        if (nfLoc != -1) {
+                            if (-1 != (nfEndLoc = headerLower.indexOf('<', nfLoc + 4))) {
+                                nf = header.substring(nfLoc + 4, nfEndLoc);
+                            }
+                        }
+                    }
+                    
+                    boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
+                    
+                    if (!showInPopup) {
+                        mHistTitle = mChapBtnText;
+                        setChapBtnText(content);
+                    }
+                    
                     String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
                             Settings.DEFAULT_EBOOK_DIRECTORY);
 
@@ -830,13 +878,34 @@ public class YbkViewActivity extends Activity {
 
                     content = Util.convertIfvar(content);
 
-                    ybkView.loadDataWithBaseURL(strUrl, Util.htmlize(content, mSharedPref), "text/html", "utf-8", "");
+                    
+
+                    content = Util.htmlize(content, mSharedPref);
+
+                    if (showInPopup) {
+                        // The page should appear in a pop-up
+                        setProgressBarIndeterminateVisibility(true);
+                        Intent popupIntent = new Intent(this, YbkViewActivity.class);
+                        popupIntent.putExtra("content", content);
+                        popupIntent.putExtra("strUrl", strUrl);
+                        popupIntent.putExtra("popup", true);
+                        popupIntent.putExtra(YbkDAO.ID, bookId);
+                        startActivity(popupIntent);
+                        setProgressBarIndeterminateVisibility(false);
+
+                    } else {
+                       
+                        ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
+
+                    }
+
+                    mNavFile = nf;
 
                     bookLoaded = true;
 
                     if (!mBackButtonPressed) {
 
-                        if (mChapFileName != null) {
+                        if (mNavFile.equals("1") && mChapFileName != null) {
                             // Save the book and chapter to history if there
                             // is one
 
@@ -1052,7 +1121,8 @@ public class YbkViewActivity extends Activity {
             }
             mChapBtnText = chapBtnText;
         } catch (IllegalStateException ise) {
-            // does no on any good to percolate this exception, so log it, use a default and move on
+            // does no on any good to percolate this exception, so log it, use a
+            // default and move on
             Log.e(TAG, ise.toString());
             // try getting the first line
             String chapBtnText = "";
@@ -1070,44 +1140,49 @@ public class YbkViewActivity extends Activity {
         try {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
                 setProgressBarIndeterminateVisibility(true);
-                try {
-                    YbkDAO ybkDao = YbkDAO.getInstance(this);
-                    // loop until we can open something or run out of history
-                    for (;;) {
-                        History hist = ybkDao.getPreviousHistory(++mHistoryPos);
-                        if (hist != null) {
-                            Book book = ybkDao.getBook(hist.bookId);
-                            if (book == null)
-                                continue;
-                            String bookFileName = book.fileName;
-                            String chapFileName = hist.chapterName;
-                            mScrollYPos = hist.scrollYPos;
+                if (mThemeIsDialog) {
+                    finish();
+                } else {
+                    try {
+                        YbkDAO ybkDao = YbkDAO.getInstance(this);
+                        // loop until we can open something or run out of
+                        // history
+                        for (;;) {
+                            History hist = ybkDao.getPreviousHistory(++mHistoryPos);
+                            if (hist != null) {
+                                Book book = ybkDao.getBook(hist.bookId);
+                                if (book == null)
+                                    continue;
+                                String bookFileName = book.fileName;
+                                String chapFileName = hist.chapterName;
+                                mScrollYPos = hist.scrollYPos;
 
-                            // Log.d(TAG,"Going back to: " + bookFileName + ", " +
-                            // chapFileName);
+                                // Log.d(TAG,"Going back to: " + bookFileName +
+                                // ", " + chapFileName);
 
-                            mBackButtonPressed = true;
-                            try {
-                                if (loadChapter(bookFileName, chapFileName)) {
+                                mBackButtonPressed = true;
+                                try {
+                                    if (loadChapter(bookFileName, chapFileName)) {
 
-                                    setBookBtn(book.shortTitle, bookFileName, chapFileName);
+                                        setBookBtn(book.shortTitle, bookFileName, chapFileName);
 
+                                    }
+                                } catch (IOException ioe) {
+                                    Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
+                                    continue;
                                 }
-                            } catch (IOException ioe) {
-                                Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
-                                continue;
+
+                                mBackButtonPressed = false;
+
+                            } else {
+                                Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
                             }
-
-                            mBackButtonPressed = false;
-
-                        } else {
-                            Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
+                            break;
                         }
-                        break;
+                    } catch (IOException ioe) {
+                        // TODO - add a friendly message
+                        Util.displayError(this, ioe, null);
                     }
-                } catch (IOException ioe) {
-                    // TODO - add a friendly message
-                    Util.displayError(this, ioe, null);
                 }
 
                 return true;

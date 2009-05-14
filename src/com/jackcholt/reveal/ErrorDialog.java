@@ -120,7 +120,6 @@ public class ErrorDialog extends Activity {
         // foreground thread
         new Thread(new Runnable() {
 
-            @Override
             public void run() {
                 try {
                     Thread.sleep(500);
