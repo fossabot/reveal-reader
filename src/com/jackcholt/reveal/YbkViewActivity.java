@@ -126,6 +126,7 @@ public class YbkViewActivity extends Activity {
                     mChapFileName = (String) statusMap.get("chapFileName");
                     mHistTitle = (String) statusMap.get("histTitle");
                     mScrollYPos = (Integer) statusMap.get("scrollYPos");
+                    Log.d(TAG, "Scroll Position Y: " + mScrollYPos);
                     popup = (Boolean) savedInstanceState.get("popup");
                     content = (String) savedInstanceState.get("content");
                     strUrl = (String) savedInstanceState.getString("strUrl");
@@ -167,9 +168,7 @@ public class YbkViewActivity extends Activity {
                 if (popup != null) {
                     setTheme(android.R.style.Theme_Dialog);
                     mThemeIsDialog = true;
-                } else {
-
-                }
+                } 
 
                 setContentView(R.layout.view_ybk);
                 
@@ -561,9 +560,9 @@ public class YbkViewActivity extends Activity {
                         mChapFileName = hist.chapterName;
                         mHistTitle = hist.title;
                         mScrollYPos = hist.scrollYPos;
-
-                        Log
-                                .d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: "
+                        mNavFile = "1";
+                        
+                        Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: "
                                         + mChapFileName);
 
                         try {
@@ -606,7 +605,8 @@ public class YbkViewActivity extends Activity {
                             mChapFileName = bm.chapterName;
                             mHistTitle = bm.title;
                             mScrollYPos = bm.scrollYPos;
-
+                            mNavFile = "1";
+                            
                             Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: "
                                     + mChapFileName);
 
@@ -919,7 +919,7 @@ public class YbkViewActivity extends Activity {
                         mHistoryPos = 0;
                         mBookId = bookId;
                         mChapFileName = chap;
-                        mScrollYPos = mYbkView.getScrollY();
+                        //mScrollYPos = mYbkView.getScrollY();
 
                     }
                 } catch (IOException e) {
@@ -1207,7 +1207,8 @@ public class YbkViewActivity extends Activity {
             stateMap.put("bookId", mBookId);
             stateMap.put("histTitle", mHistTitle);
             stateMap.put("scrollYPos", mYbkView.getScrollY());
-
+            Log.d(TAG, "Scroll Y Pos: " + mYbkView.getScrollY());
+            
             return stateMap;
         } catch (RuntimeException rte) {
             unexpectedError(rte);
