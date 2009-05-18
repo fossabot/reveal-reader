@@ -85,10 +85,12 @@
 <string name="add_bookmark">Add Bookmark here</string>
 <string name="no_bookmark">No Bookmarks</string>
 <string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
-<string name="refresh_title">Refreshing eBooks.  </string>
+<string name="wait_for_db_update">Please wait while we UPGRADE the database for the eBooks listing in the background...  this process will take a few minutes to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
+<string name="refresh_title">Refreshing eBooks.</string>
+<string name="upgrade_database">Upgrading Database.</string>
 <string name="error_reporting">An unexpected error has occurred. Would you like to help improve Reveal by anonymously sending the following information to the Reveal developers?</string>
 <string name="error_title">Report Reveal Error</string>
-<string name="menu_rss_feed">New eBooks Updates</string>
+
 <string name="unknown">UNKNOWN</string>
 <string name="unloadable_chapter">UNLOADABLE CHAPTER</string>
 <string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
@@ -102,4 +104,5 @@
 <string name="exit_reveal_btn">Exit Reveal</string>
 
 <string name="new_ebooks">New eBooks</string>
+
 </resources>

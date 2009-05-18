@@ -38,44 +38,31 @@ import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
-//import com.nullwire.trace.ExceptionHandler;
-
 public class Main extends ListActivity implements OnGestureListener {
 
     private static final int HISTORY_ID = Menu.FIRST;
-
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
-
     private static final int SETTINGS_ID = Menu.FIRST + 2;
-
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
-
     private static final int BROWSER_ID = Menu.FIRST + 4;
-
     private static final int HELP_ID = Menu.FIRST + 5;
-
     private static final int ABOUT_ID = Menu.FIRST + 6;
-
     private static final int LICENSE_ID = Menu.FIRST + 7;
-
     private static final int REVELUPDATE_ID = Menu.FIRST + 8;
-
     private static final int DELETE_ID = Menu.FIRST + 9;
-
     private static final int OPEN_ID = Menu.FIRST + 10;
     
+    //int values for reusable dialogs
+    private static final int REFRESH_DB = 0;
+    private static final int UPGRADE_DB = 1;
+
     private static int mRefreshNotifId = 0;
-
     public static int mNotifId = 1;
-
     public static Main mApplication;
-
     private static final int ACTIVITY_SETTINGS = 0;
-
     private static final int LIBRARY_NOT_CREATED = 0;
 
     // private static final boolean DONT_ADD_BOOKS = false;
-
     private static final boolean ADD_BOOKS = true;
 
     // Gestures Stuff
@@ -83,19 +70,13 @@ public class Main extends ListActivity implements OnGestureListener {
 
     @SuppressWarnings("unused")
     private GestureDetector gestureScanner;
-
     private SharedPreferences mSharedPref;
-
     private boolean BOOLshowSplashScreen;
-
     private static boolean BOOLsplashed = false;
-
     private boolean BOOLshowFullScreen;
-
     private final Handler mHandler = new Handler();
 
     // private static boolean mUpdating = false;
-
     private List<Book> mBookTitleList;
 
     /** Called when the activity is first created. */
@@ -105,13 +86,10 @@ public class Main extends ListActivity implements OnGestureListener {
             super.onCreate(savedInstanceState);
             // Debug.startMethodTracing("reveal");
 
-            // send an exception email via this URL
-            // ExceptionHandler.register(this,
-            // "http://revealreader.thepackhams.com/exception.php");
+             mApplication = this;
 
-            mApplication = this;
-
-            // Change DEBUG to "0" in Global.java when building a RELEASE Version
+            // Change DEBUG to "0" in Global.java when building a RELEASE
+            // Version
             // for the GOOGLE APP MARKET
             // This allows for real usage stats and end user error reporting
             if (Global.DEBUG == 0) {
@@ -160,6 +138,20 @@ public class Main extends ListActivity implements OnGestureListener {
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
             }
 
+            File file = new File("/data/data/com.jackcholt.reveal/databases/reveal_titles.db");
+            if (file.exists()) {
+                    file.delete();
+                    //prompt to warn of new DB create
+                    RefreshDialog.create(this, UPGRADE_DB);
+                    try {
+                        updateBookList();
+                    } catch (IOException ioe) {
+                        // TODO - add friendly message
+                        Util.displayError(this, ioe, null);
+                    }
+            }
+
+            
             if (!configChanged) {
                 // Check for SDcard presence
                 // if we have one create the dirs and look fer ebooks
@@ -170,7 +162,6 @@ public class Main extends ListActivity implements OnGestureListener {
                 } else {
                     Util.createDefaultDirs(this);
                     // updateBookList();
-
                 }
             }
 
@@ -238,7 +229,8 @@ public class Main extends ListActivity implements OnGestureListener {
     }
 
     /**
-     * Convenience method to make calling refreshLibrary() without any parameters retaining its original behavior.
+     * Convenience method to make calling refreshLibrary() without any
+     * parameters retaining its original behavior.
      * 
      * @throws IOException
      */
@@ -252,8 +244,9 @@ public class Main extends ListActivity implements OnGestureListener {
      * @param strLibDir
      *            the path to the library directory.
      * @param addNewBooks
-     *            If true, run the code that will add new books to the database as well as the code that removes missing
-     *            books from the database (which runs regardless).
+     *            If true, run the code that will add new books to the database
+     *            as well as the code that removes missing books from the
+     *            database (which runs regardless).
      * @throws IOException
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) throws IOException {
@@ -475,7 +468,7 @@ public class Main extends ListActivity implements OnGestureListener {
         try {
             switch (item.getItemId()) {
             case REFRESH_LIB_ID:
-                RefreshDialog.create(this);
+                RefreshDialog.create(this, REFRESH_DB);
                 try {
                     updateBookList();
                 } catch (IOException ioe) {
@@ -541,7 +534,8 @@ public class Main extends ListActivity implements OnGestureListener {
         try {
             setProgressBarIndeterminateVisibility(true);
 
-            // Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
+            // Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" +
+            // id);
             Book book = (Book) listView.getItemAtPosition(selectionRowId);
             Intent intent = new Intent(this, YbkViewActivity.class);
             intent.putExtra(YbkDAO.ID, book.id);

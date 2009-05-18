@@ -14,7 +14,7 @@ import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
 
 /**
- * RefreshDialog for asking people to please wait for refresh
+ * DeleteEbookDialog for asking people to please confirm the delete
  * 
  * @author Dave Packham
  * @author Shon Vella
