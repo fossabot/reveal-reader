@@ -665,6 +665,7 @@ public class YbkViewActivity extends Activity {
 
         if (chap != null) {
             Book book = ybkDao.getBook(chap.bookId);
+            mNavFile = "1";
             if (bookLoaded = loadChapter(book.fileName, chap.fileName)) {
                 setBookBtn(book.shortTitle, book.fileName, chap.fileName);
             }
@@ -905,7 +906,7 @@ public class YbkViewActivity extends Activity {
 
                     if (!mBackButtonPressed) {
 
-                        if (mNavFile.equals("1") && mChapFileName != null) {
+                        if (!showInPopup && !mThemeIsDialog && mChapFileName != null) {
                             // Save the book and chapter to history if there
                             // is one
 

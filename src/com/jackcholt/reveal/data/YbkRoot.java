@@ -39,8 +39,6 @@ class YbkRoot extends JDBMObject implements Serializable {
     public Long historyIdIndexID;
     public transient Index<Long, History> historyBookmarkNumberIndex;
     public Long historyBookmarkNumberIndexID;
-    public transient Index<String, History> historyTitleIndex;
-    public Long historyTitleIndexID;
 
     /**
      * Creates a new root object and all of it's associated indices
@@ -63,7 +61,6 @@ class YbkRoot extends JDBMObject implements Serializable {
             chapterNameIndex = new Index<String, Chapter>(db, stringComparator);
             historyIdIndex = new Index<Long, History>(db, longComparator);
             historyBookmarkNumberIndex = new Index<Long, History>(db, longComparator);
-            historyTitleIndex = new Index<String, History>(db, stringComparator);
 
             // and remember the record id's
             bookIdIndexID = bookIdIndex.getRecid();
@@ -73,7 +70,6 @@ class YbkRoot extends JDBMObject implements Serializable {
             chapterNameIndexID = chapterNameIndex.getRecid();
             historyIdIndexID = historyIdIndex.getRecid();
             historyBookmarkNumberIndexID = historyBookmarkNumberIndex.getRecid();
-            historyTitleIndexID = historyTitleIndex.getRecid();
 
             // and store this object and give it a name
             recID = db.insert(this);
@@ -137,7 +133,6 @@ class YbkRoot extends JDBMObject implements Serializable {
         chapterNameIndex = new Index<String, Chapter>(db, chapterNameIndexID);
         historyIdIndex = new Index<Long, History>(db, historyIdIndexID);
         historyBookmarkNumberIndex = new Index<Long, History>(db, historyBookmarkNumberIndexID);
-        historyTitleIndex = new Index<String, History>(db, historyTitleIndexID);
-    }
+   }
 
 }

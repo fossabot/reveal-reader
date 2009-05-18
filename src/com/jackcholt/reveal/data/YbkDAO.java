@@ -379,7 +379,6 @@ public class YbkDAO {
                 try {
                     hist.create(mDb);
                     done = root.historyIdIndex.put(hist.id, hist)
-                            && root.historyTitleIndex.put(hist.title, hist)
                             && (hist.bookmarkNumber == 0 || root.historyBookmarkNumberIndex.put(
                                     (long) hist.bookmarkNumber, hist));
                 } finally {
@@ -404,7 +403,6 @@ public class YbkDAO {
         synchronized (writeGate) {
             try {
                 History removedHist = root.historyIdIndex.remove(hist.id);
-                root.historyTitleIndex.remove(hist.title);
                 if (removedHist != null)
                     removedHist.delete(mDb);
             } catch (RuntimeException rte) {
@@ -615,7 +613,6 @@ public class YbkDAO {
         }
         for (History hist : histList) {
             root.historyIdIndex.remove(hist.id);
-            root.historyTitleIndex.remove(hist.title);
             if (hist.bookmarkNumber != 0)
                 root.historyBookmarkNumberIndex.remove((long) hist.bookmarkNumber);
             hist.delete(mDb);
