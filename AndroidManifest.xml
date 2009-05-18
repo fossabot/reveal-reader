@@ -27,8 +27,7 @@
 		<activity android:multiprocess="true" android:name=".BookmarkDialog"
 			android:label="@string/menu_bookmark" android:screenOrientation="sensor"
 			android:theme="@android:style/Theme.Dialog" />
-		<activity android:name="eBooksRSSFeed" android:theme="@android:style/Theme.Dialog"
-			android:label="@string/menu_bookmark" android:multiprocess="true"></activity>
+		
 		<activity android:name=".ErrorDialog" android:label="@string/error_title"
 			android:theme="@android:style/Theme.Dialog"
 			android:screenOrientation="sensor" android:multiprocess="false"></activity>

@@ -63,7 +63,7 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int DELETE_ID = Menu.FIRST + 9;
 
     private static final int OPEN_ID = Menu.FIRST + 10;
-
+    
     private static int mRefreshNotifId = 0;
 
     public static int mNotifId = 1;
