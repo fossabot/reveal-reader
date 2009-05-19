@@ -13,7 +13,7 @@ import com.flurry.android.FlurryAgent;
 
 /**
  * ErrorDialog for informing users of something that happening
- * 
+ *
  * @author Dave Packham
  * @author Shon Vella
  */
@@ -22,12 +22,9 @@ public class ErrorDialog extends Activity {
 
     private static final String INFO = "info";
 
-    public ErrorDialog() {
-    }
-
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see android.app.Activity#onCreate(android.os.Bundle)
      */
     @Override
@@ -53,10 +50,10 @@ public class ErrorDialog extends Activity {
             return;
         }
 
-        TextView confirmTextView = (TextView) findViewById(R.id.confirm_error_send_stacktrace);
+        final TextView confirmTextView = (TextView) findViewById(R.id.confirm_error_send_stacktrace);
         confirmTextView.setText(info);
 
-        Button sendButton = (Button) findViewById(R.id.send_error_btn);
+        final Button sendButton = (Button) findViewById(R.id.send_error_btn);
         sendButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 finish();
@@ -83,7 +80,7 @@ public class ErrorDialog extends Activity {
 
     /**
      * Launch the serious error dialog (actually an activity)
-     * 
+     *
      * @param _this
      *            the source context
      * @param t

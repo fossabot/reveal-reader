@@ -214,7 +214,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
     /**
      * Updates the book list.
-     * 
+     *
      * @throws IOException
      */
     protected void updateBookList() throws IOException {
@@ -231,7 +231,7 @@ public class Main extends ListActivity implements OnGestureListener {
     /**
      * Convenience method to make calling refreshLibrary() without any
      * parameters retaining its original behavior.
-     * 
+     *
      * @throws IOException
      */
     private void refreshLibrary(final String strLibDir) throws IOException {
@@ -240,7 +240,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
     /**
      * Refresh the eBook directory.
-     * 
+     *
      * @param strLibDir
      *            the path to the library directory.
      * @param addNewBooks
@@ -659,7 +659,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see android.app.Activity#onDestroy()
      */
     @Override
