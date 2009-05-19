@@ -708,17 +708,20 @@ public class Util {
 
         ArrayList<File> files = new ArrayList<File>();
         ArrayList<String> downloaded = new ArrayList<String>();
-
+        
+        File libDirFile = new File(libDir);
+        String filename = new File(fileLocation.getFile()).getName();
+        String extension = filename.replaceFirst(".*\\.([^\\.]+)$", "$1").toLowerCase();
         try {
             FileOutputStream out = null;
 
-            if (fileLocation.getFile().endsWith("zip") || fileLocation.getFile().contains("?")) {
+            if (extension.equals("zip") || fileLocation.getFile().contains("?")) {
                 ZipInputStream zip = new ZipInputStream(downloadUrl.openStream());
 
                 ZipEntry entry;
                 while ((entry = zip.getNextEntry()) != null) {
                     // unpack all the files
-                    File file = new File(libDir + entry.getName() + TMP_EXTENSION);
+                    File file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
 
                     // check to see if they already have this title
                     // if (file.exists() && !shouldDownload(context, file)) {
@@ -740,11 +743,10 @@ public class Util {
                     }
                 }
                 zip.close();
-            } else if (fileLocation.getFile().endsWith("ybk")) {
+            } else if (extension.equals("ybk")) {
                 BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
                 try {
-
-                    File file = new File(libDir + fileLocation.getFile() + TMP_EXTENSION);
+                    File file = new File(libDirFile, filename + TMP_EXTENSION);
 
                     // if (file.exists() && !shouldDownload(context, file)) {
                     if (file.exists()) {
@@ -767,6 +769,7 @@ public class Util {
                 }
             } else {
                 Log.w(TAG, "Unable to process file " + fileLocation.getFile());
+                throw new IOException("Unrecognized file type");
             }
 
             success = true;
