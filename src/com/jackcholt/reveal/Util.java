@@ -314,9 +314,6 @@ public class Util {
                 + "._hidepicture {" + (showPicture ? "display:none;" : "display:inline") + "}"
                 + "._showtoc {display:inline}" + "._hidetoc {display:none}" + ".ah {"
                 + (showAH ? "display:inline;" : "display:none") + "}"
-                
-                + "a {font-size: 300%} "
-                
                 + "</style>";
 
         // Log.d(TAG, "style: " + style);
