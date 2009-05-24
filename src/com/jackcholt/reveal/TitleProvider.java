@@ -258,6 +258,7 @@ public class TitleProvider extends ContentProvider {
 
 		String orderBy = null;
 		String where = null;
+        String[] whereArgs = null;
 		SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
 
 		switch (sUriMatcher.match(uri)) {
@@ -279,6 +280,8 @@ public class TitleProvider extends ContentProvider {
 		case TITLES:
 			builder.setTables(Titles.TABLE_NAME);
 			orderBy = (sortOrder == null) ? Titles.DEFAULT_SORT_ORDER : sortOrder;
+			where = selection;
+			whereArgs = selectionArgs;
 			break;
 		case TITLE:
 			builder.setTables(Titles.TABLE_NAME);
@@ -295,7 +298,7 @@ public class TitleProvider extends ContentProvider {
 		}
 
 		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-		Cursor c = builder.query(db, projection, where, null, null, null, orderBy);
+		Cursor c = builder.query(db, projection, where, whereArgs, null, null, orderBy);
 
 		Log.d(TAG, "Query yeilded " + c.getCount() + " results");
 		// Tell the cursor what uri to watch, so it knows when its source data

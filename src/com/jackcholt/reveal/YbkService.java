@@ -103,6 +103,10 @@ public class YbkService extends Service {
                         @Override
                         public void protectedRun() {
                             String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
+                            String bookFriendlyName = Util.lookupBookName(YbkService.this, bookName);
+                            if (bookFriendlyName != null) {
+                                bookName = bookFriendlyName;
+                            }
                             boolean succeeded;
                             String message;
                             try {

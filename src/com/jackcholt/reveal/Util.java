@@ -27,8 +27,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -311,7 +313,11 @@ public class Util {
         String style = "<style>" + "._showpicture {" + (showPicture ? "display:inline;" : "display:none") + "}"
                 + "._hidepicture {" + (showPicture ? "display:none;" : "display:inline") + "}"
                 + "._showtoc {display:inline}" + "._hidetoc {display:none}" + ".ah {"
-                + (showAH ? "display:inline;" : "display:none") + "}" + "</style>";
+                + (showAH ? "display:inline;" : "display:none") + "}"
+                
+                + "a {font-size: 300%} "
+                
+                + "</style>";
 
         // Log.d(TAG, "style: " + style);
 
@@ -1024,6 +1030,36 @@ public class Util {
             }
 
         });
+    }
+    
+    /**
+     * Look up the book name based on the ybk file name.
+     * @param ctx the context
+     * @param name the ybk file name (without the path)
+     * @return the book name if found, null if not found
+     */
+    public static String lookupBookName(Context ctx, String name) {
+        String bookName = null;
+        Uri uri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "title");
+        String[] projection = new String[] { TitleProvider.Titles.BOOKNAME};
+        String where = TitleProvider.Titles.FILENAME + " LIKE ?";
+        String args[] = {name.replaceAll(".ybk$", "")};
+
+        Cursor cursor = null;
+        try {
+            cursor = ctx.getContentResolver().query(uri, projection, where, args, null);
+            if (cursor.moveToFirst()) {
+                bookName = cursor.getString(0);
+            }
+        }
+        catch (Throwable t) {
+            Log.e(TAG, getStackTrace(t));
+        }
+        finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return bookName;
     }
 
 }
