@@ -24,13 +24,18 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jackcholt.reveal.data.Book;
@@ -38,9 +43,9 @@ import com.jackcholt.reveal.data.YbkDAO;
 
 /**
  * The purpose of this class is to hold general purpose methods.
- *
+ * 
  * @author Jack C. Holt, Dave Packham and others
- *
+ * 
  */
 public class Util {
     private static final String TMP_EXTENSION = ".tmp";
@@ -74,7 +79,7 @@ public class Util {
 
     /**
      * Remove HTML, surrounding quotes and Title case a book title.
-     *
+     * 
      * @param title
      *            The unformatted title.
      * @return The formatted title.
@@ -109,7 +114,7 @@ public class Util {
 
     /**
      * Parses the binding text from BINDING.HTML to get the Book Title.
-     *
+     * 
      * @param binding
      *            The binding text
      * @return The title of the book.
@@ -144,7 +149,7 @@ public class Util {
 
     /**
      * Parses the binding text from BINDING.HTML to get the Book Title.
-     *
+     * 
      * @param binding
      *            The binding text
      * @return The title of the book.
@@ -179,7 +184,7 @@ public class Util {
 
     /**
      * Uncompress a GZip file that has been converted to a byte array.
-     *
+     * 
      * @param buf
      *            The byte array that contains the GZip file contents.
      * @return The uncompressed String. Returns null if there was an IOException.
@@ -209,7 +214,7 @@ public class Util {
     /**
      * Make an array of ints from the next four bytes in the byte array <code>ba</code> starting at position
      * <code>pos</code> in <code>ba</code>.
-     *
+     * 
      * @param ba
      *            The byte array to read from.
      * @param pos
@@ -237,7 +242,7 @@ public class Util {
 
     /**
      * Make an array of ints from the next four bytes in the DataInputStream.
-     *
+     * 
      * @param is
      *            the InputStream from which to read.
      * @return An array of four bytes which are in least to greatest significance order.
@@ -258,7 +263,7 @@ public class Util {
     /**
      * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
      * byte to most significant byte order.
-     *
+     * 
      * @param is
      *            The DataInputStream to read from.
      * @return The numeric value of the four bytes.
@@ -272,7 +277,7 @@ public class Util {
     /**
      * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
      * byte (LSB) &quot;little endian&quot; order.
-     *
+     * 
      * @param bytes
      *            byte array to read from.
      * @return The numeric value of the four bytes.
@@ -353,7 +358,7 @@ public class Util {
 
     /**
      * Return the tail end of the text.
-     *
+     * 
      * @param text
      *            The text to shorten.
      * @param length
@@ -375,7 +380,7 @@ public class Util {
     /**
      * Process ifbook tags to not show links to books that don't exist in the ebook directory. Remove ifbook tags to
      * clean up the HTML.
-     *
+     * 
      * @param content
      *            HTML to process.
      * @param contRes
@@ -456,7 +461,7 @@ public class Util {
     /**
      * Convert ahtags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by the
      * number of the ahtag.
-     *
+     * 
      * @param content
      *            The content containing the ahtags to convert.
      * @return The converted content.
@@ -470,44 +475,44 @@ public class Util {
         return fixedContent;
         /*
          * StringBuilder newContent = new StringBuilder();
-         *
+         * 
          * // Use this to get the actual content StringBuilder oldContent = new StringBuilder(content);
-         *
+         * 
          * // Use this for case-insensitive comparison StringBuilder oldLowerContent = new
          * StringBuilder(content.toLowerCase()); int pos = 0;
-         *
+         * 
          * while ((pos = oldLowerContent.indexOf("<ahtag num=")) != -1) { boolean fullAhtagFound = false;
-         *
+         * 
          * // copy text before <ahtag> tag to new content and remove from old newContent.append(oldContent.substring(0,
          * pos)); oldContent.delete(0, pos); oldLowerContent.delete(0, pos);
-         *
+         * 
          * int gtPos = oldContent.indexOf(">"); if (gtPos != -1) {
-         *
+         * 
          * // grab the number by skipping the beginning of the ahtag tag String number = oldContent.substring(11,
          * gtPos);
-         *
+         * 
          * int endPos = oldLowerContent.indexOf("</ahtag>"); if (endPos != -1 && endPos > gtPos) {
-         *
+         * 
          * fullAhtagFound = true;
-         *
-         *
-         *
+         * 
+         * 
+         * 
          * newContent.append("<span class=\"ah\" id=\"ah").append(number).append( "\">");
          * newContent.append(oldContent.substring(gtPos + 1, endPos)); //Log.d(TAG, "Appending: " +
          * oldContent.substring(gtPos + 1, endPos)); newContent.append("</span>");
-         *
+         * 
          * //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
-         *
+         * 
          * // remove just-parsed <ahtag> tag structure so we can find the next oldContent.delete(0, endPos + 8);
          * oldLowerContent.delete(0, endPos + 8); } }
-         *
+         * 
          * // remove just-parsed <ahtag> tag so we can find the next if (!fullAhtagFound) { oldContent.delete(0,11);
          * oldLowerContent.delete(0,11); }
-         *
+         * 
          * }
-         *
+         * 
          * // copy the remaining content over newContent.append(oldContent);
-         *
+         * 
          * return newContent.toString();
          */
     }
@@ -515,7 +520,7 @@ public class Util {
     /**
      * Convert ifvar tags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by
      * the number of the ahtag.
-     *
+     * 
      * @param content
      *            The content containing the ahtags to convert.
      * @return The converted content.
@@ -526,18 +531,18 @@ public class Util {
         /*
          * String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" + "<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
          * "<elsevar=\\1>(.+)<[aA]\\s+href=['\"]\\+\\1=1['\"]>" + "(.+)</[aA]>(.+)<endvar=\\1>";
-         *
+         * 
          * Log.d(TAG, "findString: " + findString);
-         *
+         * 
          * String replaceString = "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">" +
          * "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>" ;
-         *
+         * 
          * Log.d(TAG, "replaceString: " + replaceString);
-         *
+         * 
          * String fixedContent = content.replaceAll(findString, replaceString);
-         *
+         * 
          * Log.d(TAG, "fixedContent: " + fixedContent);
-         *
+         * 
          * return fixedContent;
          */
 
@@ -684,7 +689,7 @@ public class Util {
 
     /**
      * Download and install title into library. Used by the title browser thread.
-     *
+     * 
      * @param fileLocation
      *            Url of target file
      * @param downloadUrl
@@ -708,7 +713,7 @@ public class Util {
 
         ArrayList<File> files = new ArrayList<File>();
         ArrayList<String> downloaded = new ArrayList<String>();
-        
+
         File libDirFile = new File(libDir);
         String filename = new File(fileLocation.getFile()).getName();
         String extension = filename.replaceFirst(".*\\.([^\\.]+)$", "$1").toLowerCase();
@@ -795,7 +800,7 @@ public class Util {
     /**
      * This should ask the user whether they want to overwrite the title in question... It's causing crashes because it
      * is called from a new thread. This may be fixed or we may just scrap it.
-     *
+     * 
      * @param context
      * @param file
      * @return
@@ -849,7 +854,7 @@ public class Util {
 
     /**
      * Convenience method to send a notification that autocancels.
-     *
+     * 
      * @see sendNotification(Context,String,int,String,int,NotificationManager,Class ,boolean)
      */
     public static void sendNotification(final Context ctx, final String text, final int iconId, final String title,
@@ -860,7 +865,7 @@ public class Util {
 
     /**
      * Encapsulation of the code needed to send a notification.
-     *
+     * 
      * @param ctx
      *            The context in which this notification is being sent. Usually the Activity.
      * @param text
@@ -895,7 +900,7 @@ public class Util {
 
     /**
      * Create the file directories if they don't exist.
-     *
+     * 
      * @param ctx
      *            The context in which we are running.
      */
@@ -929,7 +934,7 @@ public class Util {
 
     /**
      * Displays an error message and optionally the associated exception that caused it in an alert dialog
-     *
+     * 
      * @param ctx
      *            context
      * @param t
@@ -941,22 +946,39 @@ public class Util {
      */
     public static void displayError(final Context ctx, final Throwable t, final String messageFormat,
             final Object... messageArgs) {
-        String message = MessageFormat.format(messageFormat, messageArgs);
-        if (t != null) {
-            message += "\n\n" + getStackTrace(t);
-        }
+        final Activity activity = ctx instanceof Activity ? (Activity) ctx : Main.getMainApplication();
+        activity.runOnUiThread(new Runnable() {
+            public void run() {
+                String message = messageFormat == null ? "" : MessageFormat.format(messageFormat, messageArgs);
+                if (t != null) {
+                    message += "\n\n" + t;
+                }
+                
+                LayoutInflater factory = LayoutInflater.from(activity);
+                final View contentView = factory.inflate(R.layout.view_display_error, null);
+                final TextView messageView = (TextView)contentView.findViewById(R.id.display_error_msg);
+                messageView.setText(message);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
-        builder.setTitle(ctx.getResources().getString(R.string.error_title));
-        builder.setMessage(message);
-        builder.show();
+                AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+                builder.setTitle(ctx.getResources().getString(R.string.error_title));
+                builder.setView(contentView);
+                builder.setIcon(android.R.drawable.ic_dialog_alert);
+                builder.setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                        /* User clicked OK so do some stuff */
+                    }
+                });
+                builder.show();
+            }
+        });
     }
 
     private volatile static long lastTimeStamp = System.currentTimeMillis();
 
     /**
      * Get a timestamp that is different than any other that we have seen since the process started.
-     *
+     * 
      * @return unique timestamp
      */
     public static synchronized long getUniqueTimeStamp() {
@@ -969,7 +991,7 @@ public class Util {
 
     /**
      * Gets the stack trace from a thrown object as a string
-     *
+     * 
      * @param t
      *            the thrown object
      * @return the stack trace string
@@ -982,15 +1004,15 @@ public class Util {
 
     /**
      * Handle unexpected errors and runtime exceptions
-     *
+     * 
      * @param t
      *            the exception
      */
     public static void unexpectedError(final Context ctx, final Throwable t, final String... strings) {
         Activity activity;
-        
+
         Log.e(TAG, Util.getStackTrace(t));
-        
+
         if (ctx instanceof Activity) {
             activity = (Activity) ctx;
         } else {

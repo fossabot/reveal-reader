@@ -73,8 +73,7 @@ public class BookmarkDialog extends ListActivity {
     
                 });
             } catch (IOException ioe) {
-                // TODO - add friendly message
-                Util.displayError(this, ioe, null);
+                Util.displayError(this, ioe, getResources().getString(R.string.error_bookmark_load));
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);

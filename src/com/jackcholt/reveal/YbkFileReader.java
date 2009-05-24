@@ -157,7 +157,13 @@ public class YbkFileReader {
      */
     private void populateFileData() throws IOException {
         RandomAccessFile file = mFile;
+        long fileLength = file.getChannel().size();
+        
         mIndexLength = Util.readVBInt(file);
+        
+        if (mIndexLength > fileLength - file.getFilePointer()) {
+            throw new InvalidFileFormatException("Index is damaged or incomplete.");
+        }
 
         byte[] indexArray = new byte[mIndexLength];
 
@@ -182,11 +188,19 @@ public class YbkFileReader {
 
             pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
 
-            iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-            pos += 4;
-
-            iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-            pos += 4;
+            try {
+                iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                pos += 4;
+    
+                iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                pos += 4;
+            } catch (IllegalArgumentException iae) {
+                throw new InvalidFileFormatException("Index is damaged or incomplete.");
+            }
+            
+            if (iFile.offset + iFile.len > fileLength) {
+                throw new InvalidFileFormatException("Internal file " + iFile.fileName + " is missing or incomplete.");
+            }
 
             // Add the internal file into the list
             mInternalFiles.add(iFile);

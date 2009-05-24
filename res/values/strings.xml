@@ -89,8 +89,8 @@
 <string name="refresh_title">Refreshing eBooks.</string>
 <string name="upgrade_database">Upgrading Database.</string>
 <string name="error_reporting">An unexpected error has occurred. Would you like to help improve Reveal by anonymously sending the following information to the Reveal developers?</string>
-<string name="error_title">Report Reveal Error</string>
-
+<string name="error_title">Error</string>
+<string name="unexpected_error_title">Report Reveal Error</string>
 <string name="unknown">UNKNOWN</string>
 <string name="unloadable_chapter">UNLOADABLE CHAPTER</string>
 <string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
@@ -102,7 +102,11 @@
 <string name="menu_open_ebook">Open eBook</string>
 <string name="send_btn">Send</string>
 <string name="exit_reveal_btn">Exit Reveal</string>
-
+<string name="error_lib_refresh">Error refreshing eBook library: </string>
+<string name="error_bookmark_save">Error saving bookmark: </string>
+<string name="error_bookmark_load">Error loading bookmark list: </string>
+<string name="error_history_load">Error loading history list: </string>
 <string name="new_ebooks">New eBooks</string>
-
+<string name="error_unloadable_chapter">The chapter could not be opened.  The book may have a corrupted file.  You may want to get a new copy of the book.</string>
+<string name="error_damaged_ebook">The eBook \'\'{0}\'\' appears to be damaged or incomplete. Please download a new copy.</string>
 </resources>

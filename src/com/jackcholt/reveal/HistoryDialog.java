@@ -49,7 +49,7 @@ public class HistoryDialog extends ListActivity {
                 setListAdapter(histAdapter);
             } catch (IOException ioe) {
                 // TODO - add friendly message
-                Util.displayError(this, ioe, null);
+                Util.displayError(this, ioe, getResources().getString(R.string.error_history_load));
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);

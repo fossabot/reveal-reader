@@ -51,8 +51,8 @@ public class Main extends ListActivity implements OnGestureListener {
     private static final int REVELUPDATE_ID = Menu.FIRST + 8;
     private static final int DELETE_ID = Menu.FIRST + 9;
     private static final int OPEN_ID = Menu.FIRST + 10;
-    
-    //int values for reusable dialogs
+
+    // int values for reusable dialogs
     private static final int REFRESH_DB = 0;
     private static final int UPGRADE_DB = 1;
 
@@ -86,7 +86,7 @@ public class Main extends ListActivity implements OnGestureListener {
             super.onCreate(savedInstanceState);
             // Debug.startMethodTracing("reveal");
 
-             mApplication = this;
+            mApplication = this;
 
             // Change DEBUG to "0" in Global.java when building a RELEASE
             // Version
@@ -140,18 +140,12 @@ public class Main extends ListActivity implements OnGestureListener {
 
             File file = new File("/data/data/com.jackcholt.reveal/databases/reveal_titles.db");
             if (file.exists()) {
-                    file.delete();
-                    //prompt to warn of new DB create
-                    RefreshDialog.create(this, UPGRADE_DB);
-                    try {
-                        updateBookList();
-                    } catch (IOException ioe) {
-                        // TODO - add friendly message
-                        Util.displayError(this, ioe, null);
-                    }
+                file.delete();
+                // prompt to warn of new DB create
+                RefreshDialog.create(this, UPGRADE_DB);
+                updateBookList();
             }
 
-            
             if (!configChanged) {
                 // Check for SDcard presence
                 // if we have one create the dirs and look fer ebooks
@@ -214,112 +208,103 @@ public class Main extends ListActivity implements OnGestureListener {
 
     /**
      * Updates the book list.
-     *
-     * @throws IOException
      */
-    protected void updateBookList() throws IOException {
-        // if (mUpdating) {
-        // Toast
-        // .makeText(this, R.string.update_in_progress,
-        // Toast.LENGTH_LONG).show();
-        // } else {
-        // mUpdating = true;
+    protected void updateBookList() {
         refreshLibrary(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY));
-        // }
     }
 
     /**
-     * Convenience method to make calling refreshLibrary() without any
-     * parameters retaining its original behavior.
-     *
-     * @throws IOException
+     * Convenience method to make calling refreshLibrary() without any parameters retaining its original behavior.
      */
-    private void refreshLibrary(final String strLibDir) throws IOException {
+    private void refreshLibrary(final String strLibDir) {
         refreshLibrary(strLibDir, ADD_BOOKS);
     }
 
     /**
      * Refresh the eBook directory.
-     *
+     * 
      * @param strLibDir
      *            the path to the library directory.
      * @param addNewBooks
-     *            If true, run the code that will add new books to the database
-     *            as well as the code that removes missing books from the
-     *            database (which runs regardless).
-     * @throws IOException
+     *            If true, run the code that will add new books to the database as well as the code that removes missing
+     *            books from the database (which runs regardless).
      */
-    private void refreshLibrary(final String strLibDir, final boolean addNewBooks) throws IOException {
-
-        YbkDAO ybkDao = YbkDAO.getInstance(this);
+    private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
         // get a list of files from the library directory
         File libraryDir = new File(strLibDir);
         if (!libraryDir.exists()) {
             if (!libraryDir.mkdirs()) {
-                Util.displayError(this, null, (String) getResources().getText(R.string.library_not_created));
+                Util.displayError(this, (Throwable)null, getResources().getString(R.string.library_not_created));
+                return;
             }
         }
 
-        File[] files = libraryDir.listFiles(new YbkFilter());
+        try {
+            YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-        Set<String> fileSet = new HashSet<String>();
-        if (files != null) {
-            for (File file : files)
-                fileSet.add(file.getAbsolutePath().toLowerCase());
-        }
+            File[] files = libraryDir.listFiles(new YbkFilter());
 
-        // get a list of files on disk
-        Set<String> dbSet = new HashSet<String>();
-        for (Book book : ybkDao.getBooks()) {
-            dbSet.add(book.fileName);
-        }
+            Set<String> fileSet = new HashSet<String>();
+            if (files != null) {
+                for (File file : files)
+                    fileSet.add(file.getAbsolutePath().toLowerCase());
+            }
 
-        // if adding files, then calculate set of files on disk, but not in the
-        // db
-        Set<String> addFiles;
-        if (addNewBooks) {
-            addFiles = new HashSet<String>(fileSet);
-            addFiles.removeAll(dbSet);
-        } else {
-            addFiles = Collections.emptySet();
-        }
+            // get a list of files on disk
+            Set<String> dbSet = new HashSet<String>();
+            for (Book book : ybkDao.getBooks()) {
+                dbSet.add(book.fileName);
+            }
 
-        // calculate the set of files in the db but not on disk
-        Set<String> removeFiles = dbSet;
-        removeFiles.removeAll(fileSet);
+            // if adding files, then calculate set of files on disk, but not in the
+            // db
+            Set<String> addFiles;
+            if (addNewBooks) {
+                addFiles = new HashSet<String>(fileSet);
+                addFiles.removeAll(dbSet);
+            } else {
+                addFiles = Collections.emptySet();
+            }
 
-        final int count = addFiles.size() + removeFiles.size();
-        if (count != 0) {
-            Completion callback = new Completion() {
-                volatile int remaining = count;
+            // calculate the set of files in the db but not on disk
+            Set<String> removeFiles = dbSet;
+            removeFiles.removeAll(fileSet);
 
-                // @Override
-                public void completed(boolean succeeded, String message) {
-                    if (succeeded) {
-                        refreshNotify(message);
-                        scheduleRefreshBookList();
-                    } else {
-                        Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
-                                "Reveal Library", mNotifMgr, mNotifId++, Main.class);
+            final int count = addFiles.size() + removeFiles.size();
+            if (count != 0) {
+                Completion callback = new Completion() {
+                    volatile int remaining = count;
+
+                    // @Override
+                    public void completed(boolean succeeded, String message) {
+                        if (succeeded) {
+                            refreshNotify(message);
+                            scheduleRefreshBookList();
+                        } else {
+                            Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
+                                    "Reveal Library", mNotifMgr, mNotifId++, Main.class);
+                        }
+                        if (--remaining <= 0) {
+                            refreshNotify("Refreshing of library complete.");
+                            // mUpdating = false;
+                        }
                     }
-                    if (--remaining <= 0) {
-                        refreshNotify("Refreshing of library complete.");
-                        // mUpdating = false;
-                    }
+                };
+
+                refreshNotify("Refreshing the library");
+
+                // schedule the deletion of the db entries that are not on disk
+                for (String file : removeFiles)
+                    YbkService.requestRemoveBook(this, file, callback);
+
+                // schedule the adding of books on disk that are not in the db
+                for (String file : addFiles) {
+                    YbkService.requestAddBook(this, file, callback);
                 }
-            };
-
-            refreshNotify("Refreshing the library");
-
-            // schedule the deletion of the db entries that are not on disk
-            for (String file : removeFiles)
-                YbkService.requestRemoveBook(this, file, callback);
-
-            // schedule the adding of books on disk that are not in the db
-            for (String file : addFiles) {
-                YbkService.requestAddBook(this, file, callback);
             }
+        } catch (IOException ioe) {
+            Util.displayError(this, ioe, getResources().getString(R.string.error_lib_refresh));
         }
     }
 
@@ -469,12 +454,7 @@ public class Main extends ListActivity implements OnGestureListener {
             switch (item.getItemId()) {
             case REFRESH_LIB_ID:
                 RefreshDialog.create(this, REFRESH_DB);
-                try {
-                    updateBookList();
-                } catch (IOException ioe) {
-                    // TODO - add friendly message
-                    Util.displayError(this, ioe, null);
-                }
+                updateBookList();
                 return true;
 
             case SETTINGS_ID:
@@ -633,11 +613,10 @@ public class Main extends ListActivity implements OnGestureListener {
 
                         try {
                             YbkDAO.getInstance(this).reopen(this);
-                            refreshLibrary(libDir, ADD_BOOKS);
                         } catch (IOException ioe) {
-                            // TODO - add friendly message
-                            Util.displayError(this, ioe, null);
+                            Util.displayError(this, ioe, getResources().getString(R.string.error_lib_refresh));
                         }
+                        refreshLibrary(libDir, ADD_BOOKS);
                         refreshBookList();
                     }
                 }
@@ -659,7 +638,7 @@ public class Main extends ListActivity implements OnGestureListener {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see android.app.Activity#onDestroy()
      */
     @Override

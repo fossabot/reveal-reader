@@ -924,8 +924,7 @@ public class YbkViewActivity extends Activity {
 
                     }
                 } catch (IOException e) {
-                    ybkView.loadData("The chapter could not be opened.  " + "The book may have a corrupted file.  "
-                            + "You may want to get a new copy of the book.", "text/plain", "utf-8");
+                    ybkView.loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain", "utf-8");
 
                     Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
 
@@ -994,7 +993,7 @@ public class YbkViewActivity extends Activity {
                                             bookmarkNumber);
                                 } catch (IOException ioe) {
                                     // TODO - add a friendly message
-                                    Util.displayError(YbkViewActivity.this, ioe, null);
+                                    Util.displayError(YbkViewActivity.this, ioe, getResources().getString(R.string.error_bookmark_save));
                                 }
                             }
                         }).create();
@@ -1182,7 +1181,7 @@ public class YbkViewActivity extends Activity {
                         }
                     } catch (IOException ioe) {
                         // TODO - add a friendly message
-                        Util.displayError(this, ioe, null);
+                        Util.displayError(this, ioe, getResources().getString(R.string.error_history_load));
                     }
                 }
 

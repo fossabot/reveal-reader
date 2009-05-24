@@ -118,9 +118,13 @@ public class YbkService extends Service {
                                     succeeded = false;
                                     message = "Could not add '" + bookName;
                                 }
+                            } catch (InvalidFileFormatException ioe) {
+                                succeeded = false;
+                                message = "Could not add '" + bookName + "'.";
+                                Util.displayError(Main.getMainApplication(), null, getResources().getString(R.string.error_damaged_ebook), bookName);
                             } catch (IOException ioe) {
                                 succeeded = false;
-                                message = "Could not add '" + bookName + "'.: " + ioe.toString();
+                                message = "Could not add '" + bookName + "'.";
                                 Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
                             }
                             if (succeeded)

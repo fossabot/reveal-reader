@@ -75,7 +75,7 @@ public class ErrorDialog extends Activity {
             }
         });
         FlurryAgent.onEvent("ErrorDialog");
-        setTitle(R.string.error_title);
+        setTitle(R.string.unexpected_error_title);
     }
 
     /**

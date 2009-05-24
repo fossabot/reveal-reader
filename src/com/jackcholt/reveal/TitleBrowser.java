@@ -121,8 +121,10 @@ public class TitleBrowser extends ListActivity {
 
             mListCursor = managedQuery(Uri.withAppendedPath(TitleProvider.CONTENT_URI, "category"),
                     new String[] { TitleProvider.Categories._ID }, null, null, null);
+            
+            boolean noTitles = mListCursor.getCount() == 0;
 
-            if (mListCursor.getCount() == 0) {
+            if (noTitles) {
                 Toast.makeText(this, R.string.checking_ebooks, Toast.LENGTH_SHORT).show();
 
                 setProgressBarIndeterminateVisibility(true);
@@ -143,8 +145,8 @@ public class TitleBrowser extends ListActivity {
                 Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
                 mBreadCrumb.push(rootCategories);
             }
-
-            updateScreen();
+            if (!noTitles)
+                updateScreen();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
