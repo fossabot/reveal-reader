@@ -138,7 +138,7 @@ public class Main extends ListActivity implements OnGestureListener {
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
             }
 
-            File file = new File("/data/data/com.jackcholt.reveal/databases/reveal_titles.db");
+            File file = new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db");
             if (file.exists()) {
                 file.delete();
                 // prompt to warn of new DB create
