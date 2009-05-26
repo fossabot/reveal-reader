@@ -39,8 +39,6 @@ import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
-//import com.nullwire.trace.ExceptionHandler;
-
 public class YbkViewActivity extends Activity {
     private WebView mYbkView;
 
@@ -57,11 +55,11 @@ public class YbkViewActivity extends Activity {
     private boolean BOOLshowFullScreen;
     private String mFragment;
     private String mDialogFilename = "Never set";
-    private String mChapBtnText = "Not Set";
+    private String mChapBtnText = null;
     private String mHistTitle = "";
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
-    private int mHistoryPos = 0;
+    // private int mHistoryPos = 0;
     private String mDialogChapter;
     private String mNavFile = "1";
     private boolean mThemeIsDialog = false;
@@ -127,9 +125,12 @@ public class YbkViewActivity extends Activity {
                     mHistTitle = (String) statusMap.get("histTitle");
                     mScrollYPos = (Integer) statusMap.get("scrollYPos");
                     Log.d(TAG, "Scroll Position Y: " + mScrollYPos);
-                    popup = (Boolean) savedInstanceState.get("popup");
-                    content = (String) savedInstanceState.get("content");
-                    strUrl = (String) savedInstanceState.getString("strUrl");
+
+                    if (savedInstanceState != null) {
+                        popup = (Boolean) savedInstanceState.get("popup");
+                        content = (String) savedInstanceState.get("content");
+                        strUrl = (String) savedInstanceState.getString("strUrl");
+                    }
 
                 } else {
 
@@ -168,15 +169,15 @@ public class YbkViewActivity extends Activity {
                 if (popup != null) {
                     setTheme(android.R.style.Theme_Dialog);
                     mThemeIsDialog = true;
-                } 
+                }
 
                 setContentView(R.layout.view_ybk);
-                
+
                 if (popup != null) {
                     LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
                     breadCrumb.setVisibility(View.GONE);
                 }
-                
+
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
 
@@ -199,6 +200,24 @@ public class YbkViewActivity extends Activity {
                     mainBtn.setOnClickListener(new OnClickListener() {
 
                         public void onClick(final View view) {
+
+                            try {
+                                YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
+                                boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
+
+                                if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+                                    // Save the book and chapter to history if
+                                    // there
+                                    // is one
+
+                                    ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+
+                                    // remove the excess histories
+                                    ybkDao.deleteHistories();
+                                }
+                            } catch (IOException ioe) {
+                                Log.e(TAG, "Could not insert history when clicking main button");
+                            }
 
                             finish();
                         }
@@ -301,8 +320,7 @@ public class YbkViewActivity extends Activity {
                             String[] urlParts = dataString.split("/");
 
                             // get rid of the book indicator since it is only
-                            // used
-                            // in some cases.
+                            // used in some cases.
                             book = shortTitle = urlParts[0];
                             if (book.charAt(0) == '!' || book.charAt(0) == '^') {
                                 shortTitle = urlParts[0] = book.substring(1);
@@ -606,7 +624,7 @@ public class YbkViewActivity extends Activity {
                             mHistTitle = bm.title;
                             mScrollYPos = bm.scrollYPos;
                             mNavFile = "1";
-                            
+
                             Log.d(TAG, "Loading chapter from bookmark file: " + mBookFileName + " chapter: "
                                     + mChapFileName);
 
@@ -694,6 +712,19 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         long bookId = -1L;
 
+        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
+
+        if (!showInPopup && !mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+            // Save the book and chapter to history if there
+            // is one
+
+            ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+
+            // remove the excess histories
+            ybkDao.deleteHistories();
+        }
+
         // check the format of the internal file name
         if (!chapter.equals("index") && chapter.toLowerCase().indexOf(".html") == -1) {
             showDialog(INVALID_CHAPTER);
@@ -728,7 +759,6 @@ public class YbkViewActivity extends Activity {
                     ybkReader = mYbkReader = new YbkFileReader(this, filePath);
                 }
 
-                YbkDAO ybkDao = YbkDAO.getInstance(this);
                 Book book = ybkDao.getBook(filePath.toLowerCase());
 
                 bookId = book.id;
@@ -846,12 +876,12 @@ public class YbkViewActivity extends Activity {
                     int posEnd = content.toLowerCase().indexOf("<end>");
 
                     String nf = "1";
-                    if (!mBackButtonPressed  && posEnd != -1) {
+                    if (!mBackButtonPressed && posEnd != -1) {
                         String header = content.substring(0, posEnd);
                         String headerLower = header.toLowerCase();
-    
+
                         Log.d(TAG, "Chapter header: " + header);
-    
+
                         int nfLoc = headerLower.indexOf("<nf>");
                         int nfEndLoc = headerLower.length();
                         if (nfLoc != -1) {
@@ -860,14 +890,12 @@ public class YbkViewActivity extends Activity {
                             }
                         }
                     }
-                    
-                    boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
-                    
+
                     if (!showInPopup) {
                         mHistTitle = mChapBtnText;
                         setChapBtnText(content);
                     }
-                    
+
                     String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
                             Settings.DEFAULT_EBOOK_DIRECTORY);
 
@@ -878,8 +906,6 @@ public class YbkViewActivity extends Activity {
                             "<span class=\"ah\" id=\"ah$1\">$2</span>");
 
                     content = Util.convertIfvar(content);
-
-                    
 
                     content = Util.htmlize(content, mSharedPref);
 
@@ -895,36 +921,18 @@ public class YbkViewActivity extends Activity {
                         setProgressBarIndeterminateVisibility(false);
 
                     } else {
-                       
                         ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-
                     }
 
                     mNavFile = nf;
 
                     bookLoaded = true;
 
-                    if (!mBackButtonPressed) {
+                    mBookId = bookId;
+                    mChapFileName = chap;
 
-                        if (!showInPopup && !mThemeIsDialog && mChapFileName != null) {
-                            // Save the book and chapter to history if there
-                            // is one
-
-                            ybkDao.insertHistory(bookId, mChapBtnText, chap, mYbkView.getScrollY());
-
-                            // remove the excess histories
-                            ybkDao.deleteHistories();
-                        }
-
-                        // Reset the back button to the top of the history list;
-                        mHistoryPos = 0;
-                        mBookId = bookId;
-                        mChapFileName = chap;
-                        //mScrollYPos = mYbkView.getScrollY();
-
-                    }
                 } catch (IOException e) {
-                    ybkView.loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain", "utf-8");
+                    ybkView.loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain","utf-8");
 
                     Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
 
@@ -989,11 +997,13 @@ public class YbkViewActivity extends Activity {
                                     YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
                                     int bookmarkNumber = ybkDao.getMaxBookmarkNumber();
 
+                                    // insert the bookmark
                                     ybkDao.insertHistory(mBookId, bmName, mChapFileName, mYbkView.getScrollY(),
                                             bookmarkNumber);
                                 } catch (IOException ioe) {
                                     // TODO - add a friendly message
-                                    Util.displayError(YbkViewActivity.this, ioe, getResources().getString(R.string.error_bookmark_save));
+                                    Util.displayError(YbkViewActivity.this, ioe, getResources().getString(
+                                            R.string.error_bookmark_save));
                                 }
                             }
                         }).create();
@@ -1145,20 +1155,24 @@ public class YbkViewActivity extends Activity {
                 } else {
                     try {
                         YbkDAO ybkDao = YbkDAO.getInstance(this);
-                        // loop until we can open something or run out of
-                        // history
-                        for (;;) {
-                            History hist = ybkDao.getPreviousHistory(++mHistoryPos);
-                            if (hist != null) {
+                        while (true) {
+                            History hist = ybkDao.popBackStack();
+
+                            if (hist == null) {
+                                Log.d(TAG, "backStack is empty. Going to main menu.");
+                                finish();
+                            } else {
                                 Book book = ybkDao.getBook(hist.bookId);
-                                if (book == null)
+                                if (book == null) {
+                                    Log.e(TAG, "Major error.  There was a history in the back stack for which no "
+                                            + "book could be found");
                                     continue;
+                                }
                                 String bookFileName = book.fileName;
                                 String chapFileName = hist.chapterName;
                                 mScrollYPos = hist.scrollYPos;
 
-                                // Log.d(TAG,"Going back to: " + bookFileName +
-                                // ", " + chapFileName);
+                                Log.d(TAG, "Going back to: " + bookFileName + ", " + chapFileName);
 
                                 mBackButtonPressed = true;
                                 try {
@@ -1174,8 +1188,6 @@ public class YbkViewActivity extends Activity {
 
                                 mBackButtonPressed = false;
 
-                            } else {
-                                Toast.makeText(this, R.string.no_more_history, Toast.LENGTH_LONG).show();
                             }
                             break;
                         }
@@ -1208,7 +1220,7 @@ public class YbkViewActivity extends Activity {
             stateMap.put("histTitle", mHistTitle);
             stateMap.put("scrollYPos", mYbkView.getScrollY());
             Log.d(TAG, "Scroll Y Pos: " + mYbkView.getScrollY());
-            
+
             return stateMap;
         } catch (RuntimeException rte) {
             unexpectedError(rte);

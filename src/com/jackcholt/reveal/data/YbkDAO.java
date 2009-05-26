@@ -5,18 +5,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EmptyStackException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.Stack;
 
 import jdbm.RecordManager;
 import jdbm.RecordManagerFactory;
 import jdbm.RecordManagerOptions;
 import jdbm.helper.Tuple;
 import jdbm.helper.TupleBrowser;
-
 import android.content.Context;
-import android.content.SharedPreferences; //import android.os.Debug;
+import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -26,7 +27,7 @@ import com.jackcholt.reveal.Util;
 import com.jackcholt.reveal.YbkService;
 
 /**
- * A class for managing all the database accesses for the Perst OODB.
+ * A class for managing all the database accesses for the OODB and other data related logic.
  *
  * @author Jack C. Holt
  * @author Shon Vella
@@ -38,6 +39,8 @@ public class YbkDAO {
     private RecordManager mDb;
 
     private SharedPreferences mSharedPref;
+    
+    private Stack<History> backStack = new Stack<History>();
 
     private static final String TAG = "YbkDAO";
 
@@ -315,7 +318,7 @@ public class YbkDAO {
      *            The chapter that was being read.
      * @param scrollPos
      *            The position in the chapter that was being read.
-     * @return
+     * @return True if the insert succeeded, False otherwise.
      * @throws IOException
      */
     public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos)
@@ -355,6 +358,8 @@ public class YbkDAO {
         if (bookmarkNumber == 0) {
             synchronized (historyList) {
                 historyList.add(0, hist);
+                backStack.add(hist);
+                Log.d(TAG, "Added " + hist.chapterName + " to backStack");
             }
         } else {
             synchronized (bookmarkList) {
@@ -851,6 +856,7 @@ public class YbkDAO {
      *
      */
     public static class RTIOException extends IOException {
+        
         private static final long serialVersionUID = 7842382591982841568L;
 
         private RTIOException(RuntimeException rte) {
@@ -859,5 +865,21 @@ public class YbkDAO {
             Log.e(TAG, Util.getStackTrace(rte));
         }
 
+    }
+    
+    /**
+     * Pop the the most recent History off the stack and return it.
+     * @return The most recent History.  If the stack is empty, return null.
+     */
+    public History popBackStack() {
+        History hist = null;
+        
+        try {
+            hist = backStack.pop();
+        } catch (EmptyStackException ese) {
+            // do nothing
+        }
+        
+        return hist;
     }
 }
