@@ -890,7 +890,9 @@ public class YbkViewActivity extends Activity {
                             }
                         }
                     }
-
+                    
+                    showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
+                    
                     if (!showInPopup) {
                         mHistTitle = mChapBtnText;
                         setChapBtnText(content);
