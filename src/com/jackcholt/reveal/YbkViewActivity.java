@@ -404,7 +404,9 @@ public class YbkViewActivity extends Activity {
                     } else if (mScrollYPos != 0) {
                         view.scrollTo(0, mScrollYPos);
                     }
-
+                    
+                    Log.d(TAG, "Height of ybkView content: " + view.getContentHeight());
+                    
                     setProgressBarIndeterminateVisibility(false);
                 } catch (RuntimeException rte) {
                     unexpectedError(rte);
@@ -924,6 +926,7 @@ public class YbkViewActivity extends Activity {
 
                     } else {
                         ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
+                        
                     }
 
                     mNavFile = nf;
