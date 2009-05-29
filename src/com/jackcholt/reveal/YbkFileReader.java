@@ -158,61 +158,63 @@ public class YbkFileReader {
     private void populateFileData() throws IOException {
         RandomAccessFile file = mFile;
         long fileLength = file.getChannel().size();
-        
-        mIndexLength = Util.readVBInt(file);
-        
-        if (mIndexLength > fileLength - file.getFilePointer()) {
+        if (fileLength < 4) {
             throw new InvalidFileFormatException("Index is damaged or incomplete.");
         }
 
-        byte[] indexArray = new byte[mIndexLength];
-
-        file.readFully(indexArray);
-
-        // Read the index information into the internalFiles list
-        int pos = 0;
-
-        while (pos < mIndexLength) {
-            InternalFile iFile = new InternalFile();
-
-            StringBuffer fileNameSBuf = new StringBuffer();
-
-            byte b;
-            int fileNameStartPos = pos;
-
-            while ((b = indexArray[pos++]) != 0 && pos < mIndexLength) {
-                fileNameSBuf.append((char) b);
-            }
-
-            iFile.fileName = fileNameSBuf.toString();
-
-            pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
-
-            try {
-                iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-                pos += 4;
-    
-                iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-                pos += 4;
-            } catch (IllegalArgumentException iae) {
+        try {
+            mIndexLength = Util.readVBInt(file);
+            
+            if (mIndexLength > fileLength - file.getFilePointer()) {
                 throw new InvalidFileFormatException("Index is damaged or incomplete.");
             }
-            
-            if (iFile.offset + iFile.len > fileLength) {
-                throw new InvalidFileFormatException("Internal file " + iFile.fileName + " is missing or incomplete.");
+    
+            byte[] indexArray = new byte[mIndexLength];
+    
+            file.readFully(indexArray);
+    
+            // Read the index information into the internalFiles list
+            int pos = 0;
+    
+            while (pos < mIndexLength) {
+                InternalFile iFile = new InternalFile();
+    
+                StringBuffer fileNameSBuf = new StringBuffer();
+    
+                byte b;
+                int fileNameStartPos = pos;
+    
+                while ((b = indexArray[pos++]) != 0 && pos < mIndexLength) {
+                    fileNameSBuf.append((char) b);
+                }
+    
+                iFile.fileName = fileNameSBuf.toString();
+    
+                pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
+    
+                    iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                    pos += 4;
+        
+                    iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                    pos += 4;
+                if (iFile.offset < mIndexLength || iFile.len < 0 || iFile.offset + iFile.len > fileLength) {
+                    throw new InvalidFileFormatException("Internal file " + iFile.fileName + " is missing or incomplete.");
+                }
+    
+                // Add the internal file into the list
+                mInternalFiles.add(iFile);
             }
-
-            // Add the internal file into the list
-            mInternalFiles.add(iFile);
-        }
-
-        mBindingText = readBindingFile(FROM_INTERNAL);
-        if (mBindingText != null) {
-            mBookTitle = Util.getBookTitleFromBindingText(mBindingText);
-            mBookShortTitle = Util.getBookShortTitleFromBindingText(mBindingText);
-            mBookMetaData = readMetaData(FROM_INTERNAL);
-            populateOrder(readOrderCfg(FROM_INTERNAL));
-        }
+    
+            mBindingText = readBindingFile(FROM_INTERNAL);
+            if (mBindingText != null) {
+                mBookTitle = Util.getBookTitleFromBindingText(mBindingText);
+                mBookShortTitle = Util.getBookShortTitleFromBindingText(mBindingText);
+                mBookMetaData = readMetaData(FROM_INTERNAL);
+                populateOrder(readOrderCfg(FROM_INTERNAL));
+            }
+        } catch (IllegalArgumentException iae) {
+            throw new InvalidFileFormatException("Index is damaged or incomplete.");
+        }        
     }
 
     private class Order {
