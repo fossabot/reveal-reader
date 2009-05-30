@@ -28,7 +28,7 @@ public class ReportError {
             mWebView.getSettings().setJavaScriptEnabled(true);
             String errorURL;
             errorURL = "http://revealreader.thepackhams.com/exception.php?StackTrace=" 
-                + URLEncoder.encode(errorToReport, "UTF-8");
+                + URLEncoder.encode("Build " + Global.SVN_VERSION + "\n" + errorToReport, "UTF-8");
             mWebView.loadUrl(errorURL);
 
         } catch (FactoryConfigurationError e) {
