@@ -333,7 +333,7 @@ public class Main extends ListActivity implements OnGestureListener {
      */
     private class YbkFilter implements FileFilter {
         public boolean accept(File file) {
-            return file.getName().endsWith(".ybk");
+            return file.getName().toLowerCase().endsWith(".ybk");
         }
     }
 
