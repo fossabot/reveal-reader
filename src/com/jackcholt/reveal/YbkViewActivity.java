@@ -14,6 +14,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
@@ -292,95 +293,110 @@ public class YbkViewActivity extends Activity {
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                 try {
                     int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
+                    final boolean HANDLED_BY_HOST_APP = true;
+                    final boolean HANDLED_BY_WEBVIEW = false;
+                    boolean urlHandler = HANDLED_BY_HOST_APP;
+                    
+                    int sdkVersion = 2;
+                    try {
+                        sdkVersion = Integer.parseInt(Build.VERSION.SDK);
+                    } catch (NumberFormatException nfe) {
+                        // do nothing
+                    }
+                    
+                    if (sdkVersion > 2 && url.contains("book#")) {
+                        // this is needed for 
+                        urlHandler = HANDLED_BY_WEBVIEW;
+                    } else {
+                        if (url.length() > ContentUriLength + 1) {
+                            setProgressBarIndeterminateVisibility(true);
 
-                    boolean success = true;
+                            String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                                    Settings.DEFAULT_EBOOK_DIRECTORY);
 
-                    if (url.length() > ContentUriLength + 1) {
-                        setProgressBarIndeterminateVisibility(true);
+                            Log.d(TAG, "WebView URL: " + url);
+                            String book;
+                            String chapter = "";
+                            String shortTitle = null;
 
-                        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                                Settings.DEFAULT_EBOOK_DIRECTORY);
+                            if (url.indexOf('@') != -1) {
+                                view.scrollTo(0, 0);
+                            } else {
 
-                        Log.d(TAG, "WebView URL: " + url);
-                        String book;
-                        String chapter = "";
-                        String shortTitle = null;
-
-                        if (url.indexOf('@') != -1) {
-                            view.scrollTo(0, 0);
-                        } else {
-
-                            String dataString;
-                            try {
-                                dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
-                            } catch (UnsupportedEncodingException uee) {
-                                dataString = url.substring(ContentUriLength + 1);
-                            }
-
-                            String[] urlParts = dataString.split("/");
-
-                            // get rid of the book indicator since it is only
-                            // used in some cases.
-                            book = shortTitle = urlParts[0];
-                            if (book.charAt(0) == '!' || book.charAt(0) == '^') {
-                                shortTitle = urlParts[0] = book.substring(1);
-                            }
-
-                            book = libDir + urlParts[0] + ".ybk";
-
-                            for (int i = 0; i < urlParts.length; i++) {
-                                chapter += "\\" + urlParts[i];
-                            }
-
-                            try {
-                                YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
-
-                                Book bookObj = ybkDao.getBook(book);
-
-                                if (null != bookObj) {
-                                    // Log.i(TAG, "Loading chapter '" + chapter
-                                    // +
-                                    // "'");
-
-                                    String chap = chapter;
-                                    int pos;
-                                    if ((pos = chapter.indexOf("#")) != -1) {
-                                        chap = chapter.substring(0, pos);
-                                    }
-                                    Chapter chapObj = ybkDao.getChapter(bookObj.id, chap);
-                                    Chapter chapGzObj = ybkDao.getChapter(bookObj.id, chap + ".gz");
-                                    String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-                                    Chapter chapConcatObj = ybkDao.getChapter(bookObj.id, concatChap);
-
-                                    boolean bookLoaded = false;
-                                    if (chapGzObj != null) {
-                                        bookLoaded = loadChapter(book, chapter + ".gz");
-                                    } else if (chapObj != null || chapConcatObj != null) {
-                                        bookLoaded = loadChapter(book, chapter);
-                                    } else {
-                                        mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
-                                        showDialog(CHAPTER_NONEXIST);
-                                    }
-
-                                    if (bookLoaded) {
-                                        setBookBtn(shortTitle, book, chapter);
-                                        mScrollYPos = 0;
-                                    } else {
-                                        mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
-                                        showDialog(CHAPTER_NONEXIST);
-                                    }
-                                } else {
-                                    mDialogFilename = book.substring(book.lastIndexOf("/") + 1);
-                                    showDialog(FILE_NONEXIST);
+                                String dataString;
+                                try {
+                                    dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
+                                } catch (UnsupportedEncodingException uee) {
+                                    dataString = url.substring(ContentUriLength + 1);
                                 }
-                            } catch (IOException ioe) {
-                                Log.w(TAG, "Couldn't load the chapter.");
-                            }
-                        }
 
+                                String[] urlParts = dataString.split("/");
+
+                                // get rid of the book indicator since it is
+                                // only
+                                // used in some cases.
+                                book = shortTitle = urlParts[0];
+                                if (book.charAt(0) == '!' || book.charAt(0) == '^') {
+                                    shortTitle = urlParts[0] = book.substring(1);
+                                }
+
+                                book = libDir + urlParts[0] + ".ybk";
+
+                                for (int i = 0; i < urlParts.length; i++) {
+                                    chapter += "\\" + urlParts[i];
+                                }
+
+                                try {
+                                    YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
+
+                                    Book bookObj = ybkDao.getBook(book);
+
+                                    if (null != bookObj) {
+                                        // Log.i(TAG, "Loading chapter '" +
+                                        // chapter
+                                        // +
+                                        // "'");
+
+                                        String chap = chapter;
+                                        int pos;
+                                        if ((pos = chapter.indexOf("#")) != -1) {
+                                            chap = chapter.substring(0, pos);
+                                        }
+                                        Chapter chapObj = ybkDao.getChapter(bookObj.id, chap);
+                                        Chapter chapGzObj = ybkDao.getChapter(bookObj.id, chap + ".gz");
+                                        String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
+                                        Chapter chapConcatObj = ybkDao.getChapter(bookObj.id, concatChap);
+
+                                        boolean bookLoaded = false;
+                                        if (chapGzObj != null) {
+                                            bookLoaded = loadChapter(book, chapter + ".gz");
+                                        } else if (chapObj != null || chapConcatObj != null) {
+                                            bookLoaded = loadChapter(book, chapter);
+                                        } else {
+                                            mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
+                                            showDialog(CHAPTER_NONEXIST);
+                                        }
+
+                                        if (bookLoaded) {
+                                            setBookBtn(shortTitle, book, chapter);
+                                            mScrollYPos = 0;
+                                        } else {
+                                            mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
+                                            showDialog(CHAPTER_NONEXIST);
+                                        }
+                                    } else {
+                                        mDialogFilename = book.substring(book.lastIndexOf("/") + 1);
+                                        showDialog(FILE_NONEXIST);
+                                    }
+                                } catch (IOException ioe) {
+                                    Log.w(TAG, "Couldn't load the chapter.");
+                                }
+                            }
+
+                        }
                     }
 
-                    return success;
+                    return urlHandler;
                 } catch (RuntimeException rte) {
                     unexpectedError(rte);
                     return false;
@@ -404,9 +420,9 @@ public class YbkViewActivity extends Activity {
                     } else if (mScrollYPos != 0) {
                         view.scrollTo(0, mScrollYPos);
                     }
-                    
+
                     Log.d(TAG, "Height of ybkView content: " + view.getContentHeight());
-                    
+
                     setProgressBarIndeterminateVisibility(false);
                 } catch (RuntimeException rte) {
                     unexpectedError(rte);
@@ -581,8 +597,9 @@ public class YbkViewActivity extends Activity {
                         mHistTitle = hist.title;
                         mScrollYPos = hist.scrollYPos;
                         mNavFile = "1";
-                        
-                        Log.d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: "
+
+                        Log
+                                .d(TAG, "Loading chapter from history file: " + mBookFileName + " chapter: "
                                         + mChapFileName);
 
                         try {
@@ -892,9 +909,9 @@ public class YbkViewActivity extends Activity {
                             }
                         }
                     }
-                    
+
                     showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
-                    
+
                     if (!showInPopup) {
                         mHistTitle = mChapBtnText;
                         setChapBtnText(content);
@@ -926,7 +943,7 @@ public class YbkViewActivity extends Activity {
 
                     } else {
                         ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-                        
+
                     }
 
                     mNavFile = nf;
@@ -937,7 +954,9 @@ public class YbkViewActivity extends Activity {
                     mChapFileName = chap;
 
                 } catch (IOException e) {
-                    ybkView.loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain","utf-8");
+                    ybkView
+                            .loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain",
+                                    "utf-8");
 
                     Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
 
