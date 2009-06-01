@@ -49,7 +49,7 @@ public class TitleBrowser extends ListActivity {
     private int mNotifId = 0;
     private static final String TAG = "Reveal TitleBrowser";
     private SimpleCursorAdapter mAdapter;
-    private Stack<Uri> mBreadCrumb;
+    private Stack<Uri> mBreadCrumb = new Stack<Uri>();
     private Cursor mListCursor;
     private QueryHandler mQueryHandler;
     private boolean mDownloadSuccess;
@@ -98,8 +98,6 @@ public class TitleBrowser extends ListActivity {
 
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-
-            mBreadCrumb = new Stack<Uri>();
 
             mDownloadSuccess = false;
 
