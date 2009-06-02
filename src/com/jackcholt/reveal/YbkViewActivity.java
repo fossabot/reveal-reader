@@ -7,6 +7,9 @@ import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
 
+import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.commons.validator.routines.UrlValidator;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -305,10 +308,15 @@ public class YbkViewActivity extends Activity {
                     }
                     
                     if (sdkVersion > 2 && url.contains("book#")) {
-                        // this is needed for 
+                        // this is needed for internal links on SDK >= 1.5 
                         urlHandler = HANDLED_BY_WEBVIEW;
                     } else {
-                        if (url.length() > ContentUriLength + 1) {
+                        String lowerUrl = url.toLowerCase();
+                        if (lowerUrl.startsWith("mailto:") || lowerUrl.startsWith("geo:") || lowerUrl.startsWith("tel:") 
+                                || lowerUrl.startsWith("http://") || lowerUrl.startsWith("https://")) {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                            startActivity(intent);
+                        } else if (url.length() > ContentUriLength + 1) {
                             setProgressBarIndeterminateVisibility(true);
 
                             String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
@@ -320,7 +328,13 @@ public class YbkViewActivity extends Activity {
                             String shortTitle = null;
 
                             if (url.indexOf('@') != -1) {
-                                view.scrollTo(0, 0);
+                                EmailValidator emailValid = EmailValidator.getInstance();
+                                if (emailValid.isValid("mailto:" + url)) {
+                                    Intent emailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url));
+                                    startActivity(emailIntent);
+                                } else {
+                                    view.scrollTo(0, 0);
+                                }
                             } else {
 
                                 String dataString;
@@ -330,11 +344,24 @@ public class YbkViewActivity extends Activity {
                                     dataString = url.substring(ContentUriLength + 1);
                                 }
 
+                                //Log.d(TAG, "is http url? " + URLUtil.isHttpUrl(dataString));
+                                String httpString = dataString;
+                                
+                                if (!httpString.toLowerCase().startsWith("http://")) {
+                                    httpString = "http://" + httpString; 
+                                }
+                                
+                                UrlValidator urlValidator = new UrlValidator();
+                                if (urlValidator.isValid(httpString)) {
+                                    Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(httpString));
+                                    startActivity(webIntent);
+                                    return urlHandler;
+                                }
+                                
                                 String[] urlParts = dataString.split("/");
 
                                 // get rid of the book indicator since it is
-                                // only
-                                // used in some cases.
+                                // only used in some cases.
                                 book = shortTitle = urlParts[0];
                                 if (book.charAt(0) == '!' || book.charAt(0) == '^') {
                                     shortTitle = urlParts[0] = book.substring(1);
@@ -387,6 +414,7 @@ public class YbkViewActivity extends Activity {
                                     } else {
                                         mDialogFilename = book.substring(book.lastIndexOf("/") + 1);
                                         showDialog(FILE_NONEXIST);
+                                        
                                     }
                                 } catch (IOException ioe) {
                                     Log.w(TAG, "Couldn't load the chapter.");
