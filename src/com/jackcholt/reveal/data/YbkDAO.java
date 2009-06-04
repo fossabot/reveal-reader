@@ -27,11 +27,12 @@ import com.jackcholt.reveal.Util;
 import com.jackcholt.reveal.YbkService;
 
 /**
- * A class for managing all the database accesses for the OODB and other data related logic.
- *
+ * A class for managing all the database accesses for the OODB and other data
+ * related logic.
+ * 
  * @author Jack C. Holt
  * @author Shon Vella
- *
+ * 
  */
 public class YbkDAO {
     private static String DATABASE_NAME = "reveal_ybk";
@@ -39,7 +40,7 @@ public class YbkDAO {
     private RecordManager mDb;
 
     private SharedPreferences mSharedPref;
-    
+
     private Stack<History> backStack = new Stack<History>();
 
     private static final String TAG = "YbkDAO";
@@ -55,14 +56,15 @@ public class YbkDAO {
     public static final String CACHE_SIZE = "1000";
 
     /**
-     * Is the chapter a navigation chapter? Data type: INTEGER. Use {@link CHAPTER_TYPE_NO_NAV} and
-     * {@link CHAPTER_TYPE_NAV} to set values.
+     * Is the chapter a navigation chapter? Data type: INTEGER. Use
+     * {@link CHAPTER_TYPE_NO_NAV} and {@link CHAPTER_TYPE_NAV} to set values.
      */
     public static final String CHAPTER_NAV_FILE = "nav_file";
 
     /**
-     * Should the user be able to zoom the page? Data type: INTEGER. Used when the chapter contains a picture. Use
-     * {@link CHAPTER_ZOOM_MENU_OFF} and {@link CHAPTER_ZOOM_MENU_ON} to set values.
+     * Should the user be able to zoom the page? Data type: INTEGER. Used when
+     * the chapter contains a picture. Use {@link CHAPTER_ZOOM_MENU_OFF} and
+     * {@link CHAPTER_ZOOM_MENU_ON} to set values.
      */
     public static final String CHAPTER_ZOOM_PICTURE = "zoom_picture";
 
@@ -77,7 +79,7 @@ public class YbkDAO {
 
     /**
      * Allow the user to get the one and only instance of the YbkDAO.
-     *
+     * 
      * @return The YbkDAO singleton.
      * @throws IOException
      */
@@ -101,9 +103,9 @@ public class YbkDAO {
 
     /**
      * Make this a singleton by blocking direct access to the constructor.
-     *
-     *
-     *
+     * 
+     * 
+     * 
      * @throws IOException
      */
     private YbkDAO(final Context ctx) throws IOException {
@@ -112,7 +114,7 @@ public class YbkDAO {
 
     /**
      * Open the db.
-     *
+     * 
      * @throws IOException
      */
     private void open(Context ctx) throws IOException {
@@ -123,7 +125,8 @@ public class YbkDAO {
 
         Properties options = new Properties();
 
-        // Apparently this option is experimental and has bugs, but could help performance a lot
+        // Apparently this option is experimental and has bugs, but could help
+        // performance a lot
         // options.put(RecordManagerOptions.BUFFERED_INSTALLS, "true");
 
         // Apparently this option is not yet implemented
@@ -140,7 +143,7 @@ public class YbkDAO {
 
     /**
      * Close the db.
-     *
+     * 
      * @throws IOException
      */
     private void close() throws IOException {
@@ -151,7 +154,7 @@ public class YbkDAO {
 
     /**
      * Reopen the db. Primarily needed when the library directory changes.
-     *
+     * 
      * @param ctx
      * @throws IOException
      */
@@ -168,7 +171,7 @@ public class YbkDAO {
 
     /**
      * Get a list of book titles.
-     *
+     * 
      * @return The (possibly empty) list of book titles as a field index.
      * @throws IOException
      */
@@ -188,7 +191,7 @@ public class YbkDAO {
 
     /**
      * Get a list of books.
-     *
+     * 
      * @return The list of books
      * @throws IOException
      */
@@ -208,7 +211,7 @@ public class YbkDAO {
 
     /**
      * Get a List for history records that are bookmarks sorted by title.
-     *
+     * 
      * @return
      * @throws IOException
      */
@@ -230,7 +233,7 @@ public class YbkDAO {
 
     /**
      * Insert a book into the database.
-     *
+     * 
      * @param fileName
      *            The name of the file that contains the book.
      * @param bindingText
@@ -266,7 +269,8 @@ public class YbkDAO {
                 boolean done = false;
                 try {
                     book.create(mDb);
-                    // make sure the book is put into the title index last so it won't show up in the list prematurely
+                    // make sure the book is put into the title index last so it
+                    // won't show up in the list prematurely
                     done = insertChapters(id, chapters) && root.bookIdIndex.put(book.id, book)
                             && root.bookFilenameIndex.put(book.fileName, book)
                             && (book.formattedTitle == null || root.bookTitleIndex.put(book.formattedTitle, book));
@@ -289,7 +293,7 @@ public class YbkDAO {
 
     /**
      * Insert a list of chapters (should only be called from insertBook)
-     *
+     * 
      * @param chapters
      *            the list of chapters
      * @return true if successful
@@ -308,8 +312,9 @@ public class YbkDAO {
     }
 
     /**
-     * Convenience method to save a history item but not a bookmark (no bookmarkNumber).
-     *
+     * Convenience method to save a history item but not a bookmark (no
+     * bookmarkNumber).
+     * 
      * @param bookId
      *            The id of the book that this is related to.
      * @param title
@@ -332,7 +337,7 @@ public class YbkDAO {
 
     /**
      * Save a new history/bookMark item.
-     *
+     * 
      * @param bookId
      *            The id of the book that this is related to.
      * @param historyTitle
@@ -369,9 +374,24 @@ public class YbkDAO {
         return true;
     }
 
+    public boolean updateHistory(final long histId, final long bookId, final String chapName, final int scrollYPos) {
+        boolean success = false;
+        History hist = getHistory(histId);
+
+        if (hist != null) {
+            hist.scrollYPos = scrollYPos;
+            hist.bookId = bookId;
+            hist.chapterName = chapName;
+            YbkService.requestUpdateHistory(Main.getMainApplication(), hist);
+            success = true;
+        }
+
+        return success;
+    }
+
     /**
      * Insert a history (should only be called by YbkService).
-     *
+     * 
      * @param hist
      *            the history to insert
      * @return True if the insert succeeded, False otherwise.
@@ -397,8 +417,34 @@ public class YbkDAO {
     }
 
     /**
+     * Update a history; usually a bookmark (This should only be called by
+     * YbkService).
+     * 
+     * @param hist
+     *            the history to update.
+     * @return True if the insert succeeded, False otherwise.
+     * @throws IOException
+     */
+    public boolean updateHistory(final History hist) throws IOException {
+        synchronized (writeGate) {
+            try {
+                boolean done = false;
+                try {
+                    hist.update(mDb);
+                    done = true;
+                } finally {
+                    endTransaction(done);
+                }
+                return done;
+            } catch (RuntimeException rte) {
+                throw new RTIOException(rte);
+            }
+        }
+    }
+
+    /**
      * Delete a history (should only be called by YbkService).
-     *
+     * 
      * @param hist
      *            the history to insert
      * @return True if the insert succeeded, False otherwise.
@@ -420,7 +466,7 @@ public class YbkDAO {
 
     /**
      * Remove all histories beyond the maximum.
-     *
+     * 
      * @throws IOException
      */
     public void deleteHistories() {
@@ -437,7 +483,7 @@ public class YbkDAO {
 
     /**
      * Delete book from db based on filename.
-     *
+     * 
      * @param fileName
      *            The absolute file path of the book.
      * @return True if the book was deleted.
@@ -454,7 +500,7 @@ public class YbkDAO {
 
     /**
      * Remove the book from the database.
-     *
+     * 
      * @param book
      *            The book to be deleted.
      * @return True if the book was deleted.
@@ -484,8 +530,9 @@ public class YbkDAO {
     }
 
     /**
-     * Remove a book's chapters from the database. This should only be called deleteBook()
-     *
+     * Remove a book's chapters from the database. This should only be called
+     * deleteBook()
+     * 
      * @param bookId
      *            The id of the book whose chapters are to be deleted.
      * @return True if the book chapters were deleted.
@@ -503,10 +550,11 @@ public class YbkDAO {
 
     /**
      * Change the book from active to inactive or vice versa.
-     *
+     * 
      * @param book
      *            The book to change the active state of.
-     * @return True if the Book is already in the database indexes and the update occurred successfully.
+     * @return True if the Book is already in the database indexes and the
+     *         update occurred successfully.
      * @throws IOException
      */
     public boolean toggleBookActivity(final Book book) throws IOException {
@@ -531,7 +579,7 @@ public class YbkDAO {
 
     /**
      * Get the book object identified by bookId.
-     *
+     * 
      * @param bookId
      *            The key of the book to get.
      * @return The book object identified by bookId.
@@ -547,7 +595,7 @@ public class YbkDAO {
 
     /**
      * Get the history item identified by histId.
-     *
+     * 
      * @param histId
      *            The key of the history to get.
      * @return The history object identified by histId.
@@ -571,7 +619,7 @@ public class YbkDAO {
 
     /**
      * Get a bookmark by bookmarkNumber.
-     *
+     * 
      * @param bmId
      *            the bookmark id.
      * @return The History object that contains the bookmark.
@@ -589,9 +637,9 @@ public class YbkDAO {
     }
 
     /**
-     * Get a list if Histories sorted from newest to oldest for use with ArrayAdapter for showing histories in a
-     * ListActivity.
-     *
+     * Get a list if Histories sorted from newest to oldest for use with
+     * ArrayAdapter for showing histories in a ListActivity.
+     * 
      * @return the List of History objects.
      * @throws IOException
      */
@@ -601,8 +649,9 @@ public class YbkDAO {
     }
 
     /**
-     * Delete all the histories/bookmarks associated with a book that is being deleted
-     *
+     * Delete all the histories/bookmarks associated with a book that is being
+     * deleted
+     * 
      * @param bookId
      * @throws IOException
      */
@@ -637,7 +686,7 @@ public class YbkDAO {
 
     /**
      * Get a list if Histories sorted from newest to oldest
-     *
+     * 
      * @param maxHistories
      *            the maximum number of histories to return
      * @return the List of History objects.
@@ -655,7 +704,7 @@ public class YbkDAO {
 
     /**
      * Get a list if Histories sorted from newest to oldest
-     *
+     * 
      * @param maxHistories
      *            the maximum number of histories to return
      * @return the List of History objects.
@@ -665,7 +714,8 @@ public class YbkDAO {
         try {
             List<History> histList = new ArrayList<History>();
             int histCount = 0;
-            TupleBrowser<Long, Long> browser = root.historyIdIndex.browse(null); // null means
+            TupleBrowser<Long, Long> browser = root.historyIdIndex.browse(null); // null
+            // means
             // start at the
             // end
             Tuple<Long, Long> tuple = new Tuple<Long, Long>();
@@ -684,7 +734,7 @@ public class YbkDAO {
 
     /**
      * Get a list if Histories sorted from newest to oldest
-     *
+     * 
      * @param maxHistories
      *            the maximum number of histories to return
      * @return the List of History objects.
@@ -706,7 +756,7 @@ public class YbkDAO {
 
     /**
      * Get list of bookmarks.
-     *
+     * 
      * @return
      * @throws IOException
      */
@@ -718,7 +768,7 @@ public class YbkDAO {
 
     /**
      * Get the last bookmark in the list.
-     *
+     * 
      * @return The highest numbered bookmark.
      * @throws IOException
      */
@@ -736,7 +786,7 @@ public class YbkDAO {
 
     /**
      * Get a book object identified by the fileName.
-     *
+     * 
      * @param fileName
      *            the filename we're looking for.
      * @return A Book object identified by the passed in filename.
@@ -752,7 +802,7 @@ public class YbkDAO {
 
     /**
      * Get a chapter object identified by the fileName.
-     *
+     * 
      * @param fileName
      *            the name of the internal chapter file.
      * @return the chapter
@@ -768,7 +818,7 @@ public class YbkDAO {
 
     /**
      * Get chapter by book id and order id.
-     *
+     * 
      * @param bookId
      *            The id of the book that contains the chapter.
      * @param orderId
@@ -786,11 +836,12 @@ public class YbkDAO {
 
     /**
      * Check whether a chapter exists in a book.
-     *
+     * 
      * @param bookId
      *            The id of the book.
      * @param fileName
-     *            The name of the chapter (or internal file) that we're checking for.
+     *            The name of the chapter (or internal file) that we're checking
+     *            for.
      * @return True if the book has a chapter of that name, false otherwise.
      * @throws IOException
      */
@@ -827,10 +878,12 @@ public class YbkDAO {
     }
 
     /**
-     * Get the history at the current position in the list of histories that the back button has taken us to.
-     *
+     * Get the history at the current position in the list of histories that the
+     * back button has taken us to.
+     * 
      * @param historyPos
-     *            The position in the history list that we're getting the history at.
+     *            The position in the history list that we're getting the
+     *            history at.
      * @throws IOException
      */
     public History getPreviousHistory(int historyPos) throws IOException {
@@ -850,13 +903,15 @@ public class YbkDAO {
     }
 
     /**
-     * Wrapper to rethrow runtime errors as IOExceptions because there are many runtime exception possibilities that can
-     * arise from data corruption or inconsistency and we want to make sure that they are handled by the caller.
-     *
-     *
+     * Wrapper to rethrow runtime errors as IOExceptions because there are many
+     * runtime exception possibilities that can arise from data corruption or
+     * inconsistency and we want to make sure that they are handled by the
+     * caller.
+     * 
+     * 
      */
     public static class RTIOException extends IOException {
-        
+
         private static final long serialVersionUID = 7842382591982841568L;
 
         private RTIOException(RuntimeException rte) {
@@ -866,20 +921,21 @@ public class YbkDAO {
         }
 
     }
-    
+
     /**
      * Pop the the most recent History off the stack and return it.
-     * @return The most recent History.  If the stack is empty, return null.
+     * 
+     * @return The most recent History. If the stack is empty, return null.
      */
     public History popBackStack() {
         History hist = null;
-        
+
         try {
             hist = backStack.pop();
         } catch (EmptyStackException ese) {
             // do nothing
         }
-        
+
         return hist;
     }
 }

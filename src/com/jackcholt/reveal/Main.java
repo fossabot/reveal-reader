@@ -22,12 +22,10 @@ import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.GestureDetector.OnGestureListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -38,7 +36,7 @@ import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
-public class Main extends ListActivity implements OnGestureListener {
+public class Main extends ListActivity {
 
     private static final int HISTORY_ID = Menu.FIRST;
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
@@ -117,7 +115,7 @@ public class Main extends ListActivity implements OnGestureListener {
             setContentView(R.layout.main);
 
             // To capture LONG_PRESS gestures
-            gestureScanner = new GestureDetector(this);
+            //gestureScanner = new GestureDetector(this);
             registerForContextMenu(getListView());
 
             boolean configChanged = (getLastNonConfigurationInstance() != null);
@@ -552,40 +550,14 @@ public class Main extends ListActivity implements OnGestureListener {
         return null;
     }
 
-    public boolean onDown(MotionEvent arg0) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean onFling(MotionEvent arg0, MotionEvent arg1, float arg2, float arg3) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean onScroll(MotionEvent arg0, MotionEvent arg1, float arg2, float arg3) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public void onShowPress(MotionEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public boolean onSingleTapUp(MotionEvent arg0) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public void onLongPress(MotionEvent arg0) {
-        Log.e(Global.TAG, "ONLONGPRESS");
-    }
-
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         Bundle extras;
         long histId;
         Intent intent;
+        boolean fromHistory = false;
+        boolean updateBookmark = false;
+        
         try {
             if (resultCode == RESULT_OK) {
                 switch (requestCode) {
@@ -595,11 +567,18 @@ public class Main extends ListActivity implements OnGestureListener {
 
                     extras = data.getExtras();
                     histId = extras.getLong(YbkDAO.ID);
-
-                    intent = new Intent(this, YbkViewActivity.class);
-                    intent.putExtra(YbkDAO.ID, histId);
-                    intent.putExtra(YbkDAO.FROM_HISTORY, true);
-                    startActivity(intent);
+                    fromHistory = extras.getBoolean(YbkDAO.FROM_HISTORY);
+                    updateBookmark = extras.getBoolean(BookmarkDialog.UPDATE_BOOKMARK);
+                    
+                    if (fromHistory) {
+                        intent = new Intent(this, YbkViewActivity.class);
+                        intent.putExtra(YbkDAO.ID, histId);
+                        intent.putExtra(YbkDAO.FROM_HISTORY, true);
+                        startActivity(intent);
+                    } else if (updateBookmark) {
+                        
+                    }
+                    
                     break;
 
                 case ACTIVITY_SETTINGS:

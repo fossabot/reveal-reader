@@ -44,6 +44,7 @@ public class YbkService extends Service {
     public static final int DOWNLOAD_BOOK = 3;
     public static final int ADD_HISTORY = 4;
     public static final int REMOVE_HISTORY = 5;
+    public static final int UPDATE_HISTORY = 6;
 
     private volatile Looper mLibLooper;
     private volatile Handler mLibHandler;
@@ -227,14 +228,52 @@ public class YbkService extends Service {
                                 YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
                                 if (ybkDAO.insertHistory(hist)) {
                                     succeeded = true;
-                                    message = "Added history: '" + hist;
+                                    message = "Added history: '" + hist + "'";
                                 } else {
-                                    message = "Could not add history: '" + hist;
+                                    message = "Could not add history: '" + hist + "'";
                                     succeeded = true;
                                 }
                             } catch (IOException ioe) {
                                 succeeded = false;
-                                message = "Could not add history: '" + hist;
+                                message = "Could not add history: '" + hist + "'";
+                            }
+                            if (succeeded)
+                                Log.i(TAG, message);
+                            else
+                                Log.e(TAG, message);
+                            if (callbacksID != 0) {
+                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                                    callback.completed(succeeded, message);
+                                }
+                            }
+                        }
+                    };
+                    mLibHandler.post(job);
+                } else {
+                    Log.e(TAG, "Add history request missing target.");
+                }
+                break;
+            case UPDATE_HISTORY:
+                Log.d(TAG, "Received request to update history: " + hist + "'");
+                if (hist != null) {
+                    Runnable job = new SafeRunnable() {
+
+                        @Override
+                        public void protectedRun() {
+                            boolean succeeded;
+                            String message;
+                            try {
+                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
+                                if (ybkDAO.updateHistory(hist)) {
+                                    succeeded = true;
+                                    message = "Updated history: '" + hist + "'";
+                                } else {
+                                    message = "Could not update history: '" + hist + "'";
+                                    succeeded = true;
+                                }
+                            } catch (IOException ioe) {
+                                succeeded = false;
+                                message = "Could not update history: '" + hist + "'";
                             }
                             if (succeeded)
                                 Log.i(TAG, message);
@@ -264,10 +303,10 @@ public class YbkService extends Service {
                                 YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
                                 ybkDAO.deleteHistory(hist);
                                 succeeded = true;
-                                message = "Removed history: '" + hist;
+                                message = "Removed history: '" + hist + "'";
                             } catch (IOException ioe) {
                                 succeeded = false;
-                                message = "Could not remove history: '" + hist;
+                                message = "Could not remove history: '" + hist + "'";
                             }
                             if (succeeded)
                                 Log.i(TAG, message);
@@ -368,6 +407,17 @@ public class YbkService extends Service {
      */
     public static void requestAddHistory(Context context, History hist, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_HISTORY).putExtra(HISTORY_KEY,
+                hist);
+        if (callbacks != null && callbacks.length != 0) {
+            Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
+            callbackMap.put(callbackID, callbacks);
+            intent.putExtra(CALLBACKS_KEY, callbackID);
+        }
+        context.startService(intent);
+    }
+
+    public static void requestUpdateHistory(Context context, History hist, Completion... callbacks) {
+        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, UPDATE_HISTORY).putExtra(HISTORY_KEY,
                 hist);
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());

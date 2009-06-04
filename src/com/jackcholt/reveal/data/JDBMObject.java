@@ -17,7 +17,7 @@ import jdbm.RecordManager;
 public abstract class JDBMObject implements Serializable {
     private static final long serialVersionUID = 6352923845369621224L;
     // id to retrieve object from JDBM
-    protected transient long recID = 0;
+    protected long recID = 0;
 
     /**
      * Load a jdbm object from the DB
