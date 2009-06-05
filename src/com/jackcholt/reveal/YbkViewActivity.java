@@ -662,6 +662,10 @@ public class YbkViewActivity extends Activity {
 
                         // update the bookmark
                         ybkDao.updateHistory(histId, mBookId, mChapFileName, mYbkView.getScrollY());
+                    } else if (deleteBookmark) {
+                        int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
+                        hist = ybkDao.getBookmark(bmId);
+                        DeleteBookmarkDialog.create(this, hist);
                     } else {
                         // go to bookmark
                         setProgressBarIndeterminateVisibility(true);

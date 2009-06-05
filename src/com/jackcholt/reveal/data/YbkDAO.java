@@ -446,16 +446,47 @@ public class YbkDAO {
      * Delete a history (should only be called by YbkService).
      * 
      * @param hist
-     *            the history to insert
-     * @return True if the insert succeeded, False otherwise.
+     *            the history to delete
      * @throws IOException
      */
     public void deleteHistory(History hist) throws IOException {
         synchronized (writeGate) {
             try {
                 History removedHist = root.historyIdIndex.remove(hist.id);
-                if (removedHist != null)
+                if (removedHist != null) {
                     removedHist.delete(mDb);
+                }
+            } catch (RuntimeException rte) {
+                throw new RTIOException(rte);
+            } finally {
+                endTransaction(true);
+            }
+        }
+    }
+
+    /**
+     * Delete a bookmark (should only be called by YbkService).
+     * 
+     * @param bm
+     *            The bookmark to delete.
+     * @throws IOException
+     */
+    public void deleteBookmark(History bm) throws IOException {
+        synchronized (writeGate) {
+            try {
+                History removedBm = root.historyBookmarkNumberIndex.remove((long) bm.bookmarkNumber);
+                if (removedBm != null) {
+                    removedBm.delete(mDb);
+                    List<History> newBookmarkList = new ArrayList<History>();
+                    for (History bookmark : bookmarkList) {
+                        if (bookmark.id != removedBm.id) {
+                            newBookmarkList.add(bookmark);
+                        }
+                    }
+                    bookmarkList = newBookmarkList;
+
+                    Log.d(TAG, "Deleted a bookmark");
+                }
             } catch (RuntimeException rte) {
                 throw new RTIOException(rte);
             } finally {
@@ -627,7 +658,7 @@ public class YbkDAO {
      */
     public History getBookmark(final int bmId) {
         synchronized (bookmarkList) {
-            for (History hist : historyList) {
+            for (History hist : bookmarkList) {
                 if (hist.bookmarkNumber == bmId) {
                     return hist;
                 }
@@ -714,14 +745,12 @@ public class YbkDAO {
         try {
             List<History> histList = new ArrayList<History>();
             int histCount = 0;
-            TupleBrowser<Long, Long> browser = root.historyIdIndex.browse(null); // null
-            // means
-            // start at the
-            // end
+            // null means start at the end
+            TupleBrowser<Long, Long> browser = root.historyIdIndex.browse(null);
             Tuple<Long, Long> tuple = new Tuple<Long, Long>();
             while (browser.getPrevious(tuple)) {
                 History hist = History.load(mDb, tuple.getValue());
-                if (hist.bookmarkNumber == 0) {
+                if (hist != null && hist.bookmarkNumber == 0) {
                     histList.add(hist);
                     histCount++;
                 }
@@ -746,7 +775,12 @@ public class YbkDAO {
             TupleBrowser<Long, Long> browser = root.historyBookmarkNumberIndex.browse();
             Tuple<Long, Long> tuple = new Tuple<Long, Long>();
             while (browser.getNext(tuple)) {
-                bookmarks.add(History.load(mDb, tuple.getValue()));
+                History bookmark = History.load(mDb, tuple.getValue());
+                if (bookmark != null) {
+                    bookmarks.add(bookmark);
+                } else {
+                    Log.w(TAG, "There is a null bookmark object in the historyBookmarkNumberIndex.");
+                }
             }
             return bookmarks;
         } catch (RuntimeException rte) {

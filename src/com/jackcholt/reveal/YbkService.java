@@ -292,7 +292,7 @@ public class YbkService extends Service {
                 }
                 break;
             case REMOVE_HISTORY:
-                Log.d(TAG, "Received request to remove history: " + hist);
+                Log.d(TAG, "Received request to remove history: " + hist + "'");
                 if (hist != null) {
                     Runnable job = new SafeRunnable() {
                         @Override
@@ -300,8 +300,12 @@ public class YbkService extends Service {
                             boolean succeeded;
                             String message;
                             try {
-                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                                ybkDAO.deleteHistory(hist);
+                                YbkDAO ybkDao = YbkDAO.getInstance(YbkService.this);
+                                if (hist.bookmarkNumber > 0) {
+                                    ybkDao.deleteBookmark(hist);
+                                } else {
+                                    ybkDao.deleteHistory(hist);
+                                }
                                 succeeded = true;
                                 message = "Removed history: '" + hist + "'";
                             } catch (IOException ioe) {

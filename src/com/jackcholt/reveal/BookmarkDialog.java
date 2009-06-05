@@ -29,6 +29,9 @@ public class BookmarkDialog extends ListActivity {
     private static final int UPDATE_BOOKMARK_ID = 2;
     private static final int DELETE_BOOKMARK_ID = 3;
 
+    List<History> mData;
+    ArrayAdapter<History> mHistAdapter;
+    
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
@@ -94,6 +97,43 @@ public class BookmarkDialog extends ListActivity {
         }
 
     }
+    
+    public void onResume() {
+        try {
+            super.onResume();
+            try {
+                YbkDAO ybkDao = YbkDAO.getInstance(this);
+
+                mData = ybkDao.getBookmarkList();
+
+                // Now create a simple array adapter and set it to display
+                //mHistAdapter = new ArrayAdapter<History>(this, R.layout.history_list_row, mData);
+
+                /*setListAdapter(mHistAdapter);
+
+                addBtn.setOnClickListener(new OnClickListener() {
+
+                    public void onClick(final View view) {
+
+                        Log.d(TAG, "Adding a bookmark");
+
+                        Intent intent = new Intent(getBaseContext(), YbkViewActivity.class);
+                        intent.putExtra(ADD_BOOKMARK, true);
+                        setResult(RESULT_OK, intent);
+
+                        finish();
+                    }
+
+                });*/
+            } catch (IOException ioe) {
+                Util.displayError(this, ioe, getResources().getString(R.string.error_bookmark_load));
+            }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
 
     @Override
     protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
@@ -157,19 +197,21 @@ public class BookmarkDialog extends ListActivity {
                 setResult(RESULT_OK, intent);
 
                 finish();
+                break;
                 
             case UPDATE_BOOKMARK_ID:
                 intent.putExtra(UPDATE_BOOKMARK, true);
                 setResult(RESULT_OK, intent);
                 
                 finish();
-
+                break;
             case DELETE_BOOKMARK_ID:
+                intent.putExtra(YbkDAO.BOOKMARK_NUMBER, hist.bookmarkNumber);
                 intent.putExtra(DELETE_BOOKMARK, true);
                 setResult(RESULT_OK, intent);
                 
                 finish();
-
+                break;
             default:
                 return super.onContextItemSelected(item);
             }
