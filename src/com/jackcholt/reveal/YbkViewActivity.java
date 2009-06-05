@@ -652,10 +652,22 @@ public class YbkViewActivity extends Activity {
                     extras = data.getExtras();
 
                     boolean addBookMark = extras.getBoolean(BookmarkDialog.ADD_BOOKMARK);
+                    boolean updateBookmark = extras.getBoolean(BookmarkDialog.UPDATE_BOOKMARK);
+                    boolean deleteBookmark = extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK);
 
                     if (addBookMark) {
                         showDialog(ASK_BOOKMARK_NAME);
+                    } else if (updateBookmark) {
+                        histId = extras.getLong(YbkDAO.ID);
+
+                        // update the bookmark
+                        ybkDao.updateHistory(histId, mBookId, mChapFileName, mYbkView.getScrollY());
+                    } else if (deleteBookmark) {
+                        int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
+                        hist = ybkDao.getBookmark(bmId);
+                        DeleteBookmarkDialog.create(this, hist);
                     } else {
+                        // go to bookmark
                         setProgressBarIndeterminateVisibility(true);
                         histId = extras.getLong(YbkDAO.ID);
 
