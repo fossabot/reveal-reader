@@ -137,7 +137,7 @@ public class BookmarkDialog extends ListActivity {
             Bundle extras = getIntent().getExtras();
             
             menu.add(0, GOTO_BOOKMARK_ID, 0, R.string.goto_bookmark);
-            if (extras != null && extras.getBoolean("fromMain") == false) {
+            if (extras == null || extras != null && extras.getBoolean("fromMain") == false) {
                 menu.add(0, UPDATE_BOOKMARK_ID, 0, R.string.update_bookmark);
             }
             menu.add(0, DELETE_BOOKMARK_ID, 0, R.string.delete_bookmark);
