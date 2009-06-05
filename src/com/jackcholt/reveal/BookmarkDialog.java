@@ -171,8 +171,12 @@ public class BookmarkDialog extends ListActivity {
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         try {
             super.onCreateContextMenu(menu, v, menuInfo);
+            Bundle extras = getIntent().getExtras();
+            
             menu.add(0, GOTO_BOOKMARK_ID, 0, R.string.goto_bookmark);
-            menu.add(0, UPDATE_BOOKMARK_ID, 0, R.string.update_bookmark);
+            if (extras != null && extras.getBoolean("fromMain") == false) {
+                menu.add(0, UPDATE_BOOKMARK_ID, 0, R.string.update_bookmark);
+            }
             menu.add(0, DELETE_BOOKMARK_ID, 0, R.string.delete_bookmark);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -205,6 +209,7 @@ public class BookmarkDialog extends ListActivity {
                 
                 finish();
                 break;
+                
             case DELETE_BOOKMARK_ID:
                 intent.putExtra(YbkDAO.BOOKMARK_NUMBER, hist.bookmarkNumber);
                 intent.putExtra(DELETE_BOOKMARK, true);
@@ -212,6 +217,7 @@ public class BookmarkDialog extends ListActivity {
                 
                 finish();
                 break;
+                
             default:
                 return super.onContextItemSelected(item);
             }

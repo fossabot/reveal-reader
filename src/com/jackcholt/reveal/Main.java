@@ -34,6 +34,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
+import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class Main extends ListActivity {
@@ -556,7 +557,6 @@ public class Main extends ListActivity {
         long histId;
         Intent intent;
         boolean fromHistory = false;
-        boolean updateBookmark = false;
         
         try {
             if (resultCode == RESULT_OK) {
@@ -564,19 +564,25 @@ public class Main extends ListActivity {
                 case YbkViewActivity.CALL_HISTORY:
                 case YbkViewActivity.CALL_BOOKMARK:
                     setProgressBarIndeterminateVisibility(true);
-
+                    
+                    YbkDAO ybkDao = YbkDAO.getInstance(this);
+                    
                     extras = data.getExtras();
+
+                    boolean deleteBookmark = extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK);
+                    
                     histId = extras.getLong(YbkDAO.ID);
                     fromHistory = extras.getBoolean(YbkDAO.FROM_HISTORY);
-                    updateBookmark = extras.getBoolean(BookmarkDialog.UPDATE_BOOKMARK);
                     
                     if (fromHistory) {
                         intent = new Intent(this, YbkViewActivity.class);
                         intent.putExtra(YbkDAO.ID, histId);
                         intent.putExtra(YbkDAO.FROM_HISTORY, true);
                         startActivity(intent);
-                    } else if (updateBookmark) {
-                        
+                    } else if (deleteBookmark) {
+                        int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
+                        History hist = ybkDao.getBookmark(bmId);
+                        DeleteBookmarkDialog.create(this, hist);
                     }
                     
                     break;
@@ -600,6 +606,8 @@ public class Main extends ListActivity {
                     }
                 }
             }
+        } catch (IOException ioe) {
+            Util.unexpectedError(this, ioe);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
