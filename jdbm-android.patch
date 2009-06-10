@@ -79,6 +79,19 @@ Index: src/main/java/jdbm/recman/FreeLogicalRowIdPage.java
      /** Converts slot to offset */
      private short slotToOffset(int slot) {
          return (short) (O_FREE +
+Index: src/main/java/jdbm/recman/RecordFile.java
+===================================================================
+--- src/main/java/jdbm/recman/RecordFile.java	(revision 35)
++++ src/main/java/jdbm/recman/RecordFile.java	(working copy)
+@@ -751,7 +751,7 @@
+      *  Synchronizes the file.
+      */
+     void sync() throws IOException {
+-        file.getFD().sync();
++//        file.getFD().sync();
+     }
+ 
+ 
 Index: src/main/java/jdbm/recman/FreePhysicalRowIdPage.java
 ===================================================================
 --- src/main/java/jdbm/recman/FreePhysicalRowIdPage.java	(revision 35)
