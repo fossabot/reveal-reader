@@ -57,6 +57,16 @@ public class RefreshDialog extends Dialog {
 
     public static RefreshDialog create(Context _this, int mode) {
         RefreshDialog dlg = new RefreshDialog(_this, mode);
+        // Change DEBUG to "0" in Global.java when building a RELEASE Version
+        // for the GOOGLE APP MARKET
+        // This allows for real usage stats and end user error reporting
+        if (Global.DEBUG == 0) {
+            // Release Key for use of the END USERS
+            FlurryAgent.onStartSession(_this, "BLRRZRSNYZ446QUWKSP4");
+        } else {
+            // Development key for use of the DEVELOPMENT TEAM
+            FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
+        }
         dlg.show();
         return dlg;
     }

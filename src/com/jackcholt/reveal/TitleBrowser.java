@@ -322,7 +322,6 @@ public class TitleBrowser extends ListActivity {
                     // Development key for use of the DEVELOPMENT TEAM
                     FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
                 }
-                FlurryAgent.onError("TitleBrowser", "Download New Catalog", "INFO");
                 // establish data connection
                 Uri categoryUri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "categoryparent");
                 Uri rootCategories = ContentUris.withAppendedId(categoryUri, 0);
