@@ -50,10 +50,7 @@ public class Main extends ListActivity {
     private static final int REVELUPDATE_ID = Menu.FIRST + 8;
     private static final int DELETE_ID = Menu.FIRST + 9;
     private static final int OPEN_ID = Menu.FIRST + 10;
-
-    // int values for reusable dialogs
-    private static final int REFRESH_DB = 0;
-    private static final int UPGRADE_DB = 1;
+    private static final int REPAIR_LIB_ID = Menu.FIRST + 11;
 
     private static int mRefreshNotifId = 0;
     public static int mNotifId = 1;
@@ -116,7 +113,7 @@ public class Main extends ListActivity {
             setContentView(R.layout.main);
 
             // To capture LONG_PRESS gestures
-            //gestureScanner = new GestureDetector(this);
+            // gestureScanner = new GestureDetector(this);
             registerForContextMenu(getListView());
 
             boolean configChanged = (getLastNonConfigurationInstance() != null);
@@ -141,7 +138,7 @@ public class Main extends ListActivity {
             if (file.exists()) {
                 file.delete();
                 // prompt to warn of new DB create
-                RefreshDialog.create(this, UPGRADE_DB);
+                RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
                 updateBookList();
             }
 
@@ -213,7 +210,8 @@ public class Main extends ListActivity {
     }
 
     /**
-     * Convenience method to make calling refreshLibrary() without any parameters retaining its original behavior.
+     * Convenience method to make calling refreshLibrary() without any
+     * parameters retaining its original behavior.
      */
     private void refreshLibrary(final String strLibDir) {
         refreshLibrary(strLibDir, ADD_BOOKS);
@@ -225,8 +223,9 @@ public class Main extends ListActivity {
      * @param strLibDir
      *            the path to the library directory.
      * @param addNewBooks
-     *            If true, run the code that will add new books to the database as well as the code that removes missing
-     *            books from the database (which runs regardless).
+     *            If true, run the code that will add new books to the database
+     *            as well as the code that removes missing books from the
+     *            database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -234,7 +233,7 @@ public class Main extends ListActivity {
         File libraryDir = new File(strLibDir);
         if (!libraryDir.exists()) {
             if (!libraryDir.mkdirs()) {
-                Util.displayError(this, (Throwable)null, getResources().getString(R.string.library_not_created));
+                Util.displayError(this, (Throwable) null, getResources().getString(R.string.library_not_created));
                 return;
             }
         }
@@ -256,7 +255,8 @@ public class Main extends ListActivity {
                 dbSet.add(book.fileName);
             }
 
-            // if adding files, then calculate set of files on disk, but not in the
+            // if adding files, then calculate set of files on disk, but not in
+            // the
             // db
             Set<String> addFiles;
             if (addNewBooks) {
@@ -438,6 +438,8 @@ public class Main extends ListActivity {
                     android.R.drawable.ic_menu_preferences);
             menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(
                     android.R.drawable.ic_menu_share);
+            menu.add(Menu.NONE, REPAIR_LIB_ID, Menu.NONE, R.string.menu_repair_lib).setIcon(
+                    android.R.drawable.ic_menu_share);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -452,8 +454,13 @@ public class Main extends ListActivity {
         try {
             switch (item.getItemId()) {
             case REFRESH_LIB_ID:
-                RefreshDialog.create(this, REFRESH_DB);
+                RefreshDialog.create(this, RefreshDialog.REFRESH_DB);
                 updateBookList();
+                return true;
+
+            case REPAIR_LIB_ID:
+                RefreshDialog.create(this, RefreshDialog.REPAIR_DB);
+                repairDB();
                 return true;
 
             case SETTINGS_ID:
@@ -557,23 +564,23 @@ public class Main extends ListActivity {
         long histId;
         Intent intent;
         boolean fromHistory = false;
-        
+
         try {
             if (resultCode == RESULT_OK) {
                 switch (requestCode) {
                 case YbkViewActivity.CALL_HISTORY:
                 case YbkViewActivity.CALL_BOOKMARK:
                     setProgressBarIndeterminateVisibility(true);
-                    
+
                     YbkDAO ybkDao = YbkDAO.getInstance(this);
-                    
+
                     extras = data.getExtras();
 
                     boolean deleteBookmark = extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK);
-                    
+
                     histId = extras.getLong(YbkDAO.ID);
                     fromHistory = extras.getBoolean(YbkDAO.FROM_HISTORY);
-                    
+
                     if (fromHistory) {
                         intent = new Intent(this, YbkViewActivity.class);
                         intent.putExtra(YbkDAO.ID, histId);
@@ -584,7 +591,7 @@ public class Main extends ListActivity {
                         History hist = ybkDao.getBookmark(bmId);
                         DeleteBookmarkDialog.create(this, hist);
                     }
-                    
+
                     break;
 
                 case ACTIVITY_SETTINGS:
@@ -639,5 +646,16 @@ public class Main extends ListActivity {
         }
 
         super.onDestroy();
+    }
+
+    private void repairDB() {
+        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
+        try {
+            YbkDAO.getInstance(this).recreate(this);
+        } catch (IOException ioe) {
+            Util.displayError(this, ioe, getResources().getString(R.string.error_lib_refresh));
+        }
+        refreshLibrary(libDir, ADD_BOOKS);
+        refreshBookList();
     }
 }

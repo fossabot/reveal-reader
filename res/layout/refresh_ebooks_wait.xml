@@ -21,7 +21,7 @@
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
                                 android:text="@string/wait_for_refresh"
-                        android:layout_margin="5sp"/>
+                        android:layout_margin="5sp" android:id="@+id/waitMessage"/>
                         
                 </LinearLayout>
         </ScrollView>

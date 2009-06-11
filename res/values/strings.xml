@@ -87,9 +87,10 @@
 <string name="add_bookmark">Add Bookmark here</string>
 <string name="no_bookmark">No Bookmarks</string>
 <string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
-<string name="wait_for_db_update">Please wait while we UPGRADE the database for the eBooks listing in the background...  this process will take a few minutes to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
+<string name="wait_for_db_repair">Please wait while we repair and rebuild the eBook library database in the background...  this process will take a few minutes to complete so please be patient.  eBooks will reappear in the main list as they are processed.</string>
+<string name="wait_for_db_update">Please wait while we UPGRADE the eBook library database listing in the background...  this process will take a few minutes to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
 <string name="refresh_title">Refreshing eBooks.</string>
-<string name="upgrade_database">Upgrading Database.</string>
+<string name="upgrade_database">Upgrading Database.</string><string name="repair_database">Repairing  Database.</string>
 <string name="error_reporting">An unexpected error has occurred. Would you like to help improve Reveal by anonymously sending the following information to the Reveal developers?</string>
 <string name="error_title">Error</string>
 <string name="unexpected_error_title">Report Reveal Error</string>
@@ -114,4 +115,5 @@
 <string name="update_bookmark">Update Bookmark</string>
 <string name="delete_bookmark">Delete Bookmark</string>
 <string name="goto_bookmark">Go to Bookmark</string>
+<string name="menu_repair_lib">Repair Library</string>
 </resources>

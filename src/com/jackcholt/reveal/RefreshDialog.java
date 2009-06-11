@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.flurry.android.FlurryAgent;
 
@@ -14,37 +15,43 @@ import com.flurry.android.FlurryAgent;
  */
 
 public class RefreshDialog extends Dialog {
+    // int values for reusable dialogs
+    public static final int REFRESH_DB = 0;
+    public static final int UPGRADE_DB = 1;
+    public static final int REPAIR_DB = 2;
+
     public RefreshDialog(Context _this, int mode) {
         super(_this);
-        
+        setContentView(R.layout.refresh_ebooks_wait);
+        TextView messageView = (TextView) findViewById(R.id.waitMessage);
+        Button closeButton = (Button) findViewById(R.id.close_about_btn);
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
+
         switch (mode) {
-        case 0:
+        case REFRESH_DB:
             // Normal refresh Dialog
-            setContentView(R.layout.refresh_ebooks_wait);
-    
-            Button close1 = (Button) findViewById(R.id.close_about_btn);
-            close1.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    dismiss();
-                }
-            });
-            FlurryAgent.onEvent("RefreshTitles");
+            messageView.setText(R.string.wait_for_refresh);
             setTitle(R.string.refresh_title);
-            return;
+            FlurryAgent.onEvent("RefreshTitles");
+            break;
             
-        case 1:
+        case UPGRADE_DB:
             // Upgrade Dialog
-            setContentView(R.layout.update_db_wait);
-            
-            Button close2 = (Button) findViewById(R.id.close_about_btn);
-            close2.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    dismiss();
-                }
-            });
-            FlurryAgent.onEvent("UpgradeDatabase");
+            messageView.setText(R.string.wait_for_refresh);
             setTitle(R.string.upgrade_database);
-            return;
+            FlurryAgent.onEvent("UpgradeDatabase");
+            break;
+
+        case REPAIR_DB:
+            // Repair Dialog
+            messageView.setText(R.string.wait_for_db_repair);
+            setTitle(R.string.repair_database);
+            FlurryAgent.onEvent("RepairDatabase");
+            break;
         }
     }
 
