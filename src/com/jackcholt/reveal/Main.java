@@ -132,6 +132,8 @@ public class Main extends ListActivity {
             if (Util.isNetworkUp(this)) {
                 // Actually go ONLINE and check... duhhhh
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+                // Check for a message from US :)
+                // MOTDDialog.create(this);
             }
 
             File file = new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db");
