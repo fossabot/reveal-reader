@@ -198,7 +198,8 @@ public class YbkFileReader {
                     iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
                     pos += 4;
                 if (iFile.offset < mIndexLength || iFile.len < 0 || iFile.offset + iFile.len > fileLength) {
-                    throw new InvalidFileFormatException("Internal file " + iFile.fileName + " is missing or incomplete.");
+                    Log.e(TAG, this.mFilename + ": Internal file " + iFile.fileName + " is missing or incomplete.");
+                    continue;
                 }
     
                 // Add the internal file into the list
