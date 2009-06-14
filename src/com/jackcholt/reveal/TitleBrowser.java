@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
 import android.content.AsyncQueryHandler;
@@ -24,15 +23,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
-
 
 /**
  * List activity to show categories and titles under those categories
@@ -53,8 +49,6 @@ public class TitleBrowser extends ListActivity {
     private Cursor mListCursor;
     private QueryHandler mQueryHandler;
     private boolean mDownloadSuccess;
-    private URL mDownloadUrl = null;
-    private URL mFileLocation = null;
     private SharedPreferences mSharedPref;
     private boolean mBusy = false;
     private boolean BOOLshowFullScreen;
@@ -80,7 +74,8 @@ public class TitleBrowser extends ListActivity {
         try {
             super.onCreate(savedInstanceState);
 
-            // Change DEBUG to "0" in Global.java when building a RELEASE Version
+            // Change DEBUG to "0" in Global.java when building a RELEASE
+            // Version
             // for the GOOGLE APP MARKET
             // This allows for real usage stats and end user error reporting
             if (Global.DEBUG == 0) {
@@ -114,12 +109,13 @@ public class TitleBrowser extends ListActivity {
 
             mQueryHandler = new QueryHandler(this);
 
-            // If this database doesn't have anything to display, let's load it from
+            // If this database doesn't have anything to display, let's load it
+            // from
             // the embedded file
 
             mListCursor = managedQuery(Uri.withAppendedPath(TitleProvider.CONTENT_URI, "category"),
                     new String[] { TitleProvider.Categories._ID }, null, null, null);
-            
+
             boolean noTitles = mListCursor.getCount() == 0;
 
             if (noTitles) {
@@ -127,8 +123,8 @@ public class TitleBrowser extends ListActivity {
 
                 setProgressBarIndeterminateVisibility(true);
                 mBusy = true;
-                mQueryHandler.startUpdate(UPDATE_TOKEN, null, Uri.withAppendedPath(TitleProvider.CONTENT_URI,
-                        "update"), null, null, null);
+                mQueryHandler.startUpdate(UPDATE_TOKEN, null,
+                        Uri.withAppendedPath(TitleProvider.CONTENT_URI, "update"), null, null, null);
             }
 
             // setup current location in stack
@@ -254,10 +250,12 @@ public class TitleBrowser extends ListActivity {
             } else {
                 if (mBusy) {
                     Toast.makeText(this, R.string.ebook_download_busy, Toast.LENGTH_LONG).show();
-                    // Change DEBUG to "0" in Global.java when building a RELEASE
+                    // Change DEBUG to "0" in Global.java when building a
+                    // RELEASE
                     // Version
                     // for the GOOGLE APP MARKET
-                    // This allows for real usage stats and end user error reporting
+                    // This allows for real usage stats and end user error
+                    // reporting
                     if (Global.DEBUG == 0) {
                         // Release Key for use of the END USERS
                         FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
@@ -267,8 +265,7 @@ public class TitleBrowser extends ListActivity {
                     }
                     FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
                 } else {
-                    TitleDialog dialog = new TitleDialog(this, id);
-                    dialog.show();
+                    downloadTitle(id);
                 }
             }
         } catch (RuntimeException rte) {
@@ -344,124 +341,100 @@ public class TitleBrowser extends ListActivity {
         }
     }
 
-    private class TitleDialog extends Dialog {
+    private void downloadTitle(long titleId) {
+        // Get the title information
+        Uri uri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "title/" + titleId);
+        String[] projection = new String[] { TitleProvider.Titles.BOOKNAME, TitleProvider.Titles.SIZE,
+                TitleProvider.Titles.DESCRIPTION, TitleProvider.Titles.UPDATED, TitleProvider.Titles.URL,
+                TitleProvider.Titles.SOURCE_ID };
 
-        public TitleDialog(final Context context, long titleId) {
-            super(context);
+        Cursor cursor = managedQuery(uri, projection, null, null, null);
 
-            setContentView(R.layout.browser_title);
+        if (cursor.moveToNext()) {
+            StringBuilder information = new StringBuilder();
+            String name = cursor.getString(0);
+            String size = cursor.getString(1);
+            String description = cursor.getString(2);
+            String updated = cursor.getString(3);
 
-            // Get the title information
-            Uri uri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "title/" + titleId);
-            String[] projection = new String[] { TitleProvider.Titles.BOOKNAME, TitleProvider.Titles.SIZE,
-                    TitleProvider.Titles.DESCRIPTION, TitleProvider.Titles.UPDATED, TitleProvider.Titles.URL,
-                    TitleProvider.Titles.SOURCE_ID };
+            URL fileLocation = null;
+            URL downloadUrl = null;
 
-            Cursor cursor = managedQuery(uri, projection, null, null, null);
-
-            if (cursor.moveToNext()) {
-                setTitle(R.string.title_browser_name);
-
-                TextView information = (TextView) findViewById(R.id.title_information);
-                if (information != null) {
-                    String name = cursor.getString(0);
-                    String size = cursor.getString(1);
-                    String description = cursor.getString(2);
-                    String updated = cursor.getString(3);
-
-                    try {
-                        mFileLocation = new URL(cursor.getString(4));
-                        mDownloadUrl = new URL(mDownloadServer + cursor.getString(5));
-                    } catch (MalformedURLException e) {
-                        Toast.makeText(context, R.string.ebook_download_failed_url, Toast.LENGTH_SHORT).show();
-
-                        dismiss();
-                    }
-
-                    if (name != null) {
-                        information.append(name + "\n\n");
-                    }
-                    if (size != null) {
-                        information.append("Size: " + size + " KB\n");
-                    }
-                    if (updated != null) {
-                        information.append("Updated: " + updated + "\n");
-                    }
-                    if (description != null) {
-                        information.append("Description: " + description + "\n");
-                    }
-                    // Create a map and add the name of the downloaded eBook to
-                    // it
-                    Map<String, String> flurryMap = new HashMap<String, String>();
-                    flurryMap.put("eBook Downloaded", name);
-                    // Change DEBUG to "0" in Global.java when building a
-                    // RELEASE Version
-                    // for the GOOGLE APP MARKET
-                    // This allows for real usage stats and end user error
-                    // reporting
-                    if (Global.DEBUG == 0) {
-                        // Release Key for use of the END USERS
-                        FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-                    } else {
-                        // Development key for use of the DEVELOPMENT TEAM
-                        FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-                    }
-                    FlurryAgent.onEvent("TitleBrowser", flurryMap);
-                }
+            try {
+                fileLocation = new URL(cursor.getString(4));
+                downloadUrl = new URL(mDownloadServer + cursor.getString(5));
+            } catch (MalformedURLException e) {
+                Toast.makeText(this, R.string.ebook_download_failed_url, Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            // cursor.close();
+            if (name != null) {
+                information.append(name + "\n\n");
+            }
+            if (size != null) {
+                information.append("Size: " + size + " KB\n");
+            }
+            if (updated != null) {
+                information.append("Updated: " + updated + "\n");
+            }
+            if (description != null) {
+                information.append("Description: " + description + "\n");
+            }
+            // Create a map and add the name of the downloaded eBook to
+            // it
+            Map<String, String> flurryMap = new HashMap<String, String>();
+            flurryMap.put("eBook Downloaded", name);
+            // Change DEBUG to "0" in Global.java when building a
+            // RELEASE Version
+            // for the GOOGLE APP MARKET
+            // This allows for real usage stats and end user error
+            // reporting
+            if (Global.DEBUG == 0) {
+                // Release Key for use of the END USERS
+                FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+            } else {
+                // Development key for use of the DEVELOPMENT TEAM
+                FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+            }
+            FlurryAgent.onEvent("TitleBrowser", flurryMap);
 
-            Button cancel = (Button) findViewById(R.id.title_cancel_button);
-            cancel.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View view) {
-                    dismiss();
-                }
-            });
-
-            Button download = (Button) findViewById(R.id.title_download_button);
-            download.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View view) {
-                    try {
-                        if (mFileLocation != null) {
-                            Completion callback = new Completion() {
-                                // @Override
-                                public void completed(boolean succeeded, String message) {
-                                    Main main = Main.getMainApplication();
-                                    if (main != null) {
-                                        if (succeeded) {
-                                            main.refreshNotify(message);
-                                            main.scheduleRefreshBookList();
-                                        } else {
-                                            Util.sendNotification(TitleBrowser.this, message,
-                                                    android.R.drawable.stat_sys_warning, "Reveal Library", mNotifMgr,
-                                                    mNotifId++, Main.class);
-                                        }
-                                    }
-                                }
-                            };
-                            YbkService.requestDownloadBook(TitleBrowser.this, mDownloadUrl.toExternalForm(),
-                                    mFileLocation.toExternalForm(), callback);
-                            Toast.makeText(context, R.string.ebook_download_started, Toast.LENGTH_SHORT).show();
-
+            final String downloadUrlString = downloadUrl.toExternalForm();
+            final String fileLocationString = fileLocation.toExternalForm();
+            final Completion callback = new Completion() {
+                // @Override
+                public void completed(boolean succeeded, String message) {
+                    Main main = Main.getMainApplication();
+                    if (main != null) {
+                        if (succeeded) {
+                            main.refreshNotify(message);
+                            main.scheduleRefreshBookList();
                         } else {
-                            Toast.makeText(context, R.string.ebook_download_failed_type, Toast.LENGTH_SHORT).show();
+                            Util.sendNotification(TitleBrowser.this, message, android.R.drawable.stat_sys_warning,
+                                    "Reveal Library", mNotifMgr, mNotifId++, Main.class);
                         }
-
-                        dismiss();
-                    } catch (RuntimeException rte) {
-                        Util.unexpectedError(context, rte);
-                    } catch (Error e) {
-                        Util.unexpectedError(context, e);
                     }
                 }
-            });
+            };
+
+            SafeRunnable action = new SafeRunnable() {
+
+                @Override
+                public void protectedRun() {
+                    YbkService.requestDownloadBook(TitleBrowser.this, downloadUrlString, fileLocationString, callback);
+                    Toast.makeText(TitleBrowser.this, R.string.ebook_download_started, Toast.LENGTH_SHORT).show();
+                }
+            };
+
+            // String message = getResources().getString(id, formatArgs)
+            ConfirmActionDialog.confirmedAction(this, R.string.title_browser_name, information.toString(),
+                    R.string.download, action);
+
+        } else {
+            Toast.makeText(this, R.string.ebook_download_failed_type, Toast.LENGTH_SHORT).show();
         }
     }
 
     private void downloadComplete() {
-        mDownloadUrl = null;
-
         if (mDownloadSuccess) {
             Util.sendNotification(this, (String) getResources().getText(R.string.ebook_download_complete),
                     R.drawable.ebooksmall, "Reveal Online eBook Download", mNotifMgr, mNotifId++, Main.class);

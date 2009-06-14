@@ -18,7 +18,6 @@ public class RefreshDialog extends Dialog {
     // int values for reusable dialogs
     public static final int REFRESH_DB = 0;
     public static final int UPGRADE_DB = 1;
-    public static final int REPAIR_DB = 2;
 
     public RefreshDialog(Context _this, int mode) {
         super(_this);
@@ -38,19 +37,12 @@ public class RefreshDialog extends Dialog {
             setTitle(R.string.refresh_title);
             FlurryAgent.onEvent("RefreshTitles");
             break;
-            
+
         case UPGRADE_DB:
             // Upgrade Dialog
             messageView.setText(R.string.wait_for_refresh);
             setTitle(R.string.upgrade_database);
             FlurryAgent.onEvent("UpgradeDatabase");
-            break;
-
-        case REPAIR_DB:
-            // Repair Dialog
-            messageView.setText(R.string.wait_for_db_repair);
-            setTitle(R.string.repair_database);
-            FlurryAgent.onEvent("RepairDatabase");
             break;
         }
     }

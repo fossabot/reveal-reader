@@ -3,6 +3,7 @@ package com.jackcholt.reveal;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -50,7 +51,7 @@ public class Main extends ListActivity {
     private static final int REVELUPDATE_ID = Menu.FIRST + 8;
     private static final int DELETE_ID = Menu.FIRST + 9;
     private static final int OPEN_ID = Menu.FIRST + 10;
-    private static final int REPAIR_LIB_ID = Menu.FIRST + 11;
+    private static final int RESET_ID = Menu.FIRST + 11;
 
     private static int mRefreshNotifId = 0;
     public static int mNotifId = 1;
@@ -136,25 +137,30 @@ public class Main extends ListActivity {
                 // MOTDDialog.create(this);
             }
 
-            File file = new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db");
-            if (file.exists()) {
-                file.delete();
-                // prompt to warn of new DB create
-                RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
-                updateBookList();
-            }
-
             if (!configChanged) {
                 // Check for SDcard presence
                 // if we have one create the dirs and look fer ebooks
                 if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
                     // Log.e(Global.TAG, "sdcard not installed");
-                    Toast.makeText(this, "You must have an SDCARD installed to use Reveal", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getResources().getString(R.string.sdcard_required), Toast.LENGTH_LONG).show();
                     return;
                 } else {
                     Util.createDefaultDirs(this);
                     // updateBookList();
                 }
+            }
+
+            File oldDBfile = new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db");
+            if (oldDBfile.exists()) {
+                oldDBfile.delete();
+                // prompt to warn of new DB create
+                RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
+                updateBookList();
+            } else if (!(new File(
+                    mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
+                    "reveal_ybk.db").exists())) {
+                Toast.makeText(this, getResources().getString(R.string.refresh_title), Toast.LENGTH_LONG).show();
+                updateBookList();
             }
 
             refreshBookList();
@@ -370,9 +376,24 @@ public class Main extends ListActivity {
 
     @SuppressWarnings("unchecked")
     private boolean onDeleteBookMenuItem(MenuItem item) {
-        Book book = getContextMenuBook(item);
+        final Book book = getContextMenuBook(item);
         if (book != null) {
-            DeleteEbookDialog.create(this, book, (ArrayAdapter<Book>) getListView().getAdapter());
+            SafeRunnable action = new SafeRunnable() {
+                @Override
+                public void protectedRun() {
+                    File file = new File(book.fileName);
+                    if (file.exists()) {
+                        if (!file.delete()) {
+                            // TODO - should tell user about this
+                        }
+                    }
+                    YbkService.requestRemoveBook(Main.this, book.fileName);
+                    ((ArrayAdapter<Book>) getListView().getAdapter()).remove(book);
+                }
+            };
+            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.title,
+                    new File(book.fileName).getName());
+            ConfirmActionDialog.confirmedAction(this, R.string.really_delete_title, message, R.string.delete, action);
         }
         return true;
     }
@@ -440,8 +461,7 @@ public class Main extends ListActivity {
                     android.R.drawable.ic_menu_preferences);
             menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(
                     android.R.drawable.ic_menu_share);
-            menu.add(Menu.NONE, REPAIR_LIB_ID, Menu.NONE, R.string.menu_repair_lib).setIcon(
-                    android.R.drawable.ic_menu_share);
+            menu.add(Menu.NONE, RESET_ID, Menu.NONE, R.string.reset).setIcon(android.R.drawable.ic_menu_share);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -460,9 +480,8 @@ public class Main extends ListActivity {
                 updateBookList();
                 return true;
 
-            case REPAIR_LIB_ID:
-                RefreshDialog.create(this, RefreshDialog.REPAIR_DB);
-                repairDB();
+            case RESET_ID:
+                resetApp();
                 return true;
 
             case SETTINGS_ID:
@@ -650,14 +669,34 @@ public class Main extends ListActivity {
         super.onDestroy();
     }
 
-    private void repairDB() {
-        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
-        try {
-            YbkDAO.getInstance(this).recreate(this);
-        } catch (IOException ioe) {
-            Util.displayError(this, ioe, getResources().getString(R.string.error_lib_refresh));
-        }
-        refreshLibrary(libDir, ADD_BOOKS);
-        refreshBookList();
+    private void resetApp() {
+        SafeRunnable action = new SafeRunnable() {
+            @Override
+            public void protectedRun() {
+                // cleanup current library directory
+                File libDir = new File(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                        Settings.DEFAULT_EBOOK_DIRECTORY));
+                Util.deleteFiles(libDir, ".*\\.(tmp|lg|db)");
+                if (!libDir.getAbsoluteFile().toString().equalsIgnoreCase(Settings.DEFAULT_EBOOK_DIRECTORY)) {
+                    // cleanup default library directory if it wasn't the one we
+                    // were using
+                    Util.deleteFiles(new File(libDir, "images"), ".*");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY), ".*\\.(tmp|lg|db)");
+                }
+                // cleanup any sqlite databases
+                Util.deleteFiles(new File("/data/data/com.jackcholt.reveal/databases"), ".*\\.db");
+                // cleanup preferences (can't seem to delete file, so tell the
+                // preferences manager to clear them all)
+                mSharedPref.edit().clear().commit();
+
+                // shutdown, but first queue a request to restart
+                Intent restartIntent = new Intent(Main.this, Main.class);
+                restartIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                startActivity(restartIntent);
+                System.exit(0);
+
+            }
+        };
+        ConfirmActionDialog.confirmedAction(this, R.string.reset, R.string.confirm_reset, R.string.reset, action);
     }
 }

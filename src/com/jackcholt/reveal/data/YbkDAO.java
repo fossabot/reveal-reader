@@ -27,7 +27,8 @@ import com.jackcholt.reveal.Util;
 import com.jackcholt.reveal.YbkService;
 
 /**
- * A class for managing all the database accesses for the OODB and other data related logic.
+ * A class for managing all the database accesses for the OODB and other data
+ * related logic.
  * 
  * @author Jack C. Holt
  * @author Shon Vella
@@ -55,14 +56,15 @@ public class YbkDAO {
     public static final String CACHE_SIZE = "1000";
 
     /**
-     * Is the chapter a navigation chapter? Data type: INTEGER. Use {@link CHAPTER_TYPE_NO_NAV} and
-     * {@link CHAPTER_TYPE_NAV} to set values.
+     * Is the chapter a navigation chapter? Data type: INTEGER. Use
+     * {@link CHAPTER_TYPE_NO_NAV} and {@link CHAPTER_TYPE_NAV} to set values.
      */
     public static final String CHAPTER_NAV_FILE = "nav_file";
 
     /**
-     * Should the user be able to zoom the page? Data type: INTEGER. Used when the chapter contains a picture. Use
-     * {@link CHAPTER_ZOOM_MENU_OFF} and {@link CHAPTER_ZOOM_MENU_ON} to set values.
+     * Should the user be able to zoom the page? Data type: INTEGER. Used when
+     * the chapter contains a picture. Use {@link CHAPTER_ZOOM_MENU_OFF} and
+     * {@link CHAPTER_ZOOM_MENU_ON} to set values.
      */
     public static final String CHAPTER_ZOOM_PICTURE = "zoom_picture";
 
@@ -178,7 +180,7 @@ public class YbkDAO {
      * @param main
      * @throws IOException
      */
-    public void recreate(Context ctx) throws IOException {
+    private void recreate(Context ctx) throws IOException {
         // TODO - should we at least try to preserve the bookmarks?
         try {
             synchronized (writeGate) {
@@ -349,7 +351,8 @@ public class YbkDAO {
     }
 
     /**
-     * Convenience method to save a history item but not a bookmark (no bookmarkNumber).
+     * Convenience method to save a history item but not a bookmark (no
+     * bookmarkNumber).
      * 
      * @param bookId
      *            The id of the book that this is related to.
@@ -453,7 +456,8 @@ public class YbkDAO {
     }
 
     /**
-     * Update a history; usually a bookmark (This should only be called by YbkService).
+     * Update a history; usually a bookmark (This should only be called by
+     * YbkService).
      * 
      * @param hist
      *            the history to update.
@@ -596,7 +600,8 @@ public class YbkDAO {
     }
 
     /**
-     * Remove a book's chapters from the database. This should only be called deleteBook()
+     * Remove a book's chapters from the database. This should only be called
+     * deleteBook()
      * 
      * @param bookId
      *            The id of the book whose chapters are to be deleted.
@@ -618,7 +623,8 @@ public class YbkDAO {
      * 
      * @param book
      *            The book to change the active state of.
-     * @return True if the Book is already in the database indexes and the update occurred successfully.
+     * @return True if the Book is already in the database indexes and the
+     *         update occurred successfully.
      * @throws IOException
      */
     public boolean toggleBookActivity(final Book book) throws IOException {
@@ -701,8 +707,8 @@ public class YbkDAO {
     }
 
     /**
-     * Get a list if Histories sorted from newest to oldest for use with ArrayAdapter for showing histories in a
-     * ListActivity.
+     * Get a list if Histories sorted from newest to oldest for use with
+     * ArrayAdapter for showing histories in a ListActivity.
      * 
      * @return the List of History objects.
      * @throws IOException
@@ -713,7 +719,8 @@ public class YbkDAO {
     }
 
     /**
-     * Delete all the histories/bookmarks associated with a book that is being deleted
+     * Delete all the histories/bookmarks associated with a book that is being
+     * deleted
      * 
      * @param bookId
      * @throws IOException
@@ -906,7 +913,8 @@ public class YbkDAO {
      * @param bookId
      *            The id of the book.
      * @param fileName
-     *            The name of the chapter (or internal file) that we're checking for.
+     *            The name of the chapter (or internal file) that we're checking
+     *            for.
      * @return True if the book has a chapter of that name, false otherwise.
      * @throws IOException
      */
@@ -943,10 +951,12 @@ public class YbkDAO {
     }
 
     /**
-     * Get the history at the current position in the list of histories that the back button has taken us to.
+     * Get the history at the current position in the list of histories that the
+     * back button has taken us to.
      * 
      * @param historyPos
-     *            The position in the history list that we're getting the history at.
+     *            The position in the history list that we're getting the
+     *            history at.
      * @throws IOException
      */
     public History getPreviousHistory(int historyPos) throws IOException {
@@ -966,8 +976,10 @@ public class YbkDAO {
     }
 
     /**
-     * Wrapper to rethrow runtime errors as IOExceptions because there are many runtime exception possibilities that can
-     * arise from data corruption or inconsistency and we want to make sure that they are handled by the caller.
+     * Wrapper to rethrow runtime errors as IOExceptions because there are many
+     * runtime exception possibilities that can arise from data corruption or
+     * inconsistency and we want to make sure that they are handled by the
+     * caller.
      * 
      * 
      */
