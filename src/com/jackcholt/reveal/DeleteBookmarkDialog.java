@@ -3,6 +3,8 @@ package com.jackcholt.reveal;
 import java.text.MessageFormat;
 
 import android.content.Context;
+
+import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.History;
 
 /**
@@ -19,6 +21,7 @@ public abstract class DeleteBookmarkDialog {
             @Override
             public void protectedRun() {
                 YbkService.requestRemoveHistory(_this, hist);
+                FlurryAgent.onEvent("DeleteBookmark");
             }
         };
 

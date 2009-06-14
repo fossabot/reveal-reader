@@ -5,8 +5,10 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import android.app.AlertDialog;
@@ -381,14 +383,22 @@ public class Main extends ListActivity {
             SafeRunnable action = new SafeRunnable() {
                 @Override
                 public void protectedRun() {
+                    // delete the book file
                     File file = new File(book.fileName);
                     if (file.exists()) {
                         if (!file.delete()) {
                             // TODO - should tell user about this
                         }
                     }
+                    // delete associated temporary image files
+                    Util.deleteFiles(new File(file.getParentFile(), "/images"), file.getName().replaceFirst("(.*)\\.[^\\.]+$", "$1") + "_.+");
+                    // remove the book from the database
                     YbkService.requestRemoveBook(Main.this, book.fileName);
+                    // remove the book from the on-screen list
                     ((ArrayAdapter<Book>) getListView().getAdapter()).remove(book);
+                    Map<String, String> filenameMap = new HashMap<String, String>();
+                    filenameMap.put("filename", book.fileName);
+                    FlurryAgent.onEvent("DeleteBook", filenameMap);
                 }
             };
             String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.title,
@@ -673,6 +683,7 @@ public class Main extends ListActivity {
         SafeRunnable action = new SafeRunnable() {
             @Override
             public void protectedRun() {
+                FlurryAgent.onEvent("Reset");
                 // cleanup current library directory
                 File libDir = new File(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
                         Settings.DEFAULT_EBOOK_DIRECTORY));
@@ -694,7 +705,6 @@ public class Main extends ListActivity {
                 restartIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
                 startActivity(restartIntent);
                 System.exit(0);
-
             }
         };
         ConfirmActionDialog.confirmedAction(this, R.string.reset, R.string.confirm_reset, R.string.reset, action);

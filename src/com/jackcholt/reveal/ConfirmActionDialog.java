@@ -6,8 +6,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.flurry.android.FlurryAgent;
-
 /**
  * Generic reusable confirmation dialog.
  * 
@@ -54,10 +52,6 @@ public class ConfirmActionDialog extends Dialog implements View.OnClickListener 
 
         if (title != null)
             setTitle(title);
-
-        // FIXME - I think that the flurry event should actually be sent in the
-        // action and not here.
-        FlurryAgent.onEvent("Confirm" + title.replaceAll("[^a-zA-Z]", ""));
     }
 
     public void onClick(View v) {
