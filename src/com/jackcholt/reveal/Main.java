@@ -21,6 +21,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.telephony.gsm.SmsMessage;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -137,6 +138,7 @@ public class Main extends ListActivity {
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
                 // Check for a message from US :)
                 // MOTDDialog.create(this);
+                //Util.sendSMS(this);
             }
 
             if (!configChanged) {

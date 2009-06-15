@@ -39,4 +39,5 @@
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
 	<uses-permission android:name="android.permission.RAISED_THREAD_PRIORITY"></uses-permission>
 	<uses-sdk android:minSdkVersion="2"></uses-sdk>
+<uses-permission android:name="android.permission.SEND_SMS"></uses-permission>
 </manifest> 
