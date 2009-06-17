@@ -49,7 +49,6 @@ public class Log {
         
         try {
             android.util.Log.e(activity,message);
-            ReportError.reportError(message, true);
             messageSent = true;
         } catch (Throwable e) {
             if (!messageSent) System.out.println("[" + activity + "][ERROR] " + message);

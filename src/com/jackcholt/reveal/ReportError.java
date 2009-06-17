@@ -37,7 +37,7 @@ public class ReportError {
                 final Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);  
                 emailIntent.setType("plain/text");  
                 emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{"bugs@thepackhams.com"});  
-                emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Reveal Error Report");
+                emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Exception from User");
                 String message = ("Build " + Global.SVN_VERSION + "\n" + errorToReport);
                 emailIntent.putExtra(android.content.Intent.EXTRA_TEXT, message);  
                 Main.getMainApplication().startActivity(Intent.createChooser(emailIntent, "Send Error Report Email..."));
