@@ -43,7 +43,6 @@
 <string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella</string>
 <string name="contact">Contact Info for our developers.  jackcholt@gmail.com dave@thepackhams.com</string>
 <string name="website">Please Visit our website for HELP or More information  http://revealreader.thepackhams.com</string>
-<string name="donate">If you would like to donate via PayPal to our developers use the below address.  dave@thepackhams.com</string>
 <string name="close">Close</string>
 <string name="delete">Delete</string>
 <string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
@@ -121,4 +120,6 @@
 <string name="send_email_button">Send Email</string>
 <string name="error_reporting_email">If you would like to Get HELP from the developers with this bug please check &quot;Send Email&quot; checkbox.  This will allow us to reply back to your email and help you with your bug.</string>
 <string name="error_reporting_email_pop">Selecting this checkbox will open an Email message for you send review and send. Thanks</string>
+<string name="donate">If you would like to Donate via PayPal to our continued development of this Reveal Reader Please click on the PayPal icon below to be redirected to PayPal's official website.</string>
+<string name="donate_menu">PayPal Donate</string>
 </resources>

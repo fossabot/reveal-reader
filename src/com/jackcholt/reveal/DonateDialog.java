@@ -7,35 +7,34 @@ import android.content.Context;
 import android.webkit.WebView;
 
 /**
- * HelpDialog for online HELP system
+ * DonateDialog for online Donations system
  * 
  * by Dave Packham
  */
 
-public class HelpDialog extends Dialog {
-    public HelpDialog(Context _this) {
+public class DonateDialog extends Dialog {
+    public DonateDialog(Context _this) {
         super(_this);
 
-        FlurryAgent.onEvent("OnlineHelp");
-        setContentView(R.layout.help);
+        setContentView(R.layout.donate);
         String title;
-        title = "Reveal Online Help";
+        title = "Reveal PayPal Donations";
         setTitle(title);
 
-        WebView wv = (WebView) findViewById(R.id.helpView);
+        WebView wv = (WebView) findViewById(R.id.donateView);
         wv.clearCache(true);
         wv.getSettings().setJavaScriptEnabled(true);
         if (Util.isNetworkUp(_this)) {
-            wv.loadUrl("http://revealreader.thepackhams.com/revealHelp.html");
+           wv.loadUrl("http://p0lardev.it.utah.edu/revealDonate.html");
         } else {
-            wv.loadData("Cannot get online help.  Your network is currently down.", "text/plain", "utf-8");
+            wv.loadData("Cannot get to the Donation website.  Your network is currently down.", "text/plain", "utf-8");
         }
 
         show();
 
     }
 
-    public static HelpDialog create(Context _this) {
+    public static DonateDialog create(Context _this) {
         // Change DEBUG to "0" in Global.java when building a RELEASE Version
         // for the GOOGLE APP MARKET
         // This allows for real usage stats and end user error reporting
@@ -46,8 +45,9 @@ public class HelpDialog extends Dialog {
             // Development key for use of the DEVELOPMENT TEAM
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
+        FlurryAgent.onEvent("DonateDialog");
 
-        HelpDialog dlg = new HelpDialog(_this);
+        DonateDialog dlg = new DonateDialog(_this);
         return dlg;
     }
 

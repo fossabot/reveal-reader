@@ -50,11 +50,12 @@ public class Main extends ListActivity {
     private static final int BROWSER_ID = Menu.FIRST + 4;
     private static final int HELP_ID = Menu.FIRST + 5;
     private static final int ABOUT_ID = Menu.FIRST + 6;
-    private static final int LICENSE_ID = Menu.FIRST + 7;
-    private static final int REVELUPDATE_ID = Menu.FIRST + 8;
-    private static final int DELETE_ID = Menu.FIRST + 9;
-    private static final int OPEN_ID = Menu.FIRST + 10;
-    private static final int RESET_ID = Menu.FIRST + 11;
+    private static final int DONATE_ID = Menu.FIRST + 7;
+    private static final int LICENSE_ID = Menu.FIRST + 8;
+    private static final int REVELUPDATE_ID = Menu.FIRST + 9;
+    private static final int DELETE_ID = Menu.FIRST + 10;
+    private static final int OPEN_ID = Menu.FIRST + 11;
+    private static final int RESET_ID = Menu.FIRST + 12;
 
     private static int mRefreshNotifId = 0;
     public static int mNotifId = 1;
@@ -393,7 +394,9 @@ public class Main extends ListActivity {
                         }
                     }
                     // delete associated temporary image files
-                    Util.deleteFiles(new File(file.getParentFile(), "/images"), file.getName().replaceFirst("(.*)\\.[^\\.]+$", "$1") + "_.+");
+                    Util.deleteFiles(new File(file.getParentFile(), "/images"), file.getName().replaceFirst(
+                            "(.*)\\.[^\\.]+$", "$1")
+                            + "_.+");
                     // remove the book from the database
                     YbkService.requestRemoveBook(Main.this, book.fileName);
                     // remove the book from the on-screen list
@@ -467,6 +470,8 @@ public class Main extends ListActivity {
                     .setIcon(android.R.drawable.ic_menu_info_details);
             menu.add(Menu.NONE, ABOUT_ID, Menu.NONE, R.string.menu_about).setIcon(
                     android.R.drawable.ic_menu_info_details);
+            menu.add(Menu.NONE, DONATE_ID, Menu.NONE, R.string.donate_menu).setIcon(
+                    android.R.drawable.ic_menu_info_details);
             menu.add(Menu.NONE, LICENSE_ID, Menu.NONE, R.string.menu_license).setIcon(
                     android.R.drawable.ic_menu_info_details);
             menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE, R.string.menu_settings).setIcon(
@@ -514,7 +519,11 @@ public class Main extends ListActivity {
             case ABOUT_ID:
                 AboutDialog.create(this);
                 return true;
-
+            
+            case DONATE_ID:
+                DonateDialog.create(this);
+                return true;
+                
             case LICENSE_ID:
                 LicenseDialog.create(this);
                 return true;
