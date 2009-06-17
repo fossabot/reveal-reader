@@ -23,7 +23,19 @@
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
                                 android:text="@string/error_reporting"
-                        android:layout_margin="5sp"/>
+                        		android:layout_margin="5sp"/>
+                        <TextView
+                                android:id="@+id/confirm_error_send"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/error_reporting_email"
+                        		android:layout_margin="5sp"/>
+                        <TextView
+                                android:id="@+id/confirm_error_send"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/error_reporting_email_pop"
+                        		android:layout_margin="5sp"/>
                         <TextView
                                 android:id="@+id/confirm_error_send_stacktrace"
                                 android:layout_width="fill_parent"
@@ -42,6 +54,15 @@
 			android:gravity="center_horizontal"
 		>
 			<CheckBox
+				android:id="@+id/send_email_btn"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:padding="10dip"/>
+			<TextView android:text="@string/send_email_button" 
+				android:id="@+id/send_email_button" 
+				android:layout_width="wrap_content" 
+				android:layout_height="wrap_content"/>
+			<CheckBox
 				android:id="@+id/exit_reveal_btn"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -50,7 +71,8 @@
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:text="@string/exit_reveal_btn"/>
-	    </LinearLayout>
+	    
+</LinearLayout>
 	    <LinearLayout
 			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:orientation="horizontal"

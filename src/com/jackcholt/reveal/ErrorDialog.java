@@ -43,6 +43,7 @@ public class ErrorDialog extends Activity {
         setContentView(R.layout.error_dialog);
 
         final CheckBox exitCheckBox = (CheckBox) findViewById(R.id.exit_reveal_btn);
+        final CheckBox sendEmailCheckBox = (CheckBox) findViewById(R.id.send_email_btn);
 
         final String info = getIntent().getStringExtra(INFO);
         if (info == null) {
@@ -58,10 +59,18 @@ public class ErrorDialog extends Activity {
             public void onClick(View v) {
                 finish();
                 if (exitCheckBox.isChecked()) {
-                    ReportError.reportErrorToWebsite("UNCAUGHT_EXCEPTION_" + info);
+                    ReportError.reportError("UNCAUGHT_EXCEPTION_" + info, false);
                     shutdown();
-                } else {
-                    ReportError.reportError("UNCAUGHT_EXCEPTION_" + info);
+                } 
+                else if (sendEmailCheckBox.isChecked()) {
+                    ReportError.reportError("UNCAUGHT_EXCEPTION_" + info, true);
+                }
+                else if (sendEmailCheckBox.isChecked() && (exitCheckBox.isChecked()) ) {
+                    ReportError.reportError("UNCAUGHT_EXCEPTION_" + info, true);
+                    shutdown();
+                }
+                else if (!sendEmailCheckBox.isChecked() && (!exitCheckBox.isChecked()) ){
+                    ReportError.reportError("UNCAUGHT_EXCEPTION_" + info, false);
                 }
             }
         });
