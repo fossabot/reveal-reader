@@ -53,7 +53,8 @@ public class YbkDAO {
 
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
 
-    public static final String CACHE_SIZE = "1000";
+    // public static final String CACHE_SIZE = "1000";
+    public static final String CACHE_SIZE = "100";
 
     /**
      * Is the chapter a navigation chapter? Data type: INTEGER. Use
@@ -137,6 +138,14 @@ public class YbkDAO {
         // options.put(RecordManagerOptions.THREAD_SAFE, "true");
 
         options.put(RecordManagerOptions.CACHE_SIZE, CACHE_SIZE);
+
+        // undocumented option that lets shrinks the memory usage down
+        // to something we can live with on android
+        options.put("jdbm.RecordFile.cleanMRUCapacity", CACHE_SIZE);
+
+        // soft ref cache may help keep from running out of memory
+        // options.put(RecordManagerOptions.CACHE_TYPE,
+        // RecordManagerOptions.SOFT_REF_CACHE);
 
         mDb = RecordManagerFactory.createRecordManager(dbFile.getAbsolutePath(), options);
         Log.d(TAG, "Opened the database");
@@ -340,12 +349,23 @@ public class YbkDAO {
      */
     private boolean insertChapters(long bookId, List<Chapter> chapters) throws IOException {
         boolean done = false;
-        for (Chapter chap : chapters) {
+        int count = chapters.size();
+        for (int i = 0; i < count; i++) {
+            Chapter chap = chapters.get(i);
+            // free up memory asap because we are running out inserting large
+            // books
+            chapters.set(i, null);
             chap.bookId = bookId;
             chap.create(mDb);
             done = root.chapterNameIndex.put(makeKey(chap.bookId, chap.fileName.toLowerCase()), chap)
                     && (chap.orderNumber == 0 || root.chapterOrderNbrIndex.put(makeKey(chap.bookId, chap.orderNumber),
                             chap));
+            chap = null;
+        }
+        // free up the memory because big books can cause a memory squeeze
+        chapters.clear();
+        if (chapters instanceof ArrayList) {
+            ((ArrayList<Chapter>) chapters).trimToSize();
         }
         return done;
     }

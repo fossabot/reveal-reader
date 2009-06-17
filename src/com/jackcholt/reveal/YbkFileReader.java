@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Scanner;
+import java.util.StringTokenizer;
 
 import android.content.Context;
 import android.util.Log;
@@ -164,48 +164,48 @@ public class YbkFileReader {
 
         try {
             mIndexLength = Util.readVBInt(file);
-            
+
             if (mIndexLength > fileLength - file.getFilePointer()) {
                 throw new InvalidFileFormatException("Index is damaged or incomplete.");
             }
-    
+
             byte[] indexArray = new byte[mIndexLength];
-    
+
             file.readFully(indexArray);
-    
+
             // Read the index information into the internalFiles list
             int pos = 0;
-    
+
             while (pos < mIndexLength) {
                 InternalFile iFile = new InternalFile();
-    
+
                 StringBuffer fileNameSBuf = new StringBuffer();
-    
+
                 byte b;
                 int fileNameStartPos = pos;
-    
+
                 while ((b = indexArray[pos++]) != 0 && pos < mIndexLength) {
                     fileNameSBuf.append((char) b);
                 }
-    
+
                 iFile.fileName = fileNameSBuf.toString();
-    
+
                 pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
-    
-                    iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-                    pos += 4;
-        
-                    iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
-                    pos += 4;
+
+                iFile.offset = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                pos += 4;
+
+                iFile.len = Util.readVBInt(Util.makeVBIntArray(indexArray, pos));
+                pos += 4;
                 if (iFile.offset < mIndexLength || iFile.len < 0 || iFile.offset + iFile.len > fileLength) {
                     Log.e(TAG, this.mFilename + ": Internal file " + iFile.fileName + " is missing or incomplete.");
                     continue;
                 }
-    
+
                 // Add the internal file into the list
                 mInternalFiles.add(iFile);
             }
-    
+
             mBindingText = readBindingFile(FROM_INTERNAL);
             if (mBindingText != null) {
                 mBookTitle = Util.getBookTitleFromBindingText(mBindingText);
@@ -215,7 +215,7 @@ public class YbkFileReader {
             }
         } catch (IllegalArgumentException iae) {
             throw new InvalidFileFormatException("Index is damaged or incomplete.");
-        }        
+        }
     }
 
     private class Order {
@@ -230,15 +230,21 @@ public class YbkFileReader {
     }
 
     private void populateOrder(final String orderString) {
+        ArrayList<Order> orderList = new ArrayList<Order>();
+        int order = 1;
+
         if (null != orderString) {
-            Scanner orderScan = new Scanner(orderString).useDelimiter(",");
+            // for reasons not completely understood, Scanner was very, very,
+            // slow on large strings, so try using StringTokenizer instead (sv)
+            // Scanner orderScan = new Scanner(orderString).useDelimiter(",");
+            // while (orderScan.hasNext()) {
+            // Order ord = new Order(orderScan.next(), order++);
+            // orderList.add(ord);
+            // }
 
-            ArrayList<Order> orderList = new ArrayList<Order>();
-
-            int order = 1;
-            while (orderScan.hasNext()) {
-                Order ord = new Order(orderScan.next(), order++);
-                orderList.add(ord);
+            StringTokenizer tokenizer = new StringTokenizer(orderString, ",");
+            while (tokenizer.hasMoreTokens()) {
+                orderList.add(new Order(tokenizer.nextToken(), order++));
             }
             mOrderList = orderList;
         }
@@ -273,6 +279,9 @@ public class YbkFileReader {
 
         Order[] orderArray = orderList.toArray(new Order[orderList.size()]);
 
+        // big books cause a memory squeeze - don't need these any more
+        mOrderList = orderList = null;
+
         Comparator orderComp = new Comparator<Order>() {
 
             public int compare(Order arg0, Order arg1) {
@@ -290,7 +299,7 @@ public class YbkFileReader {
                 continue;
             }
 
-            if (orderList != null) {
+            if (orderArray != null) {
 
                 String iFileOrderString = "";
                 String[] iFileOrderParts = iFile.fileName.toLowerCase().split("\\\\");
@@ -333,7 +342,13 @@ public class YbkFileReader {
             if (orderNbr != null)
                 chap.orderNumber = orderNbr;
             chapters.add(chap);
+            chap = null;
         }
+
+        // big books cause a memory squeeze - don't need these any more
+        ifList = mInternalFiles = null;
+        bindingText = null;
+        orderList = null;
 
         long bookId = 0;
         try {
