@@ -25,7 +25,7 @@ public class DonateDialog extends Dialog {
         wv.clearCache(true);
         wv.getSettings().setJavaScriptEnabled(true);
         if (Util.isNetworkUp(_this)) {
-           wv.loadUrl("http://p0lardev.it.utah.edu/revealDonate.html");
+            wv.loadUrl("file:///android_asset/donate.html");
         } else {
             wv.loadData("Cannot get to the Donation website.  Your network is currently down.", "text/plain", "utf-8");
         }

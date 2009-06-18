@@ -138,7 +138,7 @@ public class Main extends ListActivity {
                 // Actually go ONLINE and check... duhhhh
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
                 // Check for a message from US :)
-                // MOTDDialog.create(this);
+                MOTDDialog.create(this);
                 // Util.sendSMS(this);
             }
 
