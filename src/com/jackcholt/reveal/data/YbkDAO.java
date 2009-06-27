@@ -422,7 +422,7 @@ public class YbkDAO {
         if (bookmarkNumber == 0) {
             synchronized (historyList) {
                 historyList.add(0, hist);
-                backStack.add(hist);
+                backStack.push(hist);
                 Log.d(TAG, "Added " + hist.chapterName + " to backStack");
             }
         } else {
@@ -562,11 +562,15 @@ public class YbkDAO {
     public void deleteHistories() {
         SharedPreferences sharedPref = mSharedPref;
         int histToKeep = sharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
+        int stackToKeep = histToKeep * 2;
 
         synchronized (historyList) {
             while (historyList.size() > histToKeep) {
                 History hist = historyList.remove(historyList.size() - 1);
                 YbkService.requestRemoveHistory(Main.getMainApplication(), hist);
+            }
+            while (backStack.size() > stackToKeep) {
+                backStack.remove(0);
             }
         }
     }
@@ -928,6 +932,36 @@ public class YbkDAO {
     }
 
     /**
+     * Get the next chapter in bookwalker order.
+     * 
+     * @param bookId
+     *            The id of the book that contains the chapter.
+     * @param prevFileName
+     *            The previous chapter filename (or empty string).
+     * @return The next chapter in the book, or null if none left
+     * @throws IOException
+     */
+    public Chapter getNextBookWalkerChapter(final long bookId, final String prevFileName) throws IOException {
+        try {
+            String startKey =  makeKey(bookId, prevFileName.toLowerCase());
+            TupleBrowser<String, Long> browser = root.chapterNameIndex.browse(startKey);
+            Tuple<String, Long> tuple = new Tuple<String, Long>();
+            while (browser.getNext(tuple)) {
+                if (tuple.getKey().equals(startKey))
+                    continue;
+                Chapter chapter = Chapter.load(mDb, (Long) tuple.getValue());
+                if (chapter.bookId != bookId)
+                    return null;
+                if (chapter.fileName.toLowerCase().contains(".html"))
+                    return chapter;
+            }
+            return null;
+        } catch (RuntimeException rte) {
+            throw new RTIOException(rte);
+        }
+    }
+
+    /**
      * Check whether a chapter exists in a book.
      * 
      * @param bookId
@@ -1031,4 +1065,13 @@ public class YbkDAO {
 
         return hist;
     }
+    
+    /**
+     * Clears all Histories off the stack.
+     * 
+     */
+    public void clearBackStack() {
+        backStack.clear();
+    }
+
 }

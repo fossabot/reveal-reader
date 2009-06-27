@@ -169,6 +169,7 @@ public class YbkService extends Service {
                             } catch (IOException ioe) {
                                 succeeded = false;
                                 message = "Could not remove book '" + bookName + "'.: " + ioe.toString();
+                                Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
                             }
                             if (succeeded)
                                 Log.i(TAG, message);
@@ -236,6 +237,7 @@ public class YbkService extends Service {
                             } catch (IOException ioe) {
                                 succeeded = false;
                                 message = "Could not add history: '" + hist + "'";
+                                Util.unexpectedError(Main.getMainApplication(), ioe);
                             }
                             if (succeeded)
                                 Log.i(TAG, message);
@@ -274,6 +276,7 @@ public class YbkService extends Service {
                             } catch (IOException ioe) {
                                 succeeded = false;
                                 message = "Could not update history: '" + hist + "'";
+                                Util.unexpectedError(Main.getMainApplication(), ioe);
                             }
                             if (succeeded)
                                 Log.i(TAG, message);
@@ -311,6 +314,7 @@ public class YbkService extends Service {
                             } catch (IOException ioe) {
                                 succeeded = false;
                                 message = "Could not remove history: '" + hist + "'";
+                                Util.unexpectedError(Main.getMainApplication(), ioe);
                             }
                             if (succeeded)
                                 Log.i(TAG, message);

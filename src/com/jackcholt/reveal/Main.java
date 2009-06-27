@@ -21,7 +21,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.telephony.gsm.SmsMessage;
+//import android.telephony.gsm.SmsMessage;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -56,15 +56,18 @@ public class Main extends ListActivity {
     private static final int DELETE_ID = Menu.FIRST + 10;
     private static final int OPEN_ID = Menu.FIRST + 11;
     private static final int RESET_ID = Menu.FIRST + 12;
+    private static final int BOOK_WALKER_ID = Menu.FIRST + 13;
 
     private static int mRefreshNotifId = 0;
     public static int mNotifId = 1;
     public static Main mApplication;
     private static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
+    private static final int WALK_BOOK = 20;
 
     // private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
+    public static final String BOOK_WALK_INDEX = "bw_index";
 
     // Gestures Stuff
     private NotificationManager mNotifMgr;
@@ -379,6 +382,22 @@ public class Main extends ListActivity {
 
     }
 
+    protected boolean onBookWalker(int index) {
+        if (index >= 0 && index < mBookTitleList.size()) {
+            Book book = mBookTitleList.get(index);
+            if (book != null) {
+                setProgressBarIndeterminateVisibility(true);
+                Intent intent = new Intent(this, YbkViewActivity.class);
+                intent.putExtra(YbkDAO.ID, book.id);
+                intent.putExtra(BOOK_WALK_INDEX, index);
+                startActivityForResult(intent, WALK_BOOK);
+            }
+        }
+        return true;
+
+    }
+
+
     @SuppressWarnings("unchecked")
     private boolean onDeleteBookMenuItem(MenuItem item) {
         final Book book = getContextMenuBook(item);
@@ -479,6 +498,8 @@ public class Main extends ListActivity {
             menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(
                     android.R.drawable.ic_menu_share);
             menu.add(Menu.NONE, RESET_ID, Menu.NONE, R.string.reset).setIcon(android.R.drawable.ic_menu_share);
+            if (Global.DEBUG == 1)
+                menu.add(Menu.NONE, BOOK_WALKER_ID, Menu.NONE, R.string.book_walker).setIcon(android.R.drawable.ic_menu_share);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -547,6 +568,9 @@ public class Main extends ListActivity {
 
             case DELETE_ID:
                 return onDeleteBookMenuItem(item);
+                
+            case BOOK_WALKER_ID:
+                return onBookWalker(0);
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -653,6 +677,12 @@ public class Main extends ListActivity {
                         refreshLibrary(libDir, ADD_BOOKS);
                         refreshBookList();
                     }
+                
+                case WALK_BOOK:
+                    int lastIndex = data.getIntExtra(BOOK_WALK_INDEX, -1);
+                    if (lastIndex != -1)
+                        onBookWalker(lastIndex+1);
+                    break;
                 }
             }
         } catch (IOException ioe) {

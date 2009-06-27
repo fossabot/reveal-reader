@@ -145,8 +145,8 @@ public class Util {
         if (bindingPos != -1) {
             bookTitle = binding.substring(0, bindingPos);
         }
-
-        return bookTitle;
+        // make sure we return an independent substring
+        return new String(bookTitle.toCharArray());
     }
 
     /**
@@ -180,8 +180,8 @@ public class Util {
         if (bindingPos != -1) {
             bookShortTitle = binding.substring(0, bindingPos);
         }
-
-        return bookShortTitle;
+        // make sure we return an independent substring
+        return new String(bookShortTitle.toCharArray());
     }
 
     /**
@@ -506,6 +506,7 @@ public class Util {
          * endPos > gtPos) {
          * 
          * fullAhtagFound = true;
+         * 
          * 
          * 
          * 
@@ -1106,6 +1107,33 @@ public class Util {
                 }
             }
         }
+    }
+
+    /**
+     * Wrapper for String.substring(start) that returns a substring that is not
+     * dependent on the buffer of the original and therefore doesn't keep the
+     * larger buffer from being garbage collected.
+     * 
+     * @param string
+     * @param start
+     * @return the substring
+     */
+    public static String independentSubstring(String string, int start) {
+        return new String(string.substring(start).toCharArray());
+    }
+
+    /**
+     * Wrapper for String.substring(start, end) that returns a substring that is not
+     * dependent on the buffer of the original and therefore doesn't keep the
+     * larger buffer from being garbage collected.
+     * 
+     * @param string
+     * @param start
+     * @param end
+     * @return the substring
+     */
+    public static String independentSubstring(String string, int start, int end) {
+        return new String(string.substring(start, end).toCharArray());
     }
 
 }

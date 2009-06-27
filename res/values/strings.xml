@@ -122,4 +122,5 @@
 <string name="error_reporting_email_pop">Selecting this checkbox will open an Email message for you send review and send. Thanks</string>
 <string name="donate">If you would like to Donate via PayPal to our continued development of this Reveal Reader Please click on the PayPal icon below to be redirected to PayPal's official website.</string>
 <string name="donate_menu">PayPal Donate</string>
+<string name="book_walker">Book Walker</string>
 </resources>

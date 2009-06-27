@@ -18,6 +18,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -66,6 +67,10 @@ public class YbkViewActivity extends Activity {
     private String mDialogChapter;
     private String mNavFile = "1";
     private boolean mThemeIsDialog = false;
+    private boolean mBookWalk = false;
+
+    private Handler mHandler = new Handler();
+
     private static final String TAG = "YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
@@ -149,6 +154,7 @@ public class YbkViewActivity extends Activity {
                         popup = (Boolean) extras.get("popup");
                         content = (String) extras.get("content");
                         strUrl = (String) extras.getString("strUrl");
+                        mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
                     }
 
                     if (isFromHistory != null) {
@@ -221,7 +227,6 @@ public class YbkViewActivity extends Activity {
                             } catch (IOException ioe) {
                                 Log.e(TAG, "Could not insert history when clicking main button");
                             }
-
                             finish();
                         }
 
@@ -237,7 +242,17 @@ public class YbkViewActivity extends Activity {
                     mYbkReader = new YbkFileReader(this, mBookFileName);
                     String shortTitle = book.shortTitle;
                     if (mChapFileName == null) {
-                        mChapFileName = "\\" + shortTitle + ".html";
+                        if (mBookWalk) {
+                            Chapter firstChapter = ybkDao.getNextBookWalkerChapter(bookId, "");
+                            if (firstChapter == null) {
+                                setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent()
+                                        .getExtras().getInt(Main.BOOK_WALK_INDEX, -1)));
+                                finish();
+                            } else {
+                                mChapFileName = firstChapter.fileName;
+                            }
+                        } else
+                            mChapFileName = "\\" + shortTitle + ".html";
                     }
 
                     if (popup == null) {
@@ -298,23 +313,26 @@ public class YbkViewActivity extends Activity {
                     final boolean HANDLED_BY_HOST_APP = true;
                     final boolean HANDLED_BY_WEBVIEW = false;
                     boolean urlHandler = HANDLED_BY_HOST_APP;
-                    final Pattern emailPattern = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}$", Pattern.CASE_INSENSITIVE);
-                    final Pattern urlPattern = Pattern.compile("^http://[A-Z0-9.-]+\\.[A-Z]{2,4}.+", Pattern.CASE_INSENSITIVE); 
-                    
+                    final Pattern emailPattern = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}$",
+                            Pattern.CASE_INSENSITIVE);
+                    final Pattern urlPattern = Pattern.compile("^http://[A-Z0-9.-]+\\.[A-Z]{2,4}.+",
+                            Pattern.CASE_INSENSITIVE);
+
                     int sdkVersion = 2;
                     try {
                         sdkVersion = Integer.parseInt(Build.VERSION.SDK);
                     } catch (NumberFormatException nfe) {
-                        // do nothing.  Just use the defaulted value.
+                        // do nothing. Just use the defaulted value.
                     }
-                    
+
                     if (sdkVersion > 2 && url.contains("book#")) {
-                        // this is needed for internal links on SDK >= 1.5 
+                        // this is needed for internal links on SDK >= 1.5
                         urlHandler = HANDLED_BY_WEBVIEW;
                     } else {
                         String lowerUrl = url.toLowerCase();
-                        if (lowerUrl.startsWith("mailto:") || lowerUrl.startsWith("geo:") || lowerUrl.startsWith("tel:") 
-                                || lowerUrl.startsWith("http://") || lowerUrl.startsWith("https://")) {
+                        if (lowerUrl.startsWith("mailto:") || lowerUrl.startsWith("geo:")
+                                || lowerUrl.startsWith("tel:") || lowerUrl.startsWith("http://")
+                                || lowerUrl.startsWith("https://")) {
                             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                             startActivity(intent);
                         } else if (url.length() > ContentUriLength + 1) {
@@ -346,18 +364,18 @@ public class YbkViewActivity extends Activity {
                                 }
 
                                 String httpString = dataString;
-                                
+
                                 if (!httpString.toLowerCase().startsWith("http://")) {
-                                    httpString = "http://" + httpString; 
+                                    httpString = "http://" + httpString;
                                 }
-                                
+
                                 Matcher urlMatcher = urlPattern.matcher(httpString);
                                 if (urlMatcher.matches()) {
                                     Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(httpString));
                                     startActivity(webIntent);
                                     return urlHandler;
                                 }
-                                
+
                                 String[] urlParts = dataString.split("/");
 
                                 // get rid of the book indicator since it is
@@ -410,7 +428,7 @@ public class YbkViewActivity extends Activity {
                                     } else {
                                         mDialogFilename = book.substring(book.lastIndexOf("/") + 1);
                                         showDialog(FILE_NONEXIST);
-                                        
+
                                     }
                                 } catch (IOException ioe) {
                                     Log.w(TAG, "Couldn't load the chapter.");
@@ -448,6 +466,9 @@ public class YbkViewActivity extends Activity {
                     Log.d(TAG, "Height of ybkView content: " + view.getContentHeight());
 
                     setProgressBarIndeterminateVisibility(false);
+                    if (mBookWalk) {
+                        mHandler.postDelayed(new ChapterWalker(), 100);
+                    }
                 } catch (RuntimeException rte) {
                     unexpectedError(rte);
                 } catch (Error e) {
@@ -767,7 +788,7 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         long bookId = -1L;
 
-        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
+        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk);
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
         if (!showInPopup && !mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
@@ -844,15 +865,15 @@ public class YbkViewActivity extends Activity {
                         if (hashLoc + 1 == chap.length()) {
                             // if # is the last character get rid of it.
                             hashLoc = -1;
-                            chap = chap.substring(0, chap.length() - 1);
+                            chap = Util.independentSubstring(chap, 0, chap.length() - 1);
                         }
 
                         // use the dreaded break <label> in order to simplify
                         // conditional nesting
                         label_get_content: if (hashLoc != -1) {
-                            fragment = chap.substring(hashLoc + 1);
+                            fragment = Util.independentSubstring(chap, hashLoc + 1);
                             if (fragment.indexOf(".") != -1) {
-                                fragment = fragment.substring(0, fragment.indexOf("."));
+                                fragment = Util.independentSubstring(fragment, 0, fragment.indexOf("."));
                             }
 
                             mFragment = fragment;
@@ -866,7 +887,7 @@ public class YbkViewActivity extends Activity {
                                     break label_get_content;
                                 }
                             } else {
-                                chap = chap.substring(0, hashLoc);
+                                chap = Util.independentSubstring(chap, 0, hashLoc);
                                 content = mYbkReader.readInternalFile(chap);
                                 if (content != null) {
                                     break label_get_content;
@@ -886,7 +907,7 @@ public class YbkViewActivity extends Activity {
                             if (chap.toLowerCase().endsWith(".gz")) {
 
                                 // Try it without the .gz
-                                chap.substring(0, chap.length() - 3);
+                                Util.independentSubstring(chap, 0, chap.length() - 3);
                                 content = mYbkReader.readInternalFile(chap);
                                 if (content != null) {
                                     break label_get_content;
@@ -941,12 +962,12 @@ public class YbkViewActivity extends Activity {
                         int nfEndLoc = headerLower.length();
                         if (nfLoc != -1) {
                             if (-1 != (nfEndLoc = headerLower.indexOf('<', nfLoc + 4))) {
-                                nf = header.substring(nfLoc + 4, nfEndLoc);
+                                nf = Util.independentSubstring(header, nfLoc + 4, nfEndLoc);
                             }
                         }
                     }
 
-                    showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
+                    showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk);
 
                     if (!showInPopup) {
                         mHistTitle = mChapBtnText;
@@ -979,7 +1000,6 @@ public class YbkViewActivity extends Activity {
 
                     } else {
                         ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-
                     }
 
                     mNavFile = nf;
@@ -1147,7 +1167,7 @@ public class YbkViewActivity extends Activity {
             Log.e(TAG, "Couldn't find a concatenated chapter for: " + chap);
         }
 
-        return content;
+        return new String(content.toCharArray());
     }
 
     /**
@@ -1189,7 +1209,14 @@ public class YbkViewActivity extends Activity {
             if (chapBtnText.length() > 30) {
                 chapBtnText = chapBtnText.substring(0, 30);
             }
-            mChapBtnText = chapBtnText;
+            // NOTE: Apparently in the in order to conserve memory, Android
+            // implementation of String.substring() just points
+            // to a offset and location within the original String. That is all
+            // well and good, except that we keep a copy of the title
+            // around in the history stack, which causes the whole internal
+            // character array of the chapter to be referenced after we have
+            // moved on from the chapter, so force making a copy of just the string we want.
+            mChapBtnText = new String(chapBtnText.toCharArray());
         } catch (IllegalStateException ise) {
             // does no on any good to percolate this exception, so log it, use a
             // default and move on
@@ -1301,4 +1328,46 @@ public class YbkViewActivity extends Activity {
             unexpectedError(e);
         }
     }
+    
+    @Override    
+    protected void onDestroy() {
+        try {
+            if (isFinishing()) {
+                try {
+                    YbkDAO.getInstance(this).clearBackStack();
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+            super.onDestroy();
+        } catch (RuntimeException rte) {
+            unexpectedError(rte);
+        } catch (Error e) {
+            unexpectedError(e);
+        }
+    }
+
+    private class ChapterWalker extends SafeRunnable {
+
+        @Override
+        public void protectedRun() {
+            try {
+                YbkDAO ybkDao = YbkDAO.getInstance(YbkViewActivity.this);
+                Chapter nextChapter = ybkDao.getNextBookWalkerChapter(mBookId, mChapFileName);
+                if (nextChapter == null) {
+                    setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent().getExtras().getInt(
+                            Main.BOOK_WALK_INDEX, -1)));
+                    finish();
+                } else {
+                    setProgressBarIndeterminateVisibility(true);
+                    loadChapter(mBookFileName, nextChapter.fileName);
+                }
+
+            } catch (IOException e) {
+                setProgressBarIndeterminateVisibility(false);
+                Util.unexpectedError(YbkViewActivity.this, e);
+            }
+        }
+    }
+
 }
