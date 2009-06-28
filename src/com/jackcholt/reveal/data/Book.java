@@ -6,6 +6,8 @@ package com.jackcholt.reveal.data;
 import java.io.IOException;
 import java.io.Serializable;
 
+import android.text.Html;
+
 import jdbm.RecordManager;
 
 /**
@@ -28,7 +30,7 @@ public class Book extends JDBMObject implements Serializable {
     public boolean active;
 
     public String toString() {
-        return formattedTitle;
+        return formattedTitle.contains("&#") ? Html.fromHtml(formattedTitle).toString() : formattedTitle;
     }
 
     /**
