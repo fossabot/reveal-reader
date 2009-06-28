@@ -1064,10 +1064,10 @@ public class Util {
      *            the context
      * @param name
      *            the ybk file name (without the path)
-     * @return the book name if found, null if not found
+     * @return the book name if found, name if not found
      */
     public static String lookupBookName(Context ctx, String name) {
-        String bookName = null;
+        String bookName = name;
         Uri uri = Uri.withAppendedPath(TitleProvider.CONTENT_URI, "title");
         String[] projection = new String[] { TitleProvider.Titles.BOOKNAME };
         String where = TitleProvider.Titles.FILENAME + " LIKE ?";

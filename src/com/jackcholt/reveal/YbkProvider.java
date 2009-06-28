@@ -27,8 +27,7 @@ public class YbkProvider extends ContentProvider {
 
     public static final String AUTHORITY = "com.jackcholt.reveal";
 
-    public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
-            + "/ybk");
+    public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/ybk");
 
     public static final int BOOK = 0;
 
@@ -109,20 +108,19 @@ public class YbkProvider extends ContentProvider {
         sUriMatcher.addURI(AUTHORITY, "ybk/back/#", BACK);
     }
 
-    private HashMap<Uri, File> mTempImgFiles = new HashMap<Uri, File>();
+    private HashMap<Uri, ImgFileInfo> mTempImgFiles = new HashMap<Uri, ImgFileInfo>();
 
     private SharedPreferences mSharedPref;
-    
+
     /**
      * @see {@link ContentProvider.delete(Uri uri, String selection, String[]
      *      selectionArgs)}
      */
     @Override
-    public int delete(final Uri uri, final String selection,
-            final String[] selectionArgs) {
-        
+    public int delete(final Uri uri, final String selection, final String[] selectionArgs) {
+
         Log.e(TAG, "YbkProvider does not support deletion.");
-        
+
         return 0;
     }
 
@@ -170,27 +168,28 @@ public class YbkProvider extends ContentProvider {
      */
     @Override
     public Uri insert(final Uri uri, final ContentValues initialValues) {
-        
+
         Log.e(TAG, "The YbkProvider does not support inserts");
-        
+
         return null;
     }
 
     @Override
     public boolean onCreate() {
-        mSharedPref = PreferenceManager
-            .getDefaultSharedPreferences(getContext());
-        
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        // clean up leftover image files
+        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                Settings.DEFAULT_EBOOK_DIRECTORY);
+        Util.deleteFiles(new File(libDir, "images"), ".*");        
         return true;
     }
 
     @Override
-    public Cursor query(final Uri uri, final String[] projection,
-            final String selection, final String[] selectionArgs,
+    public Cursor query(final Uri uri, final String[] projection, final String selection, final String[] selectionArgs,
             String sortOrder) {
 
         Log.e(TAG, "The YbkProvider does not support queries.");
-        
+
         return null;
     }
 
@@ -198,10 +197,9 @@ public class YbkProvider extends ContentProvider {
      * This is only supported for bookmarks.
      */
     @Override
-    public int update(final Uri uri, final ContentValues values,
-            final String selection, final String[] selectionArgs) {
+    public int update(final Uri uri, final ContentValues values, final String selection, final String[] selectionArgs) {
         Log.e(TAG, "The YbkProvider does not support updates.");
-        
+
         return 0;
     }
 
@@ -213,30 +211,27 @@ public class YbkProvider extends ContentProvider {
      * @return
      * @throws IOException
      */
-    public byte[] readInternalBinaryFile(final RandomAccessFile file,
-            final String bookFileName, final String chapterName)
-            throws IOException {
+    public byte[] readInternalBinaryFile(final RandomAccessFile file, final String bookFileName,
+            final String chapterName) throws IOException {
 
         int offset = 0;
         int len = 0;
         byte[] bytes = null;
-        
+
         YbkDAO ybkDao = YbkDAO.getInstance(getContext());
-        
+
         Book book = ybkDao.getBook(bookFileName);
         Chapter chap = ybkDao.getChapter(book.id, chapterName);
-        
+
         if (chap != null) {
             offset = chap.offset;
             len = chap.length;
-        
-        
+
             bytes = new byte[len];
             file.seek(offset);
             int amountRead = file.read(bytes);
             if (amountRead < len) {
-                throw new InvalidFileFormatException(
-                        "Couldn't read all of " + bookFileName + ".");
+                throw new InvalidFileFormatException("Couldn't read all of " + bookFileName + ".");
             }
         }
 
@@ -256,74 +251,118 @@ public class YbkProvider extends ContentProvider {
      * @see {@link ContentProvider.openFile(Uri, String)}
      */
     @Override
-    public ParcelFileDescriptor openFile(final Uri uri, final String mode)
-            throws FileNotFoundException {
+    public ParcelFileDescriptor openFile(final Uri uri, final String mode) throws FileNotFoundException {
         final int BUFFER_SIZE = 8096;
-        ParcelFileDescriptor pfd = null;
-        
-        // Log.d(TAG,"In openFile. URI is: " + uri.toString());
+        synchronized (mTempImgFiles) {
+            ParcelFileDescriptor pfd = null;
 
-        HashMap<Uri, File> tempImgFiles = mTempImgFiles;
-        File outFile = null;
+            // Log.d(TAG,"In openFile. URI is: " + uri.toString());
 
-        String strUri = uri.toString();
-        String fileExt = strUri.substring(strUri.lastIndexOf("."));
+            HashMap<Uri, ImgFileInfo> tempImgFiles = mTempImgFiles;
+            ImgFileInfo info;
+            File outFile;
 
-        if (".jpg .gif".contains(fileExt)) {
-            if (tempImgFiles.containsKey(uri)) {
-                outFile = tempImgFiles.get(uri);
-            } else {
-                String strCUri = CONTENT_URI.toString();
-                int cUriLength = strCUri.length();
-                String uriFileName = strUri.substring(cUriLength);
+            String strUri = uri.toString();
+            String fileExt = strUri.substring(strUri.lastIndexOf("."));
 
-                String[] fileParts = uriFileName.split("/");
-                String tempFileName = "";
-                for (int i = 1; i < fileParts.length; i++) {
-                    tempFileName += fileParts[i] + "_";
-                }
-                tempFileName = tempFileName.substring(0, tempFileName.length()-1);
-                
-                String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, 
-                        Settings.DEFAULT_EBOOK_DIRECTORY);
-                
-                outFile = new File(libDir + "images/", tempFileName);
-                outFile.deleteOnExit();
+            if (".jpg .gif".contains(fileExt)) {
+                if (tempImgFiles.containsKey(uri)) {
+                    info = tempImgFiles.get(uri);
+                    info.use();
+                    outFile = info.file;
+                } else {
+                    String strCUri = CONTENT_URI.toString();
+                    int cUriLength = strCUri.length();
+                    String uriFileName = strUri.substring(cUriLength);
 
-                if (!outFile.exists()) {
-                    HashMap<String, String> chapterMap = Util
-                            .getFileNameChapterFromUri(strUri, libDir, false);
-                    String fileName = chapterMap.get("book");
-                    String chapter = chapterMap.get("chapter");
-                    RandomAccessFile file = new RandomAccessFile(fileName, "r");
-
-                    try {
-                        byte[] contents = readInternalBinaryFile(file, fileName, chapter);
-                        if (contents != null) {
-                            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),BUFFER_SIZE);
-                            out.write(contents);
-                            out.flush();
-                        }
-                    } catch (IOException e) {
-                        throw new FileNotFoundException(
-                                "Could not write internal file to temp file. "
-                                        + e.getMessage() + " " + e.getCause());
+                    String[] fileParts = uriFileName.split("/");
+                    String tempFileName = "";
+                    for (int i = 1; i < fileParts.length; i++) {
+                        tempFileName += fileParts[i] + "_";
                     }
-                }
-                tempImgFiles.put(uri, outFile);
+                    tempFileName = tempFileName.substring(0, tempFileName.length() - 1);
 
+                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                            Settings.DEFAULT_EBOOK_DIRECTORY);
+
+                    outFile = new File(libDir + "images/", tempFileName);
+
+                    if (!outFile.exists()) {
+                        HashMap<String, String> chapterMap = Util.getFileNameChapterFromUri(strUri, libDir, false);
+                        String fileName = chapterMap.get("book");
+                        String chapter = chapterMap.get("chapter");
+                        RandomAccessFile file = new RandomAccessFile(fileName, "r");
+
+                        try {
+                            byte[] contents = readInternalBinaryFile(file, fileName, chapter);
+                            if (contents != null) {
+                                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),
+                                        BUFFER_SIZE);
+                                out.write(contents);
+                                out.flush();
+                            }
+                        } catch (IOException e) {
+                            throw new FileNotFoundException("Could not write internal file to temp file. "
+                                    + e.getMessage() + " " + e.getCause());
+                        }
+                    }
+                    info = new ImgFileInfo(uri, outFile);
+                    tempImgFiles.put(uri, info);
+                }
+
+                int m = ParcelFileDescriptor.MODE_READ_ONLY;
+                if (mode.equalsIgnoreCase("rw"))
+                    m = ParcelFileDescriptor.MODE_READ_WRITE;
+
+                pfd = new ParcelFileDescriptorWrapper(info, ParcelFileDescriptor.open(outFile, m));
+            } else {
+                Log.w(TAG, "openFile was called for non-image URI: " + uri);
             }
 
-            int m = ParcelFileDescriptor.MODE_READ_ONLY;
-            if (mode.equalsIgnoreCase("rw"))
-                m = ParcelFileDescriptor.MODE_READ_WRITE;
+            return pfd;
+        }
+    }
+    
+    private class ImgFileInfo {
+        File file;
+        int useCount = 1;
+        Uri uri;
+        
+        ImgFileInfo (Uri uri, File file) {
+            this.uri = uri;
+            this.file = file;
+        }
+        
+        int use() {
+            synchronized (mTempImgFiles) {
+                return ++useCount;
+            }
+        }
+        int unuse() {
+            synchronized (mTempImgFiles) {
+                if (--useCount <= 0) {
+                    mTempImgFiles.remove(uri);
+                    file.delete();
+                }
+                return useCount;
+            }
+        }
+    }
+    
+    private static class ParcelFileDescriptorWrapper extends ParcelFileDescriptor {
+        ImgFileInfo info;
 
-            pfd = ParcelFileDescriptor.open(outFile, m);
-        } else {
-            Log.w(TAG, "openFile was called for non-image URI: " + uri);
+        public ParcelFileDescriptorWrapper(ImgFileInfo info, ParcelFileDescriptor descriptor) {
+            super(descriptor);
+            this.info = info;
         }
 
-        return pfd;
-   }
-    
+        @Override
+        public void close() throws IOException {
+            super.close();
+            info.unuse();
+        }
+        
+    }
+
 }

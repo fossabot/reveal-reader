@@ -20,6 +20,7 @@ import android.os.Looper;
 import android.os.Process;
 import android.preference.PreferenceManager;
 
+import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -104,32 +105,32 @@ public class YbkService extends Service {
                         @Override
                         public void protectedRun() {
                             String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
-                            String bookFriendlyName = Util.lookupBookName(YbkService.this, bookName);
-                            if (bookFriendlyName != null) {
-                                bookName = bookFriendlyName;
-                            }
                             boolean succeeded;
                             String message;
                             try {
                                 // Create an object for reading a ybk file;
                                 YbkFileReader ybkRdr = new YbkFileReader(YbkService.this, target);
                                 // Tell the YbkFileReader to populate the book info
-                                // into
-                                // the database;
-                                if (ybkRdr.populateBook() != 0) {
+                                // into the database;
+                                long bookId = ybkRdr.populateBook();
+                                if (bookId != 0) {
                                     succeeded = true;
+                                    Book book = YbkDAO.getInstance(YbkService.this).getBook(bookId);
+                                    if (book != null && book.formattedTitle != null) {
+                                        bookName = book.formattedTitle;
+                                    }
                                     message = "Added '" + bookName + "' to the library";
                                 } else {
                                     succeeded = false;
-                                    message = "Could not add '" + bookName;
+                                    message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
                                 }
                             } catch (InvalidFileFormatException ioe) {
                                 succeeded = false;
-                                message = "Could not add '" + bookName + "'.";
+                                message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
                                 Util.displayError(Main.getMainApplication(), null, getResources().getString(R.string.error_damaged_ebook), bookName);
                             } catch (IOException ioe) {
                                 succeeded = false;
-                                message = "Could not add '" + bookName + "'.";
+                                message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
                                 Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
                             }
                             if (succeeded)
