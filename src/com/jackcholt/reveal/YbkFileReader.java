@@ -100,11 +100,11 @@ public class YbkFileReader {
             // do nothing
         }
 
-        InternalFile(final String newFileName, final int ybkOffset, final int ybkLen) {
-            fileName = newFileName;
-            offset = ybkOffset;
-            len = ybkLen;
-        }
+//        InternalFile(final String newFileName, final int ybkOffset, final int ybkLen) {
+//            fileName = newFileName;
+//            offset = ybkOffset;
+//            len = ybkLen;
+//        }
     }
 
     /**

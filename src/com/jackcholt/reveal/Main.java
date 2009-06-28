@@ -57,6 +57,7 @@ public class Main extends ListActivity {
     private static final int OPEN_ID = Menu.FIRST + 11;
     private static final int RESET_ID = Menu.FIRST + 12;
     private static final int BOOK_WALKER_ID = Menu.FIRST + 13;
+    private static final int PROPERTIES_ID = Menu.FIRST + 14;
 
     private static int mRefreshNotifId = 0;
     public static int mNotifId = 1;
@@ -361,6 +362,8 @@ public class Main extends ListActivity {
 
             case DELETE_ID:
                 return onDeleteBookMenuItem(item);
+            case PROPERTIES_ID:
+                return onEBookProperties(item);
             default:
                 return super.onContextItemSelected(item);
             }
@@ -382,6 +385,24 @@ public class Main extends ListActivity {
 
     }
 
+    protected boolean onEBookProperties(MenuItem item) {
+        Book book = getContextMenuBook(item);
+        String message;
+        String metaData = book.metaData;
+        if (metaData != null && metaData.length() > 0) {
+            message = metaData.replaceFirst("(?i)^.*<end>", "");            
+        } else {
+                
+            File bookFile = new File(book.fileName);
+            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message),
+                    book.formattedTitle, bookFile.getName());
+        }
+
+        InfoDialog.create(this, R.string.menu_ebook_properties, message);
+        return true;
+
+    }
+
     protected boolean onBookWalker(int index) {
         if (index >= 0 && index < mBookTitleList.size()) {
             Book book = mBookTitleList.get(index);
@@ -396,7 +417,6 @@ public class Main extends ListActivity {
         return true;
 
     }
-
 
     @SuppressWarnings("unchecked")
     private boolean onDeleteBookMenuItem(MenuItem item) {
@@ -443,6 +463,7 @@ public class Main extends ListActivity {
             super.onCreateContextMenu(menu, v, menuInfo);
             menu.add(0, OPEN_ID, 0, R.string.menu_open_ebook);
             menu.add(0, DELETE_ID, 0, R.string.menu_delete_ebook);
+            menu.add(0, PROPERTIES_ID, 0, R.string.menu_ebook_properties);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -499,7 +520,8 @@ public class Main extends ListActivity {
                     android.R.drawable.ic_menu_share);
             menu.add(Menu.NONE, RESET_ID, Menu.NONE, R.string.reset).setIcon(android.R.drawable.ic_menu_share);
             if (Global.DEBUG == 1)
-                menu.add(Menu.NONE, BOOK_WALKER_ID, Menu.NONE, R.string.book_walker).setIcon(android.R.drawable.ic_menu_share);
+                menu.add(Menu.NONE, BOOK_WALKER_ID, Menu.NONE, R.string.book_walker).setIcon(
+                        android.R.drawable.ic_menu_share);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -540,11 +562,11 @@ public class Main extends ListActivity {
             case ABOUT_ID:
                 AboutDialog.create(this);
                 return true;
-            
+
             case DONATE_ID:
                 DonateDialog.create(this);
                 return true;
-                
+
             case LICENSE_ID:
                 LicenseDialog.create(this);
                 return true;
@@ -568,7 +590,10 @@ public class Main extends ListActivity {
 
             case DELETE_ID:
                 return onDeleteBookMenuItem(item);
-                
+
+            case PROPERTIES_ID:
+                return onEBookProperties(item);
+
             case BOOK_WALKER_ID:
                 return onBookWalker(0);
             }
@@ -677,11 +702,11 @@ public class Main extends ListActivity {
                         refreshLibrary(libDir, ADD_BOOKS);
                         refreshBookList();
                     }
-                
+
                 case WALK_BOOK:
                     int lastIndex = data.getIntExtra(BOOK_WALK_INDEX, -1);
                     if (lastIndex != -1)
-                        onBookWalker(lastIndex+1);
+                        onBookWalker(lastIndex + 1);
                     break;
                 }
             }

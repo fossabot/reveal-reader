@@ -48,7 +48,7 @@
 <string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
-<string name="ok">Cancel</string>
+<string name="ok">OK</string>
 <string name="cancel">Cancel</string>
 <string name="ebook_download_started">eBook Download Started</string>
 <string name="ebook_download_busy">Please wait for the directory to be updated before attempting to download more titles.</string>
@@ -123,4 +123,6 @@
 <string name="donate">If you would like to Donate via PayPal to our continued development of this Reveal Reader Please click on the PayPal icon below to be redirected to PayPal's official website.</string>
 <string name="donate_menu">PayPal Donate</string>
 <string name="book_walker">Book Walker</string>
+<string name="menu_ebook_properties">eBook Info</string>
+<string name="ebook_info_message">&lt;b&gt;Book Name:&lt;/b&gt; {0}&lt;br/&gt;&lt;b&gt;File Name:&lt;/b&gt; {1}&lt;br/&gt;</string>
 </resources>
