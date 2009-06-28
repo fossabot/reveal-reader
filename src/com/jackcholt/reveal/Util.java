@@ -33,6 +33,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -88,7 +89,9 @@ public class Util {
      */
     public static final String formatTitle(final String title) {
         StringBuffer sb = new StringBuffer();
-        Scanner scan = new Scanner(title.toLowerCase().replaceAll("<[^>]*(small|b|)[^<]*>", ""));
+        // remove html tags and convert character references, and convert to lower case
+        String plainTitle = Html.fromHtml(title).toString().toLowerCase();
+        Scanner scan = new Scanner(plainTitle);
 
         while (scan.hasNext()) {
             String word = scan.next();
