@@ -107,9 +107,10 @@ public class YbkService extends Service {
                             String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
                             boolean succeeded;
                             String message;
+                            YbkFileReader ybkRdr = null;
                             try {
                                 // Create an object for reading a ybk file;
-                                YbkFileReader ybkRdr = new YbkFileReader(YbkService.this, target);
+                                ybkRdr = new YbkFileReader(YbkService.this, target);
                                 // Tell the YbkFileReader to populate the book info
                                 // into the database;
                                 long bookId = ybkRdr.populateBook();
@@ -132,6 +133,11 @@ public class YbkService extends Service {
                                 succeeded = false;
                                 message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
                                 Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
+                            } finally {
+                                if (ybkRdr != null) {
+                                    ybkRdr.close();
+                                    ybkRdr = null;
+                                }
                             }
                             if (succeeded)
                                 Log.i(TAG, message);

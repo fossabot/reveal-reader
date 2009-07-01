@@ -832,6 +832,7 @@ public class YbkViewActivity extends Activity {
                 // Only create a new YbkFileReader if we're opening a different
                 // book
                 if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
+                    ybkReader.close();
                     ybkReader = mYbkReader = new YbkFileReader(this, filePath);
                 }
 
@@ -1338,6 +1339,10 @@ public class YbkViewActivity extends Activity {
                 } catch (IOException ioe) {
                     // ignore
                 }
+            }
+            if (mYbkReader != null) {
+                mYbkReader.close();
+                mYbkReader = null;
             }
             super.onDestroy();
         } catch (RuntimeException rte) {

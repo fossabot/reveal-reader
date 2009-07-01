@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import org.xml.sax.XMLReader;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -1137,6 +1140,28 @@ public class Util {
      */
     public static String independentSubstring(String string, int start, int end) {
         return new String(string.substring(start, end).toCharArray());
+    }
+    
+    private static Object htmlSchema = null;
+    /**
+     * Gets an instance of the TagSoup Html Parser that is built-in to Android Framework, but not directly exposed.
+     * @ return Html Parser 
+     */
+    @SuppressWarnings("unchecked")
+    public static XMLReader getHtmlSAXParser() {
+        try {
+            if (htmlSchema == null) {
+                Class<?> htmlSchemaClass = Class.forName("org.ccil.cowan.tagsoup.HTMLSchema");
+                htmlSchema = htmlSchemaClass.newInstance();
+                // TODO - need to add in definitions for the custom elements found in a ybk
+            }
+            Class<? extends XMLReader> htmlSchemaClass = (Class<? extends XMLReader>) Class.forName("org.ccil.cowan.tagsoup.Parser");
+            XMLReader parser = htmlSchemaClass.newInstance();
+            parser.setProperty("http://www.ccil.org/~cowan/tagsoup/properties/schema", htmlSchema);
+            return parser;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

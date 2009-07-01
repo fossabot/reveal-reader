@@ -117,7 +117,7 @@ public class YbkFileReader {
      * @throws FileNotFoundException
      *             if the file cannot be opened for reading.
      */
-    public YbkFileReader(final Context ctx, final RandomAccessFile file) throws FileNotFoundException, IOException {
+    private YbkFileReader(final Context ctx, final RandomAccessFile file) throws FileNotFoundException, IOException {
         mFile = file;
         mCtx = ctx;
         // populateFileData();
@@ -143,10 +143,44 @@ public class YbkFileReader {
         mFilename = fileName;
 
         YbkDAO ybkDao = YbkDAO.getInstance(ctx);
-        Book book = ybkDao.getBook(fileName);
+        boolean noException = false;
+        Book book;
+        try {
+            book = ybkDao.getBook(fileName);
+            noException = true;
+        }
+        finally {
+            if (!noException) {
+                mFile.close();
+                mFile = null;
+            }
+        }
         if (book != null) {
             mBookId = book.id;
         }
+    }
+    
+    /**
+     * Closes the reader.
+     * 
+     * @throws IOException 
+     * 
+     */
+    public void close() {
+       if (mFile != null) {
+           try {
+            mFile.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+        }
+           mFile = null;
+       }
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        close();
+        super.finalize();
     }
 
     /**

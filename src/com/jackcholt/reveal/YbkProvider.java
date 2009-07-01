@@ -292,18 +292,28 @@ public class YbkProvider extends ContentProvider {
                         String fileName = chapterMap.get("book");
                         String chapter = chapterMap.get("chapter");
                         RandomAccessFile file = new RandomAccessFile(fileName, "r");
-
                         try {
                             byte[] contents = readInternalBinaryFile(file, fileName, chapter);
                             if (contents != null) {
                                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),
                                         BUFFER_SIZE);
+                                try {
                                 out.write(contents);
                                 out.flush();
+                                } finally {
+                                    out.close();
+                                }
                             }
                         } catch (IOException e) {
                             throw new FileNotFoundException("Could not write internal file to temp file. "
                                     + e.getMessage() + " " + e.getCause());
+                        }
+                        finally {
+                            try {
+                                file.close();
+                            } catch (IOException e) {
+                                Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+                            }
                         }
                     }
                     info = new ImgFileInfo(uri, outFile);
