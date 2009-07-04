@@ -205,7 +205,7 @@ public class YbkService extends Service {
                         @Override
                         public void protectedRun() {
                             try {
-                                List<String> downloads = Util.fetchTitle(new URL(target), new URL(source), libDir,
+                                List<String> downloads = Util.fetchTitle(new File(target), new URL(source), libDir,
                                         context);
                                 for (String download : downloads) {
                                     requestAddBook(context, download, callbackMap.get(Long.valueOf(callbacksID)));

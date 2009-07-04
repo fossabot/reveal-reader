@@ -15,10 +15,9 @@
 		<activity android:name=".YbkViewActivity" android:label="@string/reveal_ybk_view" />
 		<provider android:multiprocess="true" android:authorities="com.jackcholt.reveal"
 			android:name=".YbkProvider" android:screenOrientation="sensor"></provider>
-		<activity android:name=".TitleBrowser" android:label="@string/title_browser_name"
-			android:screenOrientation="sensor" />
-		<provider android:name=".TitleProvider" android:multiprocess="true"
-			android:authorities="com.jackcholt.reveal.titles" />
+		<activity android:label="@string/title_browser_name"
+			android:screenOrientation="sensor" android:name="TitleBrowser"/>
+		
 		<activity android:multiprocess="true" android:name=".HistoryDialog"
 			android:label="@string/menu_history" android:screenOrientation="sensor"
 			android:theme="@android:style/Theme.Dialog" />

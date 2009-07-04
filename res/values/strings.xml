@@ -2,7 +2,7 @@
 <resources>
 <string name="app_name">Reveal</string>
 <string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card.</string>
-<string name="no_books_xml">No eBook Information Downloaded. Please wait while we go online and refresh the eBook catalog...  eBook categories will appear on this screen once they are downloaded</string>
+<string name="no_books_xml">Error while trying to get book listing online.</string>
 <string name="menu_bookmark">Bookmarks</string>
 <string name="menu_history">eBook History</string>
 <string name="menu_settings">Program Settings</string>
@@ -56,6 +56,9 @@
 <string name="ebook_download_failed">Unable to download eBook</string>
 <string name="ebook_download_failed_url">Unable to download eBook at given location.</string>
 <string name="ebook_download_complete">eBook Download Complete</string>
+<string name="ebook_list_failed">Failed to update ebook list.  Please try again.</string>
+<string name="ebook_list_failed_url">Failed to update ebook list from server.  Please try again.</string>
+<string name="ebook_list_failed_io">Failed to update ebook list from server.  Please check your Internet connection and try again.</string>
 <string name="ebook_exists_still_download">This eBook already exists in your library.  Would you like to replace it with a new copy?</string>
 <string name="update_available"><b>Update Available</b>Reveal update available, Please check Android Market</string>
 <string name="checking_for_new_version_online">Checking for new Version Online</string>
