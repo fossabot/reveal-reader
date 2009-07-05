@@ -445,7 +445,7 @@ public class Main extends ListActivity {
                     FlurryAgent.onEvent("DeleteBook", filenameMap);
                 }
             };
-            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.title,
+            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.formattedTitle,
                     new File(book.fileName).getName());
             ConfirmActionDialog.confirmedAction(this, R.string.really_delete_title, message, R.string.delete, action);
         }
