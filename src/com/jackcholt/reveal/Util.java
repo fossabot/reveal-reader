@@ -745,68 +745,70 @@ public class Util {
 
         File libDirFile = new File(libDir);
         String filename = fileName.getName();
-        String extension = filename.replaceFirst(".*\\.([^\\.]+)$", "$1").toLowerCase();
-        try {
-            FileOutputStream out = null;
+        FileOutputStream out = null;
+        
+        try { //assume we have a zip file first
 
-            if (extension.equals("zip")) {
-                ZipInputStream zip = new ZipInputStream(downloadUrl.openStream());
+            ZipInputStream zip = new ZipInputStream(downloadUrl.openStream());
 
-                ZipEntry entry;
-                while ((entry = zip.getNextEntry()) != null) {
-                    // unpack all the files
-                    File file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                // unpack all the files
+                File file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
 
-                    // check to see if they already have this title
-                    // if (file.exists() && !shouldDownload(context, file)) {
-                    if (file.exists()) {
-                        file.delete();
-                        ybkDao.deleteBook(file.getAbsolutePath());
+                // check to see if they already have this title
+                // if (file.exists() && !shouldDownload(context, file)) {
+                if (file.exists()) {
+                    file.delete();
+                    ybkDao.deleteBook(file.getAbsolutePath());
 
-                    }
-
-                    out = new FileOutputStream(file);
-                    files.add(file);
-                    try {
-                        int bytesRead = 0;
-                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                            out.write(buffer, 0, bytesRead);
-                        }
-                    } finally {
-                        out.close();
-                    }
                 }
-                zip.close();
-            } else if (extension.equals("ybk")) {
-                BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
+
+                out = new FileOutputStream(file);
+                files.add(file);
                 try {
-                    File file = new File(libDirFile, filename + TMP_EXTENSION);
-
-                    // if (file.exists() && !shouldDownload(context, file)) {
-                    if (file.exists()) {
-                        file.delete();
-                        ybkDao.deleteBook(file.getAbsolutePath());
-                    }
-                    out = new FileOutputStream(file);
-                    files.add(file);
-
                     int bytesRead = 0;
-                    try {
-                        while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
-                            out.write(buffer, 0, bytesRead);
-                        }
-                    } finally {
-                        out.close();
+                    while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                        out.write(buffer, 0, bytesRead);
                     }
                 } finally {
-                    in.close();
+                    out.close();
                 }
-            } else {
+            }
+            
+            zip.close();
+            
+            success = true;
+            
+        } catch (IOException e) { //non-zip attempt
+            BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
+            try {
+                File file = new File(libDirFile, filename + TMP_EXTENSION);
+
+                // if (file.exists() && !shouldDownload(context, file)) {
+                if (file.exists()) {
+                    file.delete();
+                    ybkDao.deleteBook(file.getAbsolutePath());
+                }
+                out = new FileOutputStream(file);
+                files.add(file);
+
+                int bytesRead = 0;
+                try {
+                    while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                } finally {
+                    out.close();
+                }
+                
+                success = true;
+            } catch (IOException e2) {
                 Log.w(TAG, "Unable to process file " + fileName);
                 throw new IOException("Unrecognized file type");
+            } finally {
+                in.close();
             }
-
-            success = true;
         } finally {
             for (File file : files) {
                 if (success) {
