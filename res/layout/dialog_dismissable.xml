@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center_horizontal"
+	>
+	<WebView android:id="@+id/motdView"          
+		android:layout_width="fill_parent"          
+		android:layout_height="wrap_content"          
+		android:textSize="@dimen/font_size"/>	
+	<CheckBox android:id="@+id/dismiss_popup_id"
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:padding="10dip"/>
+	<TextView android:text="@string/dismiss_popup_btn" 
+		android:id="@+id/dismiss_popup_btn" 
+		android:layout_width="wrap_content" 
+		android:layout_height="wrap_content"/>
+        <Button
+                android:id="@+id/close_about_btn"
+                android:text="@string/close"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+        android:padding="5sp"/>
+
+</LinearLayout>

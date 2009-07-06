@@ -18,7 +18,10 @@ import org.xml.sax.SAXException;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
+import android.view.View;
 import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.CheckBox;
 
 import com.flurry.android.FlurryAgent;
 
@@ -28,15 +31,37 @@ import com.flurry.android.FlurryAgent;
  * by Dave Packham
  */
 
-
 public class MOTDDialog extends Dialog {
+    String MOTDNumberStr;
+    static int MOTDNumberInt;
+    String MOTDmessage;
+    static boolean isDismissChecked;
+    
+    
     public MOTDDialog(Context _this) {
         super(_this);
-
+        // Change DEBUG to "0" in Global.java when building a RELEASE Version
+        // for the GOOGLE APP MARKET
+        // This allows for real usage stats and end user error reporting
+        if (Global.DEBUG == 0) {
+            // Release Key for use of the END USERS
+            FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
+        } else {
+            // Development key for use of the DEVELOPMENT TEAM
+            FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
+        }
         FlurryAgent.onEvent("MOTD");
-        setContentView(R.layout.dialog_motd);
+        setContentView(R.layout.dialog_dismissable);
+
+        Button close = (Button) findViewById(R.id.close_about_btn);
+        close.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
+
         String title;
-        title = "Reveal Online MOTD";
+        title = "Reveal Online Message";
         setTitle(title);
 
         URLConnection cnVersion = null;
@@ -59,7 +84,7 @@ public class MOTDDialog extends Dialog {
         } catch (IOException e3) {
             e3.printStackTrace();
         }
-        
+
         InputStream streamVersion = null;
         try {
             streamVersion = cnVersion.getInputStream();
@@ -85,31 +110,32 @@ public class MOTDDialog extends Dialog {
             e1.printStackTrace();
         }
         NodeList manifestNodeList = manifestDoc.getElementsByTagName("manifest");
-        String versionStr = manifestNodeList.item(0).getAttributes().getNamedItem("android:versionCode")
-                .getNodeValue();
-        int version = Integer.parseInt(versionStr);
 
-        String messageStr = manifestNodeList.item(0).getAttributes().getNamedItem("android:MOTDmessage")
+        // What version of MOTD is this.
+        MOTDNumberStr = manifestNodeList.item(0).getAttributes().getNamedItem("android:MOTDNumber").getNodeValue();
+        MOTDNumberInt = Integer.parseInt(MOTDNumberStr);
+
+        // The actual MOTD HTML code to display
+        MOTDmessage = manifestNodeList.item(0).getAttributes().getNamedItem("android:MOTDmessage")
                 .getNodeValue();
 
         try {
             Editor e = Main.getMainApplication().getPreferences(Context.MODE_PRIVATE).edit();
-            e.putString("motd", messageStr);
-            e.putInt("motd_version", version);
+            e.putString("motd", MOTDmessage);
+            e.putInt("motd_version", MOTDNumberInt);
             e.commit();
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
-        
+
         } finally {
-            Global.NEW_VERSION = version;
-        }
-        
+     }
+
         WebView wv = (WebView) findViewById(R.id.motdView);
         wv.clearCache(true);
         wv.getSettings().setJavaScriptEnabled(true);
         if (Util.isNetworkUp(_this)) {
-            wv.loadData(messageStr, "text/html", "utf-8");
+            wv.loadData(MOTDmessage, "text/html", "utf-8");
         } else {
             wv.loadData("Cannot get online help.  Your network is currently down.", "text/plain", "utf-8");
         }
@@ -129,8 +155,8 @@ public class MOTDDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
         FlurryAgent.onEvent("MOTDDialog");
-        
         MOTDDialog dlg = new MOTDDialog(_this);
+
         return dlg;
     }
 
@@ -139,5 +165,11 @@ public class MOTDDialog extends Dialog {
     protected void onStop() {
         super.onStop();
         FlurryAgent.onEndSession(Main.getMainApplication());
+        
+        final CheckBox checkBox = (CheckBox) findViewById(R.id.dismiss_popup_id); 
+        
+        if (checkBox.isChecked()) {
+            PopDialogDismissDB.addDismissedDialog(Main.getMainApplication(), "MOTDialog", MOTDNumberInt);
+        }
     }
 }

@@ -33,8 +33,7 @@ public class PopDialogDismissDB {
 
     /**
      * 
-     * @param ctx
-     * @return 
+     * @param _this
      * @return
      */
     public static final void DBCreate(Context _this) {
@@ -98,23 +97,14 @@ public class PopDialogDismissDB {
     }
 
     /**
-     * Close database connection
+     * @param _this
+     * @param DialogName
+     * @param DialogNumber
      */
-    public void close() {
-        /*
-         * try { db.close(); } catch (SQLException e) {
-         * Log.d(TAG,"close exception: " + e.getLocalizedMessage()); }
-         */
-    }
-
-    /**
-     * 
-     * @param entry
-     */
-    public void addDismissedDialog(Context _this, String DialogName, String Dismissed) {
+    public static void addDismissedDialog(Context _this, String DialogName, int DialogNumber) {
         ContentValues initialValues = new ContentValues();
-        initialValues.put("dialogName", DialogName);
-        initialValues.put("dismissed", Dismissed);
+        initialValues.put("dialogName", DialogName + DialogNumber);
+        initialValues.put("dismissed", "1");
 
         try {
             db = _this.openOrCreateDatabase(DATABASE_NAME, 0, null);
@@ -127,50 +117,17 @@ public class PopDialogDismissDB {
     }
 
     /**
-     * 
-     * @param Id
+     * @param _this 
+     * @param DialogName
      */
-    public void deleteDialogDismissed(Context _this, long Id) {
+    public void checkForDialogDismissed(Context _this, String DialogName) {
         try {
             db = _this.openOrCreateDatabase(DATABASE_NAME, 0, null);
-            db.delete(TABLE_DIALOGS, "id=" + Id, null);
+            //db.equals(TABLE_DIALOGS, "id=" + Id, null);
         } catch (SQLException e) {
             Log.d(TAG, "SQLite exception: " + e.getLocalizedMessage());
         } finally {
             db.close();
         }
     }
-
-    /**
-     * 
-     * @param Id
-     * @return
-     */
-    /*
-     * public NoteEntry fetchNote(Context _this, int Id) { NoteEntry row = new
-     * NoteEntry(); try { db = _this.openOrCreateDatabase(DATABASE_NAME,
-     * 0,null); Cursor c = db.query(true, TABLE_DIALOGS, new String[] { "id",
-     * "description", "note", "category"}, "id=" + Id, null, null, null, null,
-     * null); if (c.getCount() > 0) { c.moveToFirst(); row.id = c.getInt(0);
-     * row.description = c.getString(2); row.note = c.getString(5); } else {
-     * row.id = -1; } c.close(); } catch (SQLException e) {
-     * Log.d(TAG,"SQLite exception: " + e.getLocalizedMessage()); } finally {
-     * db.close(); } return row; }
-     * 
-     * /**
-     * 
-     * @param Id
-     * 
-     * @param entry
-     */
-    /*
-     * public void updateDialogDismiss(Context _this, long Id, String
-     * DialogName) { ContentValues args = new ContentValues();
-     * args.put("description", entry.description); args.put("note", entry.note);
-     * 
-     * try { db = _this.openOrCreateDatabase(DATABASE_NAME, 0,null);
-     * db.update(TABLE_DIALOGS, args, "id=" + Id, null); } catch (SQLException
-     * e) { Log.d(TAG,"SQLite exception: " + e.getLocalizedMessage()); } finally
-     * { db.close(); } }
-     */
 }
