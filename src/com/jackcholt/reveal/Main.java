@@ -21,7 +21,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-//import android.telephony.gsm.SmsMessage;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -136,13 +135,17 @@ public class Main extends ListActivity {
                     BOOLsplashed = true;
                 }
             }
+            
+            // Create and start the DB for checking POPups and MOTDS 
+            PopDialogDismissDB.DBCreate(this);
 
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
                 // Actually go ONLINE and check... duhhhh
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+                
                 // Check for a message from US :)
-                // MOTDDialog.create(this);
+                MOTDDialog.create(this);
                 // Util.sendSMS(this);
             }
 
@@ -572,7 +575,7 @@ public class Main extends ListActivity {
                 return true;
 
             case HELP_ID:
-                HelpDialog.create(this);
+                OnlineHelpDialog.create(this);
                 return true;
 
             case HISTORY_ID:

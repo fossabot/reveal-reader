@@ -55,11 +55,12 @@ import com.jackcholt.reveal.data.YbkDAO;
  */
 public class Util {
     private static final String TMP_EXTENSION = ".tmp";
-
     private static final String TAG = "Util";
-
     public static final String NO_TITLE = "no_book_title";
 
+
+
+    
     /**
      * Dave Packham Check for network connectivity before trying to go to the
      * net and hanging :) hitting F8 in the emulator will turn network on/off
@@ -92,7 +93,8 @@ public class Util {
      */
     public static final String formatTitle(final String title) {
         StringBuffer sb = new StringBuffer();
-        // remove html tags and convert character references, and convert to lower case
+        // remove html tags and convert character references, and convert to
+        // lower case
         String plainTitle = Html.fromHtml(title).toString().toLowerCase();
         Scanner scan = new Scanner(plainTitle);
 
@@ -517,6 +519,7 @@ public class Util {
          * 
          * 
          * 
+         * 
          * newContent.append("<span class=\"ah\" id=\"ah").append(number).append(
          * "\">"); newContent.append(oldContent.substring(gtPos + 1, endPos));
          * //Log.d(TAG, "Appending: " + oldContent.substring(gtPos + 1,
@@ -746,8 +749,8 @@ public class Util {
         File libDirFile = new File(libDir);
         String filename = fileName.getName();
         FileOutputStream out = null;
-        
-        try { //assume we have a zip file first
+
+        try { // assume we have a zip file first
 
             ZipInputStream zip = new ZipInputStream(downloadUrl.openStream());
 
@@ -775,12 +778,12 @@ public class Util {
                     out.close();
                 }
             }
-            
+
             zip.close();
-            
+
             success = true;
-            
-        } catch (IOException e) { //non-zip attempt
+
+        } catch (IOException e) { // non-zip attempt
             BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
             try {
                 File file = new File(libDirFile, filename + TMP_EXTENSION);
@@ -801,7 +804,7 @@ public class Util {
                 } finally {
                     out.close();
                 }
-                
+
                 success = true;
             } catch (IOException e2) {
                 Log.w(TAG, "Unable to process file " + fileName);
@@ -1076,33 +1079,32 @@ public class Util {
      */
     public static String lookupBookName(Context ctx, String name) {
         String bookName = name.replaceAll(".*/", "");
-        
+
         try {
             URL searchUrl = new URL(TitleBrowser.TITLE_LOOKUP_URL
                     + bookName.replaceAll(".ybk$", "").replaceAll("&", "&amp;"));
-            
+
             URLConnection connection = searchUrl.openConnection();
             connection.setConnectTimeout(TitleBrowser.POPULATE_TIMEOUT);
-            
+
             InputStream in = connection.getInputStream();
 
             int length = 0;
             byte[] buffer = new byte[1024];
-            
+
             length = in.read(buffer);
-            
-            if (length > 0)
-            {
+
+            if (length > 0) {
                 bookName = new String(buffer, 0, length);
             }
-            
+
             in.close();
         } catch (MalformedURLException e) {
             Log.e(TAG, e.getMessage());
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
-        
+
         return bookName;
     }
 
@@ -1141,9 +1143,9 @@ public class Util {
     }
 
     /**
-     * Wrapper for String.substring(start, end) that returns a substring that is not
-     * dependent on the buffer of the original and therefore doesn't keep the
-     * larger buffer from being garbage collected.
+     * Wrapper for String.substring(start, end) that returns a substring that is
+     * not dependent on the buffer of the original and therefore doesn't keep
+     * the larger buffer from being garbage collected.
      * 
      * @param string
      * @param start
@@ -1153,11 +1155,12 @@ public class Util {
     public static String independentSubstring(String string, int start, int end) {
         return new String(string.substring(start, end).toCharArray());
     }
-    
+
     private static Object htmlSchema = null;
+
     /**
-     * Gets an instance of the TagSoup Html Parser that is built-in to Android Framework, but not directly exposed.
-     * @ return Html Parser 
+     * Gets an instance of the TagSoup Html Parser that is built-in to Android
+     * Framework, but not directly exposed. @ return Html Parser
      */
     @SuppressWarnings("unchecked")
     public static XMLReader getHtmlSAXParser() {
@@ -1165,9 +1168,11 @@ public class Util {
             if (htmlSchema == null) {
                 Class<?> htmlSchemaClass = Class.forName("org.ccil.cowan.tagsoup.HTMLSchema");
                 htmlSchema = htmlSchemaClass.newInstance();
-                // TODO - need to add in definitions for the custom elements found in a ybk
+                // TODO - need to add in definitions for the custom elements
+                // found in a ybk
             }
-            Class<? extends XMLReader> htmlSchemaClass = (Class<? extends XMLReader>) Class.forName("org.ccil.cowan.tagsoup.Parser");
+            Class<? extends XMLReader> htmlSchemaClass = (Class<? extends XMLReader>) Class
+                    .forName("org.ccil.cowan.tagsoup.Parser");
             XMLReader parser = htmlSchemaClass.newInstance();
             parser.setProperty("http://www.ccil.org/~cowan/tagsoup/properties/schema", htmlSchema);
             return parser;
