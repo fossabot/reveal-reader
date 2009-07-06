@@ -412,15 +412,25 @@ public class YbkDAO {
      */
     public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos,
             final int bookmarkNumber) {
+        String chapterNameNoGz = chapterName.replaceFirst("(?i)\\.gz$", "");
         History hist = new History();
         hist.bookId = bookId;
         hist.bookmarkNumber = bookmarkNumber;
-        hist.chapterName = chapterName;
+        hist.chapterName = chapterNameNoGz;
         hist.scrollYPos = scrollYPos;
         hist.title = title;
         YbkService.requestAddHistory(Main.getMainApplication(), hist);
         if (bookmarkNumber == 0) {
             synchronized (historyList) {
+                // find and remove duplicate history entries
+                Iterator<History> it = historyList.iterator();
+                while (it.hasNext()) {
+                    History h = it.next();
+                    if (h.bookId == hist.bookId && h.chapterName.equals(chapterNameNoGz)) {
+                        it.remove();
+                        YbkService.requestRemoveHistory(Main.getMainApplication(), h);
+                    }
+                }
                 historyList.add(0, hist);
                 backStack.push(hist);
                 Log.d(TAG, "Added " + hist.chapterName + " to backStack");

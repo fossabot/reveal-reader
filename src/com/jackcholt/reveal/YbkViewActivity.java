@@ -212,15 +212,11 @@ public class YbkViewActivity extends Activity {
 
                             try {
                                 YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
-                                boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog);
-
-                                if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+                                if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null
+                                        && mChapFileName != null) {
                                     // Save the book and chapter to history if
-                                    // there
-                                    // is one
-
+                                    // there is one
                                     ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
-
                                     // remove the excess histories
                                     ybkDao.deleteHistories();
                                 }
@@ -788,15 +784,11 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         long bookId = -1L;
 
-        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk);
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-        if (!showInPopup && !mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
-            // Save the book and chapter to history if there
-            // is one
-
+        if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+            // Save the book and chapter to history if there is one
             ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
-
             // remove the excess histories
             ybkDao.deleteHistories();
         }
@@ -968,7 +960,7 @@ public class YbkViewActivity extends Activity {
                         }
                     }
 
-                    showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk);
+                    boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk);
 
                     if (!showInPopup) {
                         mHistTitle = mChapBtnText;
@@ -1216,7 +1208,8 @@ public class YbkViewActivity extends Activity {
             // well and good, except that we keep a copy of the title
             // around in the history stack, which causes the whole internal
             // character array of the chapter to be referenced after we have
-            // moved on from the chapter, so force making a copy of just the string we want.
+            // moved on from the chapter, so force making a copy of just the
+            // string we want.
             mChapBtnText = new String(chapBtnText.toCharArray());
         } catch (IllegalStateException ise) {
             // does no on any good to percolate this exception, so log it, use a
@@ -1329,8 +1322,8 @@ public class YbkViewActivity extends Activity {
             unexpectedError(e);
         }
     }
-    
-    @Override    
+
+    @Override
     protected void onDestroy() {
         try {
             if (isFinishing()) {
