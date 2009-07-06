@@ -40,7 +40,7 @@ public class ErrorDialog extends Activity {
             FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
         }
         FlurryAgent.onEvent("ErrorDialog");
-        setContentView(R.layout.error_dialog);
+        setContentView(R.layout.dialog_error);
 
         final CheckBox exitCheckBox = (CheckBox) findViewById(R.id.exit_reveal_btn);
         final CheckBox sendEmailCheckBox = (CheckBox) findViewById(R.id.send_email_btn);

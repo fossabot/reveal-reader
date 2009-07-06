@@ -29,7 +29,7 @@ public class AboutDialog extends Dialog {
 			FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
 		}
 		FlurryAgent.onEvent("AboutDialog");
-	    setContentView(R.layout.about);
+	    setContentView(R.layout.dialog_about);
 	
 	    Button close = (Button) findViewById(R.id.close_about_btn);
 	    close.setOnClickListener(new View.OnClickListener() {

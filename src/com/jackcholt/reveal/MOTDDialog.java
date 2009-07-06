@@ -34,7 +34,7 @@ public class MOTDDialog extends Dialog {
         super(_this);
 
         FlurryAgent.onEvent("MOTD");
-        setContentView(R.layout.motd);
+        setContentView(R.layout.dialog_motd);
         String title;
         title = "Reveal Online MOTD";
         setTitle(title);

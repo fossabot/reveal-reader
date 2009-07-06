@@ -31,7 +31,7 @@ public class ConfirmActionDialog extends Dialog implements View.OnClickListener 
     private ConfirmActionDialog(final Context _this, String title, String message, String okButtonLabel,
             final SafeRunnable action) {
         super(_this);
-        setContentView(R.layout.confirm_action);
+        setContentView(R.layout.dialog_confirm_action);
 
         Button ok = (Button) findViewById(R.id.ok_btn);
         ok.setOnClickListener(new View.OnClickListener() {

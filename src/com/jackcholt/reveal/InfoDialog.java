@@ -27,7 +27,7 @@ public class InfoDialog extends Dialog implements View.OnClickListener {
      */
     private InfoDialog(final Context _this, String title, String message) {
         super(_this);
-        setContentView(R.layout.info);
+        setContentView(R.layout.dialog_info);
 
         Button closeBtn = (Button) findViewById(R.id.close_btn);
         closeBtn.setOnClickListener(this);

@@ -31,7 +31,7 @@ public class LicenseDialog extends Dialog {
 			FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
 		}
 		FlurryAgent.onEvent("LicenseDialog");
-	    setContentView(R.layout.license);
+	    setContentView(R.layout.dialog_license);
 	
 	    Button close = (Button) findViewById(R.id.close_about_btn);
 	    close.setOnClickListener(new View.OnClickListener() {

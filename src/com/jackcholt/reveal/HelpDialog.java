@@ -17,7 +17,7 @@ public class HelpDialog extends Dialog {
         super(_this);
 
         FlurryAgent.onEvent("OnlineHelp");
-        setContentView(R.layout.help);
+        setContentView(R.layout.dialog_help);
         String title;
         title = "Reveal Online Help";
         setTitle(title);

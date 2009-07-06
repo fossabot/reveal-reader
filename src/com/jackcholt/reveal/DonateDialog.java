@@ -16,7 +16,7 @@ public class DonateDialog extends Dialog {
     public DonateDialog(Context _this) {
         super(_this);
 
-        setContentView(R.layout.donate);
+        setContentView(R.layout.dialog_donate);
         String title;
         title = "Reveal PayPal Donations";
         setTitle(title);

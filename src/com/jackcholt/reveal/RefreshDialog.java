@@ -21,7 +21,7 @@ public class RefreshDialog extends Dialog {
 
     public RefreshDialog(Context _this, int mode) {
         super(_this);
-        setContentView(R.layout.refresh_ebooks_wait);
+        setContentView(R.layout.dialog_refresh_ebooks_wait);
         TextView messageView = (TextView) findViewById(R.id.waitMessage);
         Button closeButton = (Button) findViewById(R.id.close_about_btn);
         closeButton.setOnClickListener(new View.OnClickListener() {
