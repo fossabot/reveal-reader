@@ -155,6 +155,9 @@ public class MOTDDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
         FlurryAgent.onEvent("MOTDDialog");
+        
+        PopDialogDismissDB.checkForDialogDismissed(_this, "MOTDialog");
+        
         MOTDDialog dlg = new MOTDDialog(_this);
 
         return dlg;
@@ -170,6 +173,6 @@ public class MOTDDialog extends Dialog {
         
         if (checkBox.isChecked()) {
             PopDialogDismissDB.addDismissedDialog(Main.getMainApplication(), "MOTDialog", MOTDNumberInt);
-        }
+        } 
     }
 }
