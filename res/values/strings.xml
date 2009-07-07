@@ -117,6 +117,9 @@
 <string name="update_bookmark">Update Bookmark</string>
 <string name="delete_bookmark">Delete Bookmark</string>
 <string name="goto_bookmark">Go to Bookmark</string>
+<string name="bookmark_updated">Bookmark updated to current location.</string>
+<string name="bookmark_deleted">Bookmark deleted.</string>
+<string name="bookmark_added">Bookmark added.</string>
 <string name="reset">Reset To Default Settings</string>
 <string name="sdcard_required">You must have an SDCARD installed to use Reveal.</string>
 <string name="confirm_reset">Reseting Reveal will default all personal settings and recreate the eBook Library database. Resetting may help Reveal to run properly if it is failing due to data corruption, but will also throw away your bookmarks and history. Do you wish to proceed?</string>
@@ -129,5 +132,5 @@
 <string name="menu_ebook_properties">eBook Info</string>
 <string name="ebook_info_message">&lt;b&gt;Book Name:&lt;/b&gt; {0}&lt;br/&gt;&lt;b&gt;File Name:&lt;/b&gt; {1}&lt;br/&gt;</string>
 <string name="cancel_popup_btn">Cancel</string>
-<string name="dismiss_popup_btn">Dont Show Again</string>
+<string name="dismiss_popup_btn">Don\'t Show Again</string>
 </resources>
