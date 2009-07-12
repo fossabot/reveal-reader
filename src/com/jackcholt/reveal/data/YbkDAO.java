@@ -310,6 +310,10 @@ public class YbkDAO {
                 book.active = true;
                 book.bindingText = bindingText;
                 book.formattedTitle = title == null ? null : Util.formatTitle(title);
+                if (book.formattedTitle == Util.NO_TITLE) {
+                    // use filename instead
+                    book.formattedTitle = new File(fileName).getName();
+                }
                 book.title = title;
                 book.shortTitle = shortTitle;
                 book.metaData = metaData;
@@ -320,8 +324,16 @@ public class YbkDAO {
                     // make sure the book is put into the title index last so it
                     // won't show up in the list prematurely
                     done = insertChapters(id, chapters) && root.bookIdIndex.put(book.id, book)
-                            && root.bookFilenameIndex.put(book.fileName, book)
-                            && (book.formattedTitle == null || root.bookTitleIndex.put(book.formattedTitle, book));
+                            && root.bookFilenameIndex.put(book.fileName, book);
+                    if (done && book.formattedTitle != null) {
+                        done = root.bookTitleIndex.put(book.formattedTitle, book);
+                        if (!done) {
+                            // almost certainly a duplicate book title - so tack on filename to try to make it unique
+                            book.formattedTitle += " (" + new File(fileName).getName() +")";
+                            book.update(mDb);
+                            done = root.bookTitleIndex.put(book.formattedTitle, book);
+                        }
+                    }
                 } finally {
                     endTransaction(done);
                     if (!done) {
@@ -347,8 +359,8 @@ public class YbkDAO {
      * @return true if successful
      * @throws IOException
      */
+    @SuppressWarnings("unchecked")
     private boolean insertChapters(long bookId, List<Chapter> chapters) throws IOException {
-        boolean done = false;
         int count = chapters.size();
         for (int i = 0; i < count; i++) {
             Chapter chap = chapters.get(i);
@@ -357,9 +369,12 @@ public class YbkDAO {
             chapters.set(i, null);
             chap.bookId = bookId;
             chap.create(mDb);
-            done = root.chapterNameIndex.put(makeKey(chap.bookId, chap.fileName.toLowerCase()), chap)
+            boolean inserted = root.chapterNameIndex.put(makeKey(chap.bookId, chap.fileName.toLowerCase()), chap)
                     && (chap.orderNumber == 0 || root.chapterOrderNbrIndex.put(makeKey(chap.bookId, chap.orderNumber),
                             chap));
+            if (!inserted) {
+                Log.e(TAG, "Failed to insert chapter '" + chap.fileName + "'. Possible duplicate name?");
+            }
             chap = null;
         }
         // free up the memory because big books can cause a memory squeeze
@@ -367,7 +382,7 @@ public class YbkDAO {
         if (chapters instanceof ArrayList) {
             ((ArrayList<Chapter>) chapters).trimToSize();
         }
-        return done;
+        return true;
     }
 
     /**
