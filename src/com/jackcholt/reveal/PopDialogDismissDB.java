@@ -110,7 +110,10 @@ public class PopDialogDismissDB {
 
         try {
             db = _this.openOrCreateDatabase(DATABASE_NAME, 0, null);
-            db.insert(TABLE_DIALOGS, null, initialValues);
+            if (checkForDialogDismissed(_this, DialogName)){
+                db.insert(TABLE_DIALOGS, null, initialValues);
+               
+            }
         } catch (SQLException e) {
             Log.d(TAG, "SQLite exception: " + e.getLocalizedMessage());
         } finally {
@@ -122,7 +125,7 @@ public class PopDialogDismissDB {
      * @param _this 
      * @param DialogName
      */
-    public static void checkForDialogDismissed(Context _this, String DialogName) {
+    static boolean checkForDialogDismissed(Context _this, String DialogName) {
  
         try {
             db = _this.openOrCreateDatabase(DATABASE_NAME, 0, null);
@@ -152,5 +155,6 @@ public class PopDialogDismissDB {
         } finally {
             db.close();
         }
+        return false;
     }
 }
