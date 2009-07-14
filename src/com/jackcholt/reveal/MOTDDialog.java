@@ -16,14 +16,17 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
+import android.database.Cursor;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 
 import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.data.PopDialogDAO;
 
 /**
  * Checks for updates to the MOTD and display them
@@ -36,8 +39,7 @@ public class MOTDDialog extends Dialog {
     static int MOTDNumberInt;
     String MOTDmessage;
     static boolean isDismissChecked;
-    
-    
+
     public MOTDDialog(Context _this) {
         super(_this);
         // Change DEBUG to "0" in Global.java when building a RELEASE Version
@@ -116,8 +118,7 @@ public class MOTDDialog extends Dialog {
         MOTDNumberInt = Integer.parseInt(MOTDNumberStr);
 
         // The actual MOTD HTML code to display
-        MOTDmessage = manifestNodeList.item(0).getAttributes().getNamedItem("android:MOTDmessage")
-                .getNodeValue();
+        MOTDmessage = manifestNodeList.item(0).getAttributes().getNamedItem("android:MOTDmessage").getNodeValue();
 
         try {
             Editor e = Main.getMainApplication().getPreferences(Context.MODE_PRIVATE).edit();
@@ -129,7 +130,7 @@ public class MOTDDialog extends Dialog {
             System.out.println(e.getMessage());
 
         } finally {
-     }
+        }
 
         WebView wv = (WebView) findViewById(R.id.motdView);
         wv.clearCache(true);
@@ -155,9 +156,17 @@ public class MOTDDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
         FlurryAgent.onEvent("MOTDDialog");
-        
-        PopDialogDismissDB.checkForDialogDismissed(_this, "MOTDialog");
-        
+
+        PopDialogDAO dao = PopDialogDAO.getInstance(_this, PopDialogCheck.DATABASE_NAME, PopDialogCheck.TABLE_CREATE,
+                PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
+
+        // Check to see if the DB contains this dialog version already dismissed
+        // Then don't display
+
+        String[] columns = new String[] { PopDialogDAO.KEY_ID, PopDialogCheck.COL_DIALOGNAME,
+                PopDialogCheck.COL_DISMISSED };
+        Cursor cursor = dao.get(PopDialogCheck.DATABASE_TABLE, columns);
+
         MOTDDialog dlg = new MOTDDialog(_this);
 
         return dlg;
@@ -168,11 +177,19 @@ public class MOTDDialog extends Dialog {
     protected void onStop() {
         super.onStop();
         FlurryAgent.onEndSession(Main.getMainApplication());
-        
-        final CheckBox checkBox = (CheckBox) findViewById(R.id.dismiss_popup_id); 
-        
+
+        final CheckBox checkBox = (CheckBox) findViewById(R.id.dismiss_popup_id);
+
         if (checkBox.isChecked()) {
-            PopDialogDismissDB.addDismissedDialog(Main.getMainApplication(), "MOTDialog", MOTDNumberInt);
-        } 
+            PopDialogDAO dao = PopDialogDAO.getInstance(Main.getMainApplication(), PopDialogCheck.DATABASE_NAME,
+                    PopDialogCheck.TABLE_CREATE, PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
+
+            if (dao != null) {
+                ContentValues values = new ContentValues();
+                values.put(PopDialogCheck.COL_DIALOGNAME, "MOTDDialog" + MOTDNumberInt);
+                values.put(PopDialogCheck.COL_DISMISSED, "1");
+                dao.insert(PopDialogCheck.DATABASE_TABLE, values);
+            }
+        }
     }
 }

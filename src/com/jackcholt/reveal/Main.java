@@ -38,6 +38,7 @@ import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.History;
+import com.jackcholt.reveal.data.PopDialogDAO;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class Main extends ListActivity {
@@ -137,7 +138,7 @@ public class Main extends ListActivity {
             }
             
             // Create and start the DB for checking POPups and MOTDS 
-            PopDialogDismissDB.DBCreate(this);
+            //PopDialogDAO;
 
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
