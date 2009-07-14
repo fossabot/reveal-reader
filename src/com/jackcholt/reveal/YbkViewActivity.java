@@ -789,13 +789,18 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         long bookId = -1L;
 
+        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter.equals("index"));
+        
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-        if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+        if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
             // Save the book and chapter to history if there is one
             ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
             // remove the excess histories
             ybkDao.deleteHistories();
+            if (mBackButtonPressed) {
+                ybkDao.popBackStack();
+            }
         }
 
         // check the format of the internal file name
@@ -839,7 +844,6 @@ public class YbkViewActivity extends Activity {
 
                 try {
                     if (chap.equals("index")) {
-                        mNavFile = "1";
                         String shortTitle = book.shortTitle;
                         String tryFileToOpen = "\\" + shortTitle + ".html.gz";
                         content = ybkReader.readInternalFile(tryFileToOpen);
@@ -964,8 +968,6 @@ public class YbkViewActivity extends Activity {
                             }
                         }
                     }
-
-                    boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk);
 
                     if (!showInPopup) {
                         mHistTitle = mChapBtnText;
@@ -1331,7 +1333,7 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onDestroy() {
         try {
-            if (isFinishing()) {
+            if (isFinishing() && !mThemeIsDialog) {
                 try {
                     YbkDAO.getInstance(this).clearBackStack();
                 } catch (IOException ioe) {
