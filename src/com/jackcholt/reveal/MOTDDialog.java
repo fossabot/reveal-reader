@@ -19,13 +19,13 @@ import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
-import android.database.Cursor;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 
 import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.data.PopDialogCheck;
 import com.jackcholt.reveal.data.PopDialogDAO;
 
 /**
@@ -38,7 +38,7 @@ public class MOTDDialog extends Dialog {
     String MOTDNumberStr;
     static int MOTDNumberInt;
     String MOTDmessage;
-    static boolean isDismissChecked;
+
 
     public MOTDDialog(Context _this) {
         super(_this);
@@ -162,10 +162,7 @@ public class MOTDDialog extends Dialog {
 
         // Check to see if the DB contains this dialog version already dismissed
         // Then don't display
-
-        String[] columns = new String[] { PopDialogDAO.KEY_ID, PopDialogCheck.COL_DIALOGNAME,
-                PopDialogCheck.COL_DISMISSED };
-        Cursor cursor = dao.get(PopDialogCheck.DATABASE_TABLE, columns);
+        dao.isMyDialogDismissed("MOTDDialog" + MOTDNumberInt);
 
         MOTDDialog dlg = new MOTDDialog(_this);
 

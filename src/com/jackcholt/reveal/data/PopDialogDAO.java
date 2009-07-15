@@ -1,5 +1,7 @@
 package com.jackcholt.reveal.data;
 
+import com.jackcholt.reveal.Main;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -8,6 +10,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+/**
+ * Checks for updates to the DB for Dismissable Dialogs
+ * 
+ * by Dave Packham
+ */
 
 public class PopDialogDAO extends SQLiteOpenHelper {
 
@@ -78,6 +86,10 @@ public class PopDialogDAO extends SQLiteOpenHelper {
         return db.query(table, columns, null, null, null, null, null);
     }
     
+    public Cursor get(String table, String[] columns, String query){ 
+        return db.query(table, columns, query, null, null, null, null); 
+    } 
+    
     public Cursor get(String table, String[] columns, long id){
         Cursor cursor =db.query(true, table, columns, KEY_ID + "=" + id, null, null, null, null, null);
         if (cursor != null) {
@@ -96,5 +108,17 @@ public class PopDialogDAO extends SQLiteOpenHelper {
     
     public int update(String table, long id, ContentValues values) {
         return db.update(table, values, KEY_ID + "=" + id, null);
+    }
+    
+    public boolean isMyDialogDismissed(String dlgName) {
+        PopDialogDAO dao = PopDialogDAO.getInstance(Main.getMainApplication(), PopDialogCheck.DATABASE_NAME,
+                PopDialogCheck.TABLE_CREATE, PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
+
+        Cursor cur = dao.get(PopDialogCheck.DATABASE_TABLE, new String[] {"dismissed"}, "dialogname=" + dlgName + " and dismissed= '1'");
+
+        if (cur != null) {
+            return (cur.getCount() == 1);
+        }
+        return false;
     }
 }
