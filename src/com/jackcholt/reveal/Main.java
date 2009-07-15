@@ -38,7 +38,6 @@ import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.History;
-import com.jackcholt.reveal.data.PopDialogDAO;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class Main extends ListActivity {
