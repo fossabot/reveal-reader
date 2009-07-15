@@ -1,8 +1,5 @@
 package com.jackcholt.reveal.data;
 
-import android.database.Cursor;
-
-import com.jackcholt.reveal.Main;
 
 /**
  * Checks for updates to the DB for Dismissable Dialogs

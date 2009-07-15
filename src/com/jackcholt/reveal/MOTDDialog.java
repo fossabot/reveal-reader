@@ -141,7 +141,16 @@ public class MOTDDialog extends Dialog {
             wv.loadData("Cannot get online help.  Your network is currently down.", "text/plain", "utf-8");
         }
 
-        show();
+        // Check to see if the DB contains this dialog version already dismissed
+        // Then don't display
+        PopDialogDAO dao = PopDialogDAO.getInstance(_this, PopDialogCheck.DATABASE_NAME, PopDialogCheck.TABLE_CREATE,
+                PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
+
+        boolean showme = dao.isMyDialogDismissed("MOTDDialog" + MOTDNumberInt);        
+        
+        if (!showme){
+            show();
+        }
     }
 
     public static MOTDDialog create(Context _this) {
@@ -156,13 +165,6 @@ public class MOTDDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
         FlurryAgent.onEvent("MOTDDialog");
-
-        PopDialogDAO dao = PopDialogDAO.getInstance(_this, PopDialogCheck.DATABASE_NAME, PopDialogCheck.TABLE_CREATE,
-                PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
-
-        // Check to see if the DB contains this dialog version already dismissed
-        // Then don't display
-        dao.isMyDialogDismissed("MOTDDialog" + MOTDNumberInt);
 
         MOTDDialog dlg = new MOTDDialog(_this);
 
