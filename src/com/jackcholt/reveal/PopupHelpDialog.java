@@ -30,7 +30,7 @@ public class PopupHelpDialog extends Dialog {
 
     }
 
-    public static PopupHelpDialog create(Context _this) {
+    public static PopupHelpDialog create(Context _this, String DialogName) {
         // Change DEBUG to "0" in Global.java when building a RELEASE Version
         // for the GOOGLE APP MARKET
         // This allows for real usage stats and end user error reporting
@@ -42,7 +42,7 @@ public class PopupHelpDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
 
-        PopupHelpDialog dlg = new PopupHelpDialog(_this);
+        PopupHelpDialog dlg = new PopupHelpDialog(_this, DialogName);
         return dlg;
     }
 

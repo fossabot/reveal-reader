@@ -100,7 +100,7 @@ public class YbkViewActivity extends Activity {
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
-            PopupHelpDialog.create(this);
+            //PopupHelpDialog.create(this, "newfontsizeoption");
             
             mShowPictures = sharedPref.getBoolean("show_pictures", true);
 
