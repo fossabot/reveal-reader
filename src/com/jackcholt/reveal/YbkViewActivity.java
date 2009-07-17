@@ -63,7 +63,6 @@ public class YbkViewActivity extends Activity {
     private String mHistTitle = "";
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
-    // private int mHistoryPos = 0;
     private String mDialogChapter;
     private String mNavFile = "1";
     private boolean mThemeIsDialog = false;
@@ -87,7 +86,6 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
-            super.onCreate(savedInstanceState);
             if (Global.DEBUG == 0) {
                 // Release Key for use of the END USERS
                 FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
@@ -100,6 +98,8 @@ public class YbkViewActivity extends Activity {
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
+            //PopupHelpDialog.create(this, "newfontsizeoption");
+            
             mShowPictures = sharedPref.getBoolean("show_pictures", true);
 
             BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
@@ -181,6 +181,7 @@ public class YbkViewActivity extends Activity {
                 }
 
                 setContentView(R.layout.view_ybk);
+                super.onCreate(savedInstanceState);
 
                 if (popup != null) {
                     LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
@@ -189,6 +190,10 @@ public class YbkViewActivity extends Activity {
 
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
+            
+                //Check and set Fontsize
+                int fontSize = ybkView.getSettings().getDefaultFontSize();
+                int fixedFontSize = ybkView.getSettings().getDefaultFixedFontSize();
 
                 if (popup != null) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
@@ -784,13 +789,18 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         long bookId = -1L;
 
+        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter.equals("index"));
+        
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-        if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+        if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
             // Save the book and chapter to history if there is one
             ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
             // remove the excess histories
             ybkDao.deleteHistories();
+            if (mBackButtonPressed) {
+                ybkDao.popBackStack();
+            }
         }
 
         // check the format of the internal file name
@@ -834,7 +844,6 @@ public class YbkViewActivity extends Activity {
 
                 try {
                     if (chap.equals("index")) {
-                        mNavFile = "1";
                         String shortTitle = book.shortTitle;
                         String tryFileToOpen = "\\" + shortTitle + ".html.gz";
                         content = ybkReader.readInternalFile(tryFileToOpen);
@@ -959,8 +968,6 @@ public class YbkViewActivity extends Activity {
                             }
                         }
                     }
-
-                    boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk);
 
                     if (!showInPopup) {
                         mHistTitle = mChapBtnText;
@@ -1326,7 +1333,7 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onDestroy() {
         try {
-            if (isFinishing()) {
+            if (isFinishing() && !mThemeIsDialog) {
                 try {
                     YbkDAO.getInstance(this).clearBackStack();
                 } catch (IOException ioe) {
@@ -1367,5 +1374,4 @@ public class YbkViewActivity extends Activity {
             }
         }
     }
-
 }

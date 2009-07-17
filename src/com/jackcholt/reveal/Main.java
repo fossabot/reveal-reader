@@ -137,7 +137,7 @@ public class Main extends ListActivity {
             }
             
             // Create and start the DB for checking POPups and MOTDS 
-            PopDialogDismissDB.DBCreate(this);
+            //PopDialogDAO;
 
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
@@ -145,7 +145,9 @@ public class Main extends ListActivity {
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
                 
                 // Check for a message from US :)
-                //MOTDDialog.create(this);
+                MOTDDialog.create(this);
+                
+                // Test SMS sending
                 // Util.sendSMS(this);
             }
 

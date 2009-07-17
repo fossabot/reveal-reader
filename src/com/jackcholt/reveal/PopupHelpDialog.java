@@ -12,30 +12,25 @@ import android.webkit.WebView;
  * by Dave Packham
  */
 
-public class HelpDialog extends Dialog {
-    public HelpDialog(Context _this) {
+public class PopupHelpDialog extends Dialog {
+    public PopupHelpDialog(Context _this, String DialogName) {
         super(_this);
 
-        FlurryAgent.onEvent("OnlineHelp");
-        setContentView(R.layout.dialog_help);
+        FlurryAgent.onEvent("PopupHelp");
+        setContentView(R.layout.popuphelp);
         String title;
-        title = "Reveal Online Help";
+        title = "Reveal Popup Help";
         setTitle(title);
 
-        WebView wv = (WebView) findViewById(R.id.helpView);
+        WebView wv = (WebView) findViewById(R.id.popupView);
         wv.clearCache(true);
-        wv.getSettings().setJavaScriptEnabled(true);
-        if (Util.isNetworkUp(_this)) {
-            wv.loadUrl("http://revealreader.thepackhams.com/revealHelp.html");
-        } else {
-            wv.loadData("Cannot get online help.  Your network is currently down.", "text/plain", "utf-8");
-        }
+        wv.loadUrl("file:///android_asset/newfontsizeoption.html");
 
         show();
 
     }
 
-    public static HelpDialog create(Context _this) {
+    public static PopupHelpDialog create(Context _this, String DialogName) {
         // Change DEBUG to "0" in Global.java when building a RELEASE Version
         // for the GOOGLE APP MARKET
         // This allows for real usage stats and end user error reporting
@@ -47,7 +42,7 @@ public class HelpDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
 
-        HelpDialog dlg = new HelpDialog(_this);
+        PopupHelpDialog dlg = new PopupHelpDialog(_this, DialogName);
         return dlg;
     }
 

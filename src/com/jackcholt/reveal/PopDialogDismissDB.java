@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
-import android.widget.ArrayAdapter;
 
 /**
  * Dave Packham Create the myPopupsViewedDB Sqlite DB to track if a user has
@@ -110,7 +109,10 @@ public class PopDialogDismissDB {
 
         try {
             db = _this.openOrCreateDatabase(DATABASE_NAME, 0, null);
-            db.insert(TABLE_DIALOGS, null, initialValues);
+            if (checkForDialogDismissed(_this, DialogName)){
+                db.insert(TABLE_DIALOGS, null, initialValues);
+               
+            }
         } catch (SQLException e) {
             Log.d(TAG, "SQLite exception: " + e.getLocalizedMessage());
         } finally {
@@ -122,7 +124,7 @@ public class PopDialogDismissDB {
      * @param _this 
      * @param DialogName
      */
-    public static void checkForDialogDismissed(Context _this, String DialogName) {
+    static boolean checkForDialogDismissed(Context _this, String DialogName) {
  
         try {
             db = _this.openOrCreateDatabase(DATABASE_NAME, 0, null);
@@ -139,18 +141,19 @@ public class PopDialogDismissDB {
                     int i = 0; 
                     do { 
                         i++; 
-                        String dialognameSTR = c.getString(dialogname); 
-                        String dismissedSTR = c.getString(dismissed); 
+                        //String dialognameSTR = c.getString(dialogname); 
+                        //String dismissedSTR = c.getString(dismissed); 
                         result.add("" + i + ". " + dialogname+ " - " + dismissed); 
                     } while (c.moveToNext()); 
                 } 
             }
-        ArrayAdapter<String> fileList = new ArrayAdapter<String>(_this, android.R.layout.simple_list_item_1, result);
+        //ArrayAdapter<String> fileList = new ArrayAdapter<String>(_this, android.R.layout.simple_list_item_1, result);
 
         } catch (SQLException e) {
             Log.d(TAG, "SQLite exception: " + e.getLocalizedMessage());
         } finally {
             db.close();
         }
+        return false;
     }
 }
