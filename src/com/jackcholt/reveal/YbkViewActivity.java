@@ -63,7 +63,6 @@ public class YbkViewActivity extends Activity {
     private String mHistTitle = "";
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
-    // private int mHistoryPos = 0;
     private String mDialogChapter;
     private String mNavFile = "1";
     private boolean mThemeIsDialog = false;
@@ -87,7 +86,6 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
-            super.onCreate(savedInstanceState);
             if (Global.DEBUG == 0) {
                 // Release Key for use of the END USERS
                 FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
@@ -183,6 +181,7 @@ public class YbkViewActivity extends Activity {
                 }
 
                 setContentView(R.layout.view_ybk);
+                super.onCreate(savedInstanceState);
 
                 if (popup != null) {
                     LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);

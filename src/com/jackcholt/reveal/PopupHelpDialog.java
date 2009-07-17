@@ -42,7 +42,7 @@ public class PopupHelpDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
 
-        PopupHelpDialog dlg = new PopupHelpDialog(_this, DialogName);
+        PopupHelpDialog dlg = new PopupHelpDialog(_this);
         return dlg;
     }
 
