@@ -190,10 +190,11 @@ public class YbkViewActivity extends Activity {
 
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
+            
+                //Check and set Fontsize
                 int fontSize = ybkView.getSettings().getDefaultFontSize();
                 int fixedFontSize = ybkView.getSettings().getDefaultFixedFontSize();
-                
-                
+
                 if (popup != null) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
                 } else {
@@ -1373,5 +1374,4 @@ public class YbkViewActivity extends Activity {
             }
         }
     }
-
 }

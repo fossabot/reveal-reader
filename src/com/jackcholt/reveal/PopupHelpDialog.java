@@ -13,7 +13,7 @@ import android.webkit.WebView;
  */
 
 public class PopupHelpDialog extends Dialog {
-    public PopupHelpDialog(Context _this) {
+    public PopupHelpDialog(Context _this, String DialogName) {
         super(_this);
 
         FlurryAgent.onEvent("PopupHelp");
@@ -42,7 +42,7 @@ public class PopupHelpDialog extends Dialog {
             FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
         }
 
-        PopupHelpDialog dlg = new PopupHelpDialog(_this);
+        PopupHelpDialog dlg = new PopupHelpDialog(_this, DialogName);
         return dlg;
     }
 
