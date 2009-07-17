@@ -35,6 +35,7 @@ import com.jackcholt.reveal.data.PopDialogDAO;
  */
 
 public class MOTDDialog extends Dialog {
+    private static final String TAG = "MOTDDialog";
     String MOTDNumberStr;
     static int MOTDNumberInt;
     String MOTDmessage;
@@ -84,7 +85,9 @@ public class MOTDDialog extends Dialog {
         try {
             cnVersion.connect();
         } catch (IOException e3) {
-            e3.printStackTrace();
+            Log.e(TAG, "Cannot connect to the source for MOTD text. " +  e3.getMessage());
+            this.dismiss();
+            return;
         }
 
         InputStream streamVersion = null;
