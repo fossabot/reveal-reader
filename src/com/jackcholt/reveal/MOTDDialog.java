@@ -43,16 +43,6 @@ public class MOTDDialog extends Dialog {
 
     public MOTDDialog(Context _this) {
         super(_this);
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version
-        // for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-        }
         FlurryAgent.onEvent("MOTD");
         setContentView(R.layout.dialog_dismissable);
 
@@ -157,16 +147,6 @@ public class MOTDDialog extends Dialog {
     }
 
     public static MOTDDialog create(Context _this) {
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version
-        // for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(_this, "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
-        }
         FlurryAgent.onEvent("MOTDDialog");
 
         MOTDDialog dlg = new MOTDDialog(_this);
@@ -178,8 +158,6 @@ public class MOTDDialog extends Dialog {
     @Override
     protected void onStop() {
         super.onStop();
-        FlurryAgent.onEndSession(Main.getMainApplication());
-
         final CheckBox checkBox = (CheckBox) findViewById(R.id.dismiss_popup_id);
 
         if (checkBox.isChecked()) {

@@ -65,17 +65,7 @@ public class TitleBrowser extends ListActivity {
         try {
             super.onCreate(savedInstanceState);
 
-            // Change DEBUG to "0" in Global.java when building a RELEASE Version
-            // for the GOOGLE APP MARKET
-            // This allows for real usage stats and end user error reporting
-            if (Global.DEBUG == 0) {
-                // Release Key for use of the END USERS
-                FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-            } else {
-                // Development key for use of the DEVELOPMENT TEAM
-                FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-            }
-
+            Util.startFlurrySession(this);
             FlurryAgent.onEvent("TitleBrowser");
 
             Map<String, String> flurryMap = new HashMap<String, String>();
@@ -117,12 +107,23 @@ public class TitleBrowser extends ListActivity {
 
     }
 
-    /** Called when the activity is going away. */
+    @Override
+    protected void onStart() {
+        try {
+            Util.startFlurrySession(this);
+            super.onStart();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
+
     @Override
     protected void onStop() {
         try {
             super.onStop();
-            FlurryAgent.onEndSession(Main.getMainApplication());
+            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -161,16 +162,6 @@ public class TitleBrowser extends ListActivity {
             if (selected instanceof Title) {
                 if (mBusy) {
                     Toast.makeText(this, R.string.ebook_download_busy, Toast.LENGTH_LONG).show();
-                    // Change DEBUG to "0" in Global.java when building a RELEASE Version
-                    // for the GOOGLE APP MARKET
-                    // This allows for real usage stats and end user error reporting
-                    if (Global.DEBUG == 0) {
-                        // Release Key for use of the END USERS
-                        FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-                    } else {
-                        // Development key for use of the DEVELOPMENT TEAM
-                        FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-                    }
                     FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
                 } else {
                     downloadTitle((Title) selected);
@@ -257,16 +248,6 @@ public class TitleBrowser extends ListActivity {
         // Create a map and add the name of the downloaded eBook to it
         Map<String, String> flurryMap = new HashMap<String, String>();
         flurryMap.put("eBook Downloaded", title.name);
-        // Change DEBUG to "0" in Global.java when building a
-        // RELEASE Version for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-        }
         FlurryAgent.onEvent("TitleBrowser", flurryMap);
 
         SafeRunnable action = new SafeRunnable() {

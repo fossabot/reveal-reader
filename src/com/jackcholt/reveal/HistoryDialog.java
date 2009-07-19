@@ -21,16 +21,7 @@ public class HistoryDialog extends ListActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            // Change DEBUG to "0" in Global.java when building a RELEASE Version
-            // for the GOOGLE APP MARKET
-            // This allows for real usage stats and end user error reporting
-            if (Global.DEBUG == 0) {
-                // Release Key for use of the END USERS
-                FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-            } else {
-                // Development key for use of the DEVELOPMENT TEAM
-                FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-            }
+            Util.startFlurrySession(this);
             FlurryAgent.onEvent("HistoryDialog");
 
             setContentView(R.layout.dialog_history);
@@ -79,12 +70,24 @@ public class HistoryDialog extends ListActivity {
 
     }
 
+    @Override
+    protected void onStart() {
+        try {
+            Util.startFlurrySession(this);
+            super.onStart();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
+
     /** Called when the activity is going away. */
     @Override
     protected void onStop() {
         try {
             super.onStop();
-            FlurryAgent.onEndSession(Main.getMainApplication());
+            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

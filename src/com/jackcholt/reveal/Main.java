@@ -92,17 +92,7 @@ public class Main extends ListActivity {
 
             mApplication = this;
 
-            // Change DEBUG to "0" in Global.java when building a RELEASE
-            // Version
-            // for the GOOGLE APP MARKET
-            // This allows for real usage stats and end user error reporting
-            if (Global.DEBUG == 0) {
-                // Release Key for use of the END USERS
-                FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
-            } else {
-                // Development key for use of the DEVELOPMENT TEAM
-                FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
-            }
+            Util.startFlurrySession(this);
             FlurryAgent.onEvent("Main");
 
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -183,6 +173,12 @@ public class Main extends ListActivity {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
+    }
+
+    @Override
+    protected void onStart() {
+        Util.startFlurrySession(this);
+        super.onStart();
     }
 
     /** Called when the activity is going away. */
@@ -780,4 +776,5 @@ public class Main extends ListActivity {
         };
         ConfirmActionDialog.confirmedAction(this, R.string.reset, R.string.confirm_reset, R.string.reset, action);
     }
+
 }

@@ -24,20 +24,10 @@ public class Settings extends PreferenceActivity {
         try {
             super.onCreate(savedInstanceState);
 
-            // Change DEBUG to "0" in Global.java when building a RELEASE Version
-            // for the GOOGLE APP MARKET
-            // This allows for real usage stats and end user error reporting
-            if (Global.DEBUG == 0) {
-                // Release Key for use of the END USERS
-                FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
-            } else {
-                // Development key for use of the DEVELOPMENT TEAM
-                FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
-            }
-
             // Load the XML preferences file
             addPreferencesFromResource(R.xml.preferences);
 
+            Util.startFlurrySession(this);
             FlurryAgent.onEvent("SettingScreen");
 
             getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(
@@ -106,19 +96,36 @@ public class Settings extends PreferenceActivity {
      */
 
     @Override
+    protected void onStart() {
+        try {
+            Util.startFlurrySession(this);
+            super.onStart();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
+
+    /** Called when the activity is going away. */
+    @Override
     protected void onStop() {
-        super.onStop();
+        try {
+            super.onStop();
+            // Save user preferences. We need an Editor object to
+            // make changes. All objects are from android.context.Context
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+            SharedPreferences.Editor editor = settings.edit();
+            // editor.putBoolean("showSplashScreen", showSplashScreen);
 
-        // Save user preferences. We need an Editor object to
-        // make changes. All objects are from android.context.Context
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        SharedPreferences.Editor editor = settings.edit();
-        // editor.putBoolean("showSplashScreen", showSplashScreen);
-
-        // Don't forget to commit your edits!!!
-        editor.commit();
-        FlurryAgent.onEndSession(Main.getMainApplication());
-
+            // Don't forget to commit your edits!!!
+            editor.commit();
+            FlurryAgent.onEndSession(this);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
     }
 
     /*

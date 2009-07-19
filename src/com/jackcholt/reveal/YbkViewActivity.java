@@ -86,14 +86,7 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
-            if (Global.DEBUG == 0) {
-                // Release Key for use of the END USERS
-                FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
-            } else {
-                // Development key for use of the DEVELOPMENT TEAM
-                FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
-            }
-
+            Util.startFlurrySession(this);
             FlurryAgent.onEvent("YbkViewActivity");
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -292,10 +285,29 @@ public class YbkViewActivity extends Activity {
         Util.unexpectedError(this, t, "book: " + mBookFileName, "chapter: " + mChapFileName);
     }
 
+    @Override
+    protected void onStart() {
+        try {
+            Util.startFlurrySession(this);
+            super.onStart();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
+
     /** Called when the activity is going away. */
     @Override
     protected void onStop() {
-        super.onStop();
+        try {
+            super.onStop();
+            FlurryAgent.onEndSession(this);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
     }
 
     /**

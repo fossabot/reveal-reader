@@ -30,15 +30,7 @@ public class ErrorDialog extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
-        }
+        Util.startFlurrySession(this);
         FlurryAgent.onEvent("ErrorDialog");
         setContentView(R.layout.dialog_error);
 
@@ -135,5 +127,29 @@ public class ErrorDialog extends Activity {
             }
         }).start();
     }
+    
+    @Override
+    protected void onStart() {
+        try {
+            Util.startFlurrySession(this);
+            super.onStart();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
 
+    /** Called when the activity is going away. */
+    @Override
+    protected void onStop() {
+        try {
+            super.onStop();
+            FlurryAgent.onEndSession(this);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
 }
