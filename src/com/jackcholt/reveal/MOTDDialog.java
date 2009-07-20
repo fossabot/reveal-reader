@@ -19,6 +19,8 @@ import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
+import android.os.Looper;
+import android.os.Process;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -146,12 +148,19 @@ public class MOTDDialog extends Dialog {
         }
     }
 
-    public static MOTDDialog create(Context _this) {
+    public static void create(final Context _this) {
         FlurryAgent.onEvent("MOTDDialog");
 
-        MOTDDialog dlg = new MOTDDialog(_this);
+        Thread t = new Thread() {
+            public void run() {
+                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                Looper.prepare();
+                @SuppressWarnings("unused")
+                MOTDDialog dlg = new MOTDDialog(_this);
+            }
+        };
+        t.start();  
 
-        return dlg;
     }
 
     /** Called when the activity is going away. */
