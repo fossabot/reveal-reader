@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>  
+<resources>  
+<string-array name="font_size">  
+	<item value="12">Small</item>
+    <item value="14">Medium</item>
+    <item value="18">Large</item>
+</string-array>  
+</resources>  

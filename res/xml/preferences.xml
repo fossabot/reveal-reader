@@ -4,22 +4,29 @@
         xmlns:android="http://schemas.android.com/apk/res/android">
 
     <CheckBoxPreference
-            android:key="show_splash_screen"
-            android:title="@string/label_splash_screen"
-            android:summaryOn="@string/summary_on_show_splash_screen" 
-            android:summaryOff="@string/summary_off_show_splash_screen" 
-            android:checked="true"/>
+        android:key="show_splash_screen"
+        android:title="@string/label_splash_screen"
+        android:summaryOn="@string/summary_on_show_splash_screen" 
+        android:summaryOff="@string/summary_off_show_splash_screen" 
+        android:checked="true"/>
             
     <CheckBoxPreference
-            android:key="show_fullscreen"
-            android:title="@string/label_fullscreen"
-            android:summaryOn="@string/summary_on_fullscreen" 
-            android:summaryOff="@string/summary_off_fullscreen" 
-            android:checked="true"/>
+        android:key="show_fullscreen"
+        android:title="@string/label_fullscreen"
+        android:summaryOn="@string/summary_on_fullscreen" 
+        android:summaryOff="@string/summary_off_fullscreen" 
+        android:checked="true"/>
 
     <EditTextPreference
-    		android:key="default_ebook_dir"
-    		android:title="@string/title_default_ebook_dir" 
-    		android:summary="@string/summary_default_ebook_dir" />
- 
+   		android:key="default_ebook_dir"
+   		android:title="@string/title_default_ebook_dir" 
+   		android:summary="@string/summary_default_ebook_dir"/>
+    		
+	<ListPreference  
+		android:key="font_size"  
+		android:title="@string/title_default_font_size"  
+		android:summary="@string/summary_default_font_size"  
+		android:entries="@array/font_size"  
+		android:entryValues="@array/font_size"/>
+		 
 </PreferenceScreen>
