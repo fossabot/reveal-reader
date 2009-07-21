@@ -61,6 +61,7 @@ public class MOTDDialog extends Dialog {
 
         URLConnection cnVersion = null;
         URL urlVersion = null;
+        
         try {
             urlVersion = new URL("http://revealreader.thepackhams.com/revealMOTD.xml");
         } catch (MalformedURLException e5) {

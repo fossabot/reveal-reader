@@ -61,6 +61,7 @@ public class YbkViewActivity extends Activity {
     private String mDialogFilename = "Never set";
     private String mChapBtnText = null;
     private String mHistTitle = "";
+    private String fontSizeSTR = "";
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
     private String mDialogChapter;
@@ -186,10 +187,7 @@ public class YbkViewActivity extends Activity {
 
                 // Check and set Fontsize
                 int fontSize = ybkView.getSettings().getDefaultFontSize();
-                int fixedFontSize = ybkView.getSettings().getDefaultFixedFontSize();
-                String fontSizeSTR = "@string/default_fontsize";
-
-                fontSizeSTR = sharedPref.getString("default_font_size", fontSizeSTR);
+                fontSizeSTR = sharedPref.getString("default_font_size", "14");
                 fontSize = Integer.parseInt(fontSizeSTR);
 
                 ybkView.getSettings().setDefaultFontSize(fontSize);
