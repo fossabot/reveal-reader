@@ -51,17 +51,6 @@ public class ReportError {
 
 
     public static void reportError(final String errorToReport, final Boolean sendEmail) {
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version
-        // for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(Main.getMainApplication(), "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(Main.getMainApplication(), "VYRRJFNLNSTCVKBF73UP");
-        }
-
         Thread t = new Thread() {
             public void run() {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);

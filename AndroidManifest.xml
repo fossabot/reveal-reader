@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.jackcholt.reveal" android:versionName="1.0" android:versionCode="330">
-	<application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
+	package="com.jackcholt.reveal" android:versionName="1.0"
+	android:versionCode="330">
+	<application android:icon="@drawable/icon" android:label="@string/app_name"
+		android:debuggable="true">
 		<activity android:name=".Main" android:screenOrientation="sensor"
 			android:multiprocess="true" android:label="@string/app_name">
 			<intent-filter>
@@ -16,21 +18,22 @@
 		<provider android:multiprocess="true" android:authorities="com.jackcholt.reveal"
 			android:name=".YbkProvider" android:screenOrientation="sensor"></provider>
 		<activity android:label="@string/title_browser_name"
-			android:screenOrientation="sensor" android:name="TitleBrowser"/>
-		
+			android:screenOrientation="sensor" android:name="TitleBrowser" />
+
 		<activity android:multiprocess="true" android:name=".HistoryDialog"
 			android:label="@string/menu_history" android:screenOrientation="sensor"
 			android:theme="@android:style/Theme.Dialog" />
 		<activity android:multiprocess="true" android:name=".BookmarkDialog"
 			android:label="@string/menu_bookmark" android:screenOrientation="sensor"
 			android:theme="@android:style/Theme.Dialog" />
-		
+
 		<activity android:name=".ErrorDialog" android:label="@string/error_title"
 			android:theme="@android:style/Theme.Dialog"
 			android:screenOrientation="sensor" android:multiprocess="false"></activity>
 		<service android:name=".YbkService" android:exported="false" />
-	
-</application>
+
+		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog"></activity>
+	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>

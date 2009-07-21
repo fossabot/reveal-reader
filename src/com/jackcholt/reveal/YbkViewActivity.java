@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnClickListener;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -56,11 +57,12 @@ public class YbkViewActivity extends Activity {
     private SharedPreferences mSharedPref;
     @SuppressWarnings("unused")
     private boolean mShowPictures;
-    private boolean BOOLshowFullScreen;
+    private boolean mShowFullScreen;
     private String mFragment;
     private String mDialogFilename = "Never set";
     private String mChapBtnText = null;
     private String mHistTitle = "";
+    private String fontSizeSTR = "";
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
     private String mDialogChapter;
@@ -81,40 +83,21 @@ public class YbkViewActivity extends Activity {
     private static final int BOOKMARK_ID = Menu.FIRST + 3;
     public static final int CALL_HISTORY = 1;
     public static final int CALL_BOOKMARK = 2;
+    public static final int CALL_VERSE_CONTEXT_MENU = 3;
 
     @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
-            if (Global.DEBUG == 0) {
-                // Release Key for use of the END USERS
-                FlurryAgent.onStartSession(this, "BLRRZRSNYZ446QUWKSP4");
-            } else {
-                // Development key for use of the DEVELOPMENT TEAM
-                FlurryAgent.onStartSession(this, "VYRRJFNLNSTCVKBF73UP");
-            }
-
-            FlurryAgent.onEvent("YbkViewActivity");
+            Util.startFlurrySession(this);
+            FlurryAgent.onEvent(TAG);
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
-            //PopupHelpDialog.create(this, "newfontsizeoption");
-            
-            mShowPictures = sharedPref.getBoolean("show_pictures", true);
+            // PopupHelpDialog.create(this, "newfontsizeoption");
 
-            BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+            initDisplayFeatures(sharedPref);
 
-            if (BOOLshowFullScreen) {
-                getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            }
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-            if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
-                Log.w(TAG, "Progress bar is not supported");
-            }
-
-            setProgressBarIndeterminateVisibility(true);
             try {
 
                 YbkDAO ybkDao = YbkDAO.getInstance(this);
@@ -126,6 +109,7 @@ public class YbkViewActivity extends Activity {
                 String strUrl = null;
 
                 HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
+            
                 if (statusMap != null) {
                     mBookId = bookId = (Long) statusMap.get("bookId");
                     mBookFileName = (String) statusMap.get("bookFileName");
@@ -189,11 +173,16 @@ public class YbkViewActivity extends Activity {
                 }
 
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
-                ybkView.getSettings().setJavaScriptEnabled(true);
-            
-                //Check and set Fontsize
+                WebSettings webSettings = ybkView.getSettings();
+                webSettings.setJavaScriptEnabled(true);
+
+                // Check and set Fontsize
                 int fontSize = ybkView.getSettings().getDefaultFontSize();
-                int fixedFontSize = ybkView.getSettings().getDefaultFixedFontSize();
+                fontSizeSTR = sharedPref.getString("default_font_size", "14");
+                fontSize = Integer.parseInt(fontSizeSTR);
+
+                ybkView.getSettings().setDefaultFontSize(fontSize);
+                ybkView.getSettings().setDefaultFixedFontSize(fontSize);
 
                 if (popup != null) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
@@ -282,6 +271,21 @@ public class YbkViewActivity extends Activity {
         }
     }
 
+    private void initDisplayFeatures(SharedPreferences sharedPref) {
+        mShowPictures = sharedPref.getBoolean("show_pictures", true);
+        mShowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+
+        if (mShowFullScreen) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
+            Log.w(TAG, "Progress bar is not supported");
+        }
+    }
+
     /**
      * Handle unexpected error.
      * 
@@ -292,10 +296,29 @@ public class YbkViewActivity extends Activity {
         Util.unexpectedError(this, t, "book: " + mBookFileName, "chapter: " + mChapFileName);
     }
 
+    @Override
+    protected void onStart() {
+        try {
+            Util.startFlurrySession(this);
+            super.onStart();
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+    }
+
     /** Called when the activity is going away. */
     @Override
     protected void onStop() {
-        super.onStop();
+        try {
+            super.onStop();
+            FlurryAgent.onEndSession(this);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
     }
 
     /**
@@ -353,7 +376,10 @@ public class YbkViewActivity extends Activity {
                                     Intent emailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url));
                                     startActivity(emailIntent);
                                 } else {
-                                    view.scrollTo(0, 0);
+                                    // pop up a context menu
+                                    startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class), YbkViewActivity.CALL_VERSE_CONTEXT_MENU);
+                                    return true;
+                                    //view.scrollTo(0, 0);
                                 }
                             } else {
 
@@ -554,6 +580,7 @@ public class YbkViewActivity extends Activity {
             menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous).setIcon(
                     android.R.drawable.ic_media_previous);
             menu.add(Menu.NONE, NEXT_ID, Menu.NONE, R.string.menu_next).setIcon(android.R.drawable.ic_media_next);
+
         } catch (RuntimeException rte) {
             unexpectedError(rte);
         } catch (Error e) {
@@ -789,8 +816,9 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         long bookId = -1L;
 
-        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter.equals("index"));
-        
+        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter
+                .equals("index"));
+
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
         if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {

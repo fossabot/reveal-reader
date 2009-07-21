@@ -35,26 +35,8 @@ public class DonateDialog extends Dialog {
     }
 
     public static DonateDialog create(Context _this) {
-        // Change DEBUG to "0" in Global.java when building a RELEASE Version
-        // for the GOOGLE APP MARKET
-        // This allows for real usage stats and end user error reporting
-        if (Global.DEBUG == 0) {
-            // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(_this, "BLRRZRSNYZ446QUWKSP4");
-        } else {
-            // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(_this, "VYRRJFNLNSTCVKBF73UP");
-        }
         FlurryAgent.onEvent("DonateDialog");
-
         DonateDialog dlg = new DonateDialog(_this);
         return dlg;
-    }
-
-    /** Called when the activity is going away. */
-    @Override
-    protected void onStop() {
-        super.onStop();
-        FlurryAgent.onEndSession(Main.getMainApplication());
     }
 }

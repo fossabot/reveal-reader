@@ -44,6 +44,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -1178,6 +1179,21 @@ public class Util {
             return parser;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Start flurry session.
+     * 
+     * @param context
+     */
+    public static void startFlurrySession(Context context) {
+        if (Global.DEBUG == 0) {
+            // Release Key for use of the END USERS
+            FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
+        } else {
+            // Development key for use of the DEVELOPMENT TEAM
+            FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
         }
     }
 
