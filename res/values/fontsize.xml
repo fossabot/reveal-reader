@@ -1,8 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>  
-<resources>  
-<string-array name="font_size">  
-	<item value="12">Small</item>
-    <item value="14">Medium</item>
-    <item value="18">Large</item>
-</string-array>  
-</resources>  
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string-array name="fontsize">
+		<item>X-Small</item>
+		<item>Small</item>
+		<item>Default</item>
+		<item>Large</item>
+		<item>X_large</item>
+	</string-array>
+	
+	<string-array name="fontsize_number">
+		<item>8</item>
+		<item>12</item>
+		<item>16</item>
+		<item>20</item>
+		<item>24</item>
+	</string-array>
+</resources>

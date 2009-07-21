@@ -91,8 +91,8 @@ public class YbkViewActivity extends Activity {
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
-            //PopupHelpDialog.create(this, "newfontsizeoption");
-            
+            // PopupHelpDialog.create(this, "newfontsizeoption");
+
             mShowPictures = sharedPref.getBoolean("show_pictures", true);
 
             BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
@@ -183,10 +183,17 @@ public class YbkViewActivity extends Activity {
 
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
-            
-                //Check and set Fontsize
+
+                // Check and set Fontsize
                 int fontSize = ybkView.getSettings().getDefaultFontSize();
                 int fixedFontSize = ybkView.getSettings().getDefaultFixedFontSize();
+                String fontSizeSTR = "@string/default_fontsize";
+
+                fontSizeSTR = sharedPref.getString("default_font_size", fontSizeSTR);
+                fontSize = Integer.parseInt(fontSizeSTR);
+
+                ybkView.getSettings().setDefaultFontSize(fontSize);
+                ybkView.getSettings().setDefaultFixedFontSize(fontSize);
 
                 if (popup != null) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
@@ -566,6 +573,7 @@ public class YbkViewActivity extends Activity {
             menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous).setIcon(
                     android.R.drawable.ic_media_previous);
             menu.add(Menu.NONE, NEXT_ID, Menu.NONE, R.string.menu_next).setIcon(android.R.drawable.ic_media_next);
+
         } catch (RuntimeException rte) {
             unexpectedError(rte);
         } catch (Error e) {
@@ -801,8 +809,9 @@ public class YbkViewActivity extends Activity {
         YbkFileReader ybkReader = mYbkReader;
         long bookId = -1L;
 
-        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter.equals("index"));
-        
+        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter
+                .equals("index"));
+
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
         if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {

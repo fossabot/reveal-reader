@@ -23,10 +23,10 @@
    		android:summary="@string/summary_default_ebook_dir"/>
     		
 	<ListPreference  
-		android:key="font_size"  
+		android:key="default_font_size"  
 		android:title="@string/title_default_font_size"  
 		android:summary="@string/summary_default_font_size"  
-		android:entries="@array/font_size"  
-		android:entryValues="@array/font_size"/>
+		android:entries="@array/fontsize"  
+		android:entryValues="@array/fontsize_number"/>
 		 
 </PreferenceScreen>
