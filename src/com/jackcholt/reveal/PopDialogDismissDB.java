@@ -141,13 +141,11 @@ public class PopDialogDismissDB {
                     int i = 0; 
                     do { 
                         i++; 
-                        //String dialognameSTR = c.getString(dialogname); 
-                        //String dismissedSTR = c.getString(dismissed); 
                         result.add("" + i + ". " + dialogname+ " - " + dismissed); 
                     } while (c.moveToNext()); 
                 } 
             }
-        //ArrayAdapter<String> fileList = new ArrayAdapter<String>(_this, android.R.layout.simple_list_item_1, result);
+            c.close();
 
         } catch (SQLException e) {
             Log.d(TAG, "SQLite exception: " + e.getLocalizedMessage());

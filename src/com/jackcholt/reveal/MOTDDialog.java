@@ -179,6 +179,7 @@ public class MOTDDialog extends Dialog {
                 values.put(PopDialogCheck.COL_DISMISSED, "1");
                 dao.insert(PopDialogCheck.DATABASE_TABLE, values);
             }
+            
         }
     }
 }
