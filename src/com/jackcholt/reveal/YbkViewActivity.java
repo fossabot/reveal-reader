@@ -56,12 +56,12 @@ public class YbkViewActivity extends Activity {
     private SharedPreferences mSharedPref;
     @SuppressWarnings("unused")
     private boolean mShowPictures;
-    private boolean BOOLshowFullScreen;
+    private boolean mShowFullScreen;
     private String mFragment;
     private String mDialogFilename = "Never set";
     private String mChapBtnText = null;
     private String mHistTitle = "";
-    private String fontSizeSTR = "";
+    private String strFontSize = "";
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
     private String mDialogChapter;
@@ -87,28 +87,17 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
+            setProgressBarIndeterminateVisibility(true);
+            
             Util.startFlurrySession(this);
-            FlurryAgent.onEvent("YbkViewActivity");
+            FlurryAgent.onEvent(TAG);
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
             // PopupHelpDialog.create(this, "newfontsizeoption");
 
-            mShowPictures = sharedPref.getBoolean("show_pictures", true);
+            initDisplayFeatures(sharedPref);
 
-            BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
-
-            if (BOOLshowFullScreen) {
-                getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            }
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-            if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
-                Log.w(TAG, "Progress bar is not supported");
-            }
-
-            setProgressBarIndeterminateVisibility(true);
             try {
 
                 YbkDAO ybkDao = YbkDAO.getInstance(this);
@@ -144,11 +133,11 @@ public class YbkViewActivity extends Activity {
                         if (extras != null) {
                             isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
                             bookId = (Long) extras.get(YbkDAO.ID);
+                            popup = (Boolean) extras.get("popup");
+                            content = (String) extras.get("content");
+                            strUrl = (String) extras.getString("strUrl");
+                            mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
                         }
-                        popup = (Boolean) extras.get("popup");
-                        content = (String) extras.get("content");
-                        strUrl = (String) extras.getString("strUrl");
-                        mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
                     }
 
                     if (isFromHistory != null) {
@@ -163,9 +152,12 @@ public class YbkViewActivity extends Activity {
 
                 if (bookId == null) {
                     Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Book not loaded");
                     finish();
                     return;
                 }
+
+                Log.d(TAG, "BookId: " + bookId);
 
                 mBookId = bookId;
 
@@ -185,13 +177,7 @@ public class YbkViewActivity extends Activity {
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
 
-                // Check and set Fontsize
-                int fontSize = ybkView.getSettings().getDefaultFontSize();
-                fontSizeSTR = sharedPref.getString("default_font_size", "14");
-                fontSize = Integer.parseInt(fontSizeSTR);
-
-                ybkView.getSettings().setDefaultFontSize(fontSize);
-                ybkView.getSettings().setDefaultFixedFontSize(fontSize);
+                checkAndSetFontSize(sharedPref, ybkView);
 
                 if (popup != null) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
@@ -277,6 +263,32 @@ public class YbkViewActivity extends Activity {
             unexpectedError(rte);
         } catch (Error e) {
             unexpectedError(e);
+        }
+    }
+
+    private void checkAndSetFontSize(SharedPreferences sharedPref, final WebView ybkView) {
+        // Check and set Fontsize
+        int fontSize = ybkView.getSettings().getDefaultFontSize();
+        strFontSize = sharedPref.getString("default_font_size", "14");
+        fontSize = Integer.parseInt(strFontSize);
+
+        ybkView.getSettings().setDefaultFontSize(fontSize);
+        ybkView.getSettings().setDefaultFixedFontSize(fontSize);
+    }
+
+    private void initDisplayFeatures(SharedPreferences sharedPref) {
+        mShowPictures = sharedPref.getBoolean("show_pictures", true);
+
+        mShowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+
+        if (mShowFullScreen) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
+            Log.w(TAG, "Progress bar is not supported");
         }
     }
 
