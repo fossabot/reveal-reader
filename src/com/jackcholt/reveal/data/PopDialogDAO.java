@@ -114,11 +114,14 @@ public class PopDialogDAO extends SQLiteOpenHelper {
         PopDialogDAO dao = PopDialogDAO.getInstance(Main.getMainApplication(), PopDialogCheck.DATABASE_NAME,
                 PopDialogCheck.TABLE_CREATE, PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
 
-        Cursor cur = dao.get(PopDialogCheck.DATABASE_TABLE, new String[] {"dismissed"}, "dialogname='" + dlgName + "' and dismissed= '1'");
+        Cursor c = dao.get(PopDialogCheck.DATABASE_TABLE, new String[] {"dismissed"}, "dialogname='" + dlgName + "' and dismissed= '1'");
 
-        if (cur != null) {
-            return (cur.getCount() == 1);
+        if (c != null) {
+            boolean cCount = (c.getCount() == 1);
+            c.close();
+            return cCount;
         }
+        c.close();
         return false;
     }
 }

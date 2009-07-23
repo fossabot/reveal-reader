@@ -152,16 +152,15 @@ public class MOTDDialog extends Dialog {
     public static void create(final Context _this) {
         FlurryAgent.onEvent("MOTDDialog");
 
-        Thread t = new Thread() {
-            public void run() {
-                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-                Looper.prepare();
+        //Thread t = new Thread() {
+        //    public void run() {
+                //Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                //Looper.prepare();
                 @SuppressWarnings("unused")
                 MOTDDialog dlg = new MOTDDialog(_this);
-            }
-        };
-        t.start();  
-
+            //}
+        //};
+        //t.start();  
     }
 
     /** Called when the activity is going away. */
