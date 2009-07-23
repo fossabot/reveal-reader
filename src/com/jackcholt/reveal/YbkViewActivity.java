@@ -104,7 +104,7 @@ public class YbkViewActivity extends Activity {
 
                 Long bookId = null;
                 Boolean isFromHistory = null;
-                Boolean popup = null;
+                boolean popup = this instanceof YbkPopupActivity;
                 String content = null;
                 String strUrl = null;
 
@@ -118,7 +118,6 @@ public class YbkViewActivity extends Activity {
                     Log.d(TAG, "Scroll Position Y: " + mScrollYPos);
 
                     if (savedInstanceState != null) {
-                        popup = (Boolean) savedInstanceState.get("popup");
                         content = (String) savedInstanceState.get("content");
                         strUrl = (String) savedInstanceState.getString("strUrl");
                     }
@@ -133,7 +132,6 @@ public class YbkViewActivity extends Activity {
                         if (extras != null) {
                             isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
                             bookId = (Long) extras.get(YbkDAO.ID);
-                            popup = (Boolean) extras.get("popup");
                             content = (String) extras.get("content");
                             strUrl = (String) extras.getString("strUrl");
                             mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
@@ -161,15 +159,14 @@ public class YbkViewActivity extends Activity {
 
                 mBookId = bookId;
 
-                if (popup != null) {
-                    setTheme(android.R.style.Theme_Dialog);
+                if (popup) {
                     mThemeIsDialog = true;
                 }
 
                 setContentView(R.layout.view_ybk);
                 super.onCreate(savedInstanceState);
 
-                if (popup != null) {
+                if (popup) {
                     LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
                     breadCrumb.setVisibility(View.GONE);
                 }
@@ -179,7 +176,7 @@ public class YbkViewActivity extends Activity {
 
                 checkAndSetFontSize(sharedPref, ybkView);
 
-                if (popup != null) {
+                if (popup) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
                 } else {
                     final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
@@ -240,7 +237,7 @@ public class YbkViewActivity extends Activity {
                             mChapFileName = "\\" + shortTitle + ".html";
                     }
 
-                    if (popup == null) {
+                    if (!popup) {
                         if (loadChapter(mBookFileName, mChapFileName)) {
                             setBookBtn(shortTitle, mBookFileName, mChapFileName);
                         }
@@ -1021,10 +1018,9 @@ public class YbkViewActivity extends Activity {
                     if (showInPopup) {
                         // The page should appear in a pop-up
                         setProgressBarIndeterminateVisibility(true);
-                        Intent popupIntent = new Intent(this, YbkViewActivity.class);
+                        Intent popupIntent = new Intent(this, YbkPopupActivity.class);
                         popupIntent.putExtra("content", content);
                         popupIntent.putExtra("strUrl", strUrl);
-                        popupIntent.putExtra("popup", true);
                         popupIntent.putExtra(YbkDAO.ID, bookId);
                         startActivity(popupIntent);
                         setProgressBarIndeterminateVisibility(false);
