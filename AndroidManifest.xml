@@ -31,6 +31,8 @@
 			android:theme="@android:style/Theme.Dialog"
 			android:screenOrientation="sensor" android:multiprocess="false"></activity>
 		<service android:name=".YbkService" android:exported="false" />
+		<activity android:name=".YbkPopupActivity" android:label="@string/reveal_ybk_view"
+			android:theme="@android:style/Theme.Dialog"></activity>
 
 		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog"></activity>
 	</application>

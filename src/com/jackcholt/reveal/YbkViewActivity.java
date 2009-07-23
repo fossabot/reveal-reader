@@ -62,7 +62,7 @@ public class YbkViewActivity extends Activity {
     private String mDialogFilename = "Never set";
     private String mChapBtnText = null;
     private String mHistTitle = "";
-    private String fontSizeSTR = "";
+    private String mFontSizeStr = "";
     private int mChapOrderNbr = 0;
     private boolean mBackButtonPressed = false;
     private String mDialogChapter;
@@ -89,6 +89,8 @@ public class YbkViewActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
+            setProgressBarIndeterminateVisibility(true);
+
             Util.startFlurrySession(this);
             FlurryAgent.onEvent(TAG);
 
@@ -104,12 +106,12 @@ public class YbkViewActivity extends Activity {
 
                 Long bookId = null;
                 Boolean isFromHistory = null;
-                Boolean popup = null;
+                boolean popup = this instanceof YbkPopupActivity;
                 String content = null;
                 String strUrl = null;
 
                 HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
-            
+
                 if (statusMap != null) {
                     mBookId = bookId = (Long) statusMap.get("bookId");
                     mBookFileName = (String) statusMap.get("bookFileName");
@@ -119,7 +121,6 @@ public class YbkViewActivity extends Activity {
                     Log.d(TAG, "Scroll Position Y: " + mScrollYPos);
 
                     if (savedInstanceState != null) {
-                        popup = (Boolean) savedInstanceState.get("popup");
                         content = (String) savedInstanceState.get("content");
                         strUrl = (String) savedInstanceState.getString("strUrl");
                     }
@@ -134,11 +135,10 @@ public class YbkViewActivity extends Activity {
                         if (extras != null) {
                             isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
                             bookId = (Long) extras.get(YbkDAO.ID);
+                            content = (String) extras.get("content");
+                            strUrl = (String) extras.getString("strUrl");
+                            mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
                         }
-                        popup = (Boolean) extras.get("popup");
-                        content = (String) extras.get("content");
-                        strUrl = (String) extras.getString("strUrl");
-                        mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
                     }
 
                     if (isFromHistory != null) {
@@ -153,21 +153,23 @@ public class YbkViewActivity extends Activity {
 
                 if (bookId == null) {
                     Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Book not loaded");
                     finish();
                     return;
                 }
 
+                Log.d(TAG, "BookId: " + bookId);
+
                 mBookId = bookId;
 
-                if (popup != null) {
-                    setTheme(android.R.style.Theme_Dialog);
+                if (popup) {
                     mThemeIsDialog = true;
                 }
 
                 setContentView(R.layout.view_ybk);
                 super.onCreate(savedInstanceState);
 
-                if (popup != null) {
+                if (popup) {
                     LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
                     breadCrumb.setVisibility(View.GONE);
                 }
@@ -176,15 +178,9 @@ public class YbkViewActivity extends Activity {
                 WebSettings webSettings = ybkView.getSettings();
                 webSettings.setJavaScriptEnabled(true);
 
-                // Check and set Fontsize
-                int fontSize = ybkView.getSettings().getDefaultFontSize();
-                fontSizeSTR = sharedPref.getString("default_font_size", "14");
-                fontSize = Integer.parseInt(fontSizeSTR);
+                checkAndSetFontSize(sharedPref, ybkView);
 
-                ybkView.getSettings().setDefaultFontSize(fontSize);
-                ybkView.getSettings().setDefaultFixedFontSize(fontSize);
-
-                if (popup != null) {
+                if (popup) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
                 } else {
                     final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
@@ -192,8 +188,7 @@ public class YbkViewActivity extends Activity {
                     final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
                     chapBtn.setOnClickListener(new OnClickListener() {
                         /**
-                         * set the chapter button so it scrolls the window to
-                         * the top
+                         * set the chapter button so it scrolls the window to the top
                          */
                         public void onClick(final View v) {
                             mYbkView.scrollTo(0, 0);
@@ -245,7 +240,7 @@ public class YbkViewActivity extends Activity {
                             mChapFileName = "\\" + shortTitle + ".html";
                     }
 
-                    if (popup == null) {
+                    if (!popup) {
                         if (loadChapter(mBookFileName, mChapFileName)) {
                             setBookBtn(shortTitle, mBookFileName, mChapFileName);
                         }
@@ -271,13 +266,24 @@ public class YbkViewActivity extends Activity {
         }
     }
 
+    private void checkAndSetFontSize(SharedPreferences sharedPref, final WebView ybkView) {
+        // Check and set Fontsize
+        int fontSize = ybkView.getSettings().getDefaultFontSize();
+        mFontSizeStr = sharedPref.getString("default_font_size", "14");
+        fontSize = Integer.parseInt(mFontSizeStr);
+
+        ybkView.getSettings().setDefaultFontSize(fontSize);
+        ybkView.getSettings().setDefaultFixedFontSize(fontSize);
+    }
+
     private void initDisplayFeatures(SharedPreferences sharedPref) {
         mShowPictures = sharedPref.getBoolean("show_pictures", true);
+
         mShowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
 
         if (mShowFullScreen) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow()
+                    .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -289,11 +295,12 @@ public class YbkViewActivity extends Activity {
     /**
      * Handle unexpected error.
      * 
-     * @param t
+     * @param throwable
+     *            The exception/error that was unexpected.
      */
-    private void unexpectedError(Throwable t) {
+    private void unexpectedError(Throwable throwable) {
         finish();
-        Util.unexpectedError(this, t, "book: " + mBookFileName, "chapter: " + mChapFileName);
+        Util.unexpectedError(this, throwable, "book: " + mBookFileName, "chapter: " + mChapFileName);
     }
 
     @Override
@@ -377,9 +384,10 @@ public class YbkViewActivity extends Activity {
                                     startActivity(emailIntent);
                                 } else {
                                     // pop up a context menu
-                                    startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class), YbkViewActivity.CALL_VERSE_CONTEXT_MENU);
+                                    startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class),
+                                            YbkViewActivity.CALL_VERSE_CONTEXT_MENU);
                                     return true;
-                                    //view.scrollTo(0, 0);
+                                    // view.scrollTo(0, 0);
                                 }
                             } else {
 
@@ -548,9 +556,8 @@ public class YbkViewActivity extends Activity {
 
         if (chapBtn != null) {
             /*
-             * Checks to see if the title is too long for the button. This
-             * prevents the buttons becoming too large and the view window being
-             * smaller. - Adam Gessel
+             * Checks to see if the title is too long for the button. This prevents the buttons becoming too large and
+             * the view window being smaller. - Adam Gessel
              */
 
             if (mChapBtnText.length() > 20) {
@@ -768,8 +775,7 @@ public class YbkViewActivity extends Activity {
     }
 
     /**
-     * Load a chapter as identified by the id field of the book table and the
-     * order id.
+     * Load a chapter as identified by the id field of the book table and the order id.
      * 
      * @param bookId
      *            The record id of the chapter to load.
@@ -801,8 +807,7 @@ public class YbkViewActivity extends Activity {
     }
 
     /**
-     * Uses a YbkFileReader to get the content of a chapter and loads into the
-     * WebView.
+     * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
      * 
      * @param filePath
      *            The path to the YBK file from which to read the chapter.
@@ -1018,10 +1023,9 @@ public class YbkViewActivity extends Activity {
                     if (showInPopup) {
                         // The page should appear in a pop-up
                         setProgressBarIndeterminateVisibility(true);
-                        Intent popupIntent = new Intent(this, YbkViewActivity.class);
+                        Intent popupIntent = new Intent(this, YbkPopupActivity.class);
                         popupIntent.putExtra("content", content);
                         popupIntent.putExtra("strUrl", strUrl);
-                        popupIntent.putExtra("popup", true);
                         popupIntent.putExtra(YbkDAO.ID, bookId);
                         startActivity(popupIntent);
                         setProgressBarIndeterminateVisibility(false);
