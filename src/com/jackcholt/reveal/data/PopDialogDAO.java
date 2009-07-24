@@ -117,11 +117,12 @@ public class PopDialogDAO extends SQLiteOpenHelper {
         Cursor c = dao.get(PopDialogCheck.DATABASE_TABLE, new String[] {"dismissed"}, "dialogname='" + dlgName + "' and dismissed= '1'");
 
         if (c != null) {
-            boolean cCount = (c.getCount() == 1);
-            c.close();
-            return cCount;
+            try {
+                return (c.getCount() == 1);
+            } finally {
+                c.close();
+            }
         }
-        c.close();
         return false;
     }
 }
