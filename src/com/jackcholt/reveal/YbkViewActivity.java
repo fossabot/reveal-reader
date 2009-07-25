@@ -88,7 +88,7 @@ public class YbkViewActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             setProgressBarIndeterminateVisibility(true);
-            
+
             Util.startFlurrySession(this);
             FlurryAgent.onEvent(TAG);
 
@@ -279,8 +279,8 @@ public class YbkViewActivity extends Activity {
         mShowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
 
         if (mShowFullScreen) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow()
+                    .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -577,10 +577,41 @@ public class YbkViewActivity extends Activity {
                     android.R.drawable.ic_menu_recent_history);
             menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark)
                     .setIcon(android.R.drawable.ic_input_get);
-            menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous).setIcon(
-                    android.R.drawable.ic_media_previous);
-            menu.add(Menu.NONE, NEXT_ID, Menu.NONE, R.string.menu_next).setIcon(android.R.drawable.ic_media_next);
+            menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous).setIcon(R.drawable.previous_chapter);
+            menu.add(Menu.NONE, NEXT_ID, Menu.NONE, R.string.menu_next).setIcon(R.drawable.next_chapter);
 
+        } catch (RuntimeException rte) {
+            unexpectedError(rte);
+        } catch (Error e) {
+            unexpectedError(e);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(final Menu menu) {
+        try {
+            super.onPrepareOptionsMenu(menu);
+            MenuItem prevItem = menu.findItem(PREVIOUS_ID);
+            MenuItem nextItem = menu.findItem(NEXT_ID);
+            if (mChapOrderNbr < 1) {
+                prevItem.setVisible(false);
+                prevItem.setEnabled(false);
+                nextItem.setVisible(false);
+                nextItem.setEnabled(false);
+            } else {
+                boolean hasNext = false;
+                boolean hasPrev = mChapOrderNbr > 1;
+                try {
+                    hasNext = YbkDAO.getInstance(this).getChapter(mBookId, mChapOrderNbr + 1) != null;
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Error trying to detect if there is a next chapter: " + ioe);
+                }
+                prevItem.setVisible(hasNext || hasPrev);
+                prevItem.setEnabled(hasPrev);
+                nextItem.setVisible(hasNext || hasPrev);
+                nextItem.setEnabled(hasNext);
+            }
         } catch (RuntimeException rte) {
             unexpectedError(rte);
         } catch (Error e) {
