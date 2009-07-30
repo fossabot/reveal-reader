@@ -135,4 +135,5 @@
 <string name="dismiss_popup_btn">Don\'t Show Again</string>
 <string name="title_default_font_size">Default eBook Fontsize</string>
 <string name="summary_default_font_size">change default reading fontsize</string>
+<string name="menu_fontsize">FontSize</string>
 </resources>

@@ -21,13 +21,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -43,7 +46,7 @@ import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
-public class YbkViewActivity extends Activity {
+public class YbkViewActivity extends Activity implements OnGestureListener {
     private WebView mYbkView;
 
     private long mBookId;
@@ -82,6 +85,8 @@ public class YbkViewActivity extends Activity {
     private static final int BOOKMARK_ID = Menu.FIRST + 3;
     public static final int CALL_HISTORY = 1;
     public static final int CALL_BOOKMARK = 2;
+    
+    private GestureDetector gestureScanner; 
 
     @SuppressWarnings("unchecked")
     @Override
@@ -91,6 +96,8 @@ public class YbkViewActivity extends Activity {
 
             Util.startFlurrySession(this);
             FlurryAgent.onEvent(TAG);
+            
+            gestureScanner = new GestureDetector(this); 
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -1431,5 +1438,61 @@ public class YbkViewActivity extends Activity {
                 Util.unexpectedError(YbkViewActivity.this, e);
             }
         }
+    }
+
+    // Use Swipes to change chapters
+    // DKP
+    
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev){
+     super.dispatchTouchEvent(ev);
+        return gestureScanner.onTouchEvent(ev);
+    }
+    
+    @Override
+    public boolean onTouchEvent(MotionEvent me){
+        return gestureScanner.onTouchEvent(me);
+    } 
+    
+    public boolean onDown(MotionEvent e) {
+        return true; 
+    }
+
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY){
+        if(velocityX >= 1500){
+            setProgressBarIndeterminateVisibility(true);
+
+            try {
+                loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
+            } catch (IOException ioe) {
+                Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
+            }
+
+            setProgressBarIndeterminateVisibility(false);
+    }
+        if(velocityX <= -1500){
+            setProgressBarIndeterminateVisibility(true);
+            try {
+                loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
+            } catch (IOException ioe) {
+                Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
+            }
+            setProgressBarIndeterminateVisibility(false);
+    }
+        return true;
+    } 
+
+    public void onLongPress(MotionEvent e) {
+    }
+
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        return true;
+    }
+
+    public void onShowPress(MotionEvent e) {
+    }
+
+    public boolean onSingleTapUp(MotionEvent e) {
+       return true;
     }
 }
