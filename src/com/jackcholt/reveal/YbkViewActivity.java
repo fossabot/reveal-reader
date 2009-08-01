@@ -182,6 +182,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 ybkView.getSettings().setJavaScriptEnabled(true);
 
                 checkAndSetFontSize(sharedPref, ybkView);
+                checkAndSetEBookColor(sharedPref, ybkView);
 
                 if (popup) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
@@ -278,6 +279,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         ybkView.getSettings().setDefaultFontSize(fontSize);
         ybkView.getSettings().setDefaultFixedFontSize(fontSize);
+    }
+
+    private void checkAndSetEBookColor(SharedPreferences sharedPref, final WebView ybkView) {
+        // Check and set background and foreground colors
+        //public void onPageFinished(ybkView, String url){  
+        //    ybkView.loadUrl("javascript:(function() { " + "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
+        //                "})()");  
+       // }
+        
     }
 
     private void initDisplayFeatures(SharedPreferences sharedPref) {
@@ -1459,7 +1469,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY){
-        if(velocityX >= 1500){
+        if(velocityX <= 1500){
             setProgressBarIndeterminateVisibility(true);
 
             try {
@@ -1470,7 +1480,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             setProgressBarIndeterminateVisibility(false);
     }
-        if(velocityX <= -1500){
+        if(velocityX >= -1500){
             setProgressBarIndeterminateVisibility(true);
             try {
                 loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
