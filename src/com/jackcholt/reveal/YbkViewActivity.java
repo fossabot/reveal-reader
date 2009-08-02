@@ -85,8 +85,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private static final int BOOKMARK_ID = Menu.FIRST + 3;
     public static final int CALL_HISTORY = 1;
     public static final int CALL_BOOKMARK = 2;
-    
-    private GestureDetector gestureScanner; 
+
+    private GestureDetector gestureScanner;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -96,8 +96,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             Util.startFlurrySession(this);
             FlurryAgent.onEvent(TAG);
-            
-            gestureScanner = new GestureDetector(this); 
+
+            gestureScanner = new GestureDetector(this);
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -283,11 +283,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private void checkAndSetEBookColor(SharedPreferences sharedPref, final WebView ybkView) {
         // Check and set background and foreground colors
-        //public void onPageFinished(ybkView, String url){  
-        //    ybkView.loadUrl("javascript:(function() { " + "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
-        //                "})()");  
-       // }
-        
+        // public void onPageFinished(ybkView, String url){
+        // ybkView.loadUrl("javascript:(function() { " +
+        // "document.getElementsByTagName('body')[0].style.color = 'red'; " +
+        // "})()");
+        // }
+
     }
 
     private void initDisplayFeatures(SharedPreferences sharedPref) {
@@ -1452,45 +1453,46 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     // Use Swipes to change chapters
     // DKP
-    
+
     @Override
-    public boolean dispatchTouchEvent(MotionEvent ev){
-     super.dispatchTouchEvent(ev);
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        super.dispatchTouchEvent(ev);
         return gestureScanner.onTouchEvent(ev);
     }
-    
+
     @Override
-    public boolean onTouchEvent(MotionEvent me){
+    public boolean onTouchEvent(MotionEvent me) {
         return gestureScanner.onTouchEvent(me);
-    } 
-    
+    }
+
     public boolean onDown(MotionEvent e) {
-        return true; 
-    }
-
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY){
-        if(velocityX <= 1500){
-            setProgressBarIndeterminateVisibility(true);
-
-            try {
-                loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
-            } catch (IOException ioe) {
-                Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
-            }
-
-            setProgressBarIndeterminateVisibility(false);
-    }
-        if(velocityX >= -1500){
-            setProgressBarIndeterminateVisibility(true);
-            try {
-                loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
-            } catch (IOException ioe) {
-                Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
-            }
-            setProgressBarIndeterminateVisibility(false);
-    }
         return true;
-    } 
+    }
+
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        if (Math.abs(velocityX) > Math.abs(velocityY)) {
+            if (velocityX <= -1500) {
+                setProgressBarIndeterminateVisibility(true);
+    
+                try {
+                    loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
+                }
+                setProgressBarIndeterminateVisibility(false);
+            }
+            if (velocityX >= 1500) {
+                setProgressBarIndeterminateVisibility(true);
+                try {
+                    loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
+                }
+                setProgressBarIndeterminateVisibility(false);
+            }
+        }
+        return false;
+    }
 
     public void onLongPress(MotionEvent e) {
     }
@@ -1503,6 +1505,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     public boolean onSingleTapUp(MotionEvent e) {
-       return true;
+        return true;
     }
 }
