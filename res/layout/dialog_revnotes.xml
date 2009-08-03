@@ -5,7 +5,7 @@
 	android:layout_height="fill_parent"
 	android:orientation="vertical"
 	>
-	<WebView android:id="@+id/popupView"          
+	<WebView android:id="@+id/RevNotes"          
 	android:layout_width="fill_parent"          
 	android:layout_height="wrap_content"          
 	android:textSize="@dimen/font_size"/>	

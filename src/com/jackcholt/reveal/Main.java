@@ -128,9 +128,6 @@ public class Main extends ListActivity {
                 }
             }
 
-            // Create and start the DB for checking POPups and MOTDS
-            // PopDialogDAO;
-
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
                 // Actually go ONLINE and check... duhhhh
@@ -138,7 +135,9 @@ public class Main extends ListActivity {
 
                 // Check for a message from US :)
                 MOTDDialog.create(this);
-
+                // Check for version Notes Unique for this REV
+                RevNotesDialog.create(this);
+                
                 // Test SMS sending
                 // Util.sendSMS(this);
             }
