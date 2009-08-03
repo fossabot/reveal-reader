@@ -201,7 +201,7 @@ public class Util {
      * @return The uncompressed String. Returns null if there was an
      *         IOException.
      */
-    public static final String decompressGzip(final byte[] buf) {
+    public static final String decompressGzip(final byte[] buf, String encoding) {
         StringBuilder decomp = null;
 
         try {
@@ -213,7 +213,7 @@ public class Util {
 
             int bytesRead = 0;
             while (-1 != (bytesRead = zip.read(newBuf, 0, BUF_SIZE))) {
-                decomp.append(new String(newBuf, "ISO_8859-1").substring(0, bytesRead));
+                decomp.append(new String(newBuf, encoding).substring(0, bytesRead));
             }
         } catch (IOException ioe) {
             Log.e(TAG, "Error decompressing file: " + ioe.getMessage());

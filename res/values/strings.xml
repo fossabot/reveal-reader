@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="charset_label">Character set:</string>
 <string name="app_name">Reveal</string>
 <string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card.</string>
 <string name="no_books_xml">Error while trying to get book listing online.</string>
@@ -136,4 +137,12 @@
 <string name="title_default_font_size">Default eBook Fontsize</string>
 <string name="summary_default_font_size">change default reading fontsize</string>
 <string name="menu_fontsize">FontSize</string>
+<string name="choose_charset">Choose Character Set</string>
+<string-array name="charsets">
+	<item>Latin 1</item>
+	<item>ISO-8859-1</item>
+	<item>Cyrillic</item>
+	<item>CP1251</item>
+</string-array>
+<string name="changing_charset">Re-adding book using {0} character set. It should appear in the list momentarily. </string>
 </resources>

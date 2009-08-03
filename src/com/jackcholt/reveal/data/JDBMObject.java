@@ -14,7 +14,7 @@ import jdbm.RecordManager;
  * @author Shon Vella
  * 
  */
-public abstract class JDBMObject implements Serializable {
+public abstract class JDBMObject implements Serializable, Cloneable {
     private static final long serialVersionUID = 6352923845369621224L;
     // id to retrieve object from JDBM
     protected long recID = 0;
@@ -68,5 +68,11 @@ public abstract class JDBMObject implements Serializable {
     protected void delete(RecordManager db) throws IOException {
         db.delete(recID);
     }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
 
 }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import android.app.NotificationManager;
@@ -40,6 +41,7 @@ public class YbkService extends Service {
     public static final String SOURCE_KEY = "source";
     public static final String CALLBACKS_KEY = "callbacks";
     public static final String HISTORY_KEY = "history";
+    public static final String CHARSET_KEY = "charset";
 
     public static final int ADD_BOOK = 1;
     public static final int REMOVE_BOOK = 2;
@@ -56,7 +58,7 @@ public class YbkService extends Service {
     private volatile int mNotifId = Integer.MIN_VALUE;
 
     private SharedPreferences mSharedPref;
-
+    
     // kludge to get around the fact that we can't pass callbacks through the
     // service simply even though
     // the service is only for the local process.
@@ -96,6 +98,7 @@ public class YbkService extends Service {
             final String target = extras.getString(TARGET_KEY);
             final String source = extras.getString(SOURCE_KEY);
             final History hist = (History) extras.getSerializable(HISTORY_KEY);
+            final String charset = extras.getString(CHARSET_KEY);
             final long callbacksID = Long.valueOf(extras.getLong(CALLBACKS_KEY));
 
             switch (action) {
@@ -112,7 +115,7 @@ public class YbkService extends Service {
                             YbkFileReader ybkRdr = null;
                             try {
                                 // Create an object for reading a ybk file;
-                                ybkRdr = new YbkFileReader(YbkService.this, target);
+                                ybkRdr = new YbkFileReader(YbkService.this, target, charset);
                                 // Tell the YbkFileReader to populate the book info
                                 // into the database;
                                 long bookId = ybkRdr.populateBook();
@@ -210,7 +213,7 @@ public class YbkService extends Service {
                                 List<String> downloads = Util.fetchTitle(new File(target), new URL(source), libDir,
                                         context);
                                 for (String download : downloads) {
-                                    requestAddBook(context, download, callbackMap.get(Long.valueOf(callbacksID)));
+                                    requestAddBook(context, download, YbkFileReader.DEFAULT_YBK_CHARSET, callbackMap.get(Long.valueOf(callbacksID)));
                                 }
                             } catch (IOException ioe) {
                                 Log.e(TAG, "Unable to download '" + source + "': " + ioe.toString());
@@ -300,7 +303,7 @@ public class YbkService extends Service {
                     };
                     mLibHandler.post(job);
                 } else {
-                    Log.e(TAG, "Add history request missing target.");
+                    Log.e(TAG, "Update history request missing target.");
                 }
                 break;
             case REMOVE_HISTORY:
@@ -381,9 +384,9 @@ public class YbkService extends Service {
      * @param callbacks
      *            (optional) completion callback
      */
-    public static void requestAddBook(Context context, String target, Completion... callbacks) {
+    public static void requestAddBook(Context context, String target, String charset, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_BOOK).putExtra(TARGET_KEY,
-                target);
+                target).putExtra(CHARSET_KEY, charset);
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
             callbackMap.put(callbackID, callbacks);

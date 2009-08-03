@@ -229,7 +229,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     mBookFileName = book.fileName;
 
-                    mYbkReader = new YbkFileReader(this, mBookFileName);
+                    mYbkReader = new YbkFileReader(this, mBookFileName, null);
                     String shortTitle = book.shortTitle;
                     if (mChapFileName == null) {
                         if (mBookWalk) {
@@ -912,7 +912,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 // book
                 if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
                     ybkReader.close();
-                    ybkReader = mYbkReader = new YbkFileReader(this, filePath);
+                    ybkReader = mYbkReader = new YbkFileReader(this, filePath, null);
                 }
 
                 Book book = ybkDao.getBook(filePath.toLowerCase());
@@ -1475,6 +1475,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 setProgressBarIndeterminateVisibility(true);
     
                 try {
+//                    Toast.makeText(this, R.string.menu_next, Toast.LENGTH_SHORT).show();
                     loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
@@ -1484,6 +1485,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             if (velocityX >= 1500) {
                 setProgressBarIndeterminateVisibility(true);
                 try {
+//                    Toast.makeText(this, R.string.menu_previous, Toast.LENGTH_SHORT).show();
                     loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
