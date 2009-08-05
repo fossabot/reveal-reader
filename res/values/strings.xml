@@ -148,4 +148,12 @@
 	<item>CP1251</item>
 </string-array>
 <string name="changing_charset">Re-adding book using {0} character set. It should appear in the list momentarily. </string>
+    <string name="no_notes">No Notes Yet</string>
+    <string name="menu_insert">Add Note</string>
+    <string name="menu_delete">Delete Note</string>
+    <string name="title">Title</string>
+    <string name="body">Body</string>
+    <string name="confirm">Confirm</string>
+    <string name="edit_note">Edit Note</string>
+
 </resources>
