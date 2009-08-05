@@ -19,8 +19,6 @@ import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
-import android.os.Looper;
-import android.os.Process;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -42,9 +40,9 @@ public class MOTDDialog extends Dialog {
     static int MOTDNumberInt;
     String MOTDmessage;
 
-
     public MOTDDialog(Context _this) {
         super(_this);
+
         FlurryAgent.onEvent("MOTD");
         setContentView(R.layout.dialog_dismissable);
 
@@ -61,7 +59,7 @@ public class MOTDDialog extends Dialog {
 
         URLConnection cnVersion = null;
         URL urlVersion = null;
-        
+
         try {
             urlVersion = new URL("http://revealreader.thepackhams.com/revealMOTD.xml");
         } catch (MalformedURLException e5) {
@@ -78,7 +76,7 @@ public class MOTDDialog extends Dialog {
         try {
             cnVersion.connect();
         } catch (IOException e3) {
-            Log.e(TAG, "Cannot connect to the source for MOTD text. " +  e3.getMessage());
+            Log.e(TAG, "Cannot connect to the source for MOTD text. " + e3.getMessage());
             this.dismiss();
             return;
         }
@@ -142,9 +140,9 @@ public class MOTDDialog extends Dialog {
         PopDialogDAO dao = PopDialogDAO.getInstance(_this, PopDialogCheck.DATABASE_NAME, PopDialogCheck.TABLE_CREATE,
                 PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
 
-        boolean showme = dao.isMyDialogDismissed("MOTDDialog" + MOTDNumberInt);        
-        
-        if (!showme){
+        boolean showme = dao.isMyDialogDismissed("MOTDDialog" + MOTDNumberInt);
+
+        if (!showme) {
             show();
         }
     }
@@ -152,16 +150,15 @@ public class MOTDDialog extends Dialog {
     public static void create(final Context _this) {
         FlurryAgent.onEvent("MOTDDialog");
 
-        Thread t = new Thread() {
-            public void run() {
-                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-                Looper.prepare();
-                @SuppressWarnings("unused")
-                MOTDDialog dlg = new MOTDDialog(_this);
-            }
-        };
-        t.start();  
-
+        // Thread t = new Thread() {
+        // public void run() {
+        // Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+        // Looper.prepare();
+        @SuppressWarnings("unused")
+        MOTDDialog dlg = new MOTDDialog(_this);
+        // }
+        // };
+        // t.start();
     }
 
     /** Called when the activity is going away. */
@@ -180,7 +177,7 @@ public class MOTDDialog extends Dialog {
                 values.put(PopDialogCheck.COL_DISMISSED, "1");
                 dao.insert(PopDialogCheck.DATABASE_TABLE, values);
             }
-            
+
         }
     }
 }

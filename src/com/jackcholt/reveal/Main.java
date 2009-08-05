@@ -15,6 +15,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,6 +32,7 @@ import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
@@ -125,17 +127,16 @@ public class Main extends ListActivity {
                     BOOLsplashed = true;
                 }
             }
-            
-            // Create and start the DB for checking POPups and MOTDS 
-            //PopDialogDAO;
 
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
                 // Actually go ONLINE and check... duhhhh
                 UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
-                
+
                 // Check for a message from US :)
-                //MOTDDialog.create(this);
+                MOTDDialog.create(this);
+                // Check for version Notes Unique for this REV
+                RevNotesDialog.create(this);
                 
                 // Test SMS sending
                 // Util.sendSMS(this);
@@ -317,7 +318,7 @@ public class Main extends ListActivity {
 
                 // schedule the adding of books on disk that are not in the db
                 for (String file : addFiles) {
-                    YbkService.requestAddBook(this, file, callback);
+                    YbkService.requestAddBook(this, file, YbkFileReader.DEFAULT_YBK_CHARSET, callback);
                 }
             }
         } catch (IOException ioe) {
@@ -387,21 +388,104 @@ public class Main extends ListActivity {
     }
 
     protected boolean onEBookProperties(MenuItem item) {
-        Book book = getContextMenuBook(item);
+        final Book book = getContextMenuBook(item);
         String message;
         String metaData = book.metaData;
         if (metaData != null && metaData.length() > 0) {
-            message = metaData.replaceFirst("(?i)^.*<end>", "");            
+            message = metaData.replaceFirst("(?i)^.*<end>", "");
         } else {
-                
+
             File bookFile = new File(book.fileName);
-            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message),
-                    book.formattedTitle, bookFile.getName());
+            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message), book.formattedTitle,
+                    bookFile.getName());
         }
 
-        InfoDialog.create(this, R.string.menu_ebook_properties, message);
+        new EBookPropertiesDialog(this, getResources().getString(R.string.menu_ebook_properties), message, book).show();
         return true;
 
+    }
+
+    class EBookPropertiesDialog extends InfoDialog {
+        final Book book;
+        final Spinner spinner;
+        final CharsetEntry charsets[];
+
+        protected EBookPropertiesDialog(final Context _this, String title, String message, Book book) {
+            super(_this, title, message);
+            this.book = book;
+            spinner = (Spinner) findViewById(R.id.charset);
+            String strings[] = (String[]) getResources().getStringArray(R.array.charsets);
+            charsets = new CharsetEntry[strings.length / 2];
+            int selected = book.charset == null ? 0 : -1;
+            for (int i = 0; i < charsets.length; i++) {
+                charsets[i] = new CharsetEntry(strings[i * 2], strings[(i * 2) + 1]);
+                if (selected == -1 && charsets[i].value.equalsIgnoreCase(book.charset)) {
+                    selected = i;
+                }
+            }
+
+            if (selected == -1) {
+                // the current book charset isn't in the list, force it to Latin
+                // for now
+                selected = 0;
+            }
+
+            ArrayAdapter<CharsetEntry> adapter = new ArrayAdapter<CharsetEntry>(Main.this,
+                    android.R.layout.simple_spinner_item, charsets);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+            spinner.setSelection(selected);
+        }
+
+        @Override
+        protected int getContentViewId() {
+            return R.layout.dialog_ebook_props;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onClick(View v) {
+            super.onClick(v);
+            String charset = book.charset == null ? YbkFileReader.DEFAULT_YBK_CHARSET : book.charset;
+            int selected = spinner.getSelectedItemPosition();
+            String newCharset = charsets[selected].value;
+            if (!newCharset.equals(charset)) {
+                YbkService.requestRemoveBook(Main.this, book.fileName);
+                YbkService.requestAddBook(Main.this, book.fileName, newCharset, new Completion() {
+
+                    public void completed(boolean succeeded, String message) {
+                        if (succeeded) {
+                            scheduleRefreshBookList();
+                        } else {
+                            Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
+                                    "Reveal Library", mNotifMgr, mNotifId++, Main.class);
+                        }
+                    }
+                });
+                ((ArrayAdapter<Book>) getListView().getAdapter()).remove(book);
+                Map<String, String> filenameMap = new HashMap<String, String>();
+                filenameMap.put("filename", book.fileName);
+                FlurryAgent.onEvent("ChangeCharset", filenameMap);
+                Toast.makeText(Main.this, MessageFormat.format(getResources().getString(R.string.changing_charset), charsets[selected].key),
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+
+    }
+
+    private static class CharsetEntry {
+        final String key;
+        final String value;
+
+        CharsetEntry(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return key;
+        }
     }
 
     protected boolean onBookWalker(int index) {
@@ -446,8 +530,8 @@ public class Main extends ListActivity {
                     FlurryAgent.onEvent("DeleteBook", filenameMap);
                 }
             };
-            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.formattedTitle,
-                    new File(book.fileName).getName());
+            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook),
+                    book.formattedTitle, new File(book.fileName).getName());
             ConfirmActionDialog.confirmedAction(this, R.string.really_delete_title, message, R.string.delete, action);
         }
         return true;

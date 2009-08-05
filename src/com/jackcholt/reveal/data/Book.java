@@ -28,6 +28,7 @@ public class Book extends JDBMObject implements Serializable {
     public String shortTitle;
     public String metaData;
     public boolean active;
+    public String charset;
 
     public String toString() {
         return formattedTitle.contains("&#") ? Html.fromHtml(formattedTitle).toString() : formattedTitle;

@@ -21,13 +21,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.View.OnClickListener;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -44,7 +47,7 @@ import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
-public class YbkViewActivity extends Activity {
+public class YbkViewActivity extends Activity implements OnGestureListener {
     private WebView mYbkView;
 
     private long mBookId;
@@ -85,6 +88,8 @@ public class YbkViewActivity extends Activity {
     public static final int CALL_BOOKMARK = 2;
     public static final int CALL_VERSE_CONTEXT_MENU = 3;
 
+    private GestureDetector gestureScanner;
+
     @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -93,6 +98,8 @@ public class YbkViewActivity extends Activity {
 
             Util.startFlurrySession(this);
             FlurryAgent.onEvent(TAG);
+
+            gestureScanner = new GestureDetector(this);
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -179,6 +186,7 @@ public class YbkViewActivity extends Activity {
                 webSettings.setJavaScriptEnabled(true);
 
                 checkAndSetFontSize(sharedPref, ybkView);
+                checkAndSetEBookColor(sharedPref, ybkView);
 
                 if (popup) {
                     ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
@@ -203,8 +211,7 @@ public class YbkViewActivity extends Activity {
                                 YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
                                 if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null
                                         && mChapFileName != null) {
-                                    // Save the book and chapter to history if
-                                    // there is one
+                                    // Save the book and chapter to history if there is one
                                     ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
                                     // remove the excess histories
                                     ybkDao.deleteHistories();
@@ -224,7 +231,7 @@ public class YbkViewActivity extends Activity {
 
                     mBookFileName = book.fileName;
 
-                    mYbkReader = new YbkFileReader(this, mBookFileName);
+                    mYbkReader = new YbkFileReader(this, mBookFileName, null);
                     String shortTitle = book.shortTitle;
                     if (mChapFileName == null) {
                         if (mBookWalk) {
@@ -267,13 +274,25 @@ public class YbkViewActivity extends Activity {
     }
 
     private void checkAndSetFontSize(SharedPreferences sharedPref, final WebView ybkView) {
-        // Check and set Fontsize
         int fontSize = ybkView.getSettings().getDefaultFontSize();
         mFontSizeStr = sharedPref.getString("default_font_size", "14");
         fontSize = Integer.parseInt(mFontSizeStr);
 
         ybkView.getSettings().setDefaultFontSize(fontSize);
         ybkView.getSettings().setDefaultFixedFontSize(fontSize);
+
+        ybkView.loadUrl("javascript:(function() { " + "document.getElementsByTagName('body')[0].style.color = 'red'; "
+                + "})()");
+    }
+
+    private void checkAndSetEBookColor(SharedPreferences sharedPref, final WebView ybkView) {
+        // Check and set background and foreground colors
+        // public void onPageFinished(ybkView, String url){
+        // ybkView.loadUrl("javascript:(function() { " +
+        // "document.getElementsByTagName('body')[0].style.color = 'red'; " +
+        // "})()");
+        // }
+
     }
 
     private void initDisplayFeatures(SharedPreferences sharedPref) {
@@ -340,7 +359,7 @@ public class YbkViewActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                 try {
-                    int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
+                    final int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
                     final boolean HANDLED_BY_HOST_APP = true;
                     final boolean HANDLED_BY_WEBVIEW = false;
                     boolean urlHandler = HANDLED_BY_HOST_APP;
@@ -377,17 +396,16 @@ public class YbkViewActivity extends Activity {
                             String chapter = "";
                             String shortTitle = null;
 
-                            if (url.indexOf('@') != -1) {
+                            if (url.indexOf('@') > -1) {
                                 Matcher emailMatcher = emailPattern.matcher(url);
                                 if (emailMatcher.matches()) {
                                     Intent emailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url));
                                     startActivity(emailIntent);
                                 } else {
                                     // pop up a context menu
-                                    startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class),
-                                            YbkViewActivity.CALL_VERSE_CONTEXT_MENU);
+                                    startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class)
+                                            .putExtra("verseNumber", obtainVerseNumber(url)), CALL_VERSE_CONTEXT_MENU);
                                     return true;
-                                    // view.scrollTo(0, 0);
                                 }
                             } else {
 
@@ -491,6 +509,8 @@ public class YbkViewActivity extends Activity {
                         // Log.d(TAG, "In onPageFinished(). Jumping to #" +
                         // mFragment);
                         view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
+                        view.loadUrl("javascript:(function() { "
+                                + "document.getElementsByTagName('body')[0].style.color = 'red'; " + "})()");
                         mFragment = null;
                     } else if (url.indexOf('@') != -1) {
                         view.scrollTo(0, 0);
@@ -512,6 +532,20 @@ public class YbkViewActivity extends Activity {
 
             }
         });
+    }
+
+    private String obtainVerseNumber(final String url) {
+        String temp = url;
+        int atLoc = temp.indexOf('@');
+        if (atLoc > -1) {
+            temp = temp.substring(atLoc + 1);
+            int commaLoc = temp.indexOf(',');
+            if (commaLoc > -1) {
+                temp = temp.substring(0, commaLoc);
+            }
+        }
+
+        return temp;
     }
 
     /**
@@ -584,10 +618,41 @@ public class YbkViewActivity extends Activity {
                     android.R.drawable.ic_menu_recent_history);
             menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark)
                     .setIcon(android.R.drawable.ic_input_get);
-            menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous).setIcon(
-                    android.R.drawable.ic_media_previous);
-            menu.add(Menu.NONE, NEXT_ID, Menu.NONE, R.string.menu_next).setIcon(android.R.drawable.ic_media_next);
+            menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous).setIcon(R.drawable.previous_chapter);
+            menu.add(Menu.NONE, NEXT_ID, Menu.NONE, R.string.menu_next).setIcon(R.drawable.next_chapter);
 
+        } catch (RuntimeException rte) {
+            unexpectedError(rte);
+        } catch (Error e) {
+            unexpectedError(e);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(final Menu menu) {
+        try {
+            super.onPrepareOptionsMenu(menu);
+            MenuItem prevItem = menu.findItem(PREVIOUS_ID);
+            MenuItem nextItem = menu.findItem(NEXT_ID);
+            if (mChapOrderNbr < 1) {
+                prevItem.setVisible(false);
+                prevItem.setEnabled(false);
+                nextItem.setVisible(false);
+                nextItem.setEnabled(false);
+            } else {
+                boolean hasNext = false;
+                boolean hasPrev = mChapOrderNbr > 1;
+                try {
+                    hasNext = YbkDAO.getInstance(this).getChapter(mBookId, mChapOrderNbr + 1) != null;
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Error trying to detect if there is a next chapter: " + ioe);
+                }
+                prevItem.setVisible(hasNext || hasPrev);
+                prevItem.setEnabled(hasPrev);
+                nextItem.setVisible(hasNext || hasPrev);
+                nextItem.setEnabled(hasNext);
+            }
         } catch (RuntimeException rte) {
             unexpectedError(rte);
         } catch (Error e) {
@@ -647,11 +712,12 @@ public class YbkViewActivity extends Activity {
         return true;
     }
 
+    private long getHistId(final Intent data) {
+        return data.getExtras().getLong(YbkDAO.ID);
+    }
+
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-
-        Bundle extras;
-        long histId;
 
         try {
             YbkDAO ybkDao = YbkDAO.getInstance(this);
@@ -661,10 +727,7 @@ public class YbkViewActivity extends Activity {
                 case CALL_HISTORY:
                     setProgressBarIndeterminateVisibility(true);
 
-                    extras = data.getExtras();
-                    histId = extras.getLong(YbkDAO.ID);
-
-                    History hist = ybkDao.getHistory(histId);
+                    History hist = ybkDao.getHistory(getHistId(data));
 
                     if (hist != null) {
                         mBookId = hist.bookId;
@@ -701,29 +764,27 @@ public class YbkViewActivity extends Activity {
                     return;
 
                 case CALL_BOOKMARK:
-                    extras = data.getExtras();
 
-                    boolean addBookMark = extras.getBoolean(BookmarkDialog.ADD_BOOKMARK);
-                    boolean updateBookmark = extras.getBoolean(BookmarkDialog.UPDATE_BOOKMARK);
-                    boolean deleteBookmark = extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK);
+                    boolean addBookMark = data.getExtras().getBoolean(BookmarkDialog.ADD_BOOKMARK);
+                    boolean updateBookmark = data.getExtras().getBoolean(BookmarkDialog.UPDATE_BOOKMARK);
+                    boolean deleteBookmark = data.getExtras().getBoolean(BookmarkDialog.DELETE_BOOKMARK);
 
                     if (addBookMark) {
                         showDialog(ASK_BOOKMARK_NAME);
                     } else if (updateBookmark) {
-                        histId = extras.getLong(YbkDAO.ID);
+                        final long histId = data.getExtras().getLong(YbkDAO.ID);
 
                         // update the bookmark
                         ybkDao.updateHistory(histId, mBookId, mChapFileName, mYbkView.getScrollY());
                     } else if (deleteBookmark) {
-                        int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
+                        int bmId = data.getExtras().getInt(YbkDAO.BOOKMARK_NUMBER);
                         hist = ybkDao.getBookmark(bmId);
                         DeleteBookmarkDialog.create(this, hist);
                     } else {
                         // go to bookmark
                         setProgressBarIndeterminateVisibility(true);
-                        histId = extras.getLong(YbkDAO.ID);
 
-                        History bm = ybkDao.getHistory(histId);
+                        History bm = ybkDao.getHistory(getHistId(data));
 
                         if (bm != null) {
                             mBookId = bm.bookId;
@@ -762,6 +823,18 @@ public class YbkViewActivity extends Activity {
 
                     return;
 
+                case CALL_VERSE_CONTEXT_MENU:
+                    switch (data.getExtras().getInt(VerseContextDialog.MENU_ITEM_TAG)) {
+                    case VerseContextDialog.ANNOTATE_ID:
+                        startActivityForResult(new Intent(getBaseContext(), VerseContextDialog.class)
+                        .putExtra("verseNumber", obtainVerseNumber("")), CALL_VERSE_CONTEXT_MENU);
+
+                        break;
+                        
+                    case VerseContextDialog.GOTO_TOP_ID:
+                        mYbkView.scrollTo(0, 0);
+                        break;
+                    }
                 }
             }
             super.onActivityResult(requestCode, resultCode, data);
@@ -868,7 +941,7 @@ public class YbkViewActivity extends Activity {
                 // book
                 if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
                     ybkReader.close();
-                    ybkReader = mYbkReader = new YbkFileReader(this, filePath);
+                    ybkReader = mYbkReader = new YbkFileReader(this, filePath, null);
                 }
 
                 Book book = ybkDao.getBook(filePath.toLowerCase());
@@ -1012,9 +1085,7 @@ public class YbkViewActivity extends Activity {
 
                     content = Util.processIfbook(content, this, libDir);
 
-                    // Convert the ahtags
-                    content = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>",
-                            "<span class=\"ah\" id=\"ah$1\">$2</span>");
+                    content = convertAhtags(content);
 
                     content = Util.convertIfvar(content);
 
@@ -1053,6 +1124,10 @@ public class YbkViewActivity extends Activity {
         }
 
         return bookLoaded;
+    }
+
+    private String convertAhtags(final String content) {
+        return content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>", "<span class=\"ah\" id=\"ah$1\">$2</span>");
     }
 
     /**
@@ -1405,5 +1480,66 @@ public class YbkViewActivity extends Activity {
                 Util.unexpectedError(YbkViewActivity.this, e);
             }
         }
+    }
+
+    // Use Swipes to change chapters
+    // DKP
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        super.dispatchTouchEvent(ev);
+        return gestureScanner.onTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent me) {
+        return gestureScanner.onTouchEvent(me);
+    }
+
+    public boolean onDown(MotionEvent e) {
+        return true;
+    }
+
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        if (Math.abs(velocityX) > Math.abs(velocityY)) {
+            if (velocityX <= -1500) {
+                setProgressBarIndeterminateVisibility(true);
+
+                try {
+                    // Toast.makeText(this, R.string.menu_next,
+                    // Toast.LENGTH_SHORT).show();
+                    loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
+                }
+                setProgressBarIndeterminateVisibility(false);
+            }
+            if (velocityX >= 1500) {
+                setProgressBarIndeterminateVisibility(true);
+                try {
+                    // Toast.makeText(this, R.string.menu_previous,
+                    // Toast.LENGTH_SHORT).show();
+                    loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
+                }
+                setProgressBarIndeterminateVisibility(false);
+            }
+        }
+        return false;
+    }
+
+    public void onLongPress(MotionEvent e) {
+    }
+
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        return true;
+    }
+
+    public void onShowPress(MotionEvent e) {
+    }
+
+    public boolean onSingleTapUp(MotionEvent e) {
+        return true;
     }
 }

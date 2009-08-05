@@ -25,9 +25,9 @@ public class InfoDialog extends Dialog implements View.OnClickListener {
      * @param message
      *            message for the dialog
      */
-    private InfoDialog(final Context _this, String title, String message) {
+    protected InfoDialog(final Context _this, String title, String message) {
         super(_this);
-        setContentView(R.layout.dialog_info);
+        setContentView(getContentViewId());
 
         Button closeBtn = (Button) findViewById(R.id.close_btn);
         closeBtn.setOnClickListener(this);
@@ -37,6 +37,15 @@ public class InfoDialog extends Dialog implements View.OnClickListener {
 
         if (title != null)
             setTitle(title);
+    }
+    
+    /**
+     * Gets the contentview resource ID (this is to allow subclasses to use a different contentview.
+     *  
+     * @return the resource id
+     */
+    protected int getContentViewId() {
+        return R.layout.dialog_info;
     }
 
     public void onClick(View v) {

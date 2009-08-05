@@ -16,7 +16,7 @@
 			android:screenOrientation="sensor" />
 		<activity android:name=".YbkViewActivity" android:label="@string/reveal_ybk_view" />
 		<provider android:multiprocess="true" android:authorities="com.jackcholt.reveal"
-			android:name=".YbkProvider" android:screenOrientation="sensor"></provider>
+			android:name=".YbkProvider" android:screenOrientation="sensor"/>
 		<activity android:label="@string/title_browser_name"
 			android:screenOrientation="sensor" android:name="TitleBrowser" />
 
@@ -29,20 +29,20 @@
 
 		<activity android:name=".ErrorDialog" android:label="@string/error_title"
 			android:theme="@android:style/Theme.Dialog"
-			android:screenOrientation="sensor" android:multiprocess="false"></activity>
+			android:screenOrientation="sensor" android:multiprocess="false"/>
 		<service android:name=".YbkService" android:exported="false" />
 		<activity android:name=".YbkPopupActivity" android:label="@string/reveal_ybk_view"
-			android:theme="@android:style/Theme.Dialog"></activity>
+			android:theme="@android:style/Theme.Dialog"/>
 
-		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog"></activity>
+		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog"/>
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"></uses-permission>
-	<uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
-	<uses-permission android:name="android.permission.RAISED_THREAD_PRIORITY"></uses-permission>
-	<uses-sdk android:minSdkVersion="2"></uses-sdk>
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+	<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+	<uses-permission android:name="android.permission.RAISED_THREAD_PRIORITY"/>
+	<uses-sdk android:minSdkVersion="2"/>
 
 </manifest> 

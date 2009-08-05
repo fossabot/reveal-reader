@@ -225,7 +225,12 @@ public class YbkDAO {
             TupleBrowser<String, Long> browser = root.bookTitleIndex.browse();
             Tuple<String, Long> tuple = new Tuple<String, Long>();
             while (browser.getNext(tuple)) {
-                books.add(Book.load(mDb, (Long) tuple.getValue()));
+                Book book = Book.load(mDb, (Long) tuple.getValue());
+                if (book != null) {
+                    books.add(book);
+                } else {
+                    Log.e(TAG, "Unable to load book record " + tuple.getValue() + " for key " + tuple.getKey());
+                }
             }
             return books;
         } catch (RuntimeException rte) {
@@ -245,7 +250,12 @@ public class YbkDAO {
             TupleBrowser<Long, Long> browser = root.bookIdIndex.browse();
             Tuple<Long, Long> tuple = new Tuple<Long, Long>();
             while (browser.getNext(tuple)) {
-                books.add(Book.load(mDb, tuple.getValue()));
+                Book book = Book.load(mDb, (Long) tuple.getValue());
+                if (book != null) {
+                    books.add(book);
+                } else {
+                    Log.e(TAG, "Unable to load book record " + tuple.getValue() + " for key " + tuple.getKey());
+                }
             }
             return books;
         } catch (RuntimeException rte) {
@@ -292,7 +302,7 @@ public class YbkDAO {
      *            the list of chapters
      * @throws IOException
      */
-    public long insertBook(final String fileName, final String bindingText, final String title,
+    public long insertBook(final String fileName, final String charset, final String bindingText, final String title,
             final String shortTitle, final String metaData, final List<Chapter> chapters) throws IOException {
         // Debug.startMethodTracing("profiler", 20 * 1024 * 1024);
         synchronized (writeGate) {
@@ -303,6 +313,7 @@ public class YbkDAO {
                 Book book = new Book();
                 book.id = id;
                 book.fileName = fileName.toLowerCase();
+                book.charset = charset;
                 book.active = true;
                 book.bindingText = bindingText;
                 book.formattedTitle = title == null ? null : Util.formatTitle(title);
@@ -355,7 +366,6 @@ public class YbkDAO {
      * @return true if successful
      * @throws IOException
      */
-    @SuppressWarnings("unchecked")
     private boolean insertChapters(long bookId, List<Chapter> chapters) throws IOException {
         int count = chapters.size();
         for (int i = 0; i < count; i++) {
@@ -772,7 +782,7 @@ public class YbkDAO {
         Tuple<Long, Long> tuple = new Tuple<Long, Long>();
         while (browser.getNext(tuple)) {
             History hist = History.load(mDb, tuple.getValue());
-            if (hist.bookId == bookId) {
+            if (hist != null && hist.bookId == bookId) {
                 histList.add(hist);
             }
         }
@@ -967,10 +977,14 @@ public class YbkDAO {
                 if (tuple.getKey().equals(startKey))
                     continue;
                 Chapter chapter = Chapter.load(mDb, (Long) tuple.getValue());
-                if (chapter.bookId != bookId)
-                    return null;
-                if (chapter.fileName.toLowerCase().contains(".html"))
-                    return chapter;
+                if (chapter != null) {
+                    if (chapter.bookId != bookId)
+                        return null;
+                    if (chapter.fileName.toLowerCase().contains(".html"))
+                        return chapter;
+                } else {
+                    Log.e(TAG, "Unable to load chapter record " + tuple.getValue() + " for key " + tuple.getKey());
+                }
             }
             return null;
         } catch (RuntimeException rte) {

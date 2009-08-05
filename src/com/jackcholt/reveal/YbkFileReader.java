@@ -38,6 +38,8 @@ public class YbkFileReader {
 
     /** Zoom menu will be available */
     public static final int CHAPTER_ZOOM_MENU_ON = 1;
+    
+    public static final String DEFAULT_YBK_CHARSET = "ISO-8859-1";
 
     private static final int INDEX_FILENAME_STRING_LENGTH = 48;
 
@@ -83,6 +85,8 @@ public class YbkFileReader {
     private long mBookId = -1;
 
     private Context mCtx;
+    
+    private String mCharset = DEFAULT_YBK_CHARSET;
 
     /**
      * A class to act as a structure for holding information about the chapters
@@ -117,12 +121,10 @@ public class YbkFileReader {
      * @throws FileNotFoundException
      *             if the file cannot be opened for reading.
      */
-    private YbkFileReader(final Context ctx, final RandomAccessFile file) throws FileNotFoundException, IOException {
+    private YbkFileReader(final Context ctx, final RandomAccessFile file, String charset) throws FileNotFoundException, IOException {
         mFile = file;
         mCtx = ctx;
-        // populateFileData();
-
-        // mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        mCharset = charset == null ? DEFAULT_YBK_CHARSET : charset;
     }
 
     /**
@@ -137,8 +139,8 @@ public class YbkFileReader {
      * @throws FileNotFoundException
      *             if the filename cannot be opened for reading.
      */
-    public YbkFileReader(final Context ctx, final String fileName) throws FileNotFoundException, IOException {
-        this(ctx, new RandomAccessFile(fileName, "r"));
+    public YbkFileReader(final Context ctx, final String fileName, String charset) throws FileNotFoundException, IOException {
+        this(ctx, new RandomAccessFile(fileName, "r"), charset);
 
         mFilename = fileName;
 
@@ -157,6 +159,9 @@ public class YbkFileReader {
         }
         if (book != null) {
             mBookId = book.id;
+            if (book.charset != null) {
+                mCharset = book.charset;
+            }
         }
     }
     
@@ -213,16 +218,13 @@ public class YbkFileReader {
             while (pos < mIndexLength) {
                 InternalFile iFile = new InternalFile();
 
-                StringBuffer fileNameSBuf = new StringBuffer();
-
-                byte b;
                 int fileNameStartPos = pos;
 
-                while ((b = indexArray[pos++]) != 0 && pos < mIndexLength) {
-                    fileNameSBuf.append((char) b);
-                }
-
-                iFile.fileName = fileNameSBuf.toString();
+                // NOTE - there are character sets for which testing for 0 won't work, but at least for the time being
+                // there aren't any YBK's that use them and Yancey software would choke on them too.
+                while (indexArray[pos++] != 0 && pos < mIndexLength);
+                int fileNameLength = (pos - fileNameStartPos) - 1;
+                iFile.fileName = new String(indexArray, fileNameStartPos, fileNameLength, mCharset);
 
                 pos = fileNameStartPos + INDEX_FILENAME_STRING_LENGTH;
 
@@ -386,7 +388,7 @@ public class YbkFileReader {
 
         long bookId = 0;
         try {
-            bookId = mBookId = ybkDao.insertBook(fileName, bindingText, bookTitle, shortTitle, mBookMetaData, chapters);
+            bookId = mBookId = ybkDao.insertBook(fileName, mCharset, bindingText, bookTitle, shortTitle, mBookMetaData, chapters);
         } finally {
             if (bookId == 0) {
                 // we'll assume the fileName is already in the db and continue
@@ -535,9 +537,9 @@ public class YbkFileReader {
             }
 
             if (chapName.toLowerCase().endsWith(".gz")) {
-                fileText = Util.decompressGzip(text);
+                fileText = Util.decompressGzip(text, mCharset);
             } else {
-                fileText = new String(text, "ISO_8859-1");
+                fileText = new String(text, mCharset);
             }
         }
 
