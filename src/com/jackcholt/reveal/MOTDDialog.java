@@ -16,6 +16,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
@@ -45,7 +46,7 @@ public class MOTDDialog extends Dialog {
 
         FlurryAgent.onEvent("MOTD");
         setContentView(R.layout.dialog_dismissable);
-
+        
         Button close = (Button) findViewById(R.id.close_about_btn);
         close.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -154,6 +155,7 @@ public class MOTDDialog extends Dialog {
         // public void run() {
         // Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         // Looper.prepare();
+
         @SuppressWarnings("unused")
         MOTDDialog dlg = new MOTDDialog(_this);
         // }
