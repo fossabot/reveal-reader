@@ -1,0 +1,21 @@
+<resources>
+	<!-- Base application theme is the default theme. -->
+	<style name="Theme" parent="android:Theme">
+	</style>
+
+	<style name="Theme.DayMode">
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:colorForeground">#fff</item>
+	</style>
+
+	<style name="Theme.NightMode">
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:colorForeground">#ddd</item>
+	</style>
+	
+	<style name="TextAppearance.Theme.PlainText" 
+		parent="android:TextAppearance.Theme">
+		<item name="android:textStyle">normal</item>
+	</style>
+
+</resources>
