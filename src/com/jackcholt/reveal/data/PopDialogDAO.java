@@ -36,7 +36,7 @@ public class PopDialogDAO extends SQLiteOpenHelper {
         tName = tableName;
     }
     
-    public static PopDialogDAO getInstance(Context ctx, String dbName, String sql, String tableName, int ver){
+    public synchronized static PopDialogDAO getInstance(Context ctx, String dbName, String sql, String tableName, int ver){
         if(instance == null){
             instance = new PopDialogDAO(ctx, dbName, sql, tableName, ver);
             try{

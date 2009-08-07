@@ -11,6 +11,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -37,14 +38,13 @@ import com.jackcholt.reveal.data.PopDialogDAO;
 
 public class PopupDialogBase extends Dialog {
     private static final String TAG = "PopupDialogBase";
-    private static final String ANDROID_NAMESPACE="http://schemas.android.com/apk/res/android";
-    
+    private static final String ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android";
+
     int mMessageId;
     String mMessage;
     String mPrefix;
     String mMessageURL;
     Activity mParent;
-    
 
     public PopupDialogBase(final Activity parent, final String title, String messageURL, String prefix) {
         super(parent);
@@ -83,7 +83,7 @@ public class PopupDialogBase extends Dialog {
         t.start();
 
     }
-    
+
     /** Called when the activity is going away. */
     @Override
     protected void onStop() {
@@ -107,48 +107,61 @@ public class PopupDialogBase extends Dialog {
     /**
      * Get the message of the day from the web.
      * 
-     * @return The message of the day HTML if available and not already shown, null otherwise
+     * @return The message of the day HTML if available and not already shown,
+     *         null otherwise
      */
     private boolean fetchMessage() {
         try {
             URLConnection cnVersion = null;
             URL urlVersion = new URL(mMessageURL);
             cnVersion = urlVersion.openConnection();
-                cnVersion.setReadTimeout(10000);
-                cnVersion.setConnectTimeout(10000);
-                cnVersion.setDefaultUseCaches(false);
-                cnVersion.connect();
-                InputStream streamVersion = cnVersion.getInputStream();
-                Document manifestDoc = null;
-                try {
-                    manifestDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(streamVersion);
-                } finally {
-                    streamVersion.close();
-                }
-            NodeList manifestNodeList = manifestDoc.getElementsByTagName("manifest");
-
-            // What version of MOTD is this.
-            String messageIdStr = ((Element)manifestNodeList.item(0)).getAttribute("android:" + mPrefix + "Number");
+            cnVersion.setReadTimeout(10000);
+            cnVersion.setConnectTimeout(10000);
+            cnVersion.setDefaultUseCaches(false);
+            cnVersion.connect();
+            InputStream streamVersion = cnVersion.getInputStream();
+            Document manifestDoc = null;
+            try {
+                manifestDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(streamVersion);
+            } finally {
+                streamVersion.close();
+            }
             
-            // FIXIT - this is only needed until the different formats standardize on capitalization
-            if (messageIdStr.length() == 0) {
-                messageIdStr = ((Element)manifestNodeList.item(0)).getAttribute("android:" + mPrefix + "number");
+            Element element = manifestDoc.getDocumentElement();
+            String messageIdStr;
+            String message;
+            if (element.getAttribute("xmlns:android").length() != 0) {
+                // TODO - this test and section is only hear until the new format is posted on the website
+                messageIdStr = element.getAttribute("android:" + mPrefix + "Number");
+                if (messageIdStr.length() == 0) {
+                    messageIdStr = element.getAttribute("android:" + mPrefix + "number");
+                }
+                // The actual MOTD HTML code to display
+                message = element.getAttribute("android:" + mPrefix + "message");
+            } else {
+                messageIdStr = element.getAttribute("message-id");
+                StringBuilder sb = new StringBuilder();
+                for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+                    short type = child.getNodeType();
+                    if (type == Node.CDATA_SECTION_NODE || type == Node.TEXT_NODE) {
+                        sb.append(child.getNodeValue());
+                    }
+                }
+                message = sb.toString();
             }
             
             int messageId = Integer.parseInt(messageIdStr);
-
-            // The actual MOTD HTML code to display
-            String message = ((Element)manifestNodeList.item(0)).getAttribute("android:" + mPrefix + "message");
 
             Editor e = Main.getMainApplication().getPreferences(Context.MODE_PRIVATE).edit();
             e.putString(mPrefix, message);
             e.putInt(mPrefix + "_version", messageId);
             e.commit();
-            // Check to see if the DB contains this dialog version already dismissed
+            // Check to see if the DB contains this dialog version already
+            // dismissed
             // Then don't display
 
-            PopDialogDAO dao = PopDialogDAO.getInstance(mParent, PopDialogCheck.DATABASE_NAME, PopDialogCheck.TABLE_CREATE,
-                    PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
+            PopDialogDAO dao = PopDialogDAO.getInstance(mParent, PopDialogCheck.DATABASE_NAME,
+                    PopDialogCheck.TABLE_CREATE, PopDialogCheck.DATABASE_TABLE, PopDialogCheck.DATABASE_VERSION);
             if (!dao.isMyDialogDismissed(mPrefix + messageId)) {
                 mMessage = message;
                 mMessageId = messageId;
