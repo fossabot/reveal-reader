@@ -1,17 +1,13 @@
 package com.jackcholt.reveal;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import org.apache.http.util.ByteArrayBuffer;
 
 import android.content.Context;
 import android.util.Log;

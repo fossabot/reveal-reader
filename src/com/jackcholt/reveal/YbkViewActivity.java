@@ -101,8 +101,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
-            // PopupHelpDialog.create(this, "newfontsizeoption");
-
             initDisplayFeatures(sharedPref);
 
             try {

@@ -12,7 +12,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
@@ -38,6 +37,7 @@ import com.jackcholt.reveal.data.PopDialogDAO;
 
 public class PopupDialogBase extends Dialog {
     private static final String TAG = "PopupDialogBase";
+    @SuppressWarnings("unused")
     private static final String ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android";
 
     int mMessageId;
