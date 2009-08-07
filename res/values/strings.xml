@@ -145,4 +145,6 @@
 	<item>CP1251</item>
 </string-array>
 <string name="changing_charset">Re-adding book using {0} character set. It should appear in the list momentarily. </string>
+<string name="motd_title">Message of the Day</string>
+<string name="version_notes_title">Version Notes</string>
 </resources>

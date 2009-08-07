@@ -15,7 +15,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -132,7 +131,7 @@ public class Main extends ListActivity {
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
                 // Actually go ONLINE and check... duhhhh
-                UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+                UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
 
                 // Check for a message from US :)
                 MOTDDialog.create(this);
@@ -447,7 +446,6 @@ public class Main extends ListActivity {
         @Override
         public void onClick(View v) {
             super.onClick(v);
-            boolean charsetChanged = false;
             String charset = book.charset == null ? YbkFileReader.DEFAULT_YBK_CHARSET : book.charset;
             int selected = spinner.getSelectedItemPosition();
             String newCharset = charsets[selected].value;
@@ -643,7 +641,7 @@ public class Main extends ListActivity {
 
             case REVELUPDATE_ID:
                 Toast.makeText(this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
-                UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+                UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
                 return true;
 
             case ABOUT_ID:

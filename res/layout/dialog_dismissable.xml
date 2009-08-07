@@ -6,7 +6,7 @@
     android:layout_height="fill_parent"
     android:gravity="center_horizontal"
 	>
-	<WebView android:id="@+id/motdView"          
+	<WebView android:id="@+id/msgView"          
 		android:layout_width="fill_parent"          
 		android:layout_height="wrap_content"          
 		android:textSize="@dimen/font_size"/>	

@@ -14,6 +14,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import android.app.Activity;
 import android.os.Looper;
 import android.os.Process;
 import android.webkit.WebView;
@@ -82,7 +83,7 @@ public class UpdateChecker {
 		return version;
 	}
 
-	public static void checkForNewerVersion(int currentVersion) {
+	public static void checkForNewerVersion(final Activity activity, final int currentVersion) {
 		// Check here an XML file stored on our website for new version info
 
 		Thread t = new Thread() {
@@ -90,16 +91,21 @@ public class UpdateChecker {
 				Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 				Looper.prepare();
 				Global.NEW_VERSION = getLatestVersionCode();
+		        if (Global.NEW_VERSION > currentVersion) {
+		            // Tell user to Download a new REV of this cool CODE from the Market
+		            // Only Toast if there IS an update
+		            activity.runOnUiThread(new Runnable() {
+
+                        public void run() {
+                            Toast.makeText(Main.getMainApplication(), R.string.update_available, Toast.LENGTH_LONG)
+                            .show();
+                        }		                
+		            });
+		        }
 			}
 		};
 		t.start();
 
-		if (Global.NEW_VERSION > currentVersion) {
-			// Tell user to Download a new REV of this cool CODE from the Market
-			// Only Toast if there IS an update
-			Toast.makeText(Main.getMainApplication(), R.string.update_available, Toast.LENGTH_LONG)
-					.show();
-		}
 	}
 
 }
