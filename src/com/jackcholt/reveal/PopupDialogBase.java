@@ -20,7 +20,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
 import android.os.Process;
+import android.preference.PreferenceManager;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -37,8 +39,6 @@ import com.jackcholt.reveal.data.PopDialogDAO;
 
 public class PopupDialogBase extends Dialog {
     private static final String TAG = "PopupDialogBase";
-    @SuppressWarnings("unused")
-    private static final String ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android";
 
     int mMessageId;
     String mMessage;
@@ -64,7 +64,12 @@ public class PopupDialogBase extends Dialog {
         });
         final WebView wv = (WebView) findViewById(R.id.msgView);
         wv.clearCache(true);
-        wv.getSettings().setJavaScriptEnabled(true);
+        WebSettings settings = wv.getSettings();
+        settings.setJavaScriptEnabled(true);
+        int fontSize = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(parent).getString(
+                Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE));
+        settings.setDefaultFontSize(fontSize);
+        settings.setDefaultFixedFontSize(fontSize);
 
         Thread t = new Thread() {
             public void run() {
@@ -126,31 +131,18 @@ public class PopupDialogBase extends Dialog {
             } finally {
                 streamVersion.close();
             }
-            
+
             Element element = manifestDoc.getDocumentElement();
-            String messageIdStr;
-            String message;
-            if (element.getAttribute("xmlns:android").length() != 0) {
-                // TODO - this test and section is only hear until the new format is posted on the website
-                messageIdStr = element.getAttribute("android:" + mPrefix + "Number");
-                if (messageIdStr.length() == 0) {
-                    messageIdStr = element.getAttribute("android:" + mPrefix + "number");
-                }
-                // The actual MOTD HTML code to display
-                message = element.getAttribute("android:" + mPrefix + "message");
-            } else {
-                messageIdStr = element.getAttribute("message-id");
-                StringBuilder sb = new StringBuilder();
-                for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-                    short type = child.getNodeType();
-                    if (type == Node.CDATA_SECTION_NODE || type == Node.TEXT_NODE) {
-                        sb.append(child.getNodeValue());
-                    }
-                }
-                message = sb.toString();
-            }
-            
+            String messageIdStr = element.getAttribute("message-id");
             int messageId = Integer.parseInt(messageIdStr);
+            StringBuilder sb = new StringBuilder();
+            for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+                short type = child.getNodeType();
+                if (type == Node.CDATA_SECTION_NODE || type == Node.TEXT_NODE) {
+                    sb.append(child.getNodeValue());
+                }
+            }
+            String message = sb.toString();
 
             Editor e = Main.getMainApplication().getPreferences(Context.MODE_PRIVATE).edit();
             e.putString(mPrefix, message);

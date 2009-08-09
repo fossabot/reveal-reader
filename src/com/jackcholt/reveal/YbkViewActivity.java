@@ -274,15 +274,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private void checkAndSetFontSize(SharedPreferences sharedPref, final WebView ybkView) {
         // Check and set Fontsize
         int fontSize = ybkView.getSettings().getDefaultFontSize();
-        strFontSize = sharedPref.getString("default_font_size", "14");
+        strFontSize = sharedPref.getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
         fontSize = Integer.parseInt(strFontSize);
 
         ybkView.getSettings().setDefaultFontSize(fontSize);
         ybkView.getSettings().setDefaultFixedFontSize(fontSize);
-        
-        ybkView.loadUrl("javascript:(function() { " +  
-                "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
-                "})()"); 
+//        
+//        ybkView.loadUrl("javascript:(function() { " +  
+//                "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
+//                "})()"); 
     }
 
     private void checkAndSetEBookColor(SharedPreferences sharedPref, final WebView ybkView) {
