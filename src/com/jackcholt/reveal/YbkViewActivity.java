@@ -505,9 +505,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         // Log.d(TAG, "In onPageFinished(). Jumping to #" +
                         // mFragment);
                         view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
-                        view.loadUrl("javascript:(function() { " +  
-                                "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
-                                "})()");  
+//                        view.loadUrl("javascript:(function() { " +  
+//                                "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
+//                                "})()");  
                         mFragment = null;
                     } else if (url.indexOf('@') != -1) {
                         view.scrollTo(0, 0);
