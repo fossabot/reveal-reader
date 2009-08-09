@@ -179,8 +179,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
 
-
-                
                 checkAndSetFontSize(sharedPref, ybkView);
                 checkAndSetEBookColor(sharedPref, ybkView);
 
@@ -279,10 +277,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         ybkView.getSettings().setDefaultFontSize(fontSize);
         ybkView.getSettings().setDefaultFixedFontSize(fontSize);
-//        
-//        ybkView.loadUrl("javascript:(function() { " +  
-//                "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
-//                "})()"); 
+        //        
+        // ybkView.loadUrl("javascript:(function() { " +
+        // "document.getElementsByTagName('body')[0].style.color = 'red'; " +
+        // "})()");
     }
 
     private void checkAndSetEBookColor(SharedPreferences sharedPref, final WebView ybkView) {
@@ -505,9 +503,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         // Log.d(TAG, "In onPageFinished(). Jumping to #" +
                         // mFragment);
                         view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
-//                        view.loadUrl("javascript:(function() { " +  
-//                                "document.getElementsByTagName('body')[0].style.color = 'red'; " +  
-//                                "})()");  
+                        // view.loadUrl("javascript:(function() { " +
+                        // "document.getElementsByTagName('body')[0].style.color = 'red'; "
+                        // +
+                        // "})()");
                         mFragment = null;
                     } else if (url.indexOf('@') != -1) {
                         view.scrollTo(0, 0);
@@ -1021,8 +1020,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     }
 
-                    Chapter chapObj = ybkDao.getChapter(bookId, chap.toLowerCase());
-
+                    String chapLowerCase = chap.toLowerCase();
+                    Chapter chapObj = ybkDao.getChapter(bookId, chapLowerCase);
+                    if (chapObj == null) {
+                        chapObj = ybkDao.getChapter(bookId, chapLowerCase + ".gz");
+                    }
+                    if (chapObj == null) {
+                        String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
+                        chapObj = ybkDao.getChapter(bookId, concatChap);
+                    }
                     if (chapObj != null) {
                         mChapOrderNbr = chapObj.orderNumber;
                     } else {
@@ -1480,9 +1486,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (Math.abs(velocityX) > Math.abs(velocityY)) {
             if (velocityX <= -1500) {
                 setProgressBarIndeterminateVisibility(true);
-    
+
                 try {
-//                    Toast.makeText(this, R.string.menu_next, Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(this, R.string.menu_next,
+                    // Toast.LENGTH_SHORT).show();
                     loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
@@ -1492,7 +1499,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             if (velocityX >= 1500) {
                 setProgressBarIndeterminateVisibility(true);
                 try {
-//                    Toast.makeText(this, R.string.menu_previous, Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(this, R.string.menu_previous,
+                    // Toast.LENGTH_SHORT).show();
                     loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
