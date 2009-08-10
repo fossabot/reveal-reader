@@ -3,6 +3,7 @@ package com.jackcholt.reveal;
 import com.flurry.android.FlurryAgent;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.webkit.WebView;
 
@@ -17,11 +18,12 @@ public class OnlineHelpDialog extends Dialog {
         super(_this);
 
         FlurryAgent.onEvent("OnlineHelp");
+
         setContentView(R.layout.dialog_help);
         String title;
         title = "Reveal Online Help";
         setTitle(title);
-
+        
         WebView wv = (WebView) findViewById(R.id.helpView);
         wv.clearCache(true);
         wv.getSettings().setJavaScriptEnabled(true);
@@ -30,7 +32,7 @@ public class OnlineHelpDialog extends Dialog {
         } else {
             wv.loadData("Cannot get online help.  Your network is currently down.", "text/plain", "utf-8");
         }
-
+        
         show();
 
     }
@@ -43,6 +45,7 @@ public class OnlineHelpDialog extends Dialog {
     /** Called when the activity is going away. */
     @Override
     protected void onStop() {
+        
         super.onStop();
     }
 }
