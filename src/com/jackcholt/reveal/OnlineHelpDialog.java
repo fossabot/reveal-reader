@@ -1,11 +1,10 @@
 package com.jackcholt.reveal;
 
-import com.flurry.android.FlurryAgent;
-
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.webkit.WebView;
+
+import com.flurry.android.FlurryAgent;
 
 /**
  * HelpDialog for online HELP system

@@ -366,7 +366,6 @@ public class YbkDAO {
      * @return true if successful
      * @throws IOException
      */
-    @SuppressWarnings("unchecked")
     private boolean insertChapters(long bookId, List<Chapter> chapters) throws IOException {
         int count = chapters.size();
         for (int i = 0; i < count; i++) {
@@ -387,7 +386,7 @@ public class YbkDAO {
 
         // free up the memory because big books can cause a memory squeeze
         chapters.clear();
-        if (chapters instanceof ArrayList) {
+        if (chapters instanceof ArrayList<?>) {
             ((ArrayList<Chapter>) chapters).trimToSize();
         }
         return true;
