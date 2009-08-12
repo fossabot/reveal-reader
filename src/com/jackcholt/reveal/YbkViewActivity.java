@@ -178,7 +178,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
-
+                ybkView.getSettings().setBuiltInZoomControls(true);
+                
                 checkAndSetFontSize(sharedPref, ybkView);
                 checkAndSetEBookColor(sharedPref, ybkView);
 
