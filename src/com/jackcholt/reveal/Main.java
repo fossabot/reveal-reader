@@ -23,7 +23,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -71,12 +70,8 @@ public class Main extends ListActivity {
     private static final boolean ADD_BOOKS = true;
     public static final String BOOK_WALK_INDEX = "bw_index";
 
-    // Gestures Stuff
     private NotificationManager mNotifMgr;
 
-    @SuppressWarnings("unused")
-    private GestureDetector gestureScanner;
-    private SharedPreferences mSharedPref;
     private boolean BOOLshowSplashScreen;
     private static boolean BOOLsplashed = false;
     private boolean BOOLshowFullScreen;
@@ -90,7 +85,7 @@ public class Main extends ListActivity {
     public void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            // Debug.startMethodTracing("reveal");
+            //Debug.startMethodTracing("reveal");
 
             mApplication = this;
 
@@ -100,9 +95,7 @@ public class Main extends ListActivity {
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
-            SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-            BOOLshowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+            BOOLshowFullScreen = getSharedPrefs().getBoolean("show_fullscreen", false);
 
             if (BOOLshowFullScreen) {
                 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -111,15 +104,12 @@ public class Main extends ListActivity {
             }
 
             setContentView(R.layout.main);
-
+            
             // To capture LONG_PRESS gestures
-            // gestureScanner = new GestureDetector(this);
             registerForContextMenu(getListView());
 
-            boolean configChanged = (getLastNonConfigurationInstance() != null);
-
-            if (!configChanged) {
-                BOOLshowSplashScreen = mSharedPref.getBoolean("show_splash_screen", true);
+            if (!(isConfigChanged())) {
+                BOOLshowSplashScreen = getSharedPrefs().getBoolean("show_splash_screen", true);
 
                 if (BOOLshowSplashScreen && !BOOLsplashed) {
                     Util.showSplashScreen(this);
@@ -131,7 +121,7 @@ public class Main extends ListActivity {
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
                 // Actually go ONLINE and check... duhhhh
-                UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+                UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
 
                 // Check for a message from US :)
                 MOTDDialog.create(this);
@@ -142,7 +132,7 @@ public class Main extends ListActivity {
                 // Util.sendSMS(this);
             }
 
-            if (!configChanged) {
+            if (!(isConfigChanged())) {
                 // Check for SDcard presence
                 // if we have one create the dirs and look fer ebooks
                 if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
@@ -162,7 +152,7 @@ public class Main extends ListActivity {
                 RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
                 updateBookList();
             } else if (!(new File(
-                    mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
+                    getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
                     "reveal_ybk.db").exists())) {
                 Toast.makeText(this, getResources().getString(R.string.refresh_title), Toast.LENGTH_LONG).show();
                 updateBookList();
@@ -174,6 +164,10 @@ public class Main extends ListActivity {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
+    }
+
+    private boolean isConfigChanged() {
+        return getLastNonConfigurationInstance() != null;
     }
 
     @Override
@@ -188,7 +182,7 @@ public class Main extends ListActivity {
         try {
             super.onStop();
             FlurryAgent.onEndSession(this);
-            // Debug.stopMethodTracing();
+            //Debug.stopMethodTracing();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -225,7 +219,7 @@ public class Main extends ListActivity {
      * Updates the book list.
      */
     protected void updateBookList() {
-        refreshLibrary(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY));
+        refreshLibrary(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY));
     }
 
     /**
@@ -564,10 +558,8 @@ public class Main extends ListActivity {
 
             setProgressBarIndeterminateVisibility(false);
 
-            // Set preferences from Setting screen
-            SharedPreferences sharedPref = mSharedPref;
 
-            String libDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
+            String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
             if (!libDir.endsWith("/")) {
                 libDir = libDir + "/";
@@ -641,7 +633,7 @@ public class Main extends ListActivity {
 
             case REVELUPDATE_ID:
                 Toast.makeText(this, R.string.checking_for_new_version_online, Toast.LENGTH_SHORT).show();
-                UpdateChecker.checkForNewerVersion(Global.SVN_VERSION);
+                UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
                 return true;
 
             case ABOUT_ID:
@@ -776,7 +768,7 @@ public class Main extends ListActivity {
 
                     if (libDirChanged) {
 
-                        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                        String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                                 Settings.DEFAULT_EBOOK_DIRECTORY);
 
                         try {
@@ -836,7 +828,7 @@ public class Main extends ListActivity {
             public void protectedRun() {
                 FlurryAgent.onEvent("Reset");
                 // cleanup current library directory
-                File libDir = new File(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                File libDir = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                         Settings.DEFAULT_EBOOK_DIRECTORY));
                 Util.deleteFiles(libDir, ".*\\.(tmp|lg|db)");
                 if (!libDir.getAbsoluteFile().toString().equalsIgnoreCase(Settings.DEFAULT_EBOOK_DIRECTORY)) {
@@ -849,7 +841,7 @@ public class Main extends ListActivity {
                 Util.deleteFiles(new File("/data/data/com.jackcholt.reveal/databases"), ".*\\.db");
                 // cleanup preferences (can't seem to delete file, so tell the
                 // preferences manager to clear them all)
-                mSharedPref.edit().clear().commit();
+                getSharedPrefs().edit().clear().commit();
 
                 // shutdown, but first queue a request to restart
                 Intent restartIntent = new Intent(Main.this, Main.class);
@@ -861,4 +853,7 @@ public class Main extends ListActivity {
         ConfirmActionDialog.confirmedAction(this, R.string.reset, R.string.confirm_reset, R.string.reset, action);
     }
 
+    private SharedPreferences getSharedPrefs() {
+        return PreferenceManager.getDefaultSharedPreferences(this);
+    }
 }

@@ -6,23 +6,40 @@
     android:layout_height="fill_parent"
     android:gravity="center_horizontal"
 	>
-	<WebView android:id="@+id/motdView"          
-		android:layout_width="fill_parent"          
-		android:layout_height="wrap_content"          
-		android:textSize="@dimen/font_size"/>	
-	<CheckBox android:id="@+id/dismiss_popup_id"
-		android:layout_height="wrap_content"
-		android:layout_width="wrap_content"
-		android:padding="10dip"/>
-	<TextView android:text="@string/dismiss_popup_btn" 
-		android:id="@+id/dismiss_popup_btn" 
-		android:layout_width="wrap_content" 
-		android:layout_height="wrap_content"/>
-        <Button
-                android:id="@+id/close_about_btn"
-                android:text="@string/close"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+	<ScrollView android:layout_width="fill_parent"
+		android:layout_height="0px" android:layout_weight="1.0">
+		<LinearLayout android:id="@+id/about_container"
+			android:layout_width="fill_parent" android:layout_height="0px"
+			android:layout_weight="1.0" android:paddingLeft="5dip"
+			android:paddingRight="5dip" android:orientation="vertical">
+			<WebView android:id="@+id/msgView"          
+				android:layout_width="fill_parent"          
+				android:layout_height="wrap_content"          
+				android:textSize="@dimen/font_size"/>
+		</LinearLayout>
+	</ScrollView>
+	<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:orientation="horizontal"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center"
+			android:layout_width="fill_parent"
+			android:gravity="center_horizontal"
+		>
+		<CheckBox android:id="@+id/dismiss_popup_id"
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			android:padding="10dip"/>
+		<TextView android:text="@string/dismiss_popup_btn" 
+			android:id="@+id/dismiss_popup_btn" 
+			android:layout_width="wrap_content" 
+			android:layout_height="wrap_content"/>
+	</LinearLayout>
+    <Button
+        android:id="@+id/close_about_btn"
+        android:text="@string/close"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
         android:padding="5sp"/>
 
 </LinearLayout>

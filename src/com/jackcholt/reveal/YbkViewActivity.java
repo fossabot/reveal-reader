@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -47,7 +46,7 @@ import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
-public class YbkViewActivity extends Activity implements OnGestureListener {
+public class YbkViewActivity extends SafeActivity implements OnGestureListener {
     private WebView mYbkView;
 
     private long mBookId;
@@ -57,9 +56,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
-    private SharedPreferences mSharedPref;
-    @SuppressWarnings("unused")
-    private boolean mShowPictures;
     private boolean mShowFullScreen;
     private String mFragment;
     private String mDialogFilename = "Never set";
@@ -88,204 +84,190 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public static final int CALL_BOOKMARK = 2;
     public static final int CALL_VERSE_CONTEXT_MENU = 3;
 
-    private GestureDetector gestureScanner;
+    private GestureDetector mGestureScanner;
 
     @SuppressWarnings("unchecked")
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
+    protected void onCreateInternal(final Bundle savedInstanceState) {
+        setProgressBarIndeterminateVisibility(true);
+        Util.startFlurrySession(this);
+        FlurryAgent.onEvent(TAG);
+
+        mGestureScanner = new GestureDetector(this);
+
+        initDisplayFeatures();
+
         try {
-            setProgressBarIndeterminateVisibility(true);
 
-            Util.startFlurrySession(this);
-            FlurryAgent.onEvent(TAG);
+            YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-            gestureScanner = new GestureDetector(this);
+            Long bookId = null;
+            Boolean isFromHistory = null;
+            boolean popup = this instanceof YbkPopupActivity;
+            String content = null;
+            String strUrl = null;
 
-            SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+            HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
 
-            // PopupHelpDialog.create(this, "newfontsizeoption");
+            if (statusMap != null) {
+                mBookId = bookId = (Long) statusMap.get("bookId");
+                mBookFileName = (String) statusMap.get("bookFileName");
+                mChapFileName = (String) statusMap.get("chapFileName");
+                mHistTitle = (String) statusMap.get("histTitle");
+                mScrollYPos = (Integer) statusMap.get("scrollYPos");
+                Log.d(TAG, "Scroll Position Y: " + mScrollYPos);
 
-            initDisplayFeatures(sharedPref);
+                if (savedInstanceState != null) {
+                    content = (String) savedInstanceState.get("content");
+                    strUrl = (String) savedInstanceState.getString("strUrl");
+                }
+
+            } else {
+
+                if (savedInstanceState != null) {
+                    bookId = (Long) savedInstanceState.get(YbkDAO.ID);
+                    isFromHistory = (Boolean) savedInstanceState.get(YbkDAO.FROM_HISTORY);
+                } else {
+                    Bundle extras = getIntent().getExtras();
+                    if (extras != null) {
+                        isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
+                        bookId = (Long) extras.get(YbkDAO.ID);
+                        content = (String) extras.get("content");
+                        strUrl = (String) extras.getString("strUrl");
+                        mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
+                    }
+                }
+
+                if (isFromHistory != null) {
+                    // bookId is actually the history id
+                    History hist = ybkDao.getHistory(bookId);
+                    bookId = hist.bookId;
+                    mBookFileName = ybkDao.getBook(bookId).fileName;
+                    mChapFileName = hist.chapterName;
+                    mHistTitle = hist.title;
+                }
+            }
+
+            if (bookId == null) {
+                Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
+                Log.e(TAG, "Book not loaded");
+                finish();
+                return;
+            }
+
+            Log.d(TAG, "BookId: " + bookId);
+
+            mBookId = bookId;
+
+            if (popup) {
+                mThemeIsDialog = true;
+            }
+
+            setContentView(R.layout.view_ybk);
+            super.onCreate(savedInstanceState);
+
+            if (popup) {
+                LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
+                breadCrumb.setVisibility(View.GONE);
+            }
+                ybkView.getSettings().setBuiltInZoomControls(true);
+                
+            final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
+            WebSettings webSettings = ybkView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+
+            checkAndSetFontSize(ybkView);
+            //checkAndSetEBookColor(ybkView);
+
+            if (popup) {
+                ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
+            } else {
+                final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
+                mBookBtn = (Button) findViewById(R.id.bookButton);
+                final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
+                chapBtn.setOnClickListener(new OnClickListener() {
+                    /**
+                     * set the chapter button so it scrolls the window to the top
+                     */
+                    public void onClick(final View v) {
+                        mYbkView.scrollTo(0, 0);
+                    }
+                });
+
+                mainBtn.setOnClickListener(new OnClickListener() {
+
+                    public void onClick(final View view) {
+
+                        try {
+                            YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
+                            if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null
+                                    && mChapFileName != null) {
+                                // Save the book and chapter to history if there is one
+                                ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+                                // remove the excess histories
+                                ybkDao.deleteHistories();
+                            }
+                        } catch (IOException ioe) {
+                            Log.e(TAG, "Could not insert history when clicking main button");
+                        }
+                        finish();
+                    }
+
+                });
+
+            }
 
             try {
+                Book book = ybkDao.getBook(bookId);
 
-                YbkDAO ybkDao = YbkDAO.getInstance(this);
+                mBookFileName = book.fileName;
 
-                Long bookId = null;
-                Boolean isFromHistory = null;
-                boolean popup = this instanceof YbkPopupActivity;
-                String content = null;
-                String strUrl = null;
-
-                HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
-
-                if (statusMap != null) {
-                    mBookId = bookId = (Long) statusMap.get("bookId");
-                    mBookFileName = (String) statusMap.get("bookFileName");
-                    mChapFileName = (String) statusMap.get("chapFileName");
-                    mHistTitle = (String) statusMap.get("histTitle");
-                    mScrollYPos = (Integer) statusMap.get("scrollYPos");
-                    Log.d(TAG, "Scroll Position Y: " + mScrollYPos);
-
-                    if (savedInstanceState != null) {
-                        content = (String) savedInstanceState.get("content");
-                        strUrl = (String) savedInstanceState.getString("strUrl");
-                    }
-
-                } else {
-
-                    if (savedInstanceState != null) {
-                        bookId = (Long) savedInstanceState.get(YbkDAO.ID);
-                        isFromHistory = (Boolean) savedInstanceState.get(YbkDAO.FROM_HISTORY);
-                    } else {
-                        Bundle extras = getIntent().getExtras();
-                        if (extras != null) {
-                            isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
-                            bookId = (Long) extras.get(YbkDAO.ID);
-                            content = (String) extras.get("content");
-                            strUrl = (String) extras.getString("strUrl");
-                            mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
-                        }
-                    }
-
-                    if (isFromHistory != null) {
-                        // bookId is actually the history id
-                        History hist = ybkDao.getHistory(bookId);
-                        bookId = hist.bookId;
-                        mBookFileName = ybkDao.getBook(bookId).fileName;
-                        mChapFileName = hist.chapterName;
-                        mHistTitle = hist.title;
-                    }
-                }
-
-                if (bookId == null) {
-                    Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
-                    Log.e(TAG, "Book not loaded");
-                    finish();
-                    return;
-                }
-
-                Log.d(TAG, "BookId: " + bookId);
-
-                mBookId = bookId;
-
-                if (popup) {
-                    mThemeIsDialog = true;
-                }
-
-                setContentView(R.layout.view_ybk);
-                super.onCreate(savedInstanceState);
-
-                if (popup) {
-                    LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
-                    breadCrumb.setVisibility(View.GONE);
-                }
-
-                final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
-                WebSettings webSettings = ybkView.getSettings();
-                webSettings.setJavaScriptEnabled(true);
-
-                checkAndSetFontSize(sharedPref, ybkView);
-                checkAndSetEBookColor(sharedPref, ybkView);
-
-                if (popup) {
-                    ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-                } else {
-                    final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
-                    mBookBtn = (Button) findViewById(R.id.bookButton);
-                    final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
-                    chapBtn.setOnClickListener(new OnClickListener() {
-                        /**
-                         * set the chapter button so it scrolls the window to the top
-                         */
-                        public void onClick(final View v) {
-                            mYbkView.scrollTo(0, 0);
-                        }
-                    });
-
-                    mainBtn.setOnClickListener(new OnClickListener() {
-
-                        public void onClick(final View view) {
-
-                            try {
-                                YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
-                                if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null
-                                        && mChapFileName != null) {
-                                    // Save the book and chapter to history if there is one
-                                    ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
-                                    // remove the excess histories
-                                    ybkDao.deleteHistories();
-                                }
-                            } catch (IOException ioe) {
-                                Log.e(TAG, "Could not insert history when clicking main button");
-                            }
+                mYbkReader = new YbkFileReader(this, mBookFileName, null);
+                String shortTitle = book.shortTitle;
+                if (mChapFileName == null) {
+                    if (mBookWalk) {
+                        Chapter firstChapter = ybkDao.getNextBookWalkerChapter(bookId, "");
+                        if (firstChapter == null) {
+                            setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent()
+                                    .getExtras().getInt(Main.BOOK_WALK_INDEX, -1)));
                             finish();
+                        } else {
+                            mChapFileName = firstChapter.fileName;
                         }
-
-                    });
-
+                    } else
+                        mChapFileName = "\\" + shortTitle + ".html";
                 }
 
-                try {
-                    Book book = ybkDao.getBook(bookId);
-
-                    mBookFileName = book.fileName;
-
-                    mYbkReader = new YbkFileReader(this, mBookFileName, null);
-                    String shortTitle = book.shortTitle;
-                    if (mChapFileName == null) {
-                        if (mBookWalk) {
-                            Chapter firstChapter = ybkDao.getNextBookWalkerChapter(bookId, "");
-                            if (firstChapter == null) {
-                                setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent()
-                                        .getExtras().getInt(Main.BOOK_WALK_INDEX, -1)));
-                                finish();
-                            } else {
-                                mChapFileName = firstChapter.fileName;
-                            }
-                        } else
-                            mChapFileName = "\\" + shortTitle + ".html";
+                if (!popup) {
+                    if (loadChapter(mBookFileName, mChapFileName)) {
+                        setBookBtn(shortTitle, mBookFileName, mChapFileName);
                     }
-
-                    if (!popup) {
-                        if (loadChapter(mBookFileName, mChapFileName)) {
-                            setBookBtn(shortTitle, mBookFileName, mChapFileName);
-                        }
-                    }
-
-                } catch (IOException ioe) {
-                    Log.e(TAG, "Could not load: " + mBookFileName + " chapter: " + mChapFileName + ". "
-                            + ioe.getMessage());
-
-                    Toast.makeText(this, "Could not load : " + mBookFileName + " chapter: " + mChapFileName
-                            + ". Please report this at " + getResources().getText(R.string.website), Toast.LENGTH_LONG);
                 }
-                setWebViewClient(ybkView);
 
-                setProgressBarIndeterminateVisibility(false);
             } catch (IOException ioe) {
-                unexpectedError(ioe);
+                Log.e(TAG, "Could not load: " + mBookFileName + " chapter: " + mChapFileName + ". "
+                        + ioe.getMessage());
+
+                Toast.makeText(this, "Could not load : " + mBookFileName + " chapter: " + mChapFileName
+                        + ". Please report this at " + getResources().getText(R.string.website), Toast.LENGTH_LONG);
             }
-        } catch (RuntimeException rte) {
-            unexpectedError(rte);
-        } catch (Error e) {
-            unexpectedError(e);
+            setWebViewClient(ybkView);
+
+            setProgressBarIndeterminateVisibility(false);
+        } catch (IOException ioe) {
+            unexpectedError(ioe);
         }
     }
 
-    private void checkAndSetFontSize(SharedPreferences sharedPref, final WebView ybkView) {
-        int fontSize = ybkView.getSettings().getDefaultFontSize();
-        mFontSizeStr = sharedPref.getString("default_font_size", "14");
-        fontSize = Integer.parseInt(mFontSizeStr);
+    private void checkAndSetFontSize(final WebView ybkView) {
+        mFontSizeStr = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
+        int fontSize = Integer.parseInt(mFontSizeStr);
 
         ybkView.getSettings().setDefaultFontSize(fontSize);
         ybkView.getSettings().setDefaultFixedFontSize(fontSize);
-
-        ybkView.loadUrl("javascript:(function() { " + "document.getElementsByTagName('body')[0].style.color = 'red'; "
-                + "})()");
     }
 
-    private void checkAndSetEBookColor(SharedPreferences sharedPref, final WebView ybkView) {
+    /*private void checkAndSetEBookColor(final WebView ybkView) {
         // Check and set background and foreground colors
         // public void onPageFinished(ybkView, String url){
         // ybkView.loadUrl("javascript:(function() { " +
@@ -293,12 +275,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         // "})()");
         // }
 
-    }
+    }*/
 
-    private void initDisplayFeatures(SharedPreferences sharedPref) {
-        mShowPictures = sharedPref.getBoolean("show_pictures", true);
-
-        mShowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+    private void initDisplayFeatures() {
+        mShowFullScreen = getSharedPrefs().getBoolean("show_fullscreen", false);
 
         if (mShowFullScreen) {
             getWindow()
@@ -308,42 +288,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
-        }
-    }
-
-    /**
-     * Handle unexpected error.
-     * 
-     * @param throwable
-     *            The exception/error that was unexpected.
-     */
-    private void unexpectedError(Throwable throwable) {
-        finish();
-        Util.unexpectedError(this, throwable, "book: " + mBookFileName, "chapter: " + mChapFileName);
-    }
-
-    @Override
-    protected void onStart() {
-        try {
-            Util.startFlurrySession(this);
-            super.onStart();
-        } catch (RuntimeException rte) {
-            Util.unexpectedError(this, rte);
-        } catch (Error e) {
-            Util.unexpectedError(this, e);
-        }
-    }
-
-    /** Called when the activity is going away. */
-    @Override
-    protected void onStop() {
-        try {
-            super.onStop();
-            FlurryAgent.onEndSession(this);
-        } catch (RuntimeException rte) {
-            Util.unexpectedError(this, rte);
-        } catch (Error e) {
-            Util.unexpectedError(this, e);
         }
     }
 
@@ -388,7 +332,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         } else if (url.length() > ContentUriLength + 1) {
                             setProgressBarIndeterminateVisibility(true);
 
-                            String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                            String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                                     Settings.DEFAULT_EBOOK_DIRECTORY);
 
                             Log.d(TAG, "WebView URL: " + url);
@@ -404,7 +348,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 } else {
                                     // pop up a context menu
                                     startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class)
-                                            .putExtra("verseNumber", obtainVerseNumber(url)), CALL_VERSE_CONTEXT_MENU);
+                                            .putExtra("verseStartPos", obtainVerseStartPos(url)).putExtra("bookId",
+                                                    mBookId).putExtra("chapterName", mChapFileName),
+                                            CALL_VERSE_CONTEXT_MENU);
                                     return true;
                                 }
                             } else {
@@ -509,8 +455,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         // Log.d(TAG, "In onPageFinished(). Jumping to #" +
                         // mFragment);
                         view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
-                        view.loadUrl("javascript:(function() { "
-                                + "document.getElementsByTagName('body')[0].style.color = 'red'; " + "})()");
+                        // view.loadUrl("javascript:(function() { " +
+                        // "document.getElementsByTagName('body')[0].style.color = 'red'; "
+                        // +
+                        // "})()");
                         mFragment = null;
                     } else if (url.indexOf('@') != -1) {
                         view.scrollTo(0, 0);
@@ -534,7 +482,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         });
     }
 
-    private String obtainVerseNumber(final String url) {
+    private String obtainVerseStartPos(final String url) {
+        return url.split(",")[1];
+    }
+
+    /*private String obtainVerseNumber(final String url) {
+
         String temp = url;
         int atLoc = temp.indexOf('@');
         if (atLoc > -1) {
@@ -546,7 +499,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         return temp;
-    }
+    }*/
 
     /**
      * Set the book and chapter buttons.
@@ -826,11 +779,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 case CALL_VERSE_CONTEXT_MENU:
                     switch (data.getExtras().getInt(VerseContextDialog.MENU_ITEM_TAG)) {
                     case VerseContextDialog.ANNOTATE_ID:
-                        startActivityForResult(new Intent(getBaseContext(), VerseContextDialog.class)
-                        .putExtra("verseNumber", obtainVerseNumber("")), CALL_VERSE_CONTEXT_MENU);
+                        startActivityForResult(new Intent(getBaseContext(), NoteEdit.class).putExtra("verseStartPos",
+                                obtainVerseStartPos("")), CALL_VERSE_CONTEXT_MENU);
 
                         break;
-                        
+
                     case VerseContextDialog.GOTO_TOP_ID:
                         mYbkView.scrollTo(0, 0);
                         break;
@@ -1043,8 +996,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     }
 
-                    Chapter chapObj = ybkDao.getChapter(bookId, chap.toLowerCase());
-
+                    String chapLowerCase = chap.toLowerCase();
+                    Chapter chapObj = ybkDao.getChapter(bookId, chapLowerCase);
+                    if (chapObj == null) {
+                        chapObj = ybkDao.getChapter(bookId, chapLowerCase + ".gz");
+                    }
+                    if (chapObj == null) {
+                        String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
+                        chapObj = ybkDao.getChapter(bookId, concatChap);
+                    }
                     if (chapObj != null) {
                         mChapOrderNbr = chapObj.orderNumber;
                     } else {
@@ -1080,7 +1040,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         setChapBtnText(content);
                     }
 
-                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                    String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                             Settings.DEFAULT_EBOOK_DIRECTORY);
 
                     content = Util.processIfbook(content, this, libDir);
@@ -1089,7 +1049,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     content = Util.convertIfvar(content);
 
-                    content = Util.htmlize(content, mSharedPref);
+                    content = Util.htmlize(content, getSharedPrefs());
 
                     if (showInPopup) {
                         // The page should appear in a pop-up
@@ -1488,12 +1448,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         super.dispatchTouchEvent(ev);
-        return gestureScanner.onTouchEvent(ev);
+        return mGestureScanner.onTouchEvent(ev);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent me) {
-        return gestureScanner.onTouchEvent(me);
+        return mGestureScanner.onTouchEvent(me);
     }
 
     public boolean onDown(MotionEvent e) {
@@ -1541,5 +1501,21 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     public boolean onSingleTapUp(MotionEvent e) {
         return true;
+    }
+
+    private SharedPreferences getSharedPrefs() {
+        return PreferenceManager.getDefaultSharedPreferences(this);
+    }
+
+    @Override
+    String getBookFileName() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    String getChapFileName() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

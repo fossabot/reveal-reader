@@ -61,7 +61,7 @@
 <string name="ebook_list_failed_url">Failed to update ebook list from server.  Please try again.</string>
 <string name="ebook_list_failed_io">Failed to update ebook list from server.  Please check your Internet connection and try again.</string>
 <string name="ebook_exists_still_download">This eBook already exists in your library.  Would you like to replace it with a new copy?</string>
-<string name="update_available"><b>Update Available</b>Reveal update available, Please check Android Market</string>
+<string name="update_available"><b>Update Available:</b> A Reveal update is available. Please check Android Market.</string>
 <string name="checking_for_new_version_online">Checking for new Version Online</string>
 <string name="version_you_are_running">Version you are running SVN rev </string>
 <string name="splash">Splash Screen Here</string>
@@ -148,6 +148,8 @@
 	<item>CP1251</item>
 </string-array>
 <string name="changing_charset">Re-adding book using {0} character set. It should appear in the list momentarily. </string>
+<string name="motd_title">Message of the Day</string>
+<string name="version_notes_title">Version Notes</string>
     <string name="no_notes">No Notes Yet</string>
     <string name="menu_insert">Add Note</string>
     <string name="menu_delete">Delete Note</string>

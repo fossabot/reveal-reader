@@ -18,15 +18,15 @@ public class VerseContextDialog extends ListActivity {
     public static final int HIGHLIGHT_ID = 1;
     public static final int GOTO_TOP_ID = 2;
     public static final String MENU_ITEM_TAG = "menu_item_id";
-    private static final String TAG ="VerseContextDialog";
-    
+    private static final String TAG = "VerseContextDialog";
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
             Util.startFlurrySession(this);
             FlurryAgent.onEvent(TAG);
-            
+
             requestWindowFeature(Window.FEATURE_NO_TITLE);
 
             setContentView(R.layout.view_verse_context);
@@ -46,7 +46,7 @@ public class VerseContextDialog extends ListActivity {
         data.add(this.getResources().getString(R.string.menu_annotate));
         data.add(this.getResources().getString(R.string.menu_highlight));
         data.add(this.getResources().getString(R.string.menu_goto_top));
-        
+
         // Now create a simple array adapter and set it to display
         ArrayAdapter<String> menuAdapter = new ArrayAdapter<String>(this, R.layout.verse_menu_row, data);
 
@@ -56,8 +56,11 @@ public class VerseContextDialog extends ListActivity {
     @Override
     protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
         Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
-        
-        setResult(RESULT_OK, new Intent().putExtra(MENU_ITEM_TAG, selectionRowId));
+
+        setResult(RESULT_OK, new Intent().putExtra(MENU_ITEM_TAG, selectionRowId).putExtra("verseStartPos",
+                getIntent().getExtras().getString("verseStartPos")).putExtra("bookId",
+                getIntent().getExtras().getLong("bookId")).putExtra("chapterName",
+                getIntent().getExtras().getString("chapterName")));
 
         finish();
     }
