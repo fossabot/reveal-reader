@@ -167,28 +167,8 @@ public class Util {
      */
     public static final String getBookShortTitleFromBindingText(String binding) {
         // parse binding text to populate book title
-        String bookShortTitle = "No book short title";
+        String bookShortTitle = binding.replaceAll("^<[aA]\\s+[hH][rR][eE][fF]=['\"](.+)\\..*>.*$", "$1");
 
-        int bindingPos = binding.toLowerCase().indexOf("<a");
-
-        if (bindingPos != -1) {
-            binding = binding.substring(bindingPos);
-            bindingPos = binding.toLowerCase().indexOf("href");
-        }
-
-        if (bindingPos != -1) {
-            binding = binding.substring(bindingPos);
-            bindingPos = binding.toLowerCase().indexOf("\"");
-        }
-
-        if (bindingPos != -1) {
-            binding = binding.substring(bindingPos + 1);
-            bindingPos = binding.toLowerCase().indexOf(".");
-        }
-
-        if (bindingPos != -1) {
-            bookShortTitle = binding.substring(0, bindingPos);
-        }
         // make sure we return an independent substring
         return new String(bookShortTitle.toCharArray());
     }

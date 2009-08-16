@@ -415,45 +415,12 @@ public class YbkFileReader {
 
         if (null == fileText) {
             Log.e(TAG, "The YBK file contains no binding.html");
-            Log.w(TAG, "The YBK file contains no binding.html");
         }
 
         return fileText;
 
     }
 
-    /*
-     * public String readInternalFile(final String iFilename) throws IOException
-     * { String fileText = null; int offset = 0; int len = 0;
-     * 
-     * RandomAccessFile file = mFile;
-     * 
-     * ArrayList<InternalFile> internalFiles = mInternalFiles;
-     * 
-     * InternalFile iFile = new InternalFile(); iFile.fileName = iFilename;
-     * Object[] ifArray = internalFiles.toArray(); Arrays.sort(ifArray,
-     * iFileComp); int index = Arrays.binarySearch(ifArray, iFile, iFileComp);
-     * if (index >= 0) { offset = ((InternalFile) ifArray[index]).offset; len =
-     * ((InternalFile) ifArray[index]).len; } else { if
-     * (iFilename.toLowerCase().endsWith(".gz")){ iFile.fileName =
-     * iFilename.substring(0, iFilename.length() - 3); index =
-     * Arrays.binarySearch(ifArray, iFile, iFileComp); } else { iFile.fileName =
-     * iFilename + ".gz"; index = Arrays.binarySearch(ifArray, iFile,
-     * iFileComp); }
-     * 
-     * if (index >= 0) { offset = ((InternalFile) ifArray[index]).offset; len =
-     * ((InternalFile) ifArray[index]).len; } }
-     * 
-     * if (index >= 0) { byte[] text = new byte[len]; file.seek(offset); int
-     * amountRead = file.read(text); if (amountRead < len) { throw new
-     * InvalidFileFormatException( "Couldn't read all of " + iFilename + "."); }
-     * 
-     * if (iFile.fileName.toLowerCase().endsWith(".gz")) { fileText =
-     * Util.decompressGzip(text); } else { fileText = new String(text,
-     * "ISO_8859-1"); } }
-     * 
-     * return fileText; }
-     */
     public String readInternalFile(final String chapName) throws IOException {
         return readInternalFile(chapName, FROM_DB);
     }
