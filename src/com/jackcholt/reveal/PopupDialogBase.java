@@ -22,6 +22,7 @@ import android.content.SharedPreferences.Editor;
 import android.os.Process;
 import android.preference.PreferenceManager;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -79,7 +80,12 @@ public class PopupDialogBase extends Dialog {
                         @Override
                         public void protectedRun() {
                             wv.loadData(mMessage, "text/html", "utf-8");
-                            show();
+                            try {
+                                show();
+                            } catch (WindowManager.BadTokenException bte) {
+                                // ignore - this just means that the Activity that launched this dialog
+                                // has already gone away.
+                            }
                         }
                     });
                 }

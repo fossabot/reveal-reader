@@ -1027,7 +1027,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         chapObj = ybkDao.getChapter(bookId, chapLowerCase + ".gz");
                     }
                     if (chapObj == null) {
-                        String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
+                        String concatChap = chapLowerCase.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
                         chapObj = ybkDao.getChapter(bookId, concatChap);
                     }
                     if (chapObj != null) {
