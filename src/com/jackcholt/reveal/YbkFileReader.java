@@ -38,7 +38,7 @@ public class YbkFileReader {
 
     /** Zoom menu will be available */
     public static final int CHAPTER_ZOOM_MENU_ON = 1;
-    
+
     public static final String DEFAULT_YBK_CHARSET = "ISO-8859-1";
 
     private static final int INDEX_FILENAME_STRING_LENGTH = 48;
@@ -85,7 +85,7 @@ public class YbkFileReader {
     private long mBookId = -1;
 
     private Context mCtx;
-    
+
     private String mCharset = DEFAULT_YBK_CHARSET;
 
     /**
@@ -104,11 +104,12 @@ public class YbkFileReader {
             // do nothing
         }
 
-//        InternalFile(final String newFileName, final int ybkOffset, final int ybkLen) {
-//            fileName = newFileName;
-//            offset = ybkOffset;
-//            len = ybkLen;
-//        }
+        // InternalFile(final String newFileName, final int ybkOffset, final int
+        // ybkLen) {
+        // fileName = newFileName;
+        // offset = ybkOffset;
+        // len = ybkLen;
+        // }
     }
 
     /**
@@ -121,7 +122,8 @@ public class YbkFileReader {
      * @throws FileNotFoundException
      *             if the file cannot be opened for reading.
      */
-    private YbkFileReader(final Context ctx, final RandomAccessFile file, String charset) throws FileNotFoundException, IOException {
+    private YbkFileReader(final Context ctx, final RandomAccessFile file, String charset) throws FileNotFoundException,
+            IOException {
         mFile = file;
         mCtx = ctx;
         mCharset = charset == null ? DEFAULT_YBK_CHARSET : charset;
@@ -139,7 +141,8 @@ public class YbkFileReader {
      * @throws FileNotFoundException
      *             if the filename cannot be opened for reading.
      */
-    public YbkFileReader(final Context ctx, final String fileName, String charset) throws FileNotFoundException, IOException {
+    public YbkFileReader(final Context ctx, final String fileName, String charset) throws FileNotFoundException,
+            IOException {
         this(ctx, new RandomAccessFile(fileName, "r"), charset);
 
         mFilename = fileName;
@@ -150,8 +153,7 @@ public class YbkFileReader {
         try {
             book = ybkDao.getBook(fileName);
             noException = true;
-        }
-        finally {
+        } finally {
             if (!noException) {
                 mFile.close();
                 mFile = null;
@@ -164,24 +166,24 @@ public class YbkFileReader {
             }
         }
     }
-    
+
     /**
      * Closes the reader.
      * 
-     * @throws IOException 
+     * @throws IOException
      * 
      */
     public void close() {
-       if (mFile != null) {
-           try {
-            mFile.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+        if (mFile != null) {
+            try {
+                mFile.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+            }
+            mFile = null;
         }
-           mFile = null;
-       }
     }
-    
+
     @Override
     protected void finalize() throws Throwable {
         close();
@@ -220,9 +222,12 @@ public class YbkFileReader {
 
                 int fileNameStartPos = pos;
 
-                // NOTE - there are character sets for which testing for 0 won't work, but at least for the time being
-                // there aren't any YBK's that use them and Yancey software would choke on them too.
-                while (indexArray[pos++] != 0 && pos < mIndexLength);
+                // NOTE - there are character sets for which testing for 0 won't
+                // work, but at least for the time being
+                // there aren't any YBK's that use them and Yancey software
+                // would choke on them too.
+                while (indexArray[pos++] != 0 && pos < mIndexLength)
+                    ;
                 int fileNameLength = (pos - fileNameStartPos) - 1;
                 iFile.fileName = new String(indexArray, fileNameStartPos, fileNameLength, mCharset);
 
@@ -388,7 +393,8 @@ public class YbkFileReader {
 
         long bookId = 0;
         try {
-            bookId = mBookId = ybkDao.insertBook(fileName, mCharset, bindingText, bookTitle, shortTitle, mBookMetaData, chapters);
+            bookId = mBookId = ybkDao.insertBook(fileName, mCharset, bindingText, bookTitle, shortTitle, mBookMetaData,
+                    chapters);
         } finally {
             if (bookId == 0) {
                 // we'll assume the fileName is already in the db and continue
@@ -480,16 +486,18 @@ public class YbkFileReader {
             int index = Arrays.binarySearch(ifArray, iFile, iFileComp);
 
             if (index >= 0) {
-                offset = mInternalFiles.get(index).offset;
-                len = mInternalFiles.get(index).len;
+                InternalFile matchedFile = (InternalFile)ifArray[index];
+                offset = matchedFile.offset;
+                len = matchedFile.len;
                 fileFound = true;
             } else {
                 chapName += ".gz";
                 iFile.fileName = chapName;
                 index = Arrays.binarySearch(ifArray, iFile, iFileComp);
                 if (index > -1) {
-                    offset = mInternalFiles.get(index).offset;
-                    len = mInternalFiles.get(index).len;
+                    InternalFile matchedFile = (InternalFile)ifArray[index];
+                    offset = matchedFile.offset;
+                    len = matchedFile.len;
                     fileFound = true;
                 }
             }
@@ -503,7 +511,9 @@ public class YbkFileReader {
                 throw new InvalidFileFormatException("Couldn't read all of " + chapName + ".");
             }
 
-            if (chapName.toLowerCase().endsWith(".gz")) {
+            if (chapName.toLowerCase().endsWith(".gz") ||
+            // also check for GZ header since apparently some books in the wild don't correctly label the BINDING.HTML when it is gz compressed. 
+                    (len > 1 && text[0] == 31 && text[1] == (byte) 139)) {
                 fileText = Util.decompressGzip(text, mCharset);
             } else {
                 fileText = new String(text, mCharset);
