@@ -167,7 +167,7 @@ public class Util {
      */
     public static final String getBookShortTitleFromBindingText(String binding) {
         // parse binding text to populate book title
-        String bookShortTitle = binding.replaceAll("^<[aA]\\s+[hH][rR][eE][fF]=['\"](.+)\\..*>.*$", "$1");
+        String bookShortTitle = binding.replaceAll("^(?is)<a\\s+href=['\"](.+)\\..*>.*", "$1");
 
         // make sure we return an independent substring
         return new String(bookShortTitle.toCharArray());
@@ -1152,9 +1152,9 @@ public class Util {
                 // TODO - need to add in definitions for the custom elements
                 // found in a ybk
             }
-            Class<? extends XMLReader> htmlSchemaClass = (Class<? extends XMLReader>) Class
+            Class<? extends XMLReader> htmlParserClass = (Class<? extends XMLReader>) Class
                     .forName("org.ccil.cowan.tagsoup.Parser");
-            XMLReader parser = htmlSchemaClass.newInstance();
+            XMLReader parser = htmlParserClass.newInstance();
             parser.setProperty("http://www.ccil.org/~cowan/tagsoup/properties/schema", htmlSchema);
             return parser;
         } catch (Exception e) {
