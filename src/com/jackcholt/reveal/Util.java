@@ -1159,8 +1159,10 @@ public class Util {
             if (BOOLdisableAnalytics) {
                 FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
                 FlurryAgent.setReportLocation(false);
+                FlurryAgent.onEvent("LocationDisabled");
             } else {
                 FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
+                FlurryAgent.onEvent("LocationEnabled");
             }
         } else {
             // Development key for use of the DEVELOPMENT TEAM
