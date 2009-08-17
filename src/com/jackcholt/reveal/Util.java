@@ -165,15 +165,15 @@ public class Util {
      */
     public static final String getBookShortTitleFromBindingText(String binding) {
         // Compose the regex per http://www.martinfowler.com/bliki/ComposedRegex.html
-        String start = "^";
-        String caseInsensSingleLineFlags = "(?is)";
-        String oneOrMoreSpaces = "\\s+";
-        String singleOrDoubleQuote = "['\"]";
-        String oneOrNoBangs = "!?";
-        String shortTitleGroup = "(.+)";
-        String period = "\\.";
-        String zeroOrMoreChars = ".*";
-        String firstGroup = "$1";
+        final String start = "^";
+        final String caseInsensSingleLineFlags = "(?is)";
+        final String oneOrMoreSpaces = "\\s+";
+        final String singleOrDoubleQuote = "['\"]";
+        final String oneOrNoBangs = "!?";
+        final String shortTitleGroup = "(.+)";
+        final String period = "\\.";
+        final String zeroOrMoreChars = ".*";
+        final String firstGroup = "$1";
 
         // parse binding text to populate book title
         String bookShortTitle = Html.fromHtml(  // handle character references
