@@ -8,11 +8,11 @@
 <string name="menu_history">eBook History</string>
 <string name="menu_settings">Program Settings</string>
 <string name="menu_refresh_library">Refresh eBook Library</string>
-<string name="label_splash_screen">Disable Splash Screen</string>
+<string name="label_splash_screen">Enable Splash Screen</string>
 <string name="menu_browser">Online eBook Download</string>
 <string name="settings_name">Reveal Settings</string>
-<string name="summary_on_show_splash_screen">Splash Screen disabled</string>
-<string name="summary_off_show_splash_screen">Splash Screen enabled</string>
+<string name="summary_on_show_splash_screen">Splash Screen Enabled</string>
+<string name="summary_off_show_splash_screen">Splash Screen Disabled</string>
 <string name="up_one_level">..</string>
 <string name="reveal_ybk_view">Reveal :: Read eBook</string>
 <string name="reference_not_found">Referenced eBook ({0}) not found.</string>
