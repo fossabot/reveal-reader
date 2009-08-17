@@ -20,6 +20,7 @@ public class Settings extends PreferenceActivity {
     public static final int DEFAULT_BOOKMARK_ENTRY_AMOUNT = 20;
     public static final String EBOOK_FONT_SIZE_KEY = "default_font_size";
     public static final String DEFAULT_EBOOK_FONT_SIZE = "14";
+    
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {

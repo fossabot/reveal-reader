@@ -17,6 +17,13 @@
         android:summaryOff="@string/summary_off_fullscreen" 
         android:checked="true"/>
 
+	<CheckBoxPreference
+        android:key="disable_analytics"
+        android:title="@string/disable_analytics"
+        android:summaryOn="@string/summary_on_disable_analytics" 
+        android:summaryOff="@string/summary_off_disable_analytics" 
+        android:checked="true"/>
+        
     <EditTextPreference
    		android:key="default_ebook_dir"
    		android:title="@string/title_default_ebook_dir" 
@@ -28,5 +35,7 @@
 		android:summary="@string/summary_default_font_size"  
 		android:entries="@array/fontsize"  
 		android:entryValues="@array/fontsize_number"/>
-		 
+
+	/>
+        
 </PreferenceScreen>

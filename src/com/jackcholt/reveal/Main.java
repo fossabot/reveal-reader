@@ -71,7 +71,8 @@ public class Main extends ListActivity {
     public static final String BOOK_WALK_INDEX = "bw_index";
 
     private NotificationManager mNotifMgr;
-
+    private boolean first_run;
+    private SharedPreferences app_preferences;
     private boolean BOOLshowSplashScreen;
     private static boolean BOOLsplashed = false;
     private boolean BOOLshowFullScreen;
@@ -86,12 +87,29 @@ public class Main extends ListActivity {
         try {
             super.onCreate(savedInstanceState);
             //Debug.startMethodTracing("reveal");
-
+            
             mApplication = this;
 
+            // Run to check if this is the first time run and init.
+            StartupFirstTime();
+            
             Util.startFlurrySession(this);
             FlurryAgent.onEvent("Main");
 
+            // Here is where we request the application preferences
+            app_preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            // Now, we're going to check for the 'first_run' variable
+            first_run = app_preferences.getBoolean("first_run", true);
+           
+            // If it's false (the default) then we need to init some values
+            if (first_run) {
+                SharedPreferences.Editor editor = app_preferences.edit();
+                editor.putBoolean("first_run", false);
+                editor.putBoolean("show_splash_screen", false);
+                editor.putBoolean("show_fullscreen", false);
+                editor.commit();
+            } 
+            
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
@@ -855,5 +873,14 @@ public class Main extends ListActivity {
 
     private SharedPreferences getSharedPrefs() {
         return PreferenceManager.getDefaultSharedPreferences(this);
+    }
+    
+    /**
+     * First Run startup to initialize preferences and etc.
+     * 
+     */
+    public static void StartupFirstTime() {
+
+        
     }
 }

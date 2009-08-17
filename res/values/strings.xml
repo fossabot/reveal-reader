@@ -8,11 +8,11 @@
 <string name="menu_history">eBook History</string>
 <string name="menu_settings">Program Settings</string>
 <string name="menu_refresh_library">Refresh eBook Library</string>
-<string name="label_splash_screen">Enable Splash Screen</string>
+<string name="label_splash_screen">Disable Splash Screen</string>
 <string name="menu_browser">Online eBook Download</string>
 <string name="settings_name">Reveal Settings</string>
-<string name="summary_on_show_splash_screen">Splash Screen enabled</string>
-<string name="summary_off_show_splash_screen">Splash Screen disabled</string>
+<string name="summary_on_show_splash_screen">Splash Screen disabled</string>
+<string name="summary_off_show_splash_screen">Splash Screen enabled</string>
 <string name="up_one_level">..</string>
 <string name="reveal_ybk_view">Reveal :: Read eBook</string>
 <string name="reference_not_found">Referenced eBook ({0}) not found.</string>
@@ -102,7 +102,7 @@
 <string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
 <string name="chapter_not_found">\&quot;{0}\&quot; cannot be found.</string>
 <string name="powered_by_jdbm">Powered by JDBM (http://jdbm.sourceforge.net/)</string>
-<string name="menu_license">License</string>
+<string name="menu_license">License &amp; Analytics Info</string>
 <string name="title_license">Reveal License</string>
 <string name="menu_delete_ebook">Delete eBook</string>
 <string name="menu_open_ebook">Open eBook</string>
@@ -147,4 +147,8 @@
 <string name="changing_charset">Re-adding book using {0} character set. It should appear in the list momentarily. </string>
 <string name="motd_title">Message of the Day</string>
 <string name="version_notes_title">Version Notes</string>
+
+<string name="summary_on_disable_analytics">Analytics Location Off</string>
+<string name="summary_off_disable_analytics">Analytics Location On</string>
+<string name="disable_analytics">Disable Analytics</string>
 </resources>

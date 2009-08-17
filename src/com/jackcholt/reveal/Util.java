@@ -58,10 +58,8 @@ public class Util {
     private static final String TMP_EXTENSION = ".tmp";
     private static final String TAG = "Util";
     public static final String NO_TITLE = "no_book_title";
-
-
-
-    
+    private static SharedPreferences mSharedPref;
+        
     /**
      * Dave Packham Check for network connectivity before trying to go to the
      * net and hanging :) hitting F8 in the emulator will turn network on/off
@@ -1168,13 +1166,28 @@ public class Util {
      * @param context
      */
     public static void startFlurrySession(Context context) {
+        boolean BOOLdisableAnalytics;
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
+        BOOLdisableAnalytics = mSharedPref.getBoolean("disable_analytics", false);
+        
         if (Global.DEBUG == 0) {
             // Release Key for use of the END USERS
-            FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
+             if(BOOLdisableAnalytics){
+                FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
+                FlurryAgent.setReportLocation(false);
+            } else {
+                FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4"); 
+            }
         } else {
             // Development key for use of the DEVELOPMENT TEAM
-            FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
+            if(BOOLdisableAnalytics){
+                FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
+                FlurryAgent.setReportLocation(false);
+            } else {
+                FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
+            }
         }
     }
+    
 
 }
