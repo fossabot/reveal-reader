@@ -207,6 +207,7 @@ public class Main extends ListActivity {
      * Schedule update refresh of the book list on the main thread.
      */
     public void scheduleRefreshBookList() {
+        mHandler.removeCallbacks(mUpdateBookList);
         mHandler.post(mUpdateBookList);
     }
 
@@ -299,7 +300,6 @@ public class Main extends ListActivity {
                         }
                         if (--remaining <= 0) {
                             refreshNotify("Refreshing of library complete.");
-                            // mUpdating = false;
                         }
                     }
                 };

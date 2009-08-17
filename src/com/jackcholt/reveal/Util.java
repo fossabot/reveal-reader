@@ -167,7 +167,7 @@ public class Util {
      */
     public static final String getBookShortTitleFromBindingText(String binding) {
         // parse binding text to populate book title
-        String bookShortTitle = binding.replaceAll("^(?is)<a\\s+href=['\"](.+)\\..*>.*", "$1");
+        String bookShortTitle = binding.replaceAll("^(?is).*<a\\s+href=['\"]!?(.+)\\..*>.*", "$1");
 
         // make sure we return an independent substring
         return new String(bookShortTitle.toCharArray());

@@ -179,7 +179,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
                 ybkView.getSettings().setJavaScriptEnabled(true);
                 ybkView.getSettings().setBuiltInZoomControls(true);
-                
+
                 checkAndSetFontSize(sharedPref, ybkView);
                 checkAndSetEBookColor(sharedPref, ybkView);
 
@@ -1016,6 +1016,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             // if we haven't reached a break statement yet, we
                             // have a problem.
                             Toast.makeText(this, "Could not read chapter '" + chap + "'", Toast.LENGTH_LONG);
+                            ybkView.loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain",
+                                    "utf-8");
                             return false;
                         } // label_get_content:
 
@@ -1105,7 +1107,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     "utf-8");
 
                     Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
-
+                    return false;
                 }
             }
         }
@@ -1253,11 +1255,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             if (content.indexOf('\002') != -1) {
                 content = content.substring(0, content.indexOf('\002'));
             }
+            return new String(content.toCharArray());
         } else {
             Log.e(TAG, "Couldn't find a concatenated chapter for: " + chap);
+            return null;
         }
-
-        return new String(content.toCharArray());
     }
 
     /**
