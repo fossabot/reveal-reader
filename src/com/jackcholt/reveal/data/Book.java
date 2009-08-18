@@ -22,11 +22,8 @@ public class Book extends JDBMObject implements Serializable {
 
     public long id;
     public String fileName;
-    public String bindingText;
-    public String title;
     public String formattedTitle;
     public String shortTitle;
-    public String metaData;
     public boolean active;
     public String charset;
 

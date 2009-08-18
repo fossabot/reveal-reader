@@ -129,31 +129,7 @@ public class Util {
      * @return The title of the book.
      */
     public static final String getBookTitleFromBindingText(String binding) {
-        // parse binding text to populate book title
-        String bookTitle = NO_TITLE;
-
-        int bindingPos = binding.toLowerCase().indexOf("<a");
-
-        if (bindingPos != -1) {
-            binding = binding.substring(bindingPos);
-            bindingPos = binding.toLowerCase().indexOf("href");
-        }
-
-        if (bindingPos != -1) {
-            binding = binding.substring(bindingPos);
-            bindingPos = binding.toLowerCase().indexOf(">");
-        }
-
-        if (bindingPos != -1) {
-            binding = binding.substring(bindingPos + 1);
-            bindingPos = binding.toLowerCase().indexOf("</a>");
-        }
-
-        if (bindingPos != -1) {
-            bookTitle = binding.substring(0, bindingPos);
-        }
-        // make sure we return an independent substring
-        return new String(bookTitle.toCharArray());
+        return formatTitle(binding);
     }
 
     /**

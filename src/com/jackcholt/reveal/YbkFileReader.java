@@ -1,5 +1,6 @@
 package com.jackcholt.reveal;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -62,26 +63,8 @@ public class YbkFileReader {
 
     private ArrayList<InternalFile> mInternalFiles = new ArrayList<InternalFile>();
 
-    private String mBindingText = "No Binding Text";
-
-    @SuppressWarnings("unused")
-    private String mBookTitle = "Couldn't get the title of this book";
-
-    @SuppressWarnings("unused")
-    private String mBookShortTitle = "No Short Title";
-
-    private String mBookMetaData = null;
-
     private ArrayList<Order> mOrderList = new ArrayList<Order>();
 
-    // private String mCurrentChapterOrderName = null;
-    // private int mCurrentChapterOrderNumber = -1;
-    // private String mChapterNavBarTitle = "No Title";
-    // private String mChapterHistoryTitle = "No Title";
-    // private int mChapterNavFile = CHAPTER_TYPE_SETTINGS;
-    // private int mChapterZoomPicture = CHAPTER_ZOOM_MENU_OFF;
-    // private SharedPreferences mSharedPref;
-    // private YbkDAO mYbkDao;
     private long mBookId = -1;
 
     private Context mCtx;
@@ -103,13 +86,6 @@ public class YbkFileReader {
         InternalFile() {
             // do nothing
         }
-
-        // InternalFile(final String newFileName, final int ybkOffset, final int
-        // ybkLen) {
-        // fileName = newFileName;
-        // offset = ybkOffset;
-        // len = ybkLen;
-        // }
     }
 
     /**
@@ -247,13 +223,7 @@ public class YbkFileReader {
                 mInternalFiles.add(iFile);
             }
 
-            mBindingText = readBindingFile(FROM_INTERNAL);
-            if (mBindingText != null) {
-                mBookTitle = Util.getBookTitleFromBindingText(mBindingText);
-                mBookShortTitle = Util.getBookShortTitleFromBindingText(mBindingText);
-                mBookMetaData = readMetaData(FROM_INTERNAL);
-                populateOrder(readOrderCfg(FROM_INTERNAL));
-            }
+            populateOrder(readOrderCfg(FROM_INTERNAL));
         } catch (IllegalArgumentException iae) {
             throw new InvalidFileFormatException("Index is damaged or incomplete.");
         }
@@ -311,7 +281,13 @@ public class YbkFileReader {
 
         if (bindingText != null) {
             bookTitle = Util.getBookTitleFromBindingText(bindingText);
+            if (bookTitle.length() == 0) {
+                bookTitle = new File(fileName).getName();
+            }
             shortTitle = Util.getBookShortTitleFromBindingText(bindingText);
+            if (shortTitle.length() == 0) {
+                bookTitle = new File(fileName).getName().replaceFirst("(?s)\\..*", "");
+            }
         }
 
         List<Chapter> chapters = new ArrayList();
@@ -393,8 +369,7 @@ public class YbkFileReader {
 
         long bookId = 0;
         try {
-            bookId = mBookId = ybkDao.insertBook(fileName, mCharset, bindingText, bookTitle, shortTitle, mBookMetaData,
-                    chapters);
+            bookId = mBookId = ybkDao.insertBook(fileName, mCharset, bookTitle, shortTitle, chapters);
         } finally {
             if (bookId == 0) {
                 // we'll assume the fileName is already in the db and continue
@@ -531,8 +506,8 @@ public class YbkFileReader {
      * @throws IOException
      *             if there is a problem reading the Book Metadata file.
      */
-    private String readMetaData(final int source) throws IOException {
-        return readInternalFile(BOOKMETADATA_FILENAME, source);
+    public String readMetaData() throws IOException {
+        return readInternalFile(BOOKMETADATA_FILENAME, FROM_DB);
     }
 
     private String readOrderCfg(final int source) throws IOException {

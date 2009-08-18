@@ -177,6 +177,14 @@ public class Main extends ListActivity {
             }
 
             refreshBookList();
+
+//            for (Book book : mBookTitleList) {
+//                String shortTitle = book.shortTitle;
+//                if (shortTitle == null || shortTitle.length() == 0 || shortTitle.equalsIgnoreCase("No book short title")) {
+//                    Log.e(Global.TAG, "Bad short title " + shortTitle + "in book " + book.fileName);
+//                }
+//            }
+            
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -401,8 +409,19 @@ public class Main extends ListActivity {
 
     protected boolean onEBookProperties(MenuItem item) {
         final Book book = getContextMenuBook(item);
+        String metaData = null;
         String message;
-        String metaData = book.metaData;
+        YbkFileReader ybkReader;
+        try {
+            ybkReader = new YbkFileReader(this, book.fileName, book.charset);
+            try {
+                metaData = ybkReader.readMetaData();
+            } finally {
+                ybkReader.close();
+            }
+        } catch (IOException e) {
+            // couldn't read meta data, that's ok we'll make some up
+        }
         if (metaData != null && metaData.length() > 0) {
             message = metaData.replaceFirst("(?i)^.*<end>", "");
         } else {

@@ -302,8 +302,8 @@ public class YbkDAO {
      *            the list of chapters
      * @throws IOException
      */
-    public long insertBook(final String fileName, final String charset, final String bindingText, final String title,
-            final String shortTitle, final String metaData, final List<Chapter> chapters) throws IOException {
+    public long insertBook(final String fileName, final String charset, final String formattedTitle,
+            final String shortTitle, final List<Chapter> chapters) throws IOException {
         // Debug.startMethodTracing("profiler", 20 * 1024 * 1024);
         synchronized (writeGate) {
 
@@ -315,15 +315,8 @@ public class YbkDAO {
                 book.fileName = fileName.toLowerCase();
                 book.charset = charset;
                 book.active = true;
-                book.bindingText = bindingText;
-                book.formattedTitle = title == null ? null : Util.formatTitle(title);
-                if (book.formattedTitle == Util.NO_TITLE) {
-                    // use filename instead
-                    book.formattedTitle = new File(fileName).getName();
-                }
-                book.title = title;
+                book.formattedTitle = formattedTitle;
                 book.shortTitle = shortTitle;
-                book.metaData = metaData;
 
                 boolean done = false;
                 try {
