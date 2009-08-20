@@ -71,8 +71,6 @@ public class Main extends ListActivity {
     public static final String BOOK_WALK_INDEX = "bw_index";
 
     private NotificationManager mNotifMgr;
-    private boolean first_run;
-    private SharedPreferences app_preferences;
     private boolean BOOLshowSplashScreen;
     private static boolean BOOLsplashed = false;
     private boolean BOOLshowFullScreen;
@@ -96,14 +94,9 @@ public class Main extends ListActivity {
             Util.startFlurrySession(this);
             FlurryAgent.onEvent("Main");
 
-            // Here is where we request the application preferences
-            app_preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            // Now, we're going to check for the 'first_run' variable
-            first_run = app_preferences.getBoolean("first_run", true);
-           
-            // If it's false (the default) then we need to init some values
-            if (first_run) {
-                SharedPreferences.Editor editor = app_preferences.edit();
+            // If this is the first time we've run (the default) then we need to init some values
+            if (getSharedPrefs().getBoolean("first_run", true)) {
+                SharedPreferences.Editor editor = getSharedPrefs().edit();
                 editor.putBoolean("first_run", false);
                 editor.putBoolean("show_splash_screen", false);
                 editor.putBoolean("show_fullscreen", false);
@@ -146,20 +139,16 @@ public class Main extends ListActivity {
                 // Check for version Notes Unique for this REV
                 RevNotesDialog.create(this);
                 
-                // Test SMS sending
-                // Util.sendSMS(this);
             }
 
             if (!(isConfigChanged())) {
                 // Check for SDcard presence
                 // if we have one create the dirs and look fer ebooks
                 if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
-                    // Log.e(Global.TAG, "sdcard not installed");
                     Toast.makeText(this, getResources().getString(R.string.sdcard_required), Toast.LENGTH_LONG).show();
                     return;
                 } else {
                     Util.createDefaultDirs(this);
-                    // updateBookList();
                 }
             }
 
@@ -178,13 +167,6 @@ public class Main extends ListActivity {
 
             refreshBookList();
 
-//            for (Book book : mBookTitleList) {
-//                String shortTitle = book.shortTitle;
-//                if (shortTitle == null || shortTitle.length() == 0 || shortTitle.equalsIgnoreCase("No book short title")) {
-//                    Log.e(Global.TAG, "Bad short title " + shortTitle + "in book " + book.fileName);
-//                }
-//            }
-            
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -295,9 +277,7 @@ public class Main extends ListActivity {
                 dbSet.add(book.fileName);
             }
 
-            // if adding files, then calculate set of files on disk, but not in
-            // the
-            // db
+            // if adding files, then calculate set of files on disk, but not in the db
             Set<String> addFiles;
             if (addNewBooks) {
                 addFiles = new HashSet<String>(fileSet);
@@ -315,7 +295,6 @@ public class Main extends ListActivity {
                 Completion callback = new Completion() {
                     volatile int remaining = count;
 
-                    // @Override
                     public void completed(boolean succeeded, String message) {
                         if (succeeded) {
                             refreshNotify(message);
