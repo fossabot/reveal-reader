@@ -60,6 +60,11 @@ public class Util {
     public static final String NO_TITLE = "no_book_title";
     private static SharedPreferences mSharedPref;
 
+    // Display Toast-Message
+    public static void displayToastMessage(String message) {
+        Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG).show();
+    }
+    
     /**
      * Dave Packham Check for network connectivity before trying to go to the net and hanging :) hitting F8 in the
      * emulator will turn network on/off

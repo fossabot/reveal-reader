@@ -151,4 +151,5 @@
 <string name="summary_on_disable_analytics">Analytics Location Off</string>
 <string name="summary_off_disable_analytics">Analytics Location On</string>
 <string name="disable_analytics">Disable Analytics</string>
+<string name="paypalURL">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4146444</string>
 </resources>

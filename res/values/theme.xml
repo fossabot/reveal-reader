@@ -1,7 +1,10 @@
 <resources>
-<!--  comment out for now till we fix
+<!--
+	<style name="Theme" parent="android:Theme">
+  	</style>
 	<style name="Theme.NoBackground" parent="android:Theme">
-        <item name="android:windowBackground">@null</item>
-    </style>
--->   
+		<item name="android:windowBackground">@drawable/background</item>
+		<item name="android:textColor">@color/black</item>
+	</style>
+-->
 </resources>
