@@ -16,13 +16,6 @@
         android:summaryOn="@string/summary_on_fullscreen" 
         android:summaryOff="@string/summary_off_fullscreen" 
         android:checked="true"/>
-
-	<CheckBoxPreference
-        android:key="disable_analytics"
-        android:title="@string/disable_analytics"
-        android:summaryOn="@string/summary_on_disable_analytics" 
-        android:summaryOff="@string/summary_off_disable_analytics" 
-        android:checked="true"/>
         
     <EditTextPreference
    		android:key="default_ebook_dir"
