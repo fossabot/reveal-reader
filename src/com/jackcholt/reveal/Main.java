@@ -85,7 +85,10 @@ public class Main extends ListActivity {
     public void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            Debug.startMethodTracing("reveal");
+            
+            if (Global.DEBUG == 1) {
+                Debug.startMethodTracing("reveal");
+            }
             
             mApplication = this;
 
@@ -191,7 +194,11 @@ public class Main extends ListActivity {
         try {
             super.onStop();
             FlurryAgent.onEndSession(this);
-            Debug.stopMethodTracing();
+            
+            if (Global.DEBUG == 1) {
+                Debug.stopMethodTracing();
+            }
+            
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -654,7 +661,7 @@ public class Main extends ListActivity {
                 return true;
 
             case ABOUT_ID:
-                AboutDialog.create(this);
+                AboutDialog.create();
                 return true;
 
             case DONATE_ID:
