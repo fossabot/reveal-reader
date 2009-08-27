@@ -85,8 +85,8 @@ public class Main extends ListActivity {
     public void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            
-            if (Global.DEBUG == 1) {
+                        
+            if (Global.DEBUG == 2) {
                 Debug.startMethodTracing("reveal");
             }
             
@@ -195,7 +195,7 @@ public class Main extends ListActivity {
             super.onStop();
             FlurryAgent.onEndSession(this);
             
-            if (Global.DEBUG == 1) {
+            if (Global.DEBUG == 2) {
                 Debug.stopMethodTracing();
             }
             
@@ -893,4 +893,6 @@ public class Main extends ListActivity {
     public static void displayToastMessage(String message) {
         Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG).show();
     }
+    
+
 }
