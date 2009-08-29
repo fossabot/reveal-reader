@@ -542,7 +542,7 @@ public class YbkDAO {
         if (chapterDetails != null) {
             int chapterIndex = Arrays.binarySearch(chapterDetails.chapters, cmpChapter, Chapter.chapterNameComparator);
             if (chapterIndex < 0) {
-                cmpChapter.fileName = fileName + ".gz";
+                cmpChapter.fileName += ".gz";
                 chapterIndex = Arrays.binarySearch(chapterDetails.chapters, cmpChapter, Chapter.chapterNameComparator);
             }
             if (chapterIndex >= 0)

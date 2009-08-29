@@ -444,17 +444,14 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                             chap = chapter.substring(0, pos);
                                         }
                                         Chapter chapObj = ybkDao.getChapter(bookObj.id, chap);
-                                        Chapter chapGzObj = ybkDao.getChapter(bookObj.id, chap + ".gz");
                                         String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
                                         Chapter chapConcatObj = ybkDao.getChapter(bookObj.id, concatChap);
 
                                         boolean bookLoaded = false;
-                                        if (chapGzObj != null) {
-                                            bookLoaded = loadChapter(book, chapter + ".gz");
-                                        } else if (chapObj != null || chapConcatObj != null) {
+                                        if (chapObj != null || chapConcatObj != null) {
                                             bookLoaded = loadChapter(book, chapter);
                                         } else {
-                                            mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
+                                            mDialogChapter = chap.substring(chapter.lastIndexOf("\\") + 1);
                                             showDialog(CHAPTER_NONEXIST);
                                         }
 
