@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.StringTokenizer;
 
 import android.content.Context;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.jackcholt.reveal.data.Book;
@@ -53,11 +54,12 @@ public class YbkFileReader {
     private static final String BOOKMETADATA_FILENAME = "\\bookmetadata.html";
     private static final String ORDER_CONFIG_FILENAME = "\\order.cfg";
 
-    private RandomAccessFile mFile;
+    private RandomAccessFile mFileIO;
 
     private FileChannel mChannel;
 
     private String mFilename;
+    private File mFile;
 
     private Context mCtx;
 
@@ -70,24 +72,6 @@ public class YbkFileReader {
     private Chapter mChapters[];
 
     private int mOrder[];
-
-    /**
-     * Construct a new YbkFileReader on the given File <code>file</code>. If the
-     * <code>file</code> specified cannot be found, throw a
-     * FileNotFoundException.
-     * 
-     * @param file
-     *            a File to be opened for reading characters from.
-     * @throws FileNotFoundException
-     *             if the file cannot be opened for reading.
-     */
-    private YbkFileReader(final Context ctx, final RandomAccessFile file, String charset) throws FileNotFoundException,
-            IOException {
-        mFile = file;
-        mChannel = file.getChannel();
-        mCtx = ctx;
-        mCharset = charset == null ? DEFAULT_YBK_CHARSET : charset;
-    }
 
     /**
      * Construct a new YbkFileReader on the given file named
@@ -103,9 +87,15 @@ public class YbkFileReader {
      */
     public YbkFileReader(final Context ctx, final String fileName, String charset) throws FileNotFoundException,
             IOException {
-        this(ctx, new RandomAccessFile(fileName, "r"), charset);
+        final String libDir = PreferenceManager.getDefaultSharedPreferences(ctx).getString(
+                Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
+        mCtx = ctx;
         mFilename = fileName;
+        mFile = new File(libDir, fileName);
+        mCharset = charset == null ? DEFAULT_YBK_CHARSET : charset;
+        mFileIO = new RandomAccessFile(mFile, "r");
+        mChannel = mFileIO.getChannel();
 
         YbkDAO ybkDao = YbkDAO.getInstance(ctx);
         boolean noException = false;
@@ -140,13 +130,13 @@ public class YbkFileReader {
             }
             mChannel = null;
         }
-        if (mFile != null) {
+        if (mFileIO != null) {
             try {
-                mFile.close();
+                mFileIO.close();
             } catch (IOException e) {
                 Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
             }
-            mFile = null;
+            mFileIO = null;
         }
     }
 

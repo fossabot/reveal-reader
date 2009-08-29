@@ -722,16 +722,17 @@ public class Util {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 // unpack all the files
-                File file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+                File file = new File(libDirFile, entry.getName());
 
                 // check to see if they already have this title
                 // if (file.exists() && !shouldDownload(context, file)) {
                 if (file.exists()) {
                     file.delete();
-                    ybkDao.deleteBook(file.getAbsolutePath());
+                    ybkDao.deleteBook(entry.getName());
 
                 }
 
+                file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
                 out = new FileOutputStream(file);
                 files.add(file);
                 try {
@@ -751,13 +752,14 @@ public class Util {
         } catch (IOException e) { // non-zip attempt
             BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
             try {
-                File file = new File(libDirFile, filename + TMP_EXTENSION);
+                File file = new File(libDirFile, filename);
 
                 // if (file.exists() && !shouldDownload(context, file)) {
                 if (file.exists()) {
                     file.delete();
-                    ybkDao.deleteBook(file.getAbsolutePath());
+                    ybkDao.deleteBook(filename);
                 }
+                file = new File(libDirFile, filename);
                 out = new FileOutputStream(file);
                 files.add(file);
 
@@ -786,7 +788,7 @@ public class Util {
                     realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
                     File realName = new File(realNameString);
                     file.renameTo(realName);
-                    downloaded.add(realNameString);
+                    downloaded.add(new File(realNameString).getName());
                 } else {
                     // delete partially downloaded files
                     file.delete();

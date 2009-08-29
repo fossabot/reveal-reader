@@ -106,7 +106,7 @@ public class YbkService extends Service {
 
                         @Override
                         public void protectedRun() {
-                            String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
+                            String bookName = target.replaceFirst("\\.[^\\.]$", "");
                             boolean succeeded;
                             String message;
                             YbkFileReader ybkRdr = null;

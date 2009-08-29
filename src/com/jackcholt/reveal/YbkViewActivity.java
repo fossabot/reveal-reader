@@ -1,6 +1,7 @@
 package com.jackcholt.reveal;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -34,7 +35,6 @@ import android.view.GestureDetector.OnGestureListener;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebView.HitTestResult;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -212,7 +212,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             try {
                 Book book = ybkDao.getBook(mBookFileName);
-
+                if (book == null)
+                    throw new FileNotFoundException(mBookFileName);
                 mBookFileName = book.fileName;
 
                 mYbkReader = new YbkFileReader(this, mBookFileName, null);
@@ -243,7 +244,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 Log.e(TAG, "Could not load: " + mBookFileName + " chapter: " + mChapFileName + ". " + ioe.getMessage());
 
                 Toast.makeText(this, "Could not load : " + mBookFileName + " chapter: " + mChapFileName
-                        + ". Please report this at " + getResources().getText(R.string.website), Toast.LENGTH_LONG);
+                        + ". Please report this at " + getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
             }
             setWebViewClient(ybkView);
 
@@ -371,8 +372,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         } else if (url.length() > ContentUriLength + 1) {
                             setProgressBarIndeterminateVisibility(true);
 
-                            String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                                    Settings.DEFAULT_EBOOK_DIRECTORY);
+//                            String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+//                                    Settings.DEFAULT_EBOOK_DIRECTORY);
 
                             Log.d(TAG, "WebView URL: " + url);
                             String book;
@@ -418,7 +419,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     shortTitle = urlParts[0] = book.substring(1);
                                 }
 
-                                book = libDir + urlParts[0] + ".ybk";
+                                book = urlParts[0] + ".ybk";
 
                                 for (int i = 0; i < urlParts.length; i++) {
                                     chapter += "\\" + urlParts[i];
@@ -883,7 +884,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             // Log.d(TAG, "FilePath: " + filePath);
 
-            File testFile = new File(filePath);
+            File testFile = new File(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY), filePath);
             if (!testFile.exists()) {
                 // set the member property that holds the name of the book file
                 // we couldn't find
@@ -902,7 +903,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     ybkReader = mYbkReader = new YbkFileReader(this, filePath, null);
                 }
 
-                Book book = ybkDao.getBook(filePath.toLowerCase());
+                Book book = ybkDao.getBook(filePath);
 
                 try {
                     if (chap.equals("index")) {

@@ -1,5 +1,6 @@
 package com.jackcholt.reveal.data;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -263,7 +264,7 @@ public class YbkDAO {
                 Iterator<History> it = historyList.iterator();
                 while (it.hasNext()) {
                     History h = it.next();
-                    if ((h.bookFileName == bookFileName) && h.chapterName.equalsIgnoreCase(chapterNameNoGz)) {
+                    if ((h.bookFileName.equalsIgnoreCase(bookFileName)) && h.chapterName.equalsIgnoreCase(chapterNameNoGz)) {
                         it.remove();
                     }
                 }
@@ -338,12 +339,16 @@ public class YbkDAO {
     public boolean deleteBook(final String fileName) {
         synchronized (bookList) {
             uncacheChapterDetails(fileName);
+            deleteChapterDetails(fileName);
+            deleteBookHistories(fileName);
+            storeBookmarkList();
+            storeHistoryList();
             Iterator<Book> it = bookList.iterator();
             while (it.hasNext()) {
                 Book book = it.next();
                 if (book.fileName.equalsIgnoreCase(fileName)) {
                     it.remove();
-                    deleteBookHistories(fileName);
+                    storeBookList();
                     return true;
                 }
             }
@@ -466,7 +471,7 @@ public class YbkDAO {
                 Iterator<History> it = list.iterator();
                 while (it.hasNext()) {
                     History hist = it.next();
-                    if (hist.bookFileName == bookFileName) {
+                    if (hist.bookFileName.equalsIgnoreCase(bookFileName)) {
                         it.remove();
                     }
                 }
@@ -771,6 +776,19 @@ public class YbkDAO {
     }
 
     /**
+     * Delete chapter details file for a book
+     * 
+     * @fileName the book filename
+     * @return true if successful
+     */
+    private boolean deleteChapterDetails(String fileName) {
+        String baseFileName = new File(fileName).getName().replaceFirst("(?s)\\..*", "");
+        File file = new File(dataDirFile, baseFileName + CHAPTER_EXT);
+        return file.delete();
+    }
+
+
+    /**
      * Stores the bookmark list.
      * 
      * @throws IOException
@@ -790,9 +808,13 @@ public class YbkDAO {
      * 
      * @throws IOException
      */
-    private void storeBookList() throws IOException {
+    private void storeBookList() {
         synchronized (bookList) {
-            store(BOOKS_FILE, bookList);
+            try {
+                store(BOOKS_FILE, bookList);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -832,7 +854,7 @@ public class YbkDAO {
      */
     private void store(String filename, Serializable object) throws IOException {
         File file = new File(dataDirFile, filename);
-        ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+        ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file), 4096));
         boolean finished = false;
         try {
             os.writeObject(object);
@@ -854,7 +876,7 @@ public class YbkDAO {
      */
     private Object load(String filename) throws IOException {
         File file = new File(dataDirFile, filename);
-        ObjectInputStream is = new ObjectInputStream(new FileInputStream(file));
+        ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file), 4096));
         try {
             try {
                 return is.readObject();

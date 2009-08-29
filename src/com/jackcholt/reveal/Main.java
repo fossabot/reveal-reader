@@ -266,7 +266,7 @@ public class Main extends ListActivity {
         Set<String> fileSet = new HashSet<String>();
         if (files != null) {
             for (File file : files)
-                fileSet.add(file.getAbsolutePath().toLowerCase());
+                fileSet.add(file.getName());
         }
 
         // get a list of files on disk
@@ -296,15 +296,14 @@ public class Main extends ListActivity {
 
                 public void completed(boolean succeeded, String message) {
                     if (succeeded) {
-                        // refreshNotify(message);
-                        // scheduleRefreshBookList();
+                        refreshNotify(message);
+                        scheduleRefreshBookList();
                     } else {
                         Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
                                 "Reveal Library", mNotifMgr, mNotifId++, Main.class);
                     }
                     if (--remaining <= 0) {
                         refreshNotify("Refreshing of library complete.");
-                        scheduleRefreshBookList();
                     }
                 }
             };
@@ -396,10 +395,7 @@ public class Main extends ListActivity {
         if (metaData != null && metaData.length() > 0) {
             message = metaData.replaceFirst("(?i)^.*<end>", "");
         } else {
-
-            File bookFile = new File(book.fileName);
-            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message), book.title, bookFile
-                    .getName());
+            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message), book.title, book.fileName);
         }
 
         new EBookPropertiesDialog(this, getResources().getString(R.string.menu_ebook_properties), message, book).show();
@@ -515,7 +511,8 @@ public class Main extends ListActivity {
                 @Override
                 public void protectedRun() {
                     // delete the book file
-                    File file = new File(book.fileName);
+                    File file = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                            Settings.DEFAULT_EBOOK_DIRECTORY), book.fileName);
                     if (file.exists()) {
                         if (!file.delete()) {
                             // TODO - should tell user about this
@@ -535,7 +532,7 @@ public class Main extends ListActivity {
                 }
             };
             String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.title,
-                    new File(book.fileName).getName());
+                    book.fileName);
             ConfirmActionDialog.confirmedAction(this, R.string.really_delete_title, message, R.string.delete, action);
         }
         return true;
@@ -756,15 +753,15 @@ public class Main extends ListActivity {
 
                     histId = extras.getLong(YbkDAO.HISTORY_ID);
 
-                    if (histId != 0) {
-                        intent = new Intent(this, YbkViewActivity.class);
-                        intent.putExtra(YbkDAO.HISTORY_ID, histId);
-                        startActivity(intent);
-                    } else if (deleteBookmark) {
+                    if (deleteBookmark) {
                         int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
                         History hist = ybkDao.getBookmark(bmId);
                         DeleteBookmarkDialog.create(this, hist);
-                    }
+                    } else if (histId != 0) {
+                        intent = new Intent(this, YbkViewActivity.class);
+                        intent.putExtra(YbkDAO.HISTORY_ID, histId);
+                        startActivity(intent);
+                    } 
 
                     break;
 
