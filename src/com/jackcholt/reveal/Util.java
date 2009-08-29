@@ -58,6 +58,7 @@ public class Util {
     private static final String TMP_EXTENSION = ".tmp";
     private static final String TAG = "Util";
     public static final String NO_TITLE = "no_book_title";
+    public static final String EMPTY_STRING = new String();
     private static SharedPreferences mSharedPref;
 
     /**
@@ -259,10 +260,8 @@ public class Util {
      * @param bytes
      *            byte array to read from.
      * @return The numeric value of the four bytes.
-     * @throws IOException
-     *             If the input stream is not readable.
      */
-    public static final int readVBInt(final int[] bytes) throws IOException {
+    public static final int readVBInt(final int[] bytes) {
         int i = bytes[0];
         i += bytes[1] << 8;
         i += bytes[2] << 16;
@@ -270,6 +269,23 @@ public class Util {
 
         return i;
     }
+    
+    /**
+     * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
+     * byte (LSB) &quot;little endian&quot; order.
+     * 
+     * @param bytes
+     *            byte array to read from.
+     * @return The numeric value of the four bytes.
+     */
+    public static final int readVBInt(final byte[] bytes, int off) {
+        int i = ((int)bytes[off++]) & 0xFF;
+        i += (((int)bytes[off++]) & 0xFF) << 8;
+        i += (((int)bytes[off++]) & 0xFF) << 16;
+        i += (((int)bytes[off++]) & 0xFF) << 24;
+        return i;
+    }
+
 
     public static final String htmlize(final String text, final SharedPreferences sharedPref) {
         if (text == null) {
@@ -1127,7 +1143,7 @@ public class Util {
      */
     public static void startFlurrySession(Context context) {
         boolean BOOLdisableAnalytics;
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         BOOLdisableAnalytics = mSharedPref.getBoolean("disable_analytics", false);
 
         if (Global.DEBUG == 0) {

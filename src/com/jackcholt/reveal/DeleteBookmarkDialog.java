@@ -6,6 +6,7 @@ import android.content.Context;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.History;
+import com.jackcholt.reveal.data.YbkDAO;
 
 /**
  * For asking people to confirm the delete.
@@ -20,7 +21,7 @@ public abstract class DeleteBookmarkDialog {
         SafeRunnable action = new SafeRunnable() {
             @Override
             public void protectedRun() {
-                YbkService.requestRemoveHistory(_this, hist);
+                YbkDAO.getInstance(_this).deleteBookmark(hist);
                 FlurryAgent.onEvent("DeleteBookmark");
             }
         };

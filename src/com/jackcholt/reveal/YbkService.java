@@ -22,7 +22,6 @@ import android.preference.PreferenceManager;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
-import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
 /**
@@ -39,7 +38,6 @@ public class YbkService extends Service {
     public static final String TARGET_KEY = "target";
     public static final String SOURCE_KEY = "source";
     public static final String CALLBACKS_KEY = "callbacks";
-    public static final String HISTORY_KEY = "history";
     public static final String CHARSET_KEY = "charset";
 
     public static final int ADD_BOOK = 1;
@@ -96,7 +94,6 @@ public class YbkService extends Service {
             int action = extras.getInt(ACTION_KEY);
             final String target = extras.getString(TARGET_KEY);
             final String source = extras.getString(SOURCE_KEY);
-            final History hist = (History) extras.getSerializable(HISTORY_KEY);
             final String charset = extras.getString(CHARSET_KEY);
             final long callbacksID = Long.valueOf(extras.getLong(CALLBACKS_KEY));
 
@@ -121,8 +118,8 @@ public class YbkService extends Service {
                                 if (bookId != 0) {
                                     succeeded = true;
                                     Book book = YbkDAO.getInstance(YbkService.this).getBook(bookId);
-                                    if (book != null && book.formattedTitle != null) {
-                                        bookName = book.formattedTitle;
+                                    if (book != null && book.title != null) {
+                                        bookName = book.title;
                                     }
                                     message = "Added '" + bookName + "' to the library";
                                 } else {
@@ -168,19 +165,13 @@ public class YbkService extends Service {
                             String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
                             boolean succeeded;
                             String message;
-                            try {
-                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                                if (ybkDAO.deleteBook(target)) {
-                                    succeeded = true;
-                                    message = "Removed '" + bookName + "' from the library";
-                                } else {
-                                    message = "Could not remove book '" + bookName + "'.";
-                                    succeeded = true;
-                                }
-                            } catch (IOException ioe) {
-                                succeeded = false;
-                                message = "Could not remove book '" + bookName + "'.: " + ioe.toString();
-                                Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
+                            YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
+                            if (ybkDAO.deleteBook(target)) {
+                                succeeded = true;
+                                message = "Removed '" + bookName + "' from the library";
+                            } else {
+                                message = "Could not remove book '" + bookName + "'.";
+                                succeeded = true;
                             }
                             if (succeeded)
                                 Log.i(TAG, message);
@@ -225,122 +216,6 @@ public class YbkService extends Service {
                     mDownloadHandler.post(job);
                 } else {
                     Log.e(TAG, "Download book request missing target or filename.");
-                }
-                break;
-            case ADD_HISTORY:
-                Log.d(TAG, "Received request to add history: " + hist);
-                if (hist != null) {
-                    Runnable job = new SafeRunnable() {
-
-                        @Override
-                        public void protectedRun() {
-                            boolean succeeded;
-                            String message;
-                            try {
-                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                                if (ybkDAO.insertHistory(hist)) {
-                                    succeeded = true;
-                                    message = "Added history: '" + hist + "'";
-                                } else {
-                                    message = "Could not add history: '" + hist + "'";
-                                    succeeded = true;
-                                }
-                            } catch (IOException ioe) {
-                                succeeded = false;
-                                message = "Could not add history: '" + hist + "'";
-                                Util.unexpectedError(Main.getMainApplication(), ioe);
-                            }
-                            if (succeeded)
-                                Log.i(TAG, message);
-                            else
-                                Log.e(TAG, message);
-                            if (callbacksID != 0) {
-                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                    callback.completed(succeeded, message);
-                                }
-                            }
-                        }
-                    };
-                    mLibHandler.post(job);
-                } else {
-                    Log.e(TAG, "Add history request missing target.");
-                }
-                break;
-            case UPDATE_HISTORY:
-                Log.d(TAG, "Received request to update history: " + hist + "'");
-                if (hist != null) {
-                    Runnable job = new SafeRunnable() {
-
-                        @Override
-                        public void protectedRun() {
-                            boolean succeeded;
-                            String message;
-                            try {
-                                YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                                if (ybkDAO.updateHistory(hist)) {
-                                    succeeded = true;
-                                    message = "Updated history: '" + hist + "'";
-                                } else {
-                                    message = "Could not update history: '" + hist + "'";
-                                    succeeded = true;
-                                }
-                            } catch (IOException ioe) {
-                                succeeded = false;
-                                message = "Could not update history: '" + hist + "'";
-                                Util.unexpectedError(Main.getMainApplication(), ioe);
-                            }
-                            if (succeeded)
-                                Log.i(TAG, message);
-                            else
-                                Log.e(TAG, message);
-                            if (callbacksID != 0) {
-                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                    callback.completed(succeeded, message);
-                                }
-                            }
-                        }
-                    };
-                    mLibHandler.post(job);
-                } else {
-                    Log.e(TAG, "Update history request missing target.");
-                }
-                break;
-            case REMOVE_HISTORY:
-                Log.d(TAG, "Received request to remove history: " + hist + "'");
-                if (hist != null) {
-                    Runnable job = new SafeRunnable() {
-                        @Override
-                        public void protectedRun() {
-                            boolean succeeded;
-                            String message;
-                            try {
-                                YbkDAO ybkDao = YbkDAO.getInstance(YbkService.this);
-                                if (hist.bookmarkNumber > 0) {
-                                    ybkDao.deleteBookmark(hist);
-                                } else {
-                                    ybkDao.deleteHistory(hist);
-                                }
-                                succeeded = true;
-                                message = "Removed history: '" + hist + "'";
-                            } catch (IOException ioe) {
-                                succeeded = false;
-                                message = "Could not remove history: '" + hist + "'";
-                                Util.unexpectedError(Main.getMainApplication(), ioe);
-                            }
-                            if (succeeded)
-                                Log.i(TAG, message);
-                            else
-                                Log.e(TAG, message);
-                            if (callbacksID != 0) {
-                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                    callback.completed(succeeded, message);
-                                }
-                            }
-                        }
-                    };
-                    mLibHandler.post(job);
-                } else {
-                    Log.e(TAG, "Remove history request missing target.");
                 }
                 break;
             default:
@@ -407,59 +282,6 @@ public class YbkService extends Service {
     public static void requestRemoveBook(Context context, String target, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, REMOVE_BOOK).putExtra(TARGET_KEY,
                 target);
-        if (callbacks != null && callbacks.length != 0) {
-            Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
-            callbackMap.put(callbackID, callbacks);
-            intent.putExtra(CALLBACKS_KEY, callbackID);
-        }
-        context.startService(intent);
-    }
-
-    /**
-     * Requests that a history be added to the library.
-     * 
-     * @param context
-     *            the caller's context
-     * @param target
-     *            the history
-     * @param callbacks
-     *            (optional) completion callback
-     */
-    public static void requestAddHistory(Context context, History hist, Completion... callbacks) {
-        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_HISTORY).putExtra(HISTORY_KEY,
-                hist);
-        if (callbacks != null && callbacks.length != 0) {
-            Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
-            callbackMap.put(callbackID, callbacks);
-            intent.putExtra(CALLBACKS_KEY, callbackID);
-        }
-        context.startService(intent);
-    }
-
-    public static void requestUpdateHistory(Context context, History hist, Completion... callbacks) {
-        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, UPDATE_HISTORY).putExtra(HISTORY_KEY,
-                hist);
-        if (callbacks != null && callbacks.length != 0) {
-            Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
-            callbackMap.put(callbackID, callbacks);
-            intent.putExtra(CALLBACKS_KEY, callbackID);
-        }
-        context.startService(intent);
-    }
-
-    /**
-     * Requests that a history be removed the library.
-     * 
-     * @param context
-     *            the caller's context
-     * @param target
-     *            the history
-     * @param callbacks
-     *            (optional) completion callback
-     */
-    public static void requestRemoveHistory(Context context, History hist, Completion... callbacks) {
-        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, REMOVE_HISTORY).putExtra(
-                HISTORY_KEY, hist);
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
             callbackMap.put(callbackID, callbacks);

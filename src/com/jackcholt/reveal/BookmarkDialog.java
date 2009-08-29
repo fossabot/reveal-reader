@@ -1,6 +1,5 @@
 package com.jackcholt.reveal;
 
-import java.io.IOException;
 import java.util.List;
 
 import android.app.ListActivity;
@@ -51,33 +50,29 @@ public class BookmarkDialog extends ListActivity {
                 addBtn.setVisibility(View.GONE);
             }
 
-            try {
-                YbkDAO ybkDao = YbkDAO.getInstance(this);
+            YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-                List<History> data = ybkDao.getBookmarkList();
+            List<History> data = ybkDao.getBookmarkList();
 
-                // Now create a simple array adapter and set it to display
-                ArrayAdapter<History> histAdapter = new ArrayAdapter<History>(this, R.layout.history_list_row, data);
+            // Now create a simple array adapter and set it to display
+            ArrayAdapter<History> histAdapter = new ArrayAdapter<History>(this, R.layout.history_list_row, data);
 
-                setListAdapter(histAdapter);
+            setListAdapter(histAdapter);
 
-                addBtn.setOnClickListener(new OnClickListener() {
+            addBtn.setOnClickListener(new OnClickListener() {
 
-                    public void onClick(final View view) {
+                public void onClick(final View view) {
 
-                        Log.d(TAG, "Adding a bookmark");
+                    Log.d(TAG, "Adding a bookmark");
 
-                        Intent intent = new Intent(getBaseContext(), YbkViewActivity.class);
-                        intent.putExtra(ADD_BOOKMARK, true);
-                        setResult(RESULT_OK, intent);
+                    Intent intent = new Intent(getBaseContext(), YbkViewActivity.class);
+                    intent.putExtra(ADD_BOOKMARK, true);
+                    setResult(RESULT_OK, intent);
 
-                        finish();
-                    }
+                    finish();
+                }
 
-                });
-            } catch (IOException ioe) {
-                Util.displayError(this, ioe, getResources().getString(R.string.error_bookmark_load));
-            }
+            });
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
