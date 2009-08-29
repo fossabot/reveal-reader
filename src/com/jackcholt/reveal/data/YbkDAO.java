@@ -687,9 +687,13 @@ public class YbkDAO {
      * 
      * @throws IOException
      */
-    public void storeHistoryList() throws IOException {
+    public void storeHistoryList() {
         synchronized (historyList) {
-            store(HISTORY_FILE, historyList);
+            try {
+                store(HISTORY_FILE, historyList);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -758,9 +762,14 @@ public class YbkDAO {
      * 
      * @throws IOException
      */
-    public void storeBookmarkList() throws IOException {
+    public void storeBookmarkList() {
         synchronized (bookmarkList) {
-            store(BOOKMARKS_FILE, bookmarkList);
+            try {
+                store(BOOKMARKS_FILE, bookmarkList);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 

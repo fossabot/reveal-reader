@@ -21,7 +21,9 @@ public abstract class DeleteBookmarkDialog {
         SafeRunnable action = new SafeRunnable() {
             @Override
             public void protectedRun() {
-                YbkDAO.getInstance(_this).deleteBookmark(hist);
+                YbkDAO ybkDao = YbkDAO.getInstance(_this);
+                ybkDao.deleteBookmark(hist);
+                ybkDao.storeBookmarkList();
                 FlurryAgent.onEvent("DeleteBookmark");
             }
         };
