@@ -59,14 +59,12 @@ public class YbkFileReader {
 
     private String mFilename;
 
-    private long mBookId = -1;
-
     private Context mCtx;
 
     private String mCharset = DEFAULT_YBK_CHARSET;
-    
+
     private String mTitle;
-    
+
     private String mShortTitle;
 
     private Chapter mChapters[];
@@ -121,7 +119,6 @@ public class YbkFileReader {
             }
         }
         if (book != null) {
-            mBookId = book.id;
             if (book.charset != null) {
                 mCharset = book.charset;
             }
@@ -184,7 +181,7 @@ public class YbkFileReader {
             }
 
             int chapterCount = indexLength / INDEX_RECORD_LENGTH;
-            
+
             arrayBuf = new byte[indexLength];
             buf = ByteBuffer.wrap(arrayBuf);
             buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -192,18 +189,19 @@ public class YbkFileReader {
             buf.flip();
 
             Chapter chapters[] = mChapters = new Chapter[chapterCount];
-            
+
             Chapter orderChapter = null;
             Chapter bindingChapter = null;
 
             // Read the index information
             for (int i = 0; i < chapterCount; i++) {
                 int pos = i * INDEX_RECORD_LENGTH;
-                
+
                 Chapter chapter = chapters[i] = Chapter.fromYbkIndex(arrayBuf, pos, mCharset);
-                
+
                 // check that the offsets could possibly be legal
-                if (chapter.offset < indexLength + 4 || chapter.length < 0 || chapter.offset + chapter.length > fileLength) {
+                if (chapter.offset < indexLength + 4 || chapter.length < 0
+                        || chapter.offset + chapter.length > fileLength) {
                     Log.e(TAG, this.mFilename + ": Internal file " + chapter.fileName + " is missing or incomplete.");
                 } else if (chapter.fileName.startsWith(BINDING_FILENAME)) {
                     bindingChapter = chapter;
@@ -212,9 +210,9 @@ public class YbkFileReader {
                 }
 
             }
-            
-//            Arrays.sort(chapters, Chapter.chapterNameComparator);
-            
+
+            // Arrays.sort(chapters, Chapter.chapterNameComparator);
+
             if (bindingChapter != null) {
                 String bindingText = readInternalFile(bindingChapter.offset, bindingChapter.length);
                 String bookTitle = null;
@@ -241,19 +239,19 @@ public class YbkFileReader {
             throw new InvalidFileFormatException("Index is damaged or incomplete.");
         }
     }
-        
+
     private void populateOrder(final String orderString, Chapter[] chapters) {
         if (null != orderString) {
             int order = 0;
             int orderList[] = new int[chapters.length];
             Chapter cmpChapter = new Chapter();
-            
+
             StringTokenizer tokenizer = new StringTokenizer(orderString, ",");
             while (tokenizer.hasMoreTokens()) {
                 cmpChapter.orderName = tokenizer.nextToken().toLowerCase();
                 int chapterIndex = Arrays.binarySearch(mChapters, cmpChapter, Chapter.orderNameComparator);
                 if (chapterIndex >= 0) {
-                    orderList[order++] = chapterIndex; 
+                    orderList[order++] = chapterIndex;
                     mChapters[chapterIndex].orderNumber = order;
                 }
             }
@@ -263,7 +261,7 @@ public class YbkFileReader {
                 mOrder = new int[order];
                 System.arraycopy(orderList, 0, mOrder, 0, order);
             }
-                
+
         } else {
             mOrder = new int[0];
         }
@@ -274,24 +272,14 @@ public class YbkFileReader {
      * 
      * @param fileName
      *            The file name of the book.
-     * @return The id of the book that was saved into the database.
+     * @return the added book objects
      * @throws IOException
      */
-    public long populateBook() throws IOException {
+    public Book populateBook() throws IOException {
         String fileName = mFilename;
         YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
         populateFileData();
-
-        long bookId = 0;
-        try {
-            bookId = mBookId = ybkDao.insertBook(fileName, mCharset, mTitle, mShortTitle, mChapters, mOrder);
-        } finally {
-            if (bookId == 0) {
-                // we'll assume the fileName is already in the db and continue
-                Log.w(TAG, "Unable to insert book into the database.");
-            }
-        }
-        return bookId;
+        return ybkDao.insertBook(fileName, mCharset, mTitle, mShortTitle, mChapters, mOrder);
     }
 
     /**
@@ -313,7 +301,7 @@ public class YbkFileReader {
         int len = 0;
 
         YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
-        Chapter chap = ybkDao.getChapter(mBookId, chapName);
+        Chapter chap = ybkDao.getChapter(mFilename, chapName);
         if (chap != null) {
             offset = chap.offset;
             len = chap.length;
@@ -323,12 +311,13 @@ public class YbkFileReader {
         return fileText;
     }
 
-    
     /**
      * The brains behind reading YBK file chapters (or internal files).
-     *
-     * @param offset the bytes offset into the ybk where the chapter starts
-     * @param length the byte length of the chapter
+     * 
+     * @param offset
+     *            the bytes offset into the ybk where the chapter starts
+     * @param length
+     *            the byte length of the chapter
      * @return The text of the chapter.
      * @throws IOException
      *             If the chapter cannot be read.
@@ -374,24 +363,26 @@ public class YbkFileReader {
      */
     public byte[] readInternalBinaryFile(final String chapterName) throws IOException {
         YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
-        Chapter chap = ybkDao.getChapter(mBookId, chapterName);
+        Chapter chap = ybkDao.getChapter(mFilename, chapterName);
         byte bytes[] = null;
         if (chap != null) {
             bytes = readChunk(chap.offset, chap.length);
         }
         return bytes;
     }
-    
+
     /**
      * The brains behind reading YBK file chapters (or internal files).
-     *
-     * @param offset the bytes offset into the ybk where the chunk starts
-     * @param length the byte length of the chunk
+     * 
+     * @param offset
+     *            the bytes offset into the ybk where the chunk starts
+     * @param length
+     *            the byte length of the chunk
      * @return the chunk
      * @throws IOException
      *             If the chapter cannot be read.
      */
-    private byte [] readChunk(int offset, int length) throws IOException {
+    private byte[] readChunk(int offset, int length) throws IOException {
         byte arrayBuf[] = new byte[length];
         ByteBuffer buf = ByteBuffer.wrap(arrayBuf);
         int amountRead = mChannel.read(buf, offset);

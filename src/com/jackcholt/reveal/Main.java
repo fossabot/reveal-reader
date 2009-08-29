@@ -132,13 +132,13 @@ public class Main extends ListActivity {
 
             // Is Network up or not?
             if (Util.isNetworkUp(this)) {
-//                // Actually go ONLINE and check... duhhhh
-//                UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
-//
-//                // Check for a message from US :)
-//                MOTDDialog.create(this);
-//                // Check for version Notes Unique for this REV
-//                RevNotesDialog.create(this);
+                // // Actually go ONLINE and check... duhhhh
+                // UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
+                //
+                // // Check for a message from US :)
+                // MOTDDialog.create(this);
+                // // Check for version Notes Unique for this REV
+                // RevNotesDialog.create(this);
             }
 
             if (!(isConfigChanged())) {
@@ -280,14 +280,14 @@ public class Main extends ListActivity {
         Set<String> addFiles;
         if (addNewBooks) {
             addFiles = new HashSet<String>(fileSet);
-//          addFiles.removeAll(dbSet);
+            // addFiles.removeAll(dbSet);
         } else {
             addFiles = Collections.emptySet();
         }
 
         // calculate the set of files in the db but not on disk
         Set<String> removeFiles = dbSet;
-//      removeFiles.removeAll(fileSet);
+        // removeFiles.removeAll(fileSet);
 
         final int count = addFiles.size() + removeFiles.size();
         if (count != 0) {
@@ -296,8 +296,8 @@ public class Main extends ListActivity {
 
                 public void completed(boolean succeeded, String message) {
                     if (succeeded) {
-//                      refreshNotify(message);
-//                      scheduleRefreshBookList();
+                        // refreshNotify(message);
+                        // scheduleRefreshBookList();
                     } else {
                         Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
                                 "Reveal Library", mNotifMgr, mNotifId++, Main.class);
@@ -309,7 +309,7 @@ public class Main extends ListActivity {
                 }
             };
 
-//            refreshNotify("Refreshing the library");
+            // refreshNotify("Refreshing the library");
             Toast.makeText(this, "Refreshing the library", Toast.LENGTH_LONG).show();
 
             // schedule the deletion of the db entries that are not on disk
@@ -372,7 +372,7 @@ public class Main extends ListActivity {
         Book book = getContextMenuBook(item);
         setProgressBarIndeterminateVisibility(true);
         Intent intent = new Intent(this, YbkViewActivity.class);
-        intent.putExtra(YbkDAO.ID, book.id);
+        intent.putExtra(YbkDAO.FILENAME, book.fileName);
         startActivity(intent);
         return true;
 
@@ -498,7 +498,7 @@ public class Main extends ListActivity {
             if (book != null) {
                 setProgressBarIndeterminateVisibility(true);
                 Intent intent = new Intent(this, YbkViewActivity.class);
-                intent.putExtra(YbkDAO.ID, book.id);
+                intent.putExtra(YbkDAO.FILENAME, book.fileName);
                 intent.putExtra(BOOK_WALK_INDEX, index);
                 startActivityForResult(intent, WALK_BOOK);
             }
@@ -622,7 +622,7 @@ public class Main extends ListActivity {
         try {
             switch (item.getItemId()) {
             case REFRESH_LIB_ID:
-//                RefreshDialog.create(this, RefreshDialog.REFRESH_DB);
+                // RefreshDialog.create(this, RefreshDialog.REFRESH_DB);
                 updateBookList();
                 return true;
 
@@ -701,7 +701,7 @@ public class Main extends ListActivity {
             // id);
             Book book = (Book) listView.getItemAtPosition(selectionRowId);
             Intent intent = new Intent(this, YbkViewActivity.class);
-            intent.putExtra(YbkDAO.ID, book.id);
+            intent.putExtra(YbkDAO.FILENAME, book.fileName);
             startActivity(intent);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -740,7 +740,6 @@ public class Main extends ListActivity {
         Bundle extras;
         long histId;
         Intent intent;
-        boolean fromHistory = false;
 
         try {
             if (resultCode == RESULT_OK) {
@@ -755,13 +754,11 @@ public class Main extends ListActivity {
 
                     boolean deleteBookmark = extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK);
 
-                    histId = extras.getLong(YbkDAO.ID);
-                    fromHistory = extras.getBoolean(YbkDAO.FROM_HISTORY);
+                    histId = extras.getLong(YbkDAO.HISTORY_ID);
 
-                    if (fromHistory) {
+                    if (histId != 0) {
                         intent = new Intent(this, YbkViewActivity.class);
-                        intent.putExtra(YbkDAO.ID, histId);
-                        intent.putExtra(YbkDAO.FROM_HISTORY, true);
+                        intent.putExtra(YbkDAO.HISTORY_ID, histId);
                         startActivity(intent);
                     } else if (deleteBookmark) {
                         int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);

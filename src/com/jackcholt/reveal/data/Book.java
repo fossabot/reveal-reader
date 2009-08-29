@@ -15,11 +15,11 @@ import java.io.Serializable;
 public class Book implements Serializable {
     private static final long serialVersionUID = -1L;
 
-    public long id;
+    // public long id;
     public String fileName;
     public String title;
     public String shortTitle;
-    public boolean active;
+    // public boolean active;
     public String charset;
 
     public String toString() {

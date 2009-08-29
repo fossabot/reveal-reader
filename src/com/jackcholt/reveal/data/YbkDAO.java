@@ -25,7 +25,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.jackcholt.reveal.Settings;
-import com.jackcholt.reveal.Util;
 
 /**
  * A class for managing all the database accesses for the OODB and other data
@@ -48,11 +47,10 @@ public class YbkDAO {
     public static final String CHAPTER_EXT = ".chp";
     private static final int CHAPTER_CACHE_SIZE = 5;
 
-    public static final String ID = "id";
+    public static final String FILENAME = "FILENAME";
+    public static final String HISTORY_ID = "HISTORY_ID";
 
     public static final int GET_LAST_HISTORY = 0;
-
-    public static final String FROM_HISTORY = "from history";
 
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
 
@@ -62,11 +60,11 @@ public class YbkDAO {
     private ArrayList<History> bookmarkList;
 
     private ArrayList<Book> bookList;
-    private Map<String, ChapterDetails>chapterCache;
-    private List<String>chapterCacheLRU;
+    private Map<String, ChapterDetails> chapterCache;
+    private List<String> chapterCacheLRU;
 
     private File dataDirFile;
-    
+
     private static class ChapterDetails implements Serializable {
         private static final long serialVersionUID = 1L;
         Chapter chapters[];
@@ -181,26 +179,27 @@ public class YbkDAO {
      *            Descriptive information.
      * @param chapters
      *            the list of chapters
+     * @return the Book
      * @throws IOException
      */
-    public long insertBook(final String fileName, final String charset, final String title, final String shortTitle,
+    public Book insertBook(final String fileName, final String charset, final String title, final String shortTitle,
             final Chapter chapters[], int order[]) throws IOException {
         synchronized (bookList) {
             deleteBook(fileName);
             Log.d(TAG, "Inserting book: " + fileName);
             storeChapterDetails(fileName, chapters, order);
-            long id = Util.getUniqueTimeStamp();
+            // long id = Util.getUniqueTimeStamp();
             Book book = new Book();
-            book.id = id;
+            // book.id = id;
             book.fileName = fileName;
             book.charset = charset;
-            book.active = true;
+            // book.active = true;
             book.title = title;
             book.shortTitle = shortTitle;
             bookList.add(book);
             Collections.sort(bookList, bookTitleComparator);
             storeBookList();
-            return id;
+            return book;
         }
     }
 
@@ -219,8 +218,8 @@ public class YbkDAO {
      * Convenience method to save a history item but not a bookmark (no
      * bookmarkNumber).
      * 
-     * @param bookId
-     *            The id of the book that this is related to.
+     * @param bookFileName
+     *            The filename of the book that this is related to.
      * @param title
      *            The title to be shown in the history/bookmark list.
      * @param chapterName
@@ -229,15 +228,16 @@ public class YbkDAO {
      *            The position in the chapter that was being read.
      * @return True if the insert succeeded, False otherwise.
      */
-    public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos) {
-        return insertHistory(bookId, title, chapterName, scrollYPos, 0);
+    public boolean insertHistory(final String bookFileName, final String title, final String chapterName,
+            final int scrollYPos) {
+        return insertHistory(bookFileName, title, chapterName, scrollYPos, 0);
     }
 
     /**
      * Save a new history/bookMark item.
      * 
-     * @param bookId
-     *            The id of the book that this is related to.
+     * @param bookFileName
+     *            The filename of the book that this is related to.
      * @param historyTitle
      *            The title to be shown in the history/bookmark list.
      * @param chapterName
@@ -248,11 +248,11 @@ public class YbkDAO {
      *            The number of the bookmark to save.
      * @return True if the insert succeeded, False otherwise.
      */
-    public boolean insertHistory(final long bookId, final String title, final String chapterName, final int scrollYPos,
-            final int bookmarkNumber) {
+    public boolean insertHistory(final String bookFileName, final String title, final String chapterName,
+            final int scrollYPos, final int bookmarkNumber) {
         String chapterNameNoGz = chapterName.replaceFirst("(?i)\\.gz$", "");
         History hist = new History();
-        hist.bookId = bookId;
+        hist.bookFileName = bookFileName;
         hist.bookmarkNumber = bookmarkNumber;
         hist.chapterName = chapterNameNoGz;
         hist.scrollYPos = scrollYPos;
@@ -263,7 +263,7 @@ public class YbkDAO {
                 Iterator<History> it = historyList.iterator();
                 while (it.hasNext()) {
                     History h = it.next();
-                    if ((h.bookId == bookId) && h.chapterName.equalsIgnoreCase(chapterNameNoGz)) {
+                    if ((h.bookFileName == bookFileName) && h.chapterName.equalsIgnoreCase(chapterNameNoGz)) {
                         it.remove();
                     }
                 }
@@ -279,13 +279,23 @@ public class YbkDAO {
         return true;
     }
 
-    public boolean updateHistory(final long histId, final long bookId, final String chapName, final int scrollYPos) {
+    /**
+     * Updates a history entry
+     * 
+     * @param histId
+     * @param bookFileName
+     * @param chapName
+     * @param scrollYPos
+     * @return
+     */
+    public boolean updateHistory(final long histId, final String bookFileName, final String chapName,
+            final int scrollYPos) {
         boolean success = false;
         History hist = getHistory(histId);
 
         if (hist != null) {
             hist.scrollYPos = scrollYPos;
-            hist.bookId = bookId;
+            hist.bookFileName = bookFileName;
             hist.chapterName = chapName;
             success = true;
         }
@@ -333,7 +343,7 @@ public class YbkDAO {
                 Book book = it.next();
                 if (book.fileName.equalsIgnoreCase(fileName)) {
                     it.remove();
-                    deleteBookHistories(book.id);
+                    deleteBookHistories(fileName);
                     return true;
                 }
             }
@@ -354,23 +364,23 @@ public class YbkDAO {
         }
     }
 
-    /**
-     * Get the book object identified by bookId.
-     * 
-     * @param bookId
-     *            The key of the book to get.
-     * @return The book object identified by bookId.
-     */
-    public Book getBook(final long bookId) {
-        synchronized (bookList) {
-            for (Book book : bookList) {
-                if (book.id == bookId) {
-                    return book;
-                }
-            }
-        }
-        return null;
-    }
+    // /**
+    // * Get the book object identified by bookId.
+    // *
+    // * @param bookId
+    // * The key of the book to get.
+    // * @return The book object identified by bookId.
+    // */
+    // public Book getBook(final long bookId) {
+    // synchronized (bookList) {
+    // for (Book book : bookList) {
+    // if (book.id == bookId) {
+    // return book;
+    // }
+    // }
+    // }
+    // return null;
+    // }
 
     /**
      * Get a book object identified by the fileName.
@@ -380,7 +390,7 @@ public class YbkDAO {
      * @return A Book object identified by the passed in filename.
      * @throws IOException
      */
-    public Book getBook(final String fileName) throws IOException {
+    public Book getBook(final String fileName) {
         synchronized (bookList) {
             for (Book book : bookList) {
                 if (book.fileName.equalsIgnoreCase(fileName)) {
@@ -448,15 +458,15 @@ public class YbkDAO {
      * Delete all the histories/bookmarks associated with a book that is being
      * deleted
      * 
-     * @param bookId
+     * @param bookFileName
      */
-    private void deleteBookHistories(long bookId) {
+    private void deleteBookHistories(String bookFileName) {
         for (List<History> list : new List[] { historyList, bookmarkList }) {
             synchronized (list) {
                 Iterator<History> it = list.iterator();
                 while (it.hasNext()) {
                     History hist = it.next();
-                    if (hist.bookId == bookId) {
+                    if (hist.bookFileName == bookFileName) {
                         it.remove();
                     }
                 }
@@ -513,32 +523,33 @@ public class YbkDAO {
 
     /**
      * Get a chapter object identified by the fileName.
-     *
-     * @param bookId the id of the book
-     * @param fileName
-     *            the name of the internal chapter file.
-     * @return the chapter
-     * @throws IOException
-     */
-    public Chapter getChapter(final long bookId, final String fileName) throws IOException {
-        Book book = getBook(bookId);
-        return book == null ? null : getChapter(book, fileName);
-    }
-    
-    /**
-     * Get a chapter object identified by the fileName.
      * 
-     * @param book the book
+     * @param book
+     *            the book
      * @param fileName
      *            the name of the internal chapter file.
      * @return the chapter
      * @throws IOException
      */
     public Chapter getChapter(final Book book, final String fileName) throws IOException {
+        return getChapter(book.fileName, fileName);
+    }
+
+    /**
+     * Get a chapter object identified by the fileName.
+     * 
+     * @param bookFileName
+     *            the filename of the book
+     * @param fileName
+     *            the name of the internal chapter file.
+     * @return the chapter
+     * @throws IOException
+     */
+    public Chapter getChapter(final String bookFileName, final String fileName) throws IOException {
         Chapter cmpChapter = new Chapter();
         cmpChapter.fileName = fileName.toLowerCase();
         Chapter chapter = null;
-        ChapterDetails chapterDetails = getChapterDetails(book.fileName);
+        ChapterDetails chapterDetails = getChapterDetails(bookFileName);
         if (chapterDetails != null) {
             int chapterIndex = Arrays.binarySearch(chapterDetails.chapters, cmpChapter, Chapter.chapterNameComparator);
             if (chapterIndex < 0) {
@@ -551,26 +562,24 @@ public class YbkDAO {
         return chapter;
     }
 
-
-
     /**
      * Get chapter by book id and order id.
      * 
-     * @param bookId
-     *            The id of the book that contains the chapter.
+     * @param bookFileName
+     *            The filename of the book that contains the chapter.
      * @param orderId
      *            The number of the chapter in the order of chapters.
      * @return The chapter we're look for.
      * @throws IOException
      */
-    public Chapter getChapter(final long bookId, final int orderId) throws IOException {
+    public Chapter getChapter(final String bookFileName, final int orderId) throws IOException {
         Chapter chapter = null;
         if (orderId > 0) {
-            Book book = getBook(bookId);
+            Book book = getBook(bookFileName);
             if (book != null) {
                 ChapterDetails chapterDetails = getChapterDetails(book.fileName);
                 if (chapterDetails != null) {
-                    if (orderId <= chapterDetails.order.length) { 
+                    if (orderId <= chapterDetails.order.length) {
                         chapter = chapterDetails.chapters[chapterDetails.order[orderId - 1]];
                     }
                 }
@@ -617,20 +626,20 @@ public class YbkDAO {
     // }
     // }
     //
-    
+
     /**
      * Check whether a chapter exists in a book.
      * 
-     * @param bookId
-     *            The id of the book.
+     * @param bookFileName
+     *            The filename of the book.
      * @param fileName
      *            The name of the chapter (or internal file) that we're checking
      *            for.
      * @return True if the book has a chapter of that name, false otherwise.
      * @throws IOException
      */
-    public boolean chapterExists(final long bookId, final String fileName) throws IOException {
-         return null != getChapter(bookId, fileName);
+    public boolean chapterExists(final String bookFileName, final String fileName) throws IOException {
+        return null != getChapter(bookFileName, fileName);
     }
 
     /**
@@ -724,9 +733,13 @@ public class YbkDAO {
 
     /**
      * Store chapter related information
-     * @param fileName  filename of the book
-     * @param chapters  array of chapter information
-     * @param order     order map
+     * 
+     * @param fileName
+     *            filename of the book
+     * @param chapters
+     *            array of chapter information
+     * @param order
+     *            order map
      * @throws IOException
      */
     private void storeChapterDetails(final String fileName, final Chapter chapters[], final int[] order)
@@ -736,7 +749,7 @@ public class YbkDAO {
         chapterDetails.chapters = chapters;
         chapterDetails.order = order;
         store(baseFileName + CHAPTER_EXT, chapterDetails);
-//      cacheChapterDetails(fileName, chapterDetails);
+        // cacheChapterDetails(fileName, chapterDetails);
     }
 
     /**
@@ -767,7 +780,6 @@ public class YbkDAO {
             try {
                 store(BOOKMARKS_FILE, bookmarkList);
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -855,12 +867,14 @@ public class YbkDAO {
             is.close();
         }
     }
-    
+
     /**
      * Cache chapter details for a book.
      * 
-     * @param fileName book filename
-     * @param chapterDetails the chapter details
+     * @param fileName
+     *            book filename
+     * @param chapterDetails
+     *            the chapter details
      */
     private void cacheChapterDetails(String fileName, ChapterDetails chapterDetails) {
         synchronized (chapterCache) {
@@ -876,7 +890,8 @@ public class YbkDAO {
     /**
      * Uncache chapter details for a book.
      * 
-     * @param fileName the book filename
+     * @param fileName
+     *            the book filename
      */
     private void uncacheChapterDetails(String fileName) {
         synchronized (chapterCache) {
@@ -888,7 +903,8 @@ public class YbkDAO {
     /**
      * Get chapter details for a book.
      * 
-     * @param fileName the book filename
+     * @param fileName
+     *            the book filename
      */
     private ChapterDetails getChapterDetails(String fileName) {
         synchronized (chapterCache) {
@@ -898,6 +914,5 @@ public class YbkDAO {
             return chapterDetails;
         }
     }
-
 
 }

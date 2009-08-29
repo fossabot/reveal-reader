@@ -25,8 +25,9 @@ import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
 /**
- * Service that initiates and coordinates all the background activities of downloading books and updating the library so
- * the don't step on each other's feet.
+ * Service that initiates and coordinates all the background activities of
+ * downloading books and updating the library so the don't step on each other's
+ * feet.
  * 
  * @author Shon Vella
  * 
@@ -55,7 +56,7 @@ public class YbkService extends Service {
     private volatile int mNotifId = Integer.MIN_VALUE;
 
     private SharedPreferences mSharedPref;
-    
+
     // kludge to get around the fact that we can't pass callbacks through the
     // service simply even though
     // the service is only for the local process.
@@ -112,24 +113,18 @@ public class YbkService extends Service {
                             try {
                                 // Create an object for reading a ybk file;
                                 ybkRdr = new YbkFileReader(YbkService.this, target, charset);
-                                // Tell the YbkFileReader to populate the book info
+                                // Tell the YbkFileReader to populate the book
+                                // info
                                 // into the database;
-                                long bookId = ybkRdr.populateBook();
-                                if (bookId != 0) {
-                                    succeeded = true;
-                                    Book book = YbkDAO.getInstance(YbkService.this).getBook(bookId);
-                                    if (book != null && book.title != null) {
-                                        bookName = book.title;
-                                    }
-                                    message = "Added '" + bookName + "' to the library";
-                                } else {
-                                    succeeded = false;
-                                    message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
-                                }
+                                Book book = ybkRdr.populateBook();
+                                succeeded = true;
+                                bookName = book.title;
+                                message = "Added '" + bookName + "' to the library";
                             } catch (InvalidFileFormatException ioe) {
                                 succeeded = false;
                                 message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
-                                Util.displayError(Main.getMainApplication(), null, getResources().getString(R.string.error_damaged_ebook), bookName);
+                                Util.displayError(Main.getMainApplication(), null, getResources().getString(
+                                        R.string.error_damaged_ebook), bookName);
                             } catch (IOException ioe) {
                                 succeeded = false;
                                 message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
@@ -203,7 +198,8 @@ public class YbkService extends Service {
                                 List<String> downloads = Util.fetchTitle(new File(target), new URL(source), libDir,
                                         context);
                                 for (String download : downloads) {
-                                    requestAddBook(context, download, YbkFileReader.DEFAULT_YBK_CHARSET, callbackMap.get(Long.valueOf(callbacksID)));
+                                    requestAddBook(context, download, YbkFileReader.DEFAULT_YBK_CHARSET, callbackMap
+                                            .get(Long.valueOf(callbacksID)));
                                 }
                             } catch (IOException ioe) {
                                 Log.e(TAG, "Unable to download '" + source + "': " + ioe.toString());

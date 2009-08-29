@@ -18,7 +18,6 @@ import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -178,9 +177,8 @@ public class YbkProvider extends ContentProvider {
     public boolean onCreate() {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         // clean up leftover image files
-        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                Settings.DEFAULT_EBOOK_DIRECTORY);
-        Util.deleteFiles(new File(libDir, "images"), ".*");        
+        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
+        Util.deleteFiles(new File(libDir, "images"), ".*");
         return true;
     }
 
@@ -220,8 +218,7 @@ public class YbkProvider extends ContentProvider {
 
         YbkDAO ybkDao = YbkDAO.getInstance(getContext());
 
-        Book book = ybkDao.getBook(bookFileName);
-        Chapter chap = ybkDao.getChapter(book.id, chapterName);
+        Chapter chap = ybkDao.getChapter(bookFileName, chapterName);
 
         if (chap != null) {
             offset = chap.offset;
@@ -298,8 +295,8 @@ public class YbkProvider extends ContentProvider {
                                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),
                                         BUFFER_SIZE);
                                 try {
-                                out.write(contents);
-                                out.flush();
+                                    out.write(contents);
+                                    out.flush();
                                 } finally {
                                     out.close();
                                 }
@@ -307,8 +304,7 @@ public class YbkProvider extends ContentProvider {
                         } catch (IOException e) {
                             throw new FileNotFoundException("Could not write internal file to temp file. "
                                     + e.getMessage() + " " + e.getCause());
-                        }
-                        finally {
+                        } finally {
                             try {
                                 file.close();
                             } catch (IOException e) {
@@ -332,22 +328,23 @@ public class YbkProvider extends ContentProvider {
             return pfd;
         }
     }
-    
+
     private class ImgFileInfo {
         File file;
         int useCount = 1;
         Uri uri;
-        
-        ImgFileInfo (Uri uri, File file) {
+
+        ImgFileInfo(Uri uri, File file) {
             this.uri = uri;
             this.file = file;
         }
-        
+
         int use() {
             synchronized (mTempImgFiles) {
                 return ++useCount;
             }
         }
+
         int unuse() {
             synchronized (mTempImgFiles) {
                 if (--useCount <= 0) {
@@ -358,7 +355,7 @@ public class YbkProvider extends ContentProvider {
             }
         }
     }
-    
+
     private static class ParcelFileDescriptorWrapper extends ParcelFileDescriptor {
         ImgFileInfo info;
 
@@ -372,7 +369,7 @@ public class YbkProvider extends ContentProvider {
             super.close();
             info.unuse();
         }
-        
+
     }
 
 }

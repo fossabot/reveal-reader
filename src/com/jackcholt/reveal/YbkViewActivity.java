@@ -34,6 +34,7 @@ import android.view.GestureDetector.OnGestureListener;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebView.HitTestResult;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -49,7 +50,6 @@ import com.jackcholt.reveal.data.YbkDAO;
 public class YbkViewActivity extends Activity implements OnGestureListener {
     private WebView mYbkView;
 
-    private long mBookId;
     private String mBookFileName;
     private String mChapFileName;
     private int mScrollYPos = 0;
@@ -105,15 +105,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-            Long bookId = null;
-            Boolean isFromHistory = null;
+            long historyId = 0;
             boolean popup = this instanceof YbkPopupActivity;
             String content = null;
             String strUrl = null;
 
             HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
             if (statusMap != null) {
-                mBookId = bookId = (Long) statusMap.get("bookId");
                 mBookFileName = (String) statusMap.get("bookFileName");
                 mChapFileName = (String) statusMap.get("chapFileName");
                 mHistTitle = (String) statusMap.get("histTitle");
@@ -128,39 +126,34 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             } else {
 
                 if (savedInstanceState != null) {
-                    bookId = (Long) savedInstanceState.get(YbkDAO.ID);
-                    isFromHistory = (Boolean) savedInstanceState.get(YbkDAO.FROM_HISTORY);
+                    mBookFileName = (String) savedInstanceState.get("bookFileName");
                 } else {
                     Bundle extras = getIntent().getExtras();
                     if (extras != null) {
-                        isFromHistory = (Boolean) extras.get(YbkDAO.FROM_HISTORY);
-                        bookId = (Long) extras.get(YbkDAO.ID);
+                        historyId = extras.getLong(YbkDAO.HISTORY_ID);
+                        mBookFileName = extras.getString(YbkDAO.FILENAME);
                         content = (String) extras.get("content");
                         strUrl = (String) extras.getString("strUrl");
                         mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
                     }
                 }
 
-                if (isFromHistory != null) {
-                    // bookId is actually the history id
-                    History hist = ybkDao.getHistory(bookId);
-                    bookId = hist.bookId;
-                    mBookFileName = ybkDao.getBook(bookId).fileName;
+                if (historyId != 0) {
+                    History hist = ybkDao.getHistory(historyId);
+                    mBookFileName = hist.bookFileName;
                     mChapFileName = hist.chapterName;
                     mHistTitle = hist.title;
                 }
             }
 
-            if (bookId == null) {
+            if (mBookFileName == null) {
                 Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
                 Log.e(TAG, "Book not loaded");
                 finish();
                 return;
             }
 
-            Log.d(TAG, "BookId: " + bookId);
-
-            mBookId = bookId;
+            Log.d(TAG, "BookFileName: " + mBookFileName);
 
             if (popup) {
                 mThemeIsDialog = true;
@@ -205,7 +198,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
                             // Save the book and chapter to history if
                             // there is one
-                            ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+                            ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
                             // remove the excess histories
                             ybkDao.deleteHistories();
                             ybkDao.storeHistoryList();
@@ -218,7 +211,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             }
 
             try {
-                Book book = ybkDao.getBook(bookId);
+                Book book = ybkDao.getBook(mBookFileName);
 
                 mBookFileName = book.fileName;
 
@@ -443,9 +436,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                         if ((pos = chapter.indexOf("#")) != -1) {
                                             chap = chapter.substring(0, pos);
                                         }
-                                        Chapter chapObj = ybkDao.getChapter(bookObj.id, chap);
+                                        Chapter chapObj = ybkDao.getChapter(bookObj.fileName, chap);
                                         String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-                                        Chapter chapConcatObj = ybkDao.getChapter(bookObj.id, concatChap);
+                                        Chapter chapConcatObj = ybkDao.getChapter(bookObj.fileName, concatChap);
 
                                         boolean bookLoaded = false;
                                         if (chapObj != null || chapConcatObj != null) {
@@ -617,7 +610,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 boolean hasNext = false;
                 boolean hasPrev = mChapOrderNbr > 1;
                 try {
-                    hasNext = YbkDAO.getInstance(this).getChapter(mBookId, mChapOrderNbr + 1) != null;
+                    hasNext = YbkDAO.getInstance(this).getChapter(mBookFileName, mChapOrderNbr + 1) != null;
                 } catch (IOException ioe) {
                     Log.e(TAG, "Error trying to detect if there is a next chapter: " + ioe);
                 }
@@ -642,7 +635,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 if (mChapOrderNbr > 0) {
                     setProgressBarIndeterminateVisibility(true);
                     try {
-                        loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
+                        loadChapterByOrderId(mBookFileName, mChapOrderNbr - 1);
                     } catch (IOException ioe) {
                         Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
                     }
@@ -654,7 +647,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     setProgressBarIndeterminateVisibility(true);
 
                     try {
-                        loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
+                        loadChapterByOrderId(mBookFileName, mChapOrderNbr + 1);
                     } catch (IOException ioe) {
                         Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
                     }
@@ -700,13 +693,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     setProgressBarIndeterminateVisibility(true);
 
                     extras = data.getExtras();
-                    histId = extras.getLong(YbkDAO.ID);
+                    histId = extras.getLong(YbkDAO.HISTORY_ID);
 
                     History hist = ybkDao.getHistory(histId);
 
                     if (hist != null) {
-                        mBookId = hist.bookId;
-                        Book book = ybkDao.getBook(mBookId);
+                        mBookFileName = hist.bookFileName;
+                        Book book = ybkDao.getBook(mBookFileName);
                         if (book != null) {
                             mBookFileName = book.fileName;
                         }
@@ -748,10 +741,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     if (addBookMark) {
                         showDialog(ASK_BOOKMARK_NAME);
                     } else if (updateBookmark) {
-                        histId = extras.getLong(YbkDAO.ID);
+                        histId = extras.getLong(YbkDAO.HISTORY_ID);
 
                         // update the bookmark
-                        ybkDao.updateHistory(histId, mBookId, mChapFileName, mYbkView.getScrollY());
+                        ybkDao.updateHistory(histId, mBookFileName, mChapFileName, mYbkView.getScrollY());
                         ybkDao.storeBookmarkList();
                     } else if (deleteBookmark) {
                         int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
@@ -760,13 +753,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     } else {
                         // go to bookmark
                         setProgressBarIndeterminateVisibility(true);
-                        histId = extras.getLong(YbkDAO.ID);
+                        histId = extras.getLong(YbkDAO.HISTORY_ID);
 
                         History bm = ybkDao.getHistory(histId);
 
                         if (bm != null) {
-                            mBookId = bm.bookId;
-                            Book book = ybkDao.getBook(bm.bookId);
+                            Book book = ybkDao.getBook(bm.bookFileName);
                             if (book != null) {
                                 mBookFileName = book.fileName;
                             }
@@ -812,25 +804,25 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     /**
-     * Load a chapter as identified by the id field of the book table and the
-     * order id.
+     * Load a chapter as identified by the the order id.
      * 
-     * @param bookId
-     *            The record id of the chapter to load.
+     * @param
+     * @param orderId
+     *            The order id of the chapter to load.
      * @return Did the chapter load?
      * @throws IOException
      *             If there was a problem reading the chapter.
      */
-    private boolean loadChapterByOrderId(final long bookId, final int orderId) throws IOException {
+    private boolean loadChapterByOrderId(final String bookFileName, final int orderId) throws IOException {
 
         boolean bookLoaded = false;
 
         YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-        Chapter chap = ybkDao.getChapter(bookId, orderId);
+        Chapter chap = ybkDao.getChapter(bookFileName, orderId);
 
         if (chap != null) {
-            Book book = ybkDao.getBook(bookId);
+            Book book = ybkDao.getBook(bookFileName);
             mNavFile = "1";
             if (bookLoaded = loadChapter(book.fileName, chap.fileName)) {
                 setBookBtn(book.shortTitle, book.fileName, chap.fileName);
@@ -858,7 +850,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         boolean bookLoaded = false;
         WebView ybkView = mYbkView;
         YbkFileReader ybkReader = mYbkReader;
-        long bookId = -1L;
 
         boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter
                 .equals("index"));
@@ -867,7 +858,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
             // Save the book and chapter to history if there is one
-            ybkDao.insertHistory(mBookId, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+            ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
             // remove the excess histories
             ybkDao.deleteHistories();
             ybkDao.storeHistoryList();
@@ -899,8 +890,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 if (TextUtils.isEmpty(filePath)) {
                     mDialogFilename = "No file";
                 } else {
-                    String[] pathParts = filePath.split("/");
-                    mDialogFilename = pathParts[pathParts.length - 1];
+                    mDialogFilename = testFile.getName();
                 }
 
                 showDialog(FILE_NONEXIST);
@@ -913,8 +903,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 Book book = ybkDao.getBook(filePath.toLowerCase());
-
-                bookId = book.id;
 
                 try {
                     if (chap.equals("index")) {
@@ -954,7 +942,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                             mFragment = fragment;
 
-                            if (!ybkDao.chapterExists(bookId, chap.substring(0, hashLoc))) {
+                            if (!ybkDao.chapterExists(book.fileName, chap.substring(0, hashLoc))) {
 
                                 // need to read a special footnote chapter
                                 content = readConcatFile(chap, mYbkReader);
@@ -1014,13 +1002,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     }
 
                     String chapLowerCase = chap.toLowerCase();
-                    Chapter chapObj = ybkDao.getChapter(bookId, chapLowerCase);
+                    Chapter chapObj = ybkDao.getChapter(book.fileName, chapLowerCase);
                     if (chapObj == null) {
-                        chapObj = ybkDao.getChapter(bookId, chapLowerCase + ".gz");
+                        chapObj = ybkDao.getChapter(book.fileName, chapLowerCase + ".gz");
                     }
                     if (chapObj == null) {
                         String concatChap = chapLowerCase.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-                        chapObj = ybkDao.getChapter(bookId, concatChap);
+                        chapObj = ybkDao.getChapter(book.fileName, concatChap);
                     }
                     if (chapObj != null) {
                         mChapOrderNbr = chapObj.orderNumber;
@@ -1076,7 +1064,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         Intent popupIntent = new Intent(this, YbkPopupActivity.class);
                         popupIntent.putExtra("content", content);
                         popupIntent.putExtra("strUrl", strUrl);
-                        popupIntent.putExtra(YbkDAO.ID, bookId);
+                        popupIntent.putExtra(YbkDAO.FILENAME, book.fileName);
                         startActivity(popupIntent);
                         setProgressBarIndeterminateVisibility(false);
 
@@ -1088,7 +1076,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     bookLoaded = true;
 
-                    mBookId = bookId;
+                    mBookFileName = book.fileName;
                     mChapFileName = chap;
 
                 } catch (IOException e) {
@@ -1160,7 +1148,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     int bookmarkNumber = ybkDao.getMaxBookmarkNumber();
 
                                     // insert the bookmark
-                                    ybkDao.insertHistory(mBookId, bmName, mChapFileName, mYbkView.getScrollY(),
+                                    ybkDao.insertHistory(mBookFileName, bmName, mChapFileName, mYbkView.getScrollY(),
                                             bookmarkNumber);
                                     ybkDao.storeBookmarkList();
 
@@ -1333,7 +1321,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             Log.d(TAG, "backStack is empty. Going to main menu.");
                             finish();
                         } else {
-                            Book book = ybkDao.getBook(hist.bookId);
+                            Book book = ybkDao.getBook(hist.bookFileName);
                             if (book == null) {
                                 Log.e(TAG, "Major error.  There was a history in the back stack for which no "
                                         + "book could be found");
@@ -1383,7 +1371,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             stateMap.put("bookFileName", mBookFileName);
             stateMap.put("chapFileName", mChapFileName);
-            stateMap.put("bookId", mBookId);
             stateMap.put("histTitle", mHistTitle);
             stateMap.put("scrollYPos", mYbkView.getScrollY());
             Log.d(TAG, "Scroll Y Pos: " + mYbkView.getScrollY());
@@ -1400,7 +1387,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
         try {
-            outState.putLong(YbkDAO.ID, mBookId);
+            outState.putString(YbkDAO.FILENAME, mBookFileName);
             super.onSaveInstanceState(outState);
         } catch (RuntimeException rte) {
             unexpectedError(rte);
@@ -1434,7 +1421,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             try {
                 // YbkDAO ybkDao = YbkDAO.getInstance(YbkViewActivity.this);
                 Chapter nextChapter = null; // ybkDao.getNextBookWalkerChapter(mBookId,
-                                            // mChapFileName);
+                // mChapFileName);
                 if (nextChapter == null) {
                     setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent().getExtras().getInt(
                             Main.BOOK_WALK_INDEX, -1)));
@@ -1477,7 +1464,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 try {
                     // Toast.makeText(this, R.string.menu_next,
                     // Toast.LENGTH_SHORT).show();
-                    loadChapterByOrderId(mBookId, mChapOrderNbr + 1);
+                    loadChapterByOrderId(mBookFileName, mChapOrderNbr + 1);
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
                 }
@@ -1488,7 +1475,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 try {
                     // Toast.makeText(this, R.string.menu_previous,
                     // Toast.LENGTH_SHORT).show();
-                    loadChapterByOrderId(mBookId, mChapOrderNbr - 1);
+                    loadChapterByOrderId(mBookFileName, mChapOrderNbr - 1);
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
                 }
