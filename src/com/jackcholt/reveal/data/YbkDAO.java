@@ -53,12 +53,12 @@ public class YbkDAO {
 
     private static YbkDAO instance = null;
 
-    private ArrayList<History> historyList;
-    private ArrayList<History> bookmarkList;
+    private ArrayList<History> mHistoryList;
+    private ArrayList<History> mBookmarkList;
 
-    private ArrayList<Book> bookList;
+    private ArrayList<Book> mBookList;
 
-    private File dataDirFile;
+    private File mDataDirFile;
 
     /**
      * Allow the user to get the one and only instance of the YbkDAO.
@@ -96,12 +96,12 @@ public class YbkDAO {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
         String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
         File libDirFile = new File(libDir);
-        dataDirFile = new File(libDirFile, DATA_DIR);
-        dataDirFile.mkdirs();
+        mDataDirFile = new File(libDirFile, DATA_DIR);
+        mDataDirFile.mkdirs();
 
-        bookList = getStoredBookList();
-        historyList = getStoredHistoryList();
-        bookmarkList = getStoredBookmarkList();
+        mBookList = getStoredBookList();
+        mHistoryList = getStoredHistoryList();
+        mBookmarkList = getStoredBookmarkList();
     }
 
     /**
@@ -110,9 +110,9 @@ public class YbkDAO {
      * @return The (possibly empty) list of book titles as a field index.
      */
     public List<Book> getBookTitles() {
-        synchronized (bookList) {
-            List<Book> books = new ArrayList<Book>(bookList.size());
-            for (Book book : bookList) {
+        synchronized (mBookList) {
+            List<Book> books = new ArrayList<Book>(mBookList.size());
+            for (Book book : mBookList) {
                 if (book.title != null) {
                     books.add(book);
                 }
@@ -127,7 +127,7 @@ public class YbkDAO {
      * @return The list of books
      */
     public List<Book> getBooks() {
-        return Collections.unmodifiableList(bookList);
+        return Collections.unmodifiableList(mBookList);
     }
 
     /**
@@ -136,8 +136,8 @@ public class YbkDAO {
      * @return
      */
     public List<History> getBookmarks() {
-        synchronized (bookmarkList) {
-            List<History> bookmarks = new ArrayList<History>(bookmarkList);
+        synchronized (mBookmarkList) {
+            List<History> bookmarks = new ArrayList<History>(mBookmarkList);
             Collections.sort(bookmarks, bookmarkTitleComparator);
             return bookmarks;
         }
@@ -171,7 +171,7 @@ public class YbkDAO {
      */
     public Book insertBook(final String fileName, final String charset, final String title, final String shortTitle,
             final ChapterIndex chapterIndex) throws IOException {
-        synchronized (bookList) {
+        synchronized (mBookList) {
             deleteBook(fileName);
             Log.d(TAG, "Inserting book: " + fileName);
             storeChapterIndex(fileName, chapterIndex);
@@ -183,8 +183,8 @@ public class YbkDAO {
             // book.active = true;
             book.title = title;
             book.shortTitle = shortTitle;
-            bookList.add(book);
-            Collections.sort(bookList, bookTitleComparator);
+            mBookList.add(book);
+            Collections.sort(mBookList, bookTitleComparator);
             storeBookList();
             return book;
         }
@@ -245,22 +245,22 @@ public class YbkDAO {
         hist.scrollYPos = scrollYPos;
         hist.title = title;
         if (bookmarkNumber == 0) {
-            synchronized (historyList) {
+            synchronized (mHistoryList) {
                 // find and remove duplicate history entries
-                Iterator<History> it = historyList.iterator();
+                Iterator<History> it = mHistoryList.iterator();
                 while (it.hasNext()) {
                     History h = it.next();
                     if ((h.bookFileName.equalsIgnoreCase(bookFileName)) && h.chapterName.equalsIgnoreCase(chapterNameNoGz)) {
                         it.remove();
                     }
                 }
-                historyList.add(0, hist);
+                mHistoryList.add(0, hist);
                 backStack.push(hist);
                 Log.d(TAG, "Added " + hist.chapterName + " to backStack");
             }
         } else {
-            synchronized (bookmarkList) {
-                bookmarkList.add(hist);
+            synchronized (mBookmarkList) {
+                mBookmarkList.add(hist);
             }
         }
         return true;
@@ -291,8 +291,8 @@ public class YbkDAO {
     }
 
     public boolean deleteBookmark(History hist) {
-        synchronized (bookmarkList) {
-            return bookmarkList.remove(hist);
+        synchronized (mBookmarkList) {
+            return mBookmarkList.remove(hist);
         }
     }
 
@@ -305,9 +305,9 @@ public class YbkDAO {
         int histToKeep = sharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
         int stackToKeep = histToKeep * 2;
 
-        synchronized (historyList) {
-            while (historyList.size() > histToKeep) {
-                historyList.remove(historyList.size() - 1);
+        synchronized (mHistoryList) {
+            while (mHistoryList.size() > histToKeep) {
+                mHistoryList.remove(mHistoryList.size() - 1);
             }
             while (backStack.size() > stackToKeep) {
                 backStack.remove(0);
@@ -323,12 +323,12 @@ public class YbkDAO {
      * @return True if the book was deleted.
      */
     public boolean deleteBook(final String fileName) {
-        synchronized (bookList) {
+        synchronized (mBookList) {
             deleteChapterDetails(fileName);
             deleteBookHistories(fileName);
             storeBookmarkList();
             storeHistoryList();
-            Iterator<Book> it = bookList.iterator();
+            Iterator<Book> it = mBookList.iterator();
             while (it.hasNext()) {
                 Book book = it.next();
                 if (book.fileName.equalsIgnoreCase(fileName)) {
@@ -349,8 +349,8 @@ public class YbkDAO {
      * @return True if the book was deleted.
      */
     public boolean deleteBook(final Book book) {
-        synchronized (bookList) {
-            return bookList.remove(book);
+        synchronized (mBookList) {
+            return mBookList.remove(book);
         }
     }
 
@@ -381,8 +381,8 @@ public class YbkDAO {
      * @throws IOException
      */
     public Book getBook(final String fileName) {
-        synchronized (bookList) {
-            for (Book book : bookList) {
+        synchronized (mBookList) {
+            for (Book book : mBookList) {
                 if (book.fileName.equalsIgnoreCase(fileName)) {
                     return book;
                 }
@@ -399,13 +399,13 @@ public class YbkDAO {
      * @return The history object identified by histId.
      */
     public History getHistory(final long histId) {
-        synchronized (historyList) {
-            for (History hist : historyList) {
+        synchronized (mHistoryList) {
+            for (History hist : mHistoryList) {
                 if (hist.id == histId) {
                     return hist;
                 }
             }
-            for (History hist : bookmarkList) {
+            for (History hist : mBookmarkList) {
                 if (hist.id == histId) {
                     return hist;
                 }
@@ -422,8 +422,8 @@ public class YbkDAO {
      * @return The History object that contains the bookmark.
      */
     public History getBookmark(final int bmId) {
-        synchronized (bookmarkList) {
-            for (History hist : bookmarkList) {
+        synchronized (mBookmarkList) {
+            for (History hist : mBookmarkList) {
                 if (hist.bookmarkNumber == bmId) {
                     return hist;
                 }
@@ -451,7 +451,7 @@ public class YbkDAO {
      * @param bookFileName
      */
     private void deleteBookHistories(String bookFileName) {
-        for (List<History> list : new List[] { historyList, bookmarkList }) {
+        for (List<History> list : new List[] { mHistoryList, mBookmarkList }) {
             synchronized (list) {
                 Iterator<History> it = list.iterator();
                 while (it.hasNext()) {
@@ -472,10 +472,10 @@ public class YbkDAO {
      * @return the List of History objects.
      */
     private synchronized List<History> getHistoryList(int maxHistories) {
-        synchronized (historyList) {
+        synchronized (mHistoryList) {
             ArrayList<History> retList = new ArrayList<History>(maxHistories);
-            for (int i = 0; i < maxHistories && i < historyList.size(); i++) {
-                retList.add(historyList.get(i));
+            for (int i = 0; i < maxHistories && i < mHistoryList.size(); i++) {
+                retList.add(mHistoryList.get(i));
             }
             return retList;
         }
@@ -488,8 +488,8 @@ public class YbkDAO {
      * @throws IOException
      */
     public List<History> getBookmarkList() {
-        synchronized (bookmarkList) {
-            return new ArrayList<History>(bookmarkList);
+        synchronized (mBookmarkList) {
+            return new ArrayList<History>(mBookmarkList);
         }
     }
 
@@ -500,9 +500,9 @@ public class YbkDAO {
      * @throws IOException
      */
     public int getMaxBookmarkNumber() throws IOException {
-        synchronized (bookmarkList) {
+        synchronized (mBookmarkList) {
             int bmNbr = 1;
-            for (History hist : bookmarkList) {
+            for (History hist : mBookmarkList) {
                 if (hist.bookmarkNumber > bmNbr) {
                     bmNbr = hist.bookmarkNumber;
                 }
@@ -566,9 +566,9 @@ public class YbkDAO {
      * @throws IOException
      */
     public void storeHistoryList() {
-        synchronized (historyList) {
+        synchronized (mHistoryList) {
             try {
-                store(HISTORY_FILE, historyList);
+                store(HISTORY_FILE, mHistoryList);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -642,7 +642,7 @@ public class YbkDAO {
      */
     private boolean deleteChapterDetails(String fileName) {
         String baseFileName = new File(fileName).getName().replaceFirst("(?s)\\..*", "");
-        File file = new File(dataDirFile, baseFileName + CHAPTER_EXT);
+        File file = new File(mDataDirFile, baseFileName + CHAPTER_EXT);
         return file.delete();
     }
 
@@ -653,9 +653,9 @@ public class YbkDAO {
      * @throws IOException
      */
     public void storeBookmarkList() {
-        synchronized (bookmarkList) {
+        synchronized (mBookmarkList) {
             try {
-                store(BOOKMARKS_FILE, bookmarkList);
+                store(BOOKMARKS_FILE, mBookmarkList);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -668,9 +668,9 @@ public class YbkDAO {
      * @throws IOException
      */
     private void storeBookList() {
-        synchronized (bookList) {
+        synchronized (mBookList) {
             try {
-                store(BOOKS_FILE, bookList);
+                store(BOOKS_FILE, mBookList);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -687,9 +687,8 @@ public class YbkDAO {
         ArrayList<Book> bookList = null;
         try {
             bookList = (ArrayList<Book>) load(BOOKS_FILE);
-            if (bookList.size() != 0) {
-                @SuppressWarnings("unused")
-                Book book = bookList.get(0);
+            if (bookList.size() > 0) {
+                bookList.get(0);
                 // perform a sanity check on the type
             }
         } catch (Exception e) {
@@ -712,7 +711,7 @@ public class YbkDAO {
      * @throws IOException
      */
     private void store(String filename, Serializable object) throws IOException {
-        File file = new File(dataDirFile, filename);
+        File file = new File(mDataDirFile, filename);
         ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file), 4096));
         boolean finished = false;
         try {
@@ -734,7 +733,7 @@ public class YbkDAO {
      * 
      */
     private Object load(String filename) throws IOException {
-        File file = new File(dataDirFile, filename);
+        File file = new File(mDataDirFile, filename);
         ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file), 4096));
         try {
             try {
