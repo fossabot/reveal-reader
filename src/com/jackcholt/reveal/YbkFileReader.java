@@ -5,11 +5,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.StringTokenizer;
+import java.util.Map;
+import java.util.TreeMap;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -17,6 +18,7 @@ import android.util.Log;
 
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
+import com.jackcholt.reveal.data.ChapterIndex;
 import com.jackcholt.reveal.data.YbkDAO;
 
 /**
@@ -55,11 +57,11 @@ public class YbkFileReader {
     private static final String ORDER_CONFIG_FILENAME = "\\order.cfg";
 
     private RandomAccessFile mFileIO;
-
     private FileChannel mChannel;
 
     private String mFilename;
     private File mFile;
+    private Book mBook;
 
     private Context mCtx;
 
@@ -69,9 +71,105 @@ public class YbkFileReader {
 
     private String mShortTitle;
 
-    private Chapter mChapters[];
+    private ChapterIndex mChapterIndex;
 
-    private int mOrder[];
+    private int mInUseCount = 0;
+
+    private boolean mClosed = false;
+
+    private static Map<String, SoftReference<YbkFileReader>> readerCache = new TreeMap<String, SoftReference<YbkFileReader>>(
+            String.CASE_INSENSITIVE_ORDER);
+
+    /**
+     * Get a YbkFileReader on the given file named <code>filename</code>. If the
+     * <code>filename</code> specified cannot be found, throw a
+     * FileNotFoundException. Construct a new YbkFileReader on the given file
+     * named <code>filename</code>. If the <code>filename</code> specified
+     * cannot be found, throw a FileNotFoundException.
+     * 
+     * @param context
+     * @param fileName
+     *            the filename (relative to the library directory)
+     * @throws FileNotFoundException
+     *             if the filename cannot be opened for reading.
+     */
+    public static synchronized YbkFileReader getReader(final Context ctx, final String fileName)
+            throws FileNotFoundException, IOException {
+        YbkFileReader reader = null;
+        SoftReference<YbkFileReader> readerRef = readerCache.get(fileName);
+        if (readerRef != null) {
+            reader = readerRef.get();
+            if (reader == null) {
+                readerCache.remove(fileName);
+            }
+        }
+        if (reader == null) {
+            reader = new YbkFileReader(ctx, fileName);
+            readerCache.put(fileName, new SoftReference<YbkFileReader>(reader));
+        }
+        reader.use();
+        return reader;
+    }
+
+    /**
+     * Closes and uncaches reader for given filename.
+     * 
+     * @param fileName
+     */
+    public static synchronized void closeReader(String fileName) {
+        YbkFileReader reader = null;
+        SoftReference<YbkFileReader> readerRef = readerCache.remove(fileName);
+        if (readerRef != null) {
+            reader = readerRef.get();
+            if (reader != null) {
+                reader.close();
+            }
+        }
+    }
+
+    /**
+     * Add a book.
+     * 
+     * @param context
+     * @param fileName
+     *            the filename (relative to the library directory)
+     * @param charset
+     *            the character set to use
+     * @return the reader used to add the book (must be unused by the caller
+     * @throws FileNotFoundException
+     *             if the filename cannot be opened for reading.
+     */
+    public static synchronized YbkFileReader addBook(final Context ctx, final String fileName, String charset)
+            throws FileNotFoundException, IOException {
+        // clean up the existing book if any
+        closeReader(fileName);
+        YbkDAO ybkDao = YbkDAO.getInstance(ctx);
+        ybkDao.deleteBook(fileName);
+
+        YbkFileReader reader = new YbkFileReader(ctx, fileName);
+        reader.mCharset = charset;
+        try {
+            reader.populateBook();
+        } finally {
+            if (reader.mBook == null) {
+                reader.close();
+            }
+        }
+        readerCache.put(fileName, new SoftReference<YbkFileReader>(reader));
+        reader.use();
+        return reader;
+    }
+
+    /**
+     * Closes and uncaches reader for given filename.
+     * 
+     * @param fileName
+     */
+    public static synchronized void closeAllReaders() {
+        for (String fileName : readerCache.keySet()) {
+            closeReader(fileName);
+        }
+    }
 
     /**
      * Construct a new YbkFileReader on the given file named
@@ -80,37 +178,52 @@ public class YbkFileReader {
      * the given file named <code>filename</code>. If the <code>filename</code>
      * specified cannot be found, throw a FileNotFoundException.
      * 
+     * @param context
      * @param fileName
-     *            an absolute or relative path specifying the file to open.
+     *            the filename (relative to the library directory)
+     * @param charset
+     *            the character set to use
      * @throws FileNotFoundException
      *             if the filename cannot be opened for reading.
      */
-    public YbkFileReader(final Context ctx, final String fileName, String charset) throws FileNotFoundException,
-            IOException {
+    private YbkFileReader(final Context ctx, final String fileName) throws FileNotFoundException, IOException {
         final String libDir = PreferenceManager.getDefaultSharedPreferences(ctx).getString(
                 Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
         mCtx = ctx;
         mFilename = fileName;
         mFile = new File(libDir, fileName);
-        mCharset = charset == null ? DEFAULT_YBK_CHARSET : charset;
+        mCharset = DEFAULT_YBK_CHARSET;
         mFileIO = new RandomAccessFile(mFile, "r");
         mChannel = mFileIO.getChannel();
 
         YbkDAO ybkDao = YbkDAO.getInstance(ctx);
-        boolean noException = false;
-        Book book;
-        try {
-            book = ybkDao.getBook(fileName);
-            noException = true;
-        } finally {
-            if (!noException) {
-                close();
+        mBook = ybkDao.getBook(fileName);
+        if (mBook != null) {
+            if (mBook.charset != null) {
+                mCharset = mBook.charset;
             }
+            mChapterIndex = ybkDao.getChapterIndex(fileName);
         }
-        if (book != null) {
-            if (book.charset != null) {
-                mCharset = book.charset;
+    }
+
+    /**
+     * Increment use count.
+     * 
+     */
+    public synchronized void use() {
+        mInUseCount++;
+    }
+
+    /**
+     * Decrement use count.
+     * 
+     */
+    public synchronized void unuse() {
+        if (--mInUseCount <= 0) {
+            mInUseCount = 0;
+            if (mClosed) {
+                close();
             }
         }
     }
@@ -121,27 +234,31 @@ public class YbkFileReader {
      * @throws IOException
      * 
      */
-    public void close() {
-        if (mChannel != null) {
-            try {
-                mChannel.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Could not close ybk channel: " + Util.getStackTrace(e));
+    private synchronized void close() {
+        mClosed = true;
+        if (mInUseCount <= 0) {
+            if (mChannel != null) {
+                try {
+                    mChannel.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Could not close ybk channel: " + Util.getStackTrace(e));
+                }
+                mChannel = null;
             }
-            mChannel = null;
-        }
-        if (mFileIO != null) {
-            try {
-                mFileIO.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+            if (mFileIO != null) {
+                try {
+                    mFileIO.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+                }
+                mFileIO = null;
             }
-            mFileIO = null;
         }
     }
 
     @Override
     protected void finalize() throws Throwable {
+        mInUseCount = 0;
         close();
         super.finalize();
     }
@@ -178,7 +295,7 @@ public class YbkFileReader {
             mChannel.read(buf);
             buf.flip();
 
-            Chapter chapters[] = mChapters = new Chapter[chapterCount];
+            Chapter chapters[] = new Chapter[chapterCount];
 
             Chapter orderChapter = null;
             Chapter bindingChapter = null;
@@ -201,8 +318,6 @@ public class YbkFileReader {
 
             }
 
-            // Arrays.sort(chapters, Chapter.chapterNameComparator);
-
             if (bindingChapter != null) {
                 String bindingText = readInternalFile(bindingChapter.offset, bindingChapter.length);
                 String bookTitle = null;
@@ -221,39 +336,12 @@ public class YbkFileReader {
                 mTitle = bookTitle;
                 mShortTitle = shortTitle;
             }
-            if (orderChapter != null)
-                populateOrder(readInternalFile(orderChapter.offset, orderChapter.length), chapters);
-            else
-                mOrder = new int[0];
+            String orderString = orderChapter != null ? readInternalFile(orderChapter.offset, orderChapter.length)
+                    : Util.EMPTY_STRING;
+            mChapterIndex = new ChapterIndex(chapters, orderString, mCharset);
+
         } catch (IllegalArgumentException iae) {
             throw new InvalidFileFormatException("Index is damaged or incomplete.");
-        }
-    }
-
-    private void populateOrder(final String orderString, Chapter[] chapters) {
-        if (null != orderString) {
-            int order = 0;
-            int orderList[] = new int[chapters.length];
-            Chapter cmpChapter = new Chapter();
-
-            StringTokenizer tokenizer = new StringTokenizer(orderString, ",");
-            while (tokenizer.hasMoreTokens()) {
-                cmpChapter.orderName = tokenizer.nextToken().toLowerCase();
-                int chapterIndex = Arrays.binarySearch(mChapters, cmpChapter, Chapter.orderNameComparator);
-                if (chapterIndex >= 0) {
-                    orderList[order++] = chapterIndex;
-                    mChapters[chapterIndex].orderNumber = order;
-                }
-            }
-            if (order == mChapters.length) {
-                mOrder = orderList;
-            } else {
-                mOrder = new int[order];
-                System.arraycopy(orderList, 0, mOrder, 0, order);
-            }
-
-        } else {
-            mOrder = new int[0];
         }
     }
 
@@ -269,7 +357,73 @@ public class YbkFileReader {
         String fileName = mFilename;
         YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
         populateFileData();
-        return ybkDao.insertBook(fileName, mCharset, mTitle, mShortTitle, mChapters, mOrder);
+        mBook = ybkDao.insertBook(fileName, mCharset, mTitle, mShortTitle, mChapterIndex);
+        return mBook;
+    }
+    
+    /**
+     * Gets a chapter object.
+     * 
+     * @param chapName
+     *            the name of the chapter
+     * @return the chapter object, or null if it doesn't exist.
+     */
+    public Chapter getChapter(String chapName) {
+        Chapter chap = null;
+        try {
+            chap = mChapterIndex.getChapter(mChannel, chapName);
+            if (chap == null) {
+                chap = mChapterIndex.getChapter(mChannel, chapName + ".gz");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return chap;
+    }
+
+    /**
+     * Tests for the existence of a chapter.
+     * 
+     * @param chapName
+     *            the name of the chapter
+     * @return true if the chapter exists.
+     */
+    public boolean chapterExists(String chapName) throws IOException {
+        return getChapter(chapName) != null;
+    }
+
+    /**
+     * Gets a chapter object by orderId.
+     * 
+     * @param orderId
+     *            the chapter order id
+     * @return the chapter object, or null if it doesn't exist.
+     */
+    public Chapter getChapterByOrder(int orderId) {
+        Chapter chapter = null;
+        try {
+            chapter = mChapterIndex.getChapterByOrder(mChannel, orderId);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return chapter;
+    }
+
+    /**
+     * Gets a chapter object by index.
+     * 
+     * @param index
+     *            the chapter index
+     * @return the chapter object, or null if it doesn't exist.
+     */
+    public Chapter getChapterByIndex(int index) {
+        Chapter chapter = null;
+        try {
+            chapter = mChapterIndex.getChapterByIndex(mChannel, index);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return chapter;
     }
 
     /**
@@ -287,17 +441,10 @@ public class YbkFileReader {
      */
     public String readInternalFile(String chapName) throws IOException {
         String fileText = null;
-        int offset = 0;
-        int len = 0;
-
-        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
-        Chapter chap = ybkDao.getChapter(mFilename, chapName);
+        Chapter chap = getChapter(chapName);
         if (chap != null) {
-            offset = chap.offset;
-            len = chap.length;
-            fileText = readInternalFile(offset, len);
+            fileText = readInternalFile(chap.offset, chap.length);
         }
-
         return fileText;
     }
 
@@ -352,8 +499,7 @@ public class YbkFileReader {
      * @throws IOException
      */
     public byte[] readInternalBinaryFile(final String chapterName) throws IOException {
-        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
-        Chapter chap = ybkDao.getChapter(mFilename, chapterName);
+        Chapter chap = mChapterIndex.getChapter(mChannel, chapterName);
         byte bytes[] = null;
         if (chap != null) {
             bytes = readChunk(chap.offset, chap.length);
@@ -382,4 +528,12 @@ public class YbkFileReader {
         return arrayBuf;
     }
 
+    /**
+     * Get the Book object associated with this reader.
+     * 
+     * @return the book
+     */
+    public Book getBook() {
+        return mBook;
+    }
 }

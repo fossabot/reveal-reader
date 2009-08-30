@@ -211,12 +211,14 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             }
 
             try {
-                Book book = ybkDao.getBook(mBookFileName);
-                if (book == null)
+                mYbkReader = YbkFileReader.getReader(this, mBookFileName);
+                Book book = mYbkReader.getBook();
+                if (book == null) {
+                    mYbkReader.unuse();
+                    mYbkReader = null;
                     throw new FileNotFoundException(mBookFileName);
-                mBookFileName = book.fileName;
+                }
 
-                mYbkReader = new YbkFileReader(this, mBookFileName, null);
                 String shortTitle = book.shortTitle;
                 if (mChapFileName == null) {
                     // if (mBookWalk) {
@@ -243,8 +245,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             } catch (IOException ioe) {
                 Log.e(TAG, "Could not load: " + mBookFileName + " chapter: " + mChapFileName + ". " + ioe.getMessage());
 
-                Toast.makeText(this, "Could not load : " + mBookFileName + " chapter: " + mChapFileName
-                        + ". Please report this at " + getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
+                Toast.makeText(
+                        this,
+                        "Could not load : " + mBookFileName + " chapter: " + mChapFileName + ". Please report this at "
+                                + getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
             }
             setWebViewClient(ybkView);
 
@@ -372,8 +376,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         } else if (url.length() > ContentUriLength + 1) {
                             setProgressBarIndeterminateVisibility(true);
 
-//                            String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-//                                    Settings.DEFAULT_EBOOK_DIRECTORY);
+                            // String libDir =
+                            // mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                            // Settings.DEFAULT_EBOOK_DIRECTORY);
 
                             Log.d(TAG, "WebView URL: " + url);
                             String book;
@@ -425,10 +430,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     chapter += "\\" + urlParts[i];
                                 }
 
+                                YbkFileReader ybkRdr = null;
                                 try {
-                                    YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
-
-                                    Book bookObj = ybkDao.getBook(book);
+                                    ybkRdr = YbkFileReader.getReader(YbkViewActivity.this, book);
+                                    Book bookObj = ybkRdr.getBook();
 
                                     if (null != bookObj) {
 
@@ -437,12 +442,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                         if ((pos = chapter.indexOf("#")) != -1) {
                                             chap = chapter.substring(0, pos);
                                         }
-                                        Chapter chapObj = ybkDao.getChapter(bookObj.fileName, chap);
-                                        String concatChap = chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-                                        Chapter chapConcatObj = ybkDao.getChapter(bookObj.fileName, concatChap);
+                                        boolean chapterExists = ybkRdr.chapterExists(chap)
+                                                || ybkRdr.chapterExists(chapter.substring(0, chap.lastIndexOf("\\"))
+                                                        + "_.html.gz");
 
                                         boolean bookLoaded = false;
-                                        if (chapObj != null || chapConcatObj != null) {
+                                        if (chapterExists) {
                                             bookLoaded = loadChapter(book, chapter);
                                         } else {
                                             mDialogChapter = chap.substring(chapter.lastIndexOf("\\") + 1);
@@ -457,12 +462,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                             showDialog(CHAPTER_NONEXIST);
                                         }
                                     } else {
-                                        mDialogFilename = book.substring(book.lastIndexOf("/") + 1);
+                                        mDialogFilename = book;
                                         showDialog(FILE_NONEXIST);
-
                                     }
                                 } catch (IOException ioe) {
-                                    Log.w(TAG, "Couldn't load the chapter.");
+                                    mDialogFilename = book;
+                                    showDialog(FILE_NONEXIST);
+                                } finally {
+                                    if (ybkRdr != null) {
+                                        ybkRdr.unuse();
+                                        ybkRdr = null;
+                                    }
                                 }
                             }
 
@@ -610,11 +620,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             } else {
                 boolean hasNext = false;
                 boolean hasPrev = mChapOrderNbr > 1;
-                try {
-                    hasNext = YbkDAO.getInstance(this).getChapter(mBookFileName, mChapOrderNbr + 1) != null;
-                } catch (IOException ioe) {
-                    Log.e(TAG, "Error trying to detect if there is a next chapter: " + ioe);
-                }
+                hasNext = mYbkReader.getChapterByOrder(mChapOrderNbr + 1) != null;
                 prevItem.setVisible(hasNext || hasPrev);
                 prevItem.setEnabled(hasPrev);
                 nextItem.setVisible(hasNext || hasPrev);
@@ -818,12 +824,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         boolean bookLoaded = false;
 
-        YbkDAO ybkDao = YbkDAO.getInstance(this);
-
-        Chapter chap = ybkDao.getChapter(bookFileName, orderId);
+        Chapter chap = mYbkReader.getChapterByOrder(orderId);
 
         if (chap != null) {
-            Book book = ybkDao.getBook(bookFileName);
+            Book book = mYbkReader.getBook();
             mNavFile = "1";
             if (bookLoaded = loadChapter(book.fileName, chap.fileName)) {
                 setBookBtn(book.shortTitle, book.fileName, chap.fileName);
@@ -884,7 +888,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             // Log.d(TAG, "FilePath: " + filePath);
 
-            File testFile = new File(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY), filePath);
+            File testFile = new File(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                    Settings.DEFAULT_EBOOK_DIRECTORY), filePath);
             if (!testFile.exists()) {
                 // set the member property that holds the name of the book file
                 // we couldn't find
@@ -899,11 +904,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 // Only create a new YbkFileReader if we're opening a different
                 // book
                 if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
-                    ybkReader.close();
-                    ybkReader = mYbkReader = new YbkFileReader(this, filePath, null);
+                    ybkReader.unuse();
+                    ybkReader = mYbkReader = YbkFileReader.getReader(this, filePath);
                 }
 
-                Book book = ybkDao.getBook(filePath);
+                Book book = ybkReader.getBook();
 
                 try {
                     if (chap.equals("index")) {
@@ -943,7 +948,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                             mFragment = fragment;
 
-                            if (!ybkDao.chapterExists(book.fileName, chap.substring(0, hashLoc))) {
+                            if (!mYbkReader.chapterExists(chap.substring(0, hashLoc))) {
 
                                 // need to read a special footnote chapter
                                 content = readConcatFile(chap, mYbkReader);
@@ -969,23 +974,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 break label_get_content;
                             }
 
-                            if (chap.toLowerCase().endsWith(".gz")) {
-
-                                // Try it without the .gz
-                                Util.independentSubstring(chap, 0, chap.length() - 3);
-                                content = mYbkReader.readInternalFile(chap);
-                                if (content != null) {
-                                    break label_get_content;
-                                }
-                            } else {
-                                // try it with .gz
-                                chap += ".gz";
-                                content = mYbkReader.readInternalFile(chap);
-                                if (content != null) {
-                                    break label_get_content;
-                                }
-                            }
-
                             // Need to read special concatenated file
                             content = readConcatFile(chap, mYbkReader);
                             if (content != null) {
@@ -1002,14 +990,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     }
 
-                    String chapLowerCase = chap.toLowerCase();
-                    Chapter chapObj = ybkDao.getChapter(book.fileName, chapLowerCase);
+                    Chapter chapObj = ybkReader.getChapter(chap);
                     if (chapObj == null) {
-                        chapObj = ybkDao.getChapter(book.fileName, chapLowerCase + ".gz");
-                    }
-                    if (chapObj == null) {
-                        String concatChap = chapLowerCase.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-                        chapObj = ybkDao.getChapter(book.fileName, concatChap);
+                        String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
+                        chapObj = ybkReader.getChapter(concatChap);
                     }
                     if (chapObj != null) {
                         mChapOrderNbr = chapObj.orderNumber;
@@ -1046,10 +1030,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         setChapBtnText(content);
                     }
 
-                    String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                            Settings.DEFAULT_EBOOK_DIRECTORY);
-
-                    content = Util.processIfbook(content, this, libDir);
+                    content = Util.processIfbook(content, this);
 
                     // Convert the ahtags
                     content = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>",
@@ -1404,7 +1385,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 YbkDAO.getInstance(this).clearBackStack();
             }
             if (mYbkReader != null) {
-                mYbkReader.close();
+                mYbkReader.unuse();
                 mYbkReader = null;
             }
             super.onDestroy();

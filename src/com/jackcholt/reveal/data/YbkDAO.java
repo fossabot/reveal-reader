@@ -10,15 +10,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EmptyStackException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
-import java.util.TreeMap;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -46,7 +43,6 @@ public class YbkDAO {
     public static final String HISTORY_FILE = "history.dat";
     public static final String BOOKMARKS_FILE = "bookmarks.dat";
     public static final String CHAPTER_EXT = ".chp";
-    private static final int CHAPTER_CACHE_SIZE = 5;
 
     public static final String FILENAME = "FILENAME";
     public static final String HISTORY_ID = "HISTORY_ID";
@@ -61,16 +57,8 @@ public class YbkDAO {
     private ArrayList<History> bookmarkList;
 
     private ArrayList<Book> bookList;
-    private Map<String, ChapterDetails> chapterCache;
-    private List<String> chapterCacheLRU;
 
     private File dataDirFile;
-
-    private static class ChapterDetails implements Serializable {
-        private static final long serialVersionUID = 1L;
-        Chapter chapters[];
-        int order[];
-    }
 
     /**
      * Allow the user to get the one and only instance of the YbkDAO.
@@ -114,8 +102,6 @@ public class YbkDAO {
         bookList = getStoredBookList();
         historyList = getStoredHistoryList();
         bookmarkList = getStoredBookmarkList();
-        chapterCache = new TreeMap<String, ChapterDetails>(String.CASE_INSENSITIVE_ORDER);
-        chapterCacheLRU = new ArrayList<String>(CHAPTER_CACHE_SIZE);
     }
 
     /**
@@ -184,11 +170,11 @@ public class YbkDAO {
      * @throws IOException
      */
     public Book insertBook(final String fileName, final String charset, final String title, final String shortTitle,
-            final Chapter chapters[], int order[]) throws IOException {
+            final ChapterIndex chapterIndex) throws IOException {
         synchronized (bookList) {
             deleteBook(fileName);
             Log.d(TAG, "Inserting book: " + fileName);
-            storeChapterDetails(fileName, chapters, order);
+            storeChapterIndex(fileName, chapterIndex);
             // long id = Util.getUniqueTimeStamp();
             Book book = new Book();
             // book.id = id;
@@ -338,7 +324,6 @@ public class YbkDAO {
      */
     public boolean deleteBook(final String fileName) {
         synchronized (bookList) {
-            uncacheChapterDetails(fileName);
             deleteChapterDetails(fileName);
             deleteBookHistories(fileName);
             storeBookmarkList();
@@ -527,127 +512,6 @@ public class YbkDAO {
     }
 
     /**
-     * Get a chapter object identified by the fileName.
-     * 
-     * @param book
-     *            the book
-     * @param fileName
-     *            the name of the internal chapter file.
-     * @return the chapter
-     * @throws IOException
-     */
-    public Chapter getChapter(final Book book, final String fileName) throws IOException {
-        return getChapter(book.fileName, fileName);
-    }
-
-    /**
-     * Get a chapter object identified by the fileName.
-     * 
-     * @param bookFileName
-     *            the filename of the book
-     * @param fileName
-     *            the name of the internal chapter file.
-     * @return the chapter
-     * @throws IOException
-     */
-    public Chapter getChapter(final String bookFileName, final String fileName) throws IOException {
-        Chapter cmpChapter = new Chapter();
-        cmpChapter.fileName = fileName.toLowerCase();
-        Chapter chapter = null;
-        ChapterDetails chapterDetails = getChapterDetails(bookFileName);
-        if (chapterDetails != null) {
-            int chapterIndex = Arrays.binarySearch(chapterDetails.chapters, cmpChapter, Chapter.chapterNameComparator);
-            if (chapterIndex < 0) {
-                cmpChapter.fileName += ".gz";
-                chapterIndex = Arrays.binarySearch(chapterDetails.chapters, cmpChapter, Chapter.chapterNameComparator);
-            }
-            if (chapterIndex >= 0)
-                chapter = chapterDetails.chapters[chapterIndex];
-        }
-        return chapter;
-    }
-
-    /**
-     * Get chapter by book id and order id.
-     * 
-     * @param bookFileName
-     *            The filename of the book that contains the chapter.
-     * @param orderId
-     *            The number of the chapter in the order of chapters.
-     * @return The chapter we're look for.
-     * @throws IOException
-     */
-    public Chapter getChapter(final String bookFileName, final int orderId) throws IOException {
-        Chapter chapter = null;
-        if (orderId > 0) {
-            Book book = getBook(bookFileName);
-            if (book != null) {
-                ChapterDetails chapterDetails = getChapterDetails(book.fileName);
-                if (chapterDetails != null) {
-                    if (orderId <= chapterDetails.order.length) {
-                        chapter = chapterDetails.chapters[chapterDetails.order[orderId - 1]];
-                    }
-                }
-            }
-        }
-        return chapter;
-    }
-
-    //
-    // /**
-    // * Get the next chapter in bookwalker order.
-    // *
-    // * @param bookId
-    // * The id of the book that contains the chapter.
-    // * @param prevFileName
-    // * The previous chapter filename (or empty string).
-    // * @return The next chapter in the book, or null if none left
-    // * @throws IOException
-    // */
-    // public Chapter getNextBookWalkerChapter(final long bookId, final String
-    // prevFileName) throws IOException {
-    // try {
-    // String startKey = makeKey(bookId, prevFileName.toLowerCase());
-    // TupleBrowser<String, Long> browser =
-    // root.chapterNameIndex.browse(startKey);
-    // Tuple<String, Long> tuple = new Tuple<String, Long>();
-    // while (browser.getNext(tuple)) {
-    // if (tuple.getKey().equals(startKey))
-    // continue;
-    // Chapter chapter = Chapter.load(mDb, (Long) tuple.getValue());
-    // if (chapter != null) {
-    // if (chapter.bookId != bookId)
-    // return null;
-    // if (chapter.fileName.toLowerCase().contains(".html"))
-    // return chapter;
-    // } else {
-    // Log.e(TAG, "Unable to load chapter record " + tuple.getValue() +
-    // " for key " + tuple.getKey());
-    // }
-    // }
-    // return null;
-    // } catch (RuntimeException rte) {
-    // throw new RTIOException(rte);
-    // }
-    // }
-    //
-
-    /**
-     * Check whether a chapter exists in a book.
-     * 
-     * @param bookFileName
-     *            The filename of the book.
-     * @param fileName
-     *            The name of the chapter (or internal file) that we're checking
-     *            for.
-     * @return True if the book has a chapter of that name, false otherwise.
-     * @throws IOException
-     */
-    public boolean chapterExists(final String bookFileName, final String fileName) throws IOException {
-        return null != getChapter(bookFileName, fileName);
-    }
-
-    /**
      * Pop the the most recent History off the stack and return it.
      * 
      * @return The most recent History. If the stack is empty, return null.
@@ -737,7 +601,7 @@ public class YbkDAO {
     }
 
     /**
-     * Store chapter related information
+     * Store chapter index
      * 
      * @param fileName
      *            filename of the book
@@ -747,32 +611,27 @@ public class YbkDAO {
      *            order map
      * @throws IOException
      */
-    private void storeChapterDetails(final String fileName, final Chapter chapters[], final int[] order)
+    private void storeChapterIndex(final String fileName, final ChapterIndex chapterIndex)
             throws IOException {
         String baseFileName = new File(fileName).getName().replaceFirst("(?s)\\..*", "");
-        ChapterDetails chapterDetails = new ChapterDetails();
-        chapterDetails.chapters = chapters;
-        chapterDetails.order = order;
-        store(baseFileName + CHAPTER_EXT, chapterDetails);
-        // cacheChapterDetails(fileName, chapterDetails);
+        store(baseFileName + CHAPTER_EXT, chapterIndex);
     }
 
     /**
-     * Gets the chapter details for a book
+     * Gets the chapter index for a book
      * 
      * @fileName the book filename
-     * @return the bookmark list
+     * @return the chapter index
      */
-    private ChapterDetails getStoredChapterDetails(String fileName) {
+    public ChapterIndex getChapterIndex(String fileName) {
         String baseFileName = new File(fileName).getName().replaceFirst("(?s)\\..*", "");
-        ChapterDetails chapterDetails = null;
+        ChapterIndex chapterIndex = null;
         try {
-            chapterDetails = (ChapterDetails) load(baseFileName + CHAPTER_EXT);
-            cacheChapterDetails(fileName, chapterDetails);
+            chapterIndex = (ChapterIndex) load(baseFileName + CHAPTER_EXT);
         } catch (Exception e) {
             Log.e(TAG, "Unable to load chapter details for book " + fileName);
         }
-        return chapterDetails;
+        return chapterIndex;
     }
 
     /**
@@ -889,52 +748,4 @@ public class YbkDAO {
             is.close();
         }
     }
-
-    /**
-     * Cache chapter details for a book.
-     * 
-     * @param fileName
-     *            book filename
-     * @param chapterDetails
-     *            the chapter details
-     */
-    private void cacheChapterDetails(String fileName, ChapterDetails chapterDetails) {
-        synchronized (chapterCache) {
-            // make room in cache
-            while (chapterCacheLRU.size() > CHAPTER_CACHE_SIZE) {
-                chapterCache.remove(chapterCacheLRU.remove(0));
-            }
-            chapterCache.put(fileName, chapterDetails);
-            chapterCacheLRU.add(fileName);
-        }
-    }
-
-    /**
-     * Uncache chapter details for a book.
-     * 
-     * @param fileName
-     *            the book filename
-     */
-    private void uncacheChapterDetails(String fileName) {
-        synchronized (chapterCache) {
-            chapterCache.remove(fileName);
-            chapterCacheLRU.remove(fileName);
-        }
-    }
-
-    /**
-     * Get chapter details for a book.
-     * 
-     * @param fileName
-     *            the book filename
-     */
-    private ChapterDetails getChapterDetails(String fileName) {
-        synchronized (chapterCache) {
-            ChapterDetails chapterDetails = chapterCache.get(fileName);
-            if (chapterDetails == null)
-                chapterDetails = getStoredChapterDetails(fileName);
-            return chapterDetails;
-        }
-    }
-
 }

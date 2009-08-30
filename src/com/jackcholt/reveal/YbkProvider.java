@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.HashMap;
 
 import android.content.ContentProvider;
@@ -17,9 +16,6 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.util.Log;
-
-import com.jackcholt.reveal.data.Chapter;
-import com.jackcholt.reveal.data.YbkDAO;
 
 public class YbkProvider extends ContentProvider {
     public static final String KEY_MIMETYPE = "mimetype";
@@ -202,40 +198,6 @@ public class YbkProvider extends ContentProvider {
     }
 
     /**
-     * 
-     * @param file
-     * @param bookFileName
-     * @param chapterName
-     * @return
-     * @throws IOException
-     */
-    public byte[] readInternalBinaryFile(final RandomAccessFile file, final String bookFileName,
-            final String chapterName) throws IOException {
-
-        int offset = 0;
-        int len = 0;
-        byte[] bytes = null;
-
-        YbkDAO ybkDao = YbkDAO.getInstance(getContext());
-
-        Chapter chap = ybkDao.getChapter(bookFileName, chapterName);
-
-        if (chap != null) {
-            offset = chap.offset;
-            len = chap.length;
-
-            bytes = new byte[len];
-            file.seek(offset);
-            int amountRead = file.read(bytes);
-            if (amountRead < len) {
-                throw new InvalidFileFormatException("Couldn't read all of " + bookFileName + ".");
-            }
-        }
-
-        return bytes;
-    }
-
-    /**
      * Open a file and return a ParcelFileDescriptor reference to it.
      * 
      * @param uri
@@ -285,12 +247,13 @@ public class YbkProvider extends ContentProvider {
                     outFile = new File(libDir + "images/", tempFileName);
 
                     if (!outFile.exists()) {
-                        HashMap<String, String> chapterMap = Util.getFileNameChapterFromUri(strUri, libDir, false);
+                        HashMap<String, String> chapterMap = Util.getFileNameChapterFromUri(strUri, false);
                         String fileName = chapterMap.get("book");
                         String chapter = chapterMap.get("chapter");
-                        RandomAccessFile file = new RandomAccessFile(fileName, "r");
+                        YbkFileReader ybkRdr = null;
                         try {
-                            byte[] contents = readInternalBinaryFile(file, fileName, chapter);
+                            ybkRdr = YbkFileReader.getReader(Main.getMainApplication(), new File(fileName).getName());
+                            byte[] contents = ybkRdr.readInternalBinaryFile(chapter);
                             if (contents != null) {
                                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),
                                         BUFFER_SIZE);
@@ -305,10 +268,9 @@ public class YbkProvider extends ContentProvider {
                             throw new FileNotFoundException("Could not write internal file to temp file. "
                                     + e.getMessage() + " " + e.getCause());
                         } finally {
-                            try {
-                                file.close();
-                            } catch (IOException e) {
-                                Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+                            if (ybkRdr != null) {
+                                ybkRdr.unuse();
+                                ybkRdr = null;
                             }
                         }
                     }

@@ -111,15 +111,17 @@ public class YbkService extends Service {
                             String message;
                             YbkFileReader ybkRdr = null;
                             try {
-                                // Create an object for reading a ybk file;
-                                ybkRdr = new YbkFileReader(YbkService.this, target, charset);
-                                // Tell the YbkFileReader to populate the book
-                                // info
-                                // into the database;
-                                Book book = ybkRdr.populateBook();
-                                succeeded = true;
+                                // clean up any previous instance of the book
+                                YbkFileReader.closeReader(target);
+                                YbkDAO ybkDao = YbkDAO.getInstance(YbkService.this);
+                                ybkDao.deleteBook(target);
+                                
+                                // Add the book.
+                                ybkRdr = YbkFileReader.addBook(YbkService.this, target, charset);
+                                Book book = ybkRdr.getBook();
                                 bookName = book.title;
                                 message = "Added '" + bookName + "' to the library";
+                                succeeded = true;
                             } catch (InvalidFileFormatException ioe) {
                                 succeeded = false;
                                 message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
@@ -131,7 +133,7 @@ public class YbkService extends Service {
                                 Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
                             } finally {
                                 if (ybkRdr != null) {
-                                    ybkRdr.close();
+                                    ybkRdr.unuse();
                                     ybkRdr = null;
                                 }
                             }

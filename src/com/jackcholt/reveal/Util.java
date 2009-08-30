@@ -313,8 +313,7 @@ public class Util {
                 + "</head><body>" + content + "</body></html>";
     }
 
-    public static final HashMap<String, String> getFileNameChapterFromUri(final String uri, final String libDir,
-            final boolean isGzipped) {
+    public static final HashMap<String, String> getFileNameChapterFromUri(final String uri, final boolean isGzipped) {
 
         HashMap<String, String> map = new HashMap<String, String>();
 
@@ -323,7 +322,7 @@ public class Util {
 
         String[] urlParts = dataString.split("/");
 
-        String book = libDir + urlParts[0] + ".ybk";
+        String book = urlParts[0] + ".ybk";
 
         map.put("book", book);
 
@@ -379,12 +378,10 @@ public class Util {
      *            HTML to process.
      * @param contRes
      *            Reference to the environment in which we are working.
-     * @param libDir
-     *            The directory which contains our ebooks.
      * @return The processed content.
      * @throws IOException
      */
-    public static String processIfbook(final String content, final Context ctx, final String libDir) throws IOException {
+    public static String processIfbook(final String content, final Context ctx) throws IOException {
 
         YbkDAO ybkDao = YbkDAO.getInstance(ctx);
 
@@ -420,7 +417,7 @@ public class Util {
 
                         fullIfBookFound = true;
 
-                        Book book = ybkDao.getBook(libDir + bookName + ".ybk");
+                        Book book = ybkDao.getBook(bookName + ".ybk");
 
                         if (book != null) {
                             newContent.append(oldContent.substring(gtPos + 1, elsePos));

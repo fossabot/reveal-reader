@@ -383,11 +383,11 @@ public class Main extends ListActivity {
         String message;
         YbkFileReader ybkReader;
         try {
-            ybkReader = new YbkFileReader(this, book.fileName, book.charset);
+            ybkReader = YbkFileReader.getReader(this, book.fileName);
             try {
                 metaData = ybkReader.readMetaData();
             } finally {
-                ybkReader.close();
+                ybkReader.unuse();
             }
         } catch (IOException e) {
             // couldn't read meta data, that's ok we'll make some up
