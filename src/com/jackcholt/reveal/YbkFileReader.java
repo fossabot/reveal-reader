@@ -5,12 +5,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -77,8 +76,44 @@ public class YbkFileReader {
 
     private boolean mClosed = false;
 
-    private static Map<String, SoftReference<YbkFileReader>> readerCache = new TreeMap<String, SoftReference<YbkFileReader>>(
-            String.CASE_INSENSITIVE_ORDER);
+    private static final int READER_CACHE_SIZE = 10;
+    
+    private static List<YbkFileReader> readerCache = new ArrayList<YbkFileReader>(READER_CACHE_SIZE);
+    
+    private static synchronized YbkFileReader getReaderFromCache(String fileName) {
+        int cacheCount = readerCache.size();
+        for (int i = cacheCount - 1; i >= 0; i--) {
+            YbkFileReader reader = readerCache.get(i);
+            if (reader.mFilename.equalsIgnoreCase(fileName)) {
+                if (i != cacheCount -1) {
+                    readerCache.remove(i);
+                    readerCache.add(reader);
+                }
+                return reader;
+            }
+        }
+        return null;
+    }
+    
+    private static synchronized void cacheReader(YbkFileReader reader) {
+        while (readerCache.size() >= READER_CACHE_SIZE) {
+            YbkFileReader oldReader = readerCache.remove(0);
+            oldReader.close();
+        }
+        readerCache.add(reader);
+    }
+
+    private static synchronized void uncacheReader(String fileName) {
+        int cacheCount = readerCache.size();
+        for (int i = cacheCount - 1; i >= 0; i--) {
+            YbkFileReader reader = readerCache.get(i);
+            if (reader.mFilename.equalsIgnoreCase(fileName)) {
+                readerCache.remove(i);
+                reader.close();
+            }
+        }
+    }
+
 
     /**
      * Get a YbkFileReader on the given file named <code>filename</code>. If the
@@ -95,17 +130,10 @@ public class YbkFileReader {
      */
     public static synchronized YbkFileReader getReader(final Context ctx, final String fileName)
             throws FileNotFoundException, IOException {
-        YbkFileReader reader = null;
-        SoftReference<YbkFileReader> readerRef = readerCache.get(fileName);
-        if (readerRef != null) {
-            reader = readerRef.get();
-            if (reader == null) {
-                readerCache.remove(fileName);
-            }
-        }
+        YbkFileReader reader = getReaderFromCache(fileName);
         if (reader == null) {
             reader = new YbkFileReader(ctx, fileName);
-            readerCache.put(fileName, new SoftReference<YbkFileReader>(reader));
+            cacheReader(reader);
         }
         reader.use();
         return reader;
@@ -117,14 +145,7 @@ public class YbkFileReader {
      * @param fileName
      */
     public static synchronized void closeReader(String fileName) {
-        YbkFileReader reader = null;
-        SoftReference<YbkFileReader> readerRef = readerCache.remove(fileName);
-        if (readerRef != null) {
-            reader = readerRef.get();
-            if (reader != null) {
-                reader.close();
-            }
-        }
+        uncacheReader(fileName);
     }
 
     /**
@@ -155,7 +176,7 @@ public class YbkFileReader {
                 reader.close();
             }
         }
-        readerCache.put(fileName, new SoftReference<YbkFileReader>(reader));
+        cacheReader(reader);
         reader.use();
         return reader;
     }
@@ -166,9 +187,10 @@ public class YbkFileReader {
      * @param fileName
      */
     public static synchronized void closeAllReaders() {
-        for (String fileName : readerCache.keySet()) {
-            closeReader(fileName);
+        for (YbkFileReader reader : readerCache) {
+            reader.close();
         }
+        readerCache.clear();
     }
 
     /**

@@ -3,6 +3,7 @@ package com.jackcholt.reveal.data;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
@@ -21,7 +22,7 @@ public class ChapterIndex implements Serializable {
 
     public long hashIndex[];
     public short orderIndex[];
-    public transient Chapter chapters[];
+    public transient SoftReference<Chapter[]> chaptersRef;
     public String charset = YbkFileReader.DEFAULT_YBK_CHARSET;
 
     /**
@@ -44,7 +45,6 @@ public class ChapterIndex implements Serializable {
      *            the character set to use to turn bytes into characters
      */
     public ChapterIndex(Chapter chapters[], String orderString, String charset) {
-        this.chapters = chapters;
         this.charset = charset;
         this.orderIndex = buildOrderIndex(orderString, chapters);
         this.hashIndex = buildHashIndex(chapters);
@@ -191,8 +191,11 @@ public class ChapterIndex implements Serializable {
      */
     public Chapter getChapterByIndex(FileChannel bookChannel, int index) throws IOException {
         Chapter chapter = null;
-        if (chapters == null) {
+        Chapter chapters[] = null;
+        
+        if (chaptersRef == null || (chapters = chaptersRef.get()) == null) {
             chapters = new Chapter[hashIndex.length];
+            chaptersRef = new SoftReference<Chapter[]>(chapters);
         }
 
         if (index >= 0 && index < chapters.length) {

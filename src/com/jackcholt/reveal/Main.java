@@ -73,6 +73,7 @@ public class Main extends ListActivity {
     private NotificationManager mNotifMgr;
     private boolean BOOLshowSplashScreen;
     private static boolean BOOLsplashed = false;
+    private static boolean BOOLcheckedOnline = false;
     private boolean BOOLshowFullScreen;
     private final Handler mHandler = new Handler();
 
@@ -130,15 +131,25 @@ public class Main extends ListActivity {
                 }
             }
 
+            
+            
             // Is Network up or not?
-            if (Util.isNetworkUp(this)) {
-                // // Actually go ONLINE and check... duhhhh
-                // UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
-                //
-                // // Check for a message from US :)
-                // MOTDDialog.create(this);
-                // // Check for version Notes Unique for this REV
-                // RevNotesDialog.create(this);
+            if (!BOOLcheckedOnline && Util.isNetworkUp(this)) {
+                // only check once per process instantiation
+                BOOLcheckedOnline = true;
+                
+                // and wait a little bit to kick it off so it won't slow down the initial display of the list
+                mHandler.postDelayed(new SafeRunnable() {         
+                    @Override
+                    public void protectedRun() {
+                        // Actually go ONLINE and check... duhhhh
+                        UpdateChecker.checkForNewerVersion(Main.this, Global.SVN_VERSION);                       
+                        // Check for a message from US :)
+                        MOTDDialog.create(Main.this);
+                        // Check for version Notes Unique for this REV
+                        RevNotesDialog.create(Main.this);
+                    }
+                }, 5000);
             }
 
             if (!(isConfigChanged())) {
@@ -152,15 +163,33 @@ public class Main extends ListActivity {
                 }
             }
 
-            File oldDBfile = new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db");
-            if (oldDBfile.exists()) {
-                oldDBfile.delete();
-                // prompt to warn of new DB create
-                RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
-                updateBookList();
-            } else if (!(new File(new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
-                    Settings.DEFAULT_EBOOK_DIRECTORY), YbkDAO.DATA_DIR), YbkDAO.BOOKS_FILE).exists())) {
-                Toast.makeText(this, getResources().getString(R.string.refresh_title), Toast.LENGTH_LONG).show();
+            String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                    Settings.DEFAULT_EBOOK_DIRECTORY);
+
+            boolean upgrading = false;
+
+            // delete old versions of databases
+            File oldDBFiles[] = {
+                    new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db"),
+                    new File(libDir, "reveal_ybk.db"),
+                    new File(libDir, "reveal_ybk.lg")
+            };
+            
+            for (File oldDBFile : oldDBFiles) {
+                if (oldDBFile.exists()) {
+                    oldDBFile.delete();
+                    upgrading = true;
+                }
+            }
+            
+            // if new version of db doesn't exist, create it
+            if (!(new File(new File(libDir, YbkDAO.DATA_DIR), YbkDAO.BOOKS_FILE).exists())) {
+                if (upgrading) {
+                    // had older version, do upgrading message
+                    RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
+                } else {
+                    Toast.makeText(this, getResources().getString(R.string.refresh_title), Toast.LENGTH_LONG).show();
+                }
                 updateBookList();
             }
 
@@ -317,7 +346,7 @@ public class Main extends ListActivity {
 
             // schedule the adding of books on disk that are not in the db
             for (String file : addFiles) {
-                YbkService.requestAddBook(this, file, YbkFileReader.DEFAULT_YBK_CHARSET, callback);
+                YbkService.requestAddBook(this, file, null, callback);
             }
         }
     }
@@ -395,7 +424,8 @@ public class Main extends ListActivity {
         if (metaData != null && metaData.length() > 0) {
             message = metaData.replaceFirst("(?i)^.*<end>", "");
         } else {
-            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message), book.title, book.fileName);
+            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message), book.title,
+                    book.fileName);
         }
 
         new EBookPropertiesDialog(this, getResources().getString(R.string.menu_ebook_properties), message, book).show();
@@ -761,7 +791,7 @@ public class Main extends ListActivity {
                         intent = new Intent(this, YbkViewActivity.class);
                         intent.putExtra(YbkDAO.HISTORY_ID, histId);
                         startActivity(intent);
-                    } 
+                    }
 
                     break;
 
@@ -827,15 +857,19 @@ public class Main extends ListActivity {
                 // cleanup current library directory
                 File libDir = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                         Settings.DEFAULT_EBOOK_DIRECTORY));
+                Util.deleteFiles(new File(libDir, "images"), ".*");
                 Util.deleteFiles(libDir, ".*\\.(tmp|lg|db)");
+                Util.deleteFiles(new File(libDir, "data"), "books\\.dat|.*\\.chp");
                 if (!libDir.getAbsoluteFile().toString().equalsIgnoreCase(Settings.DEFAULT_EBOOK_DIRECTORY)) {
                     // cleanup default library directory if it wasn't the one we
                     // were using
-                    Util.deleteFiles(new File(libDir, "images"), ".*");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "images"), ".*");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY), ".*\\.(tmp|lg|db)");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "data"), "books\\.dat|.*\\.chp");
                 }
                 // cleanup any sqlite databases
                 Util.deleteFiles(new File("/data/data/com.jackcholt.reveal/databases"), ".*\\.db");
+                
                 // cleanup preferences (can't seem to delete file, so tell the
                 // preferences manager to clear them all)
                 getSharedPrefs().edit().clear().commit();

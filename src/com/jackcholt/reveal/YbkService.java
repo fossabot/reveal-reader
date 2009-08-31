@@ -115,9 +115,21 @@ public class YbkService extends Service {
                                 YbkFileReader.closeReader(target);
                                 YbkDAO ybkDao = YbkDAO.getInstance(YbkService.this);
                                 ybkDao.deleteBook(target);
+
+                                String useCharset = charset;
                                 
+                                // kludge for the known Cyrillic books
+                                if (useCharset == null) {
+                                    if (target.equalsIgnoreCase("km.ybk") || target.equalsIgnoreCase("vz.ybk")
+                                            || target.equalsIgnoreCase("nz.ybk")) {
+                                        useCharset = "CP1251";
+                                    } else {
+                                        useCharset = YbkFileReader.DEFAULT_YBK_CHARSET;
+                                    }
+                                }
+
                                 // Add the book.
-                                ybkRdr = YbkFileReader.addBook(YbkService.this, target, charset);
+                                ybkRdr = YbkFileReader.addBook(YbkService.this, target, useCharset);
                                 Book book = ybkRdr.getBook();
                                 bookName = book.title;
                                 message = "Added '" + bookName + "' to the library";
@@ -200,8 +212,7 @@ public class YbkService extends Service {
                                 List<String> downloads = Util.fetchTitle(new File(target), new URL(source), libDir,
                                         context);
                                 for (String download : downloads) {
-                                    requestAddBook(context, download, YbkFileReader.DEFAULT_YBK_CHARSET, callbackMap
-                                            .get(Long.valueOf(callbacksID)));
+                                    requestAddBook(context, download, null, callbackMap.get(Long.valueOf(callbacksID)));
                                 }
                             } catch (IOException ioe) {
                                 Log.e(TAG, "Unable to download '" + source + "': " + ioe.toString());
