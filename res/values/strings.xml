@@ -46,7 +46,7 @@
 <string name="website">Please Visit our website for HELP or More information  http://revealreader.thepackhams.com</string>
 <string name="close">Close</string>
 <string name="delete">Delete</string>
-<string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
+<string name="title_download_url">http://www.thecoffeys.NOT/ebooks/xmlbooks.asp</string>
 <string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
 <string name="download">Download</string>
 <string name="ok">OK</string>
@@ -151,4 +151,6 @@
 <string name="summary_on_disable_analytics">Analytics Location Off</string>
 <string name="summary_off_disable_analytics">Analytics Location On</string>
 <string name="disable_analytics">Disable Analytics</string>
+<string name="paypalURL">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4146444</string>
+<string name="title_download_url_ourDB">http://revealreader.thepackhams.com/ebooks</string>
 </resources>

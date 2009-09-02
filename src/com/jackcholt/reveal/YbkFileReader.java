@@ -327,6 +327,9 @@ public class YbkFileReader {
                 int pos = i * INDEX_RECORD_LENGTH;
 
                 Chapter chapter = chapters[i] = Chapter.fromYbkIndex(arrayBuf, pos, mCharset);
+                // temporarily add negative order number so we can tell the original order
+                // but distinguish it from a real order number later on
+                chapter.orderNumber = -1 - i;
 
                 // check that the offsets could possibly be legal
                 if (chapter.offset < indexLength + 4 || chapter.length < 0

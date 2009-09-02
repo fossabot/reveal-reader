@@ -71,8 +71,12 @@ public class ChapterIndex implements Serializable {
                 cmpChapter.orderName = tokenizer.nextToken().toLowerCase();
                 int chapterIndex = Arrays.binarySearch(orderChapters, cmpChapter, Chapter.orderNameComparator);
                 if (chapterIndex >= 0) {
-                    orderList[order++] = (short) chapterIndex;
-                    orderChapters[chapterIndex].orderNumber = order;
+                    int originalIndex = orderChapters[chapterIndex].orderNumber;
+                    if (originalIndex < 0) {
+                        originalIndex = -originalIndex - 1;
+                        orderList[order++] = (short) originalIndex;
+                        orderChapters[chapterIndex].orderNumber = order;
+                    }
                 }
             }
             if (order == chapters.length) {
@@ -100,11 +104,14 @@ public class ChapterIndex implements Serializable {
             Chapter chapter = chapters[i];
             // strip the sign bit to keep things simpler
             int hash = chapter.fileName.hashCode() & 0x7FFFFFFF;
+            int orderNumber = chapter.orderNumber;
+            if (orderNumber < 0)
+                orderNumber = 0;
             // hashkey has the hash in the high order 32 bits,
             // the order number in the next 16 bits.
             // and the index into the chapters in the low order 16 bits.
             // NOTE THAT THIS MEANS WE CANNOT SUPPORT MORE THAN 64K
-            long key = (((long) hash) << 32) | (((int) chapter.orderNumber) << 16) | i;
+            long key = (((long) hash) << 32) | (orderNumber << 16) | i;
             hashList[i] = key;
         }
         // sort so we can binary search against the hashes
