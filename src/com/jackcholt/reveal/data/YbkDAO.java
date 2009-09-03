@@ -55,6 +55,7 @@ public class YbkDAO {
 
     private ArrayList<History> mHistoryList;
     private ArrayList<History> mBookmarkList;
+    private ArrayList<History>[] mHistoryLists;
 
     private ArrayList<Book> mBookList;
 
@@ -92,6 +93,7 @@ public class YbkDAO {
      * Open the db.
      * 
      */
+    @SuppressWarnings("unchecked")
     public void open(Context ctx) {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
         String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
@@ -102,6 +104,7 @@ public class YbkDAO {
         mBookList = getStoredBookList();
         mHistoryList = getStoredHistoryList();
         mBookmarkList = getStoredBookmarkList();
+        mHistoryLists = (ArrayList<History>[]) new ArrayList[] {mHistoryList, mBookmarkList}; 
     }
 
     /**
@@ -202,25 +205,6 @@ public class YbkDAO {
     };
 
     /**
-     * Convenience method to save a history item but not a bookmark (no
-     * bookmarkNumber).
-     * 
-     * @param bookFileName
-     *            The filename of the book that this is related to.
-     * @param title
-     *            The title to be shown in the history/bookmark list.
-     * @param chapterName
-     *            The chapter that was being read.
-     * @param scrollPos
-     *            The position in the chapter that was being read.
-     * @return True if the insert succeeded, False otherwise.
-     */
-    public boolean insertHistory(final String bookFileName, final String title, final String chapterName,
-            final int scrollYPos) {
-        return insertHistory(bookFileName, title, chapterName, scrollYPos, 0);
-    }
-
-    /**
      * Save a new history/bookMark item.
      * 
      * @param bookFileName
@@ -231,11 +215,51 @@ public class YbkDAO {
      *            The chapter that was being read.
      * @param scrollPos
      *            The position in the chapter that was being read.
+     * @return True if the insert succeeded, False otherwise.
+     */
+    public boolean insertHistory(final String bookFileName, final String title, final String chapterName,
+            final int scrollYPos) {
+        String chapterNameNoGz = chapterName.replaceFirst("(?i)\\.gz$", "");
+        History hist = new History();
+        hist.bookFileName = bookFileName;
+        hist.bookmarkNumber = 0;
+        hist.chapterName = chapterNameNoGz;
+        hist.scrollYPos = scrollYPos;
+        hist.title = title;
+        synchronized (mHistoryList) {
+            // find and remove duplicate history entries
+            Iterator<History> it = mHistoryList.iterator();
+            while (it.hasNext()) {
+                History h = it.next();
+                if ((h.bookFileName.equalsIgnoreCase(bookFileName)) && h.chapterName.equalsIgnoreCase(chapterNameNoGz)) {
+                    it.remove();
+                }
+            }
+            mHistoryList.add(0, hist);
+            backStack.push(hist);
+            Log.d(TAG, "Added " + hist.chapterName + " to backStack");
+            deleteHistories();
+            storeHistoryList();
+        }
+        return true;
+    }
+
+    /**
+     * Save a new /bookMark item.
+     * 
+     * @param bookFileName
+     *            The filename of the book that this is related to.
+     * @param historyTitle
+     *            The title to be shown in the bookmark list.
+     * @param chapterName
+     *            The chapter that was being read.
+     * @param scrollPos
+     *            The position in the chapter that was being read.
      * @param bookmarkNumber
      *            The number of the bookmark to save.
      * @return True if the insert succeeded, False otherwise.
      */
-    public boolean insertHistory(final String bookFileName, final String title, final String chapterName,
+    public boolean insertBookmark(final String bookFileName, final String title, final String chapterName,
             final int scrollYPos, final int bookmarkNumber) {
         String chapterNameNoGz = chapterName.replaceFirst("(?i)\\.gz$", "");
         History hist = new History();
@@ -244,46 +268,32 @@ public class YbkDAO {
         hist.chapterName = chapterNameNoGz;
         hist.scrollYPos = scrollYPos;
         hist.title = title;
-        if (bookmarkNumber == 0) {
-            synchronized (mHistoryList) {
-                // find and remove duplicate history entries
-                Iterator<History> it = mHistoryList.iterator();
-                while (it.hasNext()) {
-                    History h = it.next();
-                    if ((h.bookFileName.equalsIgnoreCase(bookFileName)) && h.chapterName.equalsIgnoreCase(chapterNameNoGz)) {
-                        it.remove();
-                    }
-                }
-                mHistoryList.add(0, hist);
-                backStack.push(hist);
-                Log.d(TAG, "Added " + hist.chapterName + " to backStack");
-            }
-        } else {
-            synchronized (mBookmarkList) {
-                mBookmarkList.add(hist);
-            }
+        synchronized (mBookmarkList) {
+            mBookmarkList.add(hist);
+            storeBookmarkList();
         }
         return true;
     }
 
     /**
-     * Updates a history entry
+     * Updates a bookmark entry
      * 
-     * @param histId
+     * @param bmId
      * @param bookFileName
      * @param chapName
      * @param scrollYPos
      * @return
      */
-    public boolean updateHistory(final long histId, final String bookFileName, final String chapName,
+    public boolean updateBookmark(final int bmId, final String bookFileName, final String chapName,
             final int scrollYPos) {
         boolean success = false;
-        History hist = getHistory(histId);
+        History hist = getBookmark(bmId);
 
         if (hist != null) {
             hist.scrollYPos = scrollYPos;
             hist.bookFileName = bookFileName;
             hist.chapterName = chapName;
+            storeBookmarkList();
             success = true;
         }
 
@@ -292,7 +302,9 @@ public class YbkDAO {
 
     public boolean deleteBookmark(History hist) {
         synchronized (mBookmarkList) {
-            return mBookmarkList.remove(hist);
+            boolean success =  mBookmarkList.remove(hist);
+            storeBookmarkList();
+            return success;
         }
     }
 
@@ -300,7 +312,7 @@ public class YbkDAO {
      * Remove all histories beyond the maximum.
      * 
      */
-    public void deleteHistories() {
+    private void deleteHistories() {
         SharedPreferences sharedPref = mSharedPref;
         int histToKeep = sharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
         int stackToKeep = histToKeep * 2;
@@ -325,7 +337,6 @@ public class YbkDAO {
     public boolean deleteBook(final String fileName) {
         synchronized (mBookList) {
             deleteChapterDetails(fileName);
-            deleteBookHistories(fileName);
             storeBookmarkList();
             storeHistoryList();
             Iterator<Book> it = mBookList.iterator();
@@ -354,24 +365,6 @@ public class YbkDAO {
         }
     }
 
-    // /**
-    // * Get the book object identified by bookId.
-    // *
-    // * @param bookId
-    // * The key of the book to get.
-    // * @return The book object identified by bookId.
-    // */
-    // public Book getBook(final long bookId) {
-    // synchronized (bookList) {
-    // for (Book book : bookList) {
-    // if (book.id == bookId) {
-    // return book;
-    // }
-    // }
-    // }
-    // return null;
-    // }
-
     /**
      * Get a book object identified by the fileName.
      * 
@@ -399,19 +392,23 @@ public class YbkDAO {
      * @return The history object identified by histId.
      */
     public History getHistory(final long histId) {
+        History history = null;
         synchronized (mHistoryList) {
-            for (History hist : mHistoryList) {
-                if (hist.id == histId) {
-                    return hist;
+            synchronized (mBookmarkList) {
+                for (List<History> list : mHistoryLists) {
+                    for (History hist : list) {
+                        if (hist.id == histId) {
+                            if (getBook(hist.bookFileName) != null) {
+                                // only return histories for which there is a book
+                                history = hist;
+                            }
+                            break;
+                        }
+                    }
                 }
             }
-            for (History hist : mBookmarkList) {
-                if (hist.id == histId) {
-                    return hist;
-                }
-            }
-            return null;
         }
+        return history;
     }
 
     /**
@@ -422,13 +419,18 @@ public class YbkDAO {
      * @return The History object that contains the bookmark.
      */
     public History getBookmark(final int bmId) {
+        History history = null;
         synchronized (mBookmarkList) {
             for (History hist : mBookmarkList) {
                 if (hist.bookmarkNumber == bmId) {
-                    return hist;
+                    if (getBook(hist.bookFileName) != null) {
+                        // only return histories for which there is a book
+                        history = hist;
+                    }
+                    break;
                 }
             }
-            return null;
+            return history;
         }
     }
 
@@ -440,42 +442,14 @@ public class YbkDAO {
      * @throws IOException
      */
     public List<History> getHistoryList() throws IOException {
-        int maxHistories = mSharedPref.getInt(Settings.HISTORY_ENTRY_AMOUNT_KEY, Settings.DEFAULT_HISTORY_ENTRY_AMOUNT);
-        return getHistoryList(maxHistories);
-    }
-
-    /**
-     * Delete all the histories/bookmarks associated with a book that is being
-     * deleted
-     * 
-     * @param bookFileName
-     */
-    private void deleteBookHistories(String bookFileName) {
-        for (List<History> list : new List[] { mHistoryList, mBookmarkList }) {
-            synchronized (list) {
-                Iterator<History> it = list.iterator();
-                while (it.hasNext()) {
-                    History hist = it.next();
-                    if (hist.bookFileName.equalsIgnoreCase(bookFileName)) {
-                        it.remove();
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Get a list if Histories sorted from newest to oldest
-     * 
-     * @param maxHistories
-     *            the maximum number of histories to return
-     * @return the List of History objects.
-     */
-    private synchronized List<History> getHistoryList(int maxHistories) {
         synchronized (mHistoryList) {
-            ArrayList<History> retList = new ArrayList<History>(maxHistories);
-            for (int i = 0; i < maxHistories && i < mHistoryList.size(); i++) {
-                retList.add(mHistoryList.get(i));
+            ArrayList<History> retList = new ArrayList<History>(mHistoryList.size());
+            for (int i = 0; i < mHistoryList.size(); i++) {
+                History hist = mHistoryList.get(i);
+                if (getBook(hist.bookFileName) != null) {
+                    // only return histories for which there is a book
+                    retList.add(hist);
+                }
             }
             return retList;
         }
@@ -489,7 +463,15 @@ public class YbkDAO {
      */
     public List<History> getBookmarkList() {
         synchronized (mBookmarkList) {
-            return new ArrayList<History>(mBookmarkList);
+            ArrayList<History> retList = new ArrayList<History>(mBookmarkList.size());
+            for (int i = 0; i < mBookmarkList.size(); i++) {
+                History hist = mBookmarkList.get(i);
+                if (getBook(hist.bookFileName) != null) {
+                    // only return bookmarks for which there is a book
+                    retList.add(hist);
+                }
+            }
+            return retList;
         }
     }
 
@@ -565,7 +547,7 @@ public class YbkDAO {
      * 
      * @throws IOException
      */
-    public void storeHistoryList() {
+    private void storeHistoryList() {
         synchronized (mHistoryList) {
             try {
                 store(HISTORY_FILE, mHistoryList);
@@ -652,7 +634,7 @@ public class YbkDAO {
      * 
      * @throws IOException
      */
-    public void storeBookmarkList() {
+    private void storeBookmarkList() {
         synchronized (mBookmarkList) {
             try {
                 store(BOOKMARKS_FILE, mBookmarkList);

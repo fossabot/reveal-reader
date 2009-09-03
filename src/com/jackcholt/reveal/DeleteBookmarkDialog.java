@@ -23,7 +23,6 @@ public abstract class DeleteBookmarkDialog {
             public void protectedRun() {
                 YbkDAO ybkDao = YbkDAO.getInstance(_this);
                 ybkDao.deleteBookmark(hist);
-                ybkDao.storeBookmarkList();
                 FlurryAgent.onEvent("DeleteBookmark");
             }
         };

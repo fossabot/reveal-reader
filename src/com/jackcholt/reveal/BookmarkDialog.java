@@ -160,6 +160,7 @@ public class BookmarkDialog extends ListActivity {
                 break;
 
             case UPDATE_BOOKMARK_ID:
+                intent.putExtra(YbkDAO.BOOKMARK_NUMBER, hist.bookmarkNumber);
                 intent.putExtra(UPDATE_BOOKMARK, true);
                 setResult(RESULT_OK, intent);
 

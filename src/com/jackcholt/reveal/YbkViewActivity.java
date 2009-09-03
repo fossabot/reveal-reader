@@ -199,9 +199,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             // Save the book and chapter to history if
                             // there is one
                             ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
-                            // remove the excess histories
-                            ybkDao.deleteHistories();
-                            ybkDao.storeHistoryList();
                         }
                         finish();
                     }
@@ -748,11 +745,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     if (addBookMark) {
                         showDialog(ASK_BOOKMARK_NAME);
                     } else if (updateBookmark) {
-                        histId = extras.getLong(YbkDAO.HISTORY_ID);
-
+                        int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
                         // update the bookmark
-                        ybkDao.updateHistory(histId, mBookFileName, mChapFileName, mYbkView.getScrollY());
-                        ybkDao.storeBookmarkList();
+                        ybkDao.updateBookmark(bmId, mBookFileName, mChapFileName, mYbkView.getScrollY());
                     } else if (deleteBookmark) {
                         int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
                         hist = ybkDao.getBookmark(bmId);
@@ -864,9 +859,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
             // Save the book and chapter to history if there is one
             ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
-            // remove the excess histories
-            ybkDao.deleteHistories();
-            ybkDao.storeHistoryList();
 
             if (mBackButtonPressed) {
                 ybkDao.popBackStack();
@@ -1130,9 +1122,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     int bookmarkNumber = ybkDao.getMaxBookmarkNumber();
 
                                     // insert the bookmark
-                                    ybkDao.insertHistory(mBookFileName, bmName, mChapFileName, mYbkView.getScrollY(),
+                                    ybkDao.insertBookmark(mBookFileName, bmName, mChapFileName, mYbkView.getScrollY(),
                                             bookmarkNumber);
-                                    ybkDao.storeBookmarkList();
 
                                 } catch (IOException ioe) {
                                     // TODO - add a friendly message

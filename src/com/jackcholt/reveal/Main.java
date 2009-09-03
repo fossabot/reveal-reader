@@ -324,7 +324,7 @@ public class Main extends ListActivity {
 
         // calculate the set of files in the db but not on disk
         Set<String> removeFiles = dbSet;
-        // removeFiles.removeAll(fileSet);
+        removeFiles.removeAll(fileSet);
 
         final int count = addFiles.size() + removeFiles.size();
         if (count != 0) {
