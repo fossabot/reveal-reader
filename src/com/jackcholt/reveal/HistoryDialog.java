@@ -57,8 +57,7 @@ public class HistoryDialog extends ListActivity {
             History hist = (History) listView.getItemAtPosition(selectionRowId);
 
             Intent intent = new Intent(this, YbkViewActivity.class);
-            intent.putExtra(YbkDAO.ID, hist.id);
-            intent.putExtra(YbkDAO.FROM_HISTORY, true);
+            intent.putExtra(YbkDAO.HISTORY_ID, hist.id);
             setResult(RESULT_OK, intent);
 
             finish();

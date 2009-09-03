@@ -74,6 +74,7 @@ public class Main extends ListActivity {
     private NotificationManager mNotifMgr;
     private boolean BOOLshowSplashScreen;
     private static boolean BOOLsplashed = false;
+    private static boolean BOOLcheckedOnline = false;
     private boolean BOOLshowFullScreen;
     private final Handler mHandler = new Handler();
 
@@ -94,19 +95,20 @@ public class Main extends ListActivity {
 
             // Run to check if this is the first time run and init.
             StartupFirstTime();
-            
+
             Util.startFlurrySession(this);
             FlurryAgent.onEvent("Main");
 
-            // If this is the first time we've run (the default) then we need to init some values
+            // If this is the first time we've run (the default) then we need to
+            // init some values
             if (getSharedPrefs().getBoolean("first_run", true)) {
                 SharedPreferences.Editor editor = getSharedPrefs().edit();
                 editor.putBoolean("first_run", false);
                 editor.putBoolean("show_splash_screen", false);
                 editor.putBoolean("show_fullscreen", false);
                 editor.commit();
-            } 
-            
+            }
+
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
@@ -119,7 +121,7 @@ public class Main extends ListActivity {
             }
 
             setContentView(R.layout.main);
-            
+
             // To capture LONG_PRESS gestures
             registerForContextMenu(getListView());
 
@@ -133,16 +135,25 @@ public class Main extends ListActivity {
                 }
             }
 
+            
+            
             // Is Network up or not?
-            if (Util.isNetworkUp(this)) {
-                // Actually go ONLINE and check... duhhhh
-                UpdateChecker.checkForNewerVersion(this, Global.SVN_VERSION);
-
-                // Check for a message from US :)
-                MOTDDialog.create(this);
-                // Check for version Notes Unique for this REV
-                RevNotesDialog.create(this);
+            if (!BOOLcheckedOnline && Util.isNetworkUp(this)) {
+                // only check once per process instantiation
+                BOOLcheckedOnline = true;
                 
+                // and wait a little bit to kick it off so it won't slow down the initial display of the list
+                mHandler.postDelayed(new SafeRunnable() {         
+                    @Override
+                    public void protectedRun() {
+                        // Actually go ONLINE and check... duhhhh
+                        UpdateChecker.checkForNewerVersion(Main.this, Global.SVN_VERSION);                       
+                        // Check for a message from US :)
+                        MOTDDialog.create(Main.this);
+                        // Check for version Notes Unique for this REV
+                        RevNotesDialog.create(Main.this);
+                    }
+                }, 5000);
             }
 
             if (!(isConfigChanged())) {
@@ -156,16 +167,33 @@ public class Main extends ListActivity {
                 }
             }
 
-            File oldDBfile = new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db");
-            if (oldDBfile.exists()) {
-                oldDBfile.delete();
-                // prompt to warn of new DB create
-                RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
-                updateBookList();
-            } else if (!(new File(
-                    getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
-                    "reveal_ybk.db").exists())) {
-                Toast.makeText(this, getResources().getString(R.string.refresh_title), Toast.LENGTH_LONG).show();
+            String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                    Settings.DEFAULT_EBOOK_DIRECTORY);
+
+            boolean upgrading = false;
+
+            // delete old versions of databases
+            File oldDBFiles[] = {
+                    new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db"),
+                    new File(libDir, "reveal_ybk.db"),
+                    new File(libDir, "reveal_ybk.lg")
+            };
+            
+            for (File oldDBFile : oldDBFiles) {
+                if (oldDBFile.exists()) {
+                    oldDBFile.delete();
+                    upgrading = true;
+                }
+            }
+            
+            // if new version of db doesn't exist, create it
+            if (!(new File(new File(libDir, YbkDAO.DATA_DIR), YbkDAO.BOOKS_FILE).exists())) {
+                if (upgrading) {
+                    // had older version, do upgrading message
+                    RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
+                } else {
+                    Toast.makeText(this, getResources().getString(R.string.refresh_title), Toast.LENGTH_LONG).show();
+                }
                 updateBookList();
             }
 
@@ -268,68 +296,66 @@ public class Main extends ListActivity {
             }
         }
 
-        try {
-            YbkDAO ybkDao = YbkDAO.getInstance(this);
+        YbkDAO ybkDao = YbkDAO.getInstance(this);
 
-            File[] files = libraryDir.listFiles(new YbkFilter());
+        File[] files = libraryDir.listFiles(new YbkFilter());
 
-            Set<String> fileSet = new HashSet<String>();
-            if (files != null) {
-                for (File file : files)
-                    fileSet.add(file.getAbsolutePath().toLowerCase());
-            }
+        Set<String> fileSet = new HashSet<String>();
+        if (files != null) {
+            for (File file : files)
+                fileSet.add(file.getName());
+        }
 
-            // get a list of files on disk
-            Set<String> dbSet = new HashSet<String>();
-            for (Book book : ybkDao.getBooks()) {
-                dbSet.add(book.fileName);
-            }
+        // get a list of files on disk
+        Set<String> dbSet = new HashSet<String>();
+        for (Book book : ybkDao.getBooks()) {
+            dbSet.add(book.fileName);
+        }
 
-            // if adding files, then calculate set of files on disk, but not in the db
-            Set<String> addFiles;
-            if (addNewBooks) {
-                addFiles = new HashSet<String>(fileSet);
-                addFiles.removeAll(dbSet);
-            } else {
-                addFiles = Collections.emptySet();
-            }
+        // if adding files, then calculate set of files on disk, but not in the
+        // db
+        Set<String> addFiles;
+        if (addNewBooks) {
+            addFiles = new HashSet<String>(fileSet);
+            // addFiles.removeAll(dbSet);
+        } else {
+            addFiles = Collections.emptySet();
+        }
 
-            // calculate the set of files in the db but not on disk
-            Set<String> removeFiles = dbSet;
-            removeFiles.removeAll(fileSet);
+        // calculate the set of files in the db but not on disk
+        Set<String> removeFiles = dbSet;
+        removeFiles.removeAll(fileSet);
 
-            final int count = addFiles.size() + removeFiles.size();
-            if (count != 0) {
-                Completion callback = new Completion() {
-                    volatile int remaining = count;
+        final int count = addFiles.size() + removeFiles.size();
+        if (count != 0) {
+            Completion callback = new Completion() {
+                volatile int remaining = count;
 
-                    public void completed(boolean succeeded, String message) {
-                        if (succeeded) {
-                            refreshNotify(message);
-                            scheduleRefreshBookList();
-                        } else {
-                            Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
-                                    "Reveal Library", mNotifMgr, mNotifId++, Main.class);
-                        }
-                        if (--remaining <= 0) {
-                            refreshNotify("Refreshing of library complete.");
-                        }
+                public void completed(boolean succeeded, String message) {
+                    if (succeeded) {
+                        refreshNotify(message);
+                        scheduleRefreshBookList();
+                    } else {
+                        Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
+                                "Reveal Library", mNotifMgr, mNotifId++, Main.class);
                     }
-                };
-
-                refreshNotify("Refreshing the library");
-
-                // schedule the deletion of the db entries that are not on disk
-                for (String file : removeFiles)
-                    YbkService.requestRemoveBook(this, file, callback);
-
-                // schedule the adding of books on disk that are not in the db
-                for (String file : addFiles) {
-                    YbkService.requestAddBook(this, file, YbkFileReader.DEFAULT_YBK_CHARSET, callback);
+                    if (--remaining <= 0) {
+                        refreshNotify("Refreshing of library complete.");
+                    }
                 }
+            };
+
+            // refreshNotify("Refreshing the library");
+            Toast.makeText(this, "Refreshing the library", Toast.LENGTH_LONG).show();
+
+            // schedule the deletion of the db entries that are not on disk
+            for (String file : removeFiles)
+                YbkService.requestRemoveBook(this, file, callback);
+
+            // schedule the adding of books on disk that are not in the db
+            for (String file : addFiles) {
+                YbkService.requestAddBook(this, file, null, callback);
             }
-        } catch (IOException ioe) {
-            Util.displayError(this, ioe, getResources().getString(R.string.error_lib_refresh));
         }
     }
 
@@ -337,20 +363,14 @@ public class Main extends ListActivity {
      * Refresh the list of books in the main list.
      */
     private void refreshBookList() {
+        YbkDAO ybkDao;
+        ybkDao = YbkDAO.getInstance(this);
 
-        try {
-            YbkDAO ybkDao;
-            ybkDao = YbkDAO.getInstance(this);
+        mBookTitleList = ybkDao.getBookTitles();
+        // Now create a simple adapter and set it to display
+        ArrayAdapter<Book> bookAdapter = new ArrayAdapter<Book>(this, R.layout.book_list_row, mBookTitleList);
 
-            mBookTitleList = ybkDao.getBookTitles();
-            // Now create a simple adapter and set it to display
-            ArrayAdapter<Book> bookAdapter = new ArrayAdapter<Book>(this, R.layout.book_list_row, mBookTitleList);
-
-            setListAdapter(bookAdapter);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        setListAdapter(bookAdapter);
     }
 
     /**
@@ -388,7 +408,7 @@ public class Main extends ListActivity {
         Book book = getContextMenuBook(item);
         setProgressBarIndeterminateVisibility(true);
         Intent intent = new Intent(this, YbkViewActivity.class);
-        intent.putExtra(YbkDAO.ID, book.id);
+        intent.putExtra(YbkDAO.FILENAME, book.fileName);
         startActivity(intent);
         return true;
 
@@ -400,11 +420,11 @@ public class Main extends ListActivity {
         String message;
         YbkFileReader ybkReader;
         try {
-            ybkReader = new YbkFileReader(this, book.fileName, book.charset);
+            ybkReader = YbkFileReader.getReader(this, book.fileName);
             try {
                 metaData = ybkReader.readMetaData();
             } finally {
-                ybkReader.close();
+                ybkReader.unuse();
             }
         } catch (IOException e) {
             // couldn't read meta data, that's ok we'll make some up
@@ -412,10 +432,8 @@ public class Main extends ListActivity {
         if (metaData != null && metaData.length() > 0) {
             message = metaData.replaceFirst("(?i)^.*<end>", "");
         } else {
-
-            File bookFile = new File(book.fileName);
-            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message), book.formattedTitle,
-                    bookFile.getName());
+            message = MessageFormat.format(getResources().getString(R.string.ebook_info_message), book.title,
+                    book.fileName);
         }
 
         new EBookPropertiesDialog(this, getResources().getString(R.string.menu_ebook_properties), message, book).show();
@@ -484,8 +502,10 @@ public class Main extends ListActivity {
                 Map<String, String> filenameMap = new HashMap<String, String>();
                 filenameMap.put("filename", book.fileName);
                 FlurryAgent.onEvent("ChangeCharset", filenameMap);
-                Toast.makeText(Main.this, MessageFormat.format(getResources().getString(R.string.changing_charset), charsets[selected].key),
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(
+                        Main.this,
+                        MessageFormat.format(getResources().getString(R.string.changing_charset),
+                                charsets[selected].key), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -512,7 +532,7 @@ public class Main extends ListActivity {
             if (book != null) {
                 setProgressBarIndeterminateVisibility(true);
                 Intent intent = new Intent(this, YbkViewActivity.class);
-                intent.putExtra(YbkDAO.ID, book.id);
+                intent.putExtra(YbkDAO.FILENAME, book.fileName);
                 intent.putExtra(BOOK_WALK_INDEX, index);
                 startActivityForResult(intent, WALK_BOOK);
             }
@@ -529,7 +549,8 @@ public class Main extends ListActivity {
                 @Override
                 public void protectedRun() {
                     // delete the book file
-                    File file = new File(book.fileName);
+                    File file = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                            Settings.DEFAULT_EBOOK_DIRECTORY), book.fileName);
                     if (file.exists()) {
                         if (!file.delete()) {
                             // TODO - should tell user about this
@@ -548,8 +569,8 @@ public class Main extends ListActivity {
                     FlurryAgent.onEvent("DeleteBook", filenameMap);
                 }
             };
-            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook),
-                    book.formattedTitle, new File(book.fileName).getName());
+            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.title,
+                    book.fileName);
             ConfirmActionDialog.confirmedAction(this, R.string.really_delete_title, message, R.string.delete, action);
         }
         return true;
@@ -581,7 +602,6 @@ public class Main extends ListActivity {
             super.onResume();
 
             setProgressBarIndeterminateVisibility(false);
-
 
             String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
@@ -637,7 +657,7 @@ public class Main extends ListActivity {
         try {
             switch (item.getItemId()) {
             case REFRESH_LIB_ID:
-                RefreshDialog.create(this, RefreshDialog.REFRESH_DB);
+                // RefreshDialog.create(this, RefreshDialog.REFRESH_DB);
                 updateBookList();
                 return true;
 
@@ -716,7 +736,7 @@ public class Main extends ListActivity {
             // id);
             Book book = (Book) listView.getItemAtPosition(selectionRowId);
             Intent intent = new Intent(this, YbkViewActivity.class);
-            intent.putExtra(YbkDAO.ID, book.id);
+            intent.putExtra(YbkDAO.FILENAME, book.fileName);
             startActivity(intent);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -755,7 +775,6 @@ public class Main extends ListActivity {
         Bundle extras;
         long histId;
         Intent intent;
-        boolean fromHistory = false;
 
         try {
             if (resultCode == RESULT_OK) {
@@ -770,18 +789,16 @@ public class Main extends ListActivity {
 
                     boolean deleteBookmark = extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK);
 
-                    histId = extras.getLong(YbkDAO.ID);
-                    fromHistory = extras.getBoolean(YbkDAO.FROM_HISTORY);
+                    histId = extras.getLong(YbkDAO.HISTORY_ID);
 
-                    if (fromHistory) {
-                        intent = new Intent(this, YbkViewActivity.class);
-                        intent.putExtra(YbkDAO.ID, histId);
-                        intent.putExtra(YbkDAO.FROM_HISTORY, true);
-                        startActivity(intent);
-                    } else if (deleteBookmark) {
+                    if (deleteBookmark) {
                         int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
                         History hist = ybkDao.getBookmark(bmId);
                         DeleteBookmarkDialog.create(this, hist);
+                    } else if (histId != 0) {
+                        intent = new Intent(this, YbkViewActivity.class);
+                        intent.putExtra(YbkDAO.HISTORY_ID, histId);
+                        startActivity(intent);
                     }
 
                     break;
@@ -795,11 +812,7 @@ public class Main extends ListActivity {
                         String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                                 Settings.DEFAULT_EBOOK_DIRECTORY);
 
-                        try {
-                            YbkDAO.getInstance(this).reopen(this);
-                        } catch (IOException ioe) {
-                            Util.displayError(this, ioe, getResources().getString(R.string.error_lib_refresh));
-                        }
+                        YbkDAO.getInstance(this).open(this);
                         refreshLibrary(libDir, ADD_BOOKS);
                         refreshBookList();
                     }
@@ -811,8 +824,6 @@ public class Main extends ListActivity {
                     break;
                 }
             }
-        } catch (IOException ioe) {
-            Util.unexpectedError(this, ioe);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -854,15 +865,19 @@ public class Main extends ListActivity {
                 // cleanup current library directory
                 File libDir = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                         Settings.DEFAULT_EBOOK_DIRECTORY));
+                Util.deleteFiles(new File(libDir, "images"), ".*");
                 Util.deleteFiles(libDir, ".*\\.(tmp|lg|db)");
+                Util.deleteFiles(new File(libDir, "data"), "books\\.dat|.*\\.chp");
                 if (!libDir.getAbsoluteFile().toString().equalsIgnoreCase(Settings.DEFAULT_EBOOK_DIRECTORY)) {
                     // cleanup default library directory if it wasn't the one we
                     // were using
-                    Util.deleteFiles(new File(libDir, "images"), ".*");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "images"), ".*");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY), ".*\\.(tmp|lg|db)");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "data"), "books\\.dat|.*\\.chp");
                 }
                 // cleanup any sqlite databases
                 Util.deleteFiles(new File("/data/data/com.jackcholt.reveal/databases"), ".*\\.db");
+                
                 // cleanup preferences (can't seem to delete file, so tell the
                 // preferences manager to clear them all)
                 getSharedPrefs().edit().clear().commit();
@@ -880,13 +895,12 @@ public class Main extends ListActivity {
     private SharedPreferences getSharedPrefs() {
         return PreferenceManager.getDefaultSharedPreferences(this);
     }
-    
+
     /**
      * First Run startup to initialize preferences and etc.
      */
     public static void StartupFirstTime() {
 
-        
     }
     
     // Display Toast-Message

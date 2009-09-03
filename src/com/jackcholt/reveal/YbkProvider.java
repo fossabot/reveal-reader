@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.HashMap;
 
 import android.content.ContentProvider;
@@ -17,10 +16,6 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.util.Log;
-
-import com.jackcholt.reveal.data.Book;
-import com.jackcholt.reveal.data.Chapter;
-import com.jackcholt.reveal.data.YbkDAO;
 
 public class YbkProvider extends ContentProvider {
     public static final String KEY_MIMETYPE = "mimetype";
@@ -178,9 +173,8 @@ public class YbkProvider extends ContentProvider {
     public boolean onCreate() {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         // clean up leftover image files
-        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                Settings.DEFAULT_EBOOK_DIRECTORY);
-        Util.deleteFiles(new File(libDir, "images"), ".*");        
+        String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
+        Util.deleteFiles(new File(libDir, "images"), ".*");
         return true;
     }
 
@@ -201,41 +195,6 @@ public class YbkProvider extends ContentProvider {
         Log.e(TAG, "The YbkProvider does not support updates.");
 
         return 0;
-    }
-
-    /**
-     * 
-     * @param file
-     * @param bookFileName
-     * @param chapterName
-     * @return
-     * @throws IOException
-     */
-    public byte[] readInternalBinaryFile(final RandomAccessFile file, final String bookFileName,
-            final String chapterName) throws IOException {
-
-        int offset = 0;
-        int len = 0;
-        byte[] bytes = null;
-
-        YbkDAO ybkDao = YbkDAO.getInstance(getContext());
-
-        Book book = ybkDao.getBook(bookFileName);
-        Chapter chap = ybkDao.getChapter(book.id, chapterName);
-
-        if (chap != null) {
-            offset = chap.offset;
-            len = chap.length;
-
-            bytes = new byte[len];
-            file.seek(offset);
-            int amountRead = file.read(bytes);
-            if (amountRead < len) {
-                throw new InvalidFileFormatException("Couldn't read all of " + bookFileName + ".");
-            }
-        }
-
-        return bytes;
     }
 
     /**
@@ -288,18 +247,19 @@ public class YbkProvider extends ContentProvider {
                     outFile = new File(libDir + "images/", tempFileName);
 
                     if (!outFile.exists()) {
-                        HashMap<String, String> chapterMap = Util.getFileNameChapterFromUri(strUri, libDir, false);
+                        HashMap<String, String> chapterMap = Util.getFileNameChapterFromUri(strUri, false);
                         String fileName = chapterMap.get("book");
                         String chapter = chapterMap.get("chapter");
-                        RandomAccessFile file = new RandomAccessFile(fileName, "r");
+                        YbkFileReader ybkRdr = null;
                         try {
-                            byte[] contents = readInternalBinaryFile(file, fileName, chapter);
+                            ybkRdr = YbkFileReader.getReader(Main.getMainApplication(), new File(fileName).getName());
+                            byte[] contents = ybkRdr.readInternalBinaryFile(chapter);
                             if (contents != null) {
                                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),
                                         BUFFER_SIZE);
                                 try {
-                                out.write(contents);
-                                out.flush();
+                                    out.write(contents);
+                                    out.flush();
                                 } finally {
                                     out.close();
                                 }
@@ -307,12 +267,10 @@ public class YbkProvider extends ContentProvider {
                         } catch (IOException e) {
                             throw new FileNotFoundException("Could not write internal file to temp file. "
                                     + e.getMessage() + " " + e.getCause());
-                        }
-                        finally {
-                            try {
-                                file.close();
-                            } catch (IOException e) {
-                                Log.e(TAG, "Could not close ybk file: " + Util.getStackTrace(e));
+                        } finally {
+                            if (ybkRdr != null) {
+                                ybkRdr.unuse();
+                                ybkRdr = null;
                             }
                         }
                     }
@@ -332,22 +290,23 @@ public class YbkProvider extends ContentProvider {
             return pfd;
         }
     }
-    
+
     private class ImgFileInfo {
         File file;
         int useCount = 1;
         Uri uri;
-        
-        ImgFileInfo (Uri uri, File file) {
+
+        ImgFileInfo(Uri uri, File file) {
             this.uri = uri;
             this.file = file;
         }
-        
+
         int use() {
             synchronized (mTempImgFiles) {
                 return ++useCount;
             }
         }
+
         int unuse() {
             synchronized (mTempImgFiles) {
                 if (--useCount <= 0) {
@@ -358,7 +317,7 @@ public class YbkProvider extends ContentProvider {
             }
         }
     }
-    
+
     private static class ParcelFileDescriptorWrapper extends ParcelFileDescriptor {
         ImgFileInfo info;
 
@@ -372,7 +331,7 @@ public class YbkProvider extends ContentProvider {
             super.close();
             info.unuse();
         }
-        
+
     }
 
 }

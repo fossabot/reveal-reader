@@ -27,7 +27,7 @@ public class OnlineHelpDialog extends Dialog {
         wv.clearCache(true);
         wv.getSettings().setJavaScriptEnabled(true);
         if (Util.isNetworkUp(_this)) {
-            wv.loadUrl("http://revealreader.thepackhams.com/revealHelp.html");
+            wv.loadUrl("http://sites.google.com/site/revealonlinehelp/");
         } else {
             wv.loadData("Cannot get online help.  Your network is currently down.", "text/plain", "utf-8");
         }

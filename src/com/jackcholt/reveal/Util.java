@@ -58,6 +58,7 @@ public class Util {
     private static final String TMP_EXTENSION = ".tmp";
     private static final String TAG = "Util";
     public static final String NO_TITLE = "no_book_title";
+    public static final String EMPTY_STRING = new String();
     private static SharedPreferences mSharedPref;
 
     // Display Toast-Message
@@ -264,10 +265,8 @@ public class Util {
      * @param bytes
      *            byte array to read from.
      * @return The numeric value of the four bytes.
-     * @throws IOException
-     *             If the input stream is not readable.
      */
-    public static final int readVBInt(final int[] bytes) throws IOException {
+    public static final int readVBInt(final int[] bytes) {
         int i = bytes[0];
         i += bytes[1] << 8;
         i += bytes[2] << 16;
@@ -275,6 +274,23 @@ public class Util {
 
         return i;
     }
+    
+    /**
+     * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
+     * byte (LSB) &quot;little endian&quot; order.
+     * 
+     * @param bytes
+     *            byte array to read from.
+     * @return The numeric value of the four bytes.
+     */
+    public static final int readVBInt(final byte[] bytes, int off) {
+        int i = ((int)bytes[off++]) & 0xFF;
+        i += (((int)bytes[off++]) & 0xFF) << 8;
+        i += (((int)bytes[off++]) & 0xFF) << 16;
+        i += (((int)bytes[off++]) & 0xFF) << 24;
+        return i;
+    }
+
 
     public static final String htmlize(final String text, final SharedPreferences sharedPref) {
         if (text == null) {
@@ -302,8 +318,7 @@ public class Util {
                 + "</head><body>" + content + "</body></html>";
     }
 
-    public static final HashMap<String, String> getFileNameChapterFromUri(final String uri, final String libDir,
-            final boolean isGzipped) {
+    public static final HashMap<String, String> getFileNameChapterFromUri(final String uri, final boolean isGzipped) {
 
         HashMap<String, String> map = new HashMap<String, String>();
 
@@ -312,7 +327,7 @@ public class Util {
 
         String[] urlParts = dataString.split("/");
 
-        String book = libDir + urlParts[0] + ".ybk";
+        String book = urlParts[0] + ".ybk";
 
         map.put("book", book);
 
@@ -368,12 +383,10 @@ public class Util {
      *            HTML to process.
      * @param contRes
      *            Reference to the environment in which we are working.
-     * @param libDir
-     *            The directory which contains our ebooks.
      * @return The processed content.
      * @throws IOException
      */
-    public static String processIfbook(final String content, final Context ctx, final String libDir) throws IOException {
+    public static String processIfbook(final String content, final Context ctx) throws IOException {
 
         YbkDAO ybkDao = YbkDAO.getInstance(ctx);
 
@@ -409,7 +422,7 @@ public class Util {
 
                         fullIfBookFound = true;
 
-                        Book book = ybkDao.getBook(libDir + bookName + ".ybk");
+                        Book book = ybkDao.getBook(bookName + ".ybk");
 
                         if (book != null) {
                             newContent.append(oldContent.substring(gtPos + 1, elsePos));
@@ -711,16 +724,17 @@ public class Util {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 // unpack all the files
-                File file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+                File file = new File(libDirFile, entry.getName());
 
                 // check to see if they already have this title
                 // if (file.exists() && !shouldDownload(context, file)) {
                 if (file.exists()) {
                     file.delete();
-                    ybkDao.deleteBook(file.getAbsolutePath());
+                    ybkDao.deleteBook(entry.getName());
 
                 }
 
+                file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
                 out = new FileOutputStream(file);
                 files.add(file);
                 try {
@@ -740,13 +754,14 @@ public class Util {
         } catch (IOException e) { // non-zip attempt
             BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
             try {
-                File file = new File(libDirFile, filename + TMP_EXTENSION);
+                File file = new File(libDirFile, filename);
 
                 // if (file.exists() && !shouldDownload(context, file)) {
                 if (file.exists()) {
                     file.delete();
-                    ybkDao.deleteBook(file.getAbsolutePath());
+                    ybkDao.deleteBook(filename);
                 }
+                file = new File(libDirFile, filename);
                 out = new FileOutputStream(file);
                 files.add(file);
 
@@ -775,7 +790,7 @@ public class Util {
                     realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
                     File realName = new File(realNameString);
                     file.renameTo(realName);
-                    downloaded.add(realNameString);
+                    downloaded.add(new File(realNameString).getName());
                 } else {
                     // delete partially downloaded files
                     file.delete();
@@ -1132,7 +1147,7 @@ public class Util {
      */
     public static void startFlurrySession(Context context) {
         boolean BOOLdisableAnalytics;
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         BOOLdisableAnalytics = mSharedPref.getBoolean("disable_analytics", false);
 
         if (Global.DEBUG == 0) {
