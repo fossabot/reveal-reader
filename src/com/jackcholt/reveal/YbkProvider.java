@@ -263,9 +263,11 @@ public class YbkProvider extends ContentProvider {
                                 } finally {
                                     out.close();
                                 }
+                            } else {
+                                throw new FileNotFoundException("Couldn't read internal image file.");
                             }
                         } catch (IOException e) {
-                            throw new FileNotFoundException("Could not write internal file to temp file. "
+                            throw new FileNotFoundException("Could not write internal file to temp file."
                                     + e.getMessage() + " " + e.getCause());
                         } finally {
                             if (ybkRdr != null) {

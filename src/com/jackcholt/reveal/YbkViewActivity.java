@@ -71,6 +71,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private String mNavFile = "1";
     private boolean mThemeIsDialog = false;
     private boolean mBookWalk = false;
+    private int mBookWalkIndex = -1;
 
     private Handler mHandler = new Handler();
 
@@ -218,18 +219,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                 String shortTitle = book.shortTitle;
                 if (mChapFileName == null) {
-                    // if (mBookWalk) {
-                    // Chapter firstChapter =
-                    // ybkDao.getNextBookWalkerChapter(bookId, "");
-                    // if (firstChapter == null) {
-                    // setResult(RESULT_OK, new
-                    // Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent()
-                    // .getExtras().getInt(Main.BOOK_WALK_INDEX, -1)));
-                    // finish();
-                    // } else {
-                    // mChapFileName = firstChapter.fileName;
-                    // }
-                    // } else
+                    if (mBookWalk) {
+                        mBookWalkIndex = -1;
+                        Chapter firstChapter = getNextBookWalkerChapter();
+                        if (firstChapter == null) {
+                            setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent().getExtras()
+                                    .getInt(Main.BOOK_WALK_INDEX, -1)));
+                            finish();
+                        } else {
+                            mChapFileName = firstChapter.fileName;
+                        }
+                    } else
                     mChapFileName = "\\" + shortTitle + ".html";
                 }
 
@@ -255,6 +255,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         } catch (Error e) {
             unexpectedError(e);
         }
+    }
+
+    private Chapter getNextBookWalkerChapter() {
+        Chapter nextChapter = null;
+        if (mYbkReader != null) {
+            do {
+                nextChapter = mYbkReader.getChapterByIndex(++mBookWalkIndex);
+            } while (nextChapter != null && !nextChapter.fileName.matches("(?i).*\\.html(\\.gz)?"));
+            
+        }
+        return nextChapter;
     }
 
     private void checkAndSetFontSize(SharedPreferences sharedPref, final WebView ybkView) {
@@ -987,11 +998,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
                         chapObj = ybkReader.getChapter(concatChap);
                     }
-                    if (chapObj != null) {
-                        mChapOrderNbr = chapObj.orderNumber;
-                    } else {
-                        mChapOrderNbr = -1;
-                    }
 
                     // replace MS-Word "smartquotes" and other extended
                     // characters with spaces
@@ -1044,14 +1050,18 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     } else {
                         ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
+                        if (chapObj != null) {
+                            mChapOrderNbr = chapObj.orderNumber;
+                        } else {
+                            mChapOrderNbr = -1;
+                        }
+                        mNavFile = nf;
+                        mBookFileName = book.fileName;
+                        mChapFileName = chap;
                     }
-
-                    mNavFile = nf;
 
                     bookLoaded = true;
 
-                    mBookFileName = book.fileName;
-                    mChapFileName = chap;
 
                 } catch (IOException e) {
                     ybkView
@@ -1393,15 +1403,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         public void protectedRun() {
             try {
                 // YbkDAO ybkDao = YbkDAO.getInstance(YbkViewActivity.this);
-                Chapter nextChapter = null; // ybkDao.getNextBookWalkerChapter(mBookId,
-                // mChapFileName);
+                Chapter nextChapter = getNextBookWalkerChapter();
                 if (nextChapter == null) {
                     setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent().getExtras().getInt(
                             Main.BOOK_WALK_INDEX, -1)));
                     finish();
                 } else {
                     setProgressBarIndeterminateVisibility(true);
-                    loadChapter(mBookFileName, nextChapter.fileName);
+                    if (loadChapter(mBookFileName, nextChapter.fileName))
+                        setBookBtn(mYbkReader.getBook().shortTitle, mBookFileName, nextChapter.fileName);;
                 }
 
             } catch (IOException e) {
