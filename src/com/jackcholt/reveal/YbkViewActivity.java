@@ -1440,7 +1440,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        if (Math.abs(velocityX) > Math.abs(velocityY)) {
+        if (mChapOrderNbr > 0 && Math.abs(velocityX) > Math.abs(velocityY)) {
             if (velocityX <= -1500) {
                 setProgressBarIndeterminateVisibility(true);
 
