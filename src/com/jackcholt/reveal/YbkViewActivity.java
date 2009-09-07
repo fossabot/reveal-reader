@@ -840,6 +840,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             }
 
         } else {
+            Toast.makeText(this, R.string.no_swipe_available, Toast.LENGTH_LONG).show();
             Log.e(TAG, "No chapters found for order id: " + orderId);
         }
 

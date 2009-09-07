@@ -729,6 +729,8 @@ public class Util {
                 in = new BufferedInputStream(ourUrl.openStream());
                 Log.d(TAG, "download from " + ourUrl);
             } catch (IOException ioe1) {
+                FlurryAgent.onError("fetchTitle", filename, "WARNING");
+                ReportError.reportError("MISSING_EBOOK_" + filename, false);
                 in = new BufferedInputStream(downloadUrl.openStream());
                 Log.d(TAG, "download from " + downloadUrl);
             }

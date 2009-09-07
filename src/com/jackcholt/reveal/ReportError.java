@@ -33,7 +33,7 @@ public class ReportError {
             mWebView.loadUrl(errorURL);
 
             // Create the Intent to send Email error report  
-            if (sendEmail = true) {
+            if (sendEmail == true) {
                 final Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);  
                 emailIntent.setType("plain/text");  
                 emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{"bugs@thepackhams.com"});  
