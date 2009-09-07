@@ -3,6 +3,7 @@ package com.jackcholt.reveal;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,6 +59,7 @@ public class Util {
     private static final String TMP_EXTENSION = ".tmp";
     private static final String TAG = "Util";
     public static final String NO_TITLE = "no_book_title";
+    public static final String DOWNLOAD_MIRROR = "http://revealreader.thepackhams.com/ebooks/";
     public static final String EMPTY_STRING = new String();
     private static SharedPreferences mSharedPref;
 
@@ -707,7 +709,7 @@ public class Util {
         boolean success = false;
 
         YbkDAO ybkDao = YbkDAO.getInstance(context);
-
+        
         final byte[] buffer = new byte[255];
 
         ArrayList<File> files = new ArrayList<File>();
@@ -715,88 +717,86 @@ public class Util {
 
         File libDirFile = new File(libDir);
         String filename = fileName.getName();
+        File tempFile = new File(libDir, filename + TMP_EXTENSION);
         FileOutputStream out = null;
-
-        try { // assume we have a zip file first
-
-            ZipInputStream zip = new ZipInputStream(downloadUrl.openStream());
-
-            ZipEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-                // unpack all the files
-                File file = new File(libDirFile, entry.getName());
-
-                // check to see if they already have this title
-                // if (file.exists() && !shouldDownload(context, file)) {
-                if (file.exists()) {
-                    file.delete();
-                    ybkDao.deleteBook(entry.getName());
-
-                }
-
-                file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
-                out = new FileOutputStream(file);
-                files.add(file);
-                try {
-                    int bytesRead = 0;
-                    while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                } finally {
-                    out.close();
-                }
-            }
-
-            zip.close();
-
-            success = true;
-
-        } catch (IOException e) { // non-zip attempt
-            BufferedInputStream in = new BufferedInputStream(downloadUrl.openStream());
+        BufferedInputStream in = null;
+        
+        //Get the file that was referred to us
+        try {
+            URL ourUrl = new URL(DOWNLOAD_MIRROR + filename);
+            
             try {
-                File file = new File(libDirFile, filename);
-
-                // if (file.exists() && !shouldDownload(context, file)) {
-                if (file.exists()) {
-                    file.delete();
-                    ybkDao.deleteBook(filename);
-                }
-                file = new File(libDirFile, filename);
-                out = new FileOutputStream(file);
-                files.add(file);
-
-                int bytesRead = 0;
-                try {
-                    while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                } finally {
-                    out.close();
-                }
-
-                success = true;
-            } catch (IOException e2) {
-                Log.w(TAG, "Unable to process file " + fileName);
-                throw new IOException("Unrecognized file type");
-            } finally {
+                in = new BufferedInputStream(ourUrl.openStream());
+                Log.d(TAG, "download from " + ourUrl);
+            } catch (IOException ioe1) {
+                in = new BufferedInputStream(downloadUrl.openStream());
+                Log.d(TAG, "download from " + downloadUrl);
+            }
+            
+            out = new FileOutputStream(tempFile);
+            
+            int bytesRead = 0;
+            while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
+                out.write(buffer, 0, bytesRead);
+            }
+            
+            success = true;
+        } catch (IOException ioe) {
+            throw ioe;
+        } finally {
+            if (in != null) {
                 in.close();
             }
-        } finally {
-            for (File file : files) {
-                if (success) {
+            if (out != null) {
+                out.close();
+            }
+            if (!success && tempFile.exists()) {
+                tempFile.delete();
+            }
+        }
+        
+        Log.d(TAG, tempFile.getAbsolutePath());
+        if (tempFile.exists()) {
+            try {
+                ZipInputStream zip = new ZipInputStream(new FileInputStream(tempFile));
 
+                ZipEntry entry;
+                while ((entry = zip.getNextEntry()) != null) {
+                    // unpack all the files
+                    File file = new File(libDirFile, entry.getName());
+
+                    // check to see if they already have this title
+                    if (file.exists()) {
+                        file.delete();
+                        ybkDao.deleteBook(entry.getName());
+                    }
+
+                    file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+                    out = new FileOutputStream(file);
+                    files.add(file);
+                    try {
+                        int bytesRead = 0;
+                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    } finally {
+                        out.close();
+                    }
+                }
+            } catch (IOException ioe) {
+                files.add(tempFile);
+            } finally {
+                for (File file : files) {
                     // rename from tmp
                     String realNameString = file.getAbsolutePath();
                     realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
                     File realName = new File(realNameString);
                     file.renameTo(realName);
                     downloaded.add(new File(realNameString).getName());
-                } else {
-                    // delete partially downloaded files
-                    file.delete();
                 }
             }
         }
+
         return downloaded;
     }
 
