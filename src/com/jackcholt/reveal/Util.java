@@ -691,8 +691,8 @@ public class Util {
     /**
      * Download and install title into library. Used by the title browser thread.
      * 
-     * @param fileLocation
-     *            Url of target file
+     * @param fileName
+     *            Target file name
      * @param downloadUrl
      *            Url from which we are downloading
      * @param libDir
@@ -786,6 +786,7 @@ public class Util {
                     }
                 }
             } catch (IOException ioe) {
+                Log.w(TAG, ioe.toString());
                 files.add(tempFile);
             } finally {
                 for (File file : files) {
@@ -794,7 +795,11 @@ public class Util {
                     realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
                     File realName = new File(realNameString);
                     file.renameTo(realName);
-                    downloaded.add(new File(realNameString).getName());
+                    downloaded.add(realName.getName());
+                }
+                
+                if (tempFile.exists()) {
+                    tempFile.delete();
                 }
             }
         }
