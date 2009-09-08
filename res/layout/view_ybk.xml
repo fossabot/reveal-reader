@@ -25,7 +25,7 @@
     </LinearLayout>
     <WebView android:id="@+id/ybkView"
           android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
+          android:layout_height="fill_parent"
           android:longClickable="true"
           android:textSize="@dimen/font_size"/>                    
 </LinearLayout>

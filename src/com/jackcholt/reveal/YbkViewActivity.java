@@ -56,7 +56,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private Button mBookBtn;
     private Button mChapBtn;
     private YbkFileReader mYbkReader;
-    private SharedPreferences mSharedPref;
     @SuppressWarnings("unused")
     private boolean mShowPictures;
     private boolean mShowFullScreen;
@@ -72,7 +71,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private boolean mThemeIsDialog = false;
     private boolean mBookWalk = false;
     private int mBookWalkIndex = -1;
-
+    private String mOrigChapName;
     private Handler mHandler = new Handler();
 
     private static final String TAG = "YbkViewActivity";
@@ -100,14 +99,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             gestureScanner = new GestureDetector(this);
 
-            SharedPreferences sharedPref = mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-            initDisplayFeatures(sharedPref);
-
-            YbkDAO ybkDao = YbkDAO.getInstance(this);
+            initDisplayFeatures();
 
             long historyId = 0;
-            boolean popup = this instanceof YbkPopupActivity;
             String content = null;
             String strUrl = null;
 
@@ -140,7 +134,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 if (historyId != 0) {
-                    History hist = ybkDao.getHistory(historyId);
+                    History hist = YbkDAO.getInstance(this).getHistory(historyId);
                     mBookFileName = hist.bookFileName;
                     mChapFileName = hist.chapterName;
                     mHistTitle = hist.title;
@@ -156,14 +150,14 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             Log.d(TAG, "BookFileName: " + mBookFileName);
 
-            if (popup) {
+            if ((this instanceof YbkPopupActivity)) {
                 mThemeIsDialog = true;
             }
 
             setContentView(R.layout.view_ybk);
             super.onCreate(savedInstanceState);
 
-            if (popup) {
+            if ((this instanceof YbkPopupActivity)) {
                 LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
                 breadCrumb.setVisibility(View.GONE);
             }
@@ -172,10 +166,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             ybkView.getSettings().setJavaScriptEnabled(true);
             ybkView.getSettings().setBuiltInZoomControls(true);
 
-            checkAndSetFontSize(sharedPref, ybkView);
-            checkAndSetEBookColor(sharedPref, ybkView);
+            checkAndSetFontSize(getSharedPrefs(), ybkView);
 
-            if (popup) {
+            if ((this instanceof YbkPopupActivity)) {
                 ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
             } else {
                 final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
@@ -183,8 +176,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
                 chapBtn.setOnClickListener(new OnClickListener() {
                     /**
-                     * set the chapter button so it scrolls the window to the
-                     * top
+                     * set the chapter button so it scrolls the window to the top
                      */
                     public void onClick(final View v) {
                         mYbkView.scrollTo(0, 0);
@@ -230,10 +222,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             mChapFileName = firstChapter.fileName;
                         }
                     } else
-                    mChapFileName = "\\" + shortTitle + ".html";
+                        mChapFileName = "\\" + shortTitle + ".html";
                 }
 
-                if (!popup) {
+                if (!(this instanceof YbkPopupActivity)) {
                     if (loadChapter(mBookFileName, mChapFileName)) {
                         setBookBtn(shortTitle, mBookFileName, mChapFileName);
                     }
@@ -257,13 +249,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
     }
 
+    private SharedPreferences getSharedPrefs() {
+        return PreferenceManager.getDefaultSharedPreferences(this);
+    }
+
     private Chapter getNextBookWalkerChapter() {
         Chapter nextChapter = null;
         if (mYbkReader != null) {
             do {
                 nextChapter = mYbkReader.getChapterByIndex(++mBookWalkIndex);
             } while (nextChapter != null && !nextChapter.fileName.matches("(?i).*\\.html(\\.gz)?"));
-            
+
         }
         return nextChapter;
     }
@@ -271,31 +267,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private void checkAndSetFontSize(SharedPreferences sharedPref, final WebView ybkView) {
         // Check and set Fontsize
         int fontSize = ybkView.getSettings().getDefaultFontSize();
-        strFontSize = sharedPref.getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
+        strFontSize = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
         fontSize = Integer.parseInt(strFontSize);
 
         ybkView.getSettings().setDefaultFontSize(fontSize);
         ybkView.getSettings().setDefaultFixedFontSize(fontSize);
-        //        
-        // ybkView.loadUrl("javascript:(function() { " +
-        // "document.getElementsByTagName('body')[0].style.color = 'red'; " +
-        // "})()");
     }
 
-    private void checkAndSetEBookColor(SharedPreferences sharedPref, final WebView ybkView) {
-        // Check and set background and foreground colors
-        // public void onPageFinished(ybkView, String url){
-        // ybkView.loadUrl("javascript:(function() { " +
-        // "document.getElementsByTagName('body')[0].style.color = 'red'; " +
-        // "})()");
-        // }
+    private void initDisplayFeatures() {
+        mShowPictures = getSharedPrefs().getBoolean("show_pictures", true);
 
-    }
-
-    private void initDisplayFeatures(SharedPreferences sharedPref) {
-        mShowPictures = sharedPref.getBoolean("show_pictures", true);
-
-        mShowFullScreen = sharedPref.getBoolean("show_fullscreen", false);
+        mShowFullScreen = getSharedPrefs().getBoolean("show_fullscreen", false);
 
         if (mShowFullScreen) {
             getWindow()
@@ -373,118 +355,114 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     if (sdkVersion > 2 && url.contains("book#")) {
                         // this is needed for internal links on SDK >= 1.5
-                        urlHandler = HANDLED_BY_WEBVIEW;
-                    } else {
-                        String lowerUrl = url.toLowerCase();
-                        if (lowerUrl.startsWith("mailto:") || lowerUrl.startsWith("geo:")
-                                || lowerUrl.startsWith("tel:") || lowerUrl.startsWith("http://")
-                                || lowerUrl.startsWith("https://")) {
-                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                            startActivity(intent);
-                        } else if (url.length() > ContentUriLength + 1) {
-                            setProgressBarIndeterminateVisibility(true);
+                        return HANDLED_BY_WEBVIEW;
+                    }
 
-                            // String libDir =
-                            // mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                            // Settings.DEFAULT_EBOOK_DIRECTORY);
+                    String lowerUrl = url.toLowerCase();
+                    if (lowerUrl.startsWith("mailto:") || lowerUrl.startsWith("geo:") || lowerUrl.startsWith("tel:")
+                            || lowerUrl.startsWith("http://") || lowerUrl.startsWith("https://")) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                    } else if (url.length() > ContentUriLength + 1) {
+                        setProgressBarIndeterminateVisibility(true);
 
-                            Log.d(TAG, "WebView URL: " + url);
-                            String book;
-                            String chapter = "";
-                            String shortTitle = null;
+                        Log.d(TAG, "WebView URL: " + url);
+                        String book;
+                        String chapter = "";
+                        String shortTitle = null;
 
-                            if (url.indexOf('@') != -1) {
-                                Matcher emailMatcher = emailPattern.matcher(url);
-                                if (emailMatcher.matches()) {
-                                    Intent emailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url));
-                                    startActivity(emailIntent);
-                                } else {
-                                    view.scrollTo(0, 0);
-                                }
+                        if (url.indexOf('@') != -1) {
+                            Matcher emailMatcher = emailPattern.matcher(url);
+                            if (emailMatcher.matches()) {
+                                Intent emailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url));
+                                startActivity(emailIntent);
                             } else {
+                                view.scrollTo(0, 0);
+                            }
+                        } else {
 
-                                String dataString;
-                                try {
-                                    dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
-                                } catch (UnsupportedEncodingException uee) {
-                                    dataString = url.substring(ContentUriLength + 1);
-                                }
-
-                                String httpString = dataString;
-
-                                if (!httpString.toLowerCase().startsWith("http://")) {
-                                    httpString = "http://" + httpString;
-                                }
-
-                                Matcher urlMatcher = urlPattern.matcher(httpString);
-                                if (urlMatcher.matches()) {
-                                    Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(httpString));
-                                    startActivity(webIntent);
-                                    return urlHandler;
-                                }
-
-                                String[] urlParts = dataString.split("/");
-
-                                // get rid of the book indicator since it is
-                                // only used in some cases.
-                                book = shortTitle = urlParts[0];
-                                if (book.charAt(0) == '!' || book.charAt(0) == '^') {
-                                    shortTitle = urlParts[0] = book.substring(1);
-                                }
-
-                                book = urlParts[0] + ".ybk";
-
-                                for (int i = 0; i < urlParts.length; i++) {
-                                    chapter += "\\" + urlParts[i];
-                                }
-
-                                YbkFileReader ybkRdr = null;
-                                try {
-                                    ybkRdr = YbkFileReader.getReader(YbkViewActivity.this, book);
-                                    Book bookObj = ybkRdr.getBook();
-
-                                    if (null != bookObj) {
-
-                                        String chap = chapter;
-                                        int pos;
-                                        if ((pos = chapter.indexOf("#")) != -1) {
-                                            chap = chapter.substring(0, pos);
-                                        }
-                                        boolean chapterExists = ybkRdr.chapterExists(chap)
-                                                || ybkRdr.chapterExists(chapter.substring(0, chap.lastIndexOf("\\"))
-                                                        + "_.html.gz");
-
-                                        boolean bookLoaded = false;
-                                        if (chapterExists) {
-                                            bookLoaded = loadChapter(book, chapter);
-                                        } else {
-                                            mDialogChapter = chap.substring(chapter.lastIndexOf("\\") + 1);
-                                            showDialog(CHAPTER_NONEXIST);
-                                        }
-
-                                        if (bookLoaded) {
-                                            setBookBtn(shortTitle, book, chapter);
-                                            mScrollYPos = 0;
-                                        } else {
-                                            mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
-                                            showDialog(CHAPTER_NONEXIST);
-                                        }
-                                    } else {
-                                        mDialogFilename = book;
-                                        showDialog(FILE_NONEXIST);
-                                    }
-                                } catch (IOException ioe) {
-                                    mDialogFilename = book;
-                                    showDialog(FILE_NONEXIST);
-                                } finally {
-                                    if (ybkRdr != null) {
-                                        ybkRdr.unuse();
-                                        ybkRdr = null;
-                                    }
-                                }
+                            String dataString;
+                            try {
+                                dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
+                            } catch (UnsupportedEncodingException uee) {
+                                dataString = url.substring(ContentUriLength + 1);
                             }
 
+                            String httpString = dataString;
+
+                            if (!httpString.toLowerCase().startsWith("http://")) {
+                                httpString = "http://" + httpString;
+                            }
+
+                            Matcher urlMatcher = urlPattern.matcher(httpString);
+                            if (urlMatcher.matches()) {
+                                Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(httpString));
+                                startActivity(webIntent);
+                                return urlHandler;
+                            }
+
+                            String[] urlParts = dataString.split("/");
+
+                            // keep original chapter name around so we can check for leading characters later
+                            mOrigChapName = urlParts[0];
+                            // get rid of the book indicator since it is only used in some cases.
+                            book = shortTitle = mOrigChapName;
+                            if (book.charAt(0) == '!' || book.charAt(0) == '^') {
+                                shortTitle = urlParts[0] = book.substring(1);
+                            }
+
+                            book = urlParts[0] + ".ybk";
+
+                            for (int i = 0; i < urlParts.length; i++) {
+                                chapter += "\\" + urlParts[i];
+                            }
+
+                            YbkFileReader ybkRdr = null;
+                            try {
+                                ybkRdr = YbkFileReader.getReader(YbkViewActivity.this, book);
+                                Book bookObj = ybkRdr.getBook();
+
+                                if (null != bookObj) {
+
+                                    String chap = chapter;
+                                    int pos;
+                                    if ((pos = chapter.indexOf("#")) != -1) {
+                                        chap = chapter.substring(0, pos);
+                                    }
+                                    boolean chapterExists = ybkRdr.chapterExists(chap)
+                                            || ybkRdr.chapterExists(chapter.substring(0, chap.lastIndexOf("\\"))
+                                                    + "_.html.gz");
+
+                                    boolean bookLoaded = false;
+                                    if (chapterExists) {
+                                        bookLoaded = loadChapter(book, chapter);
+                                    } else {
+                                        mDialogChapter = chap.substring(chapter.lastIndexOf("\\") + 1);
+                                        showDialog(CHAPTER_NONEXIST);
+                                    }
+
+                                    if (bookLoaded) {
+                                        setBookBtn(shortTitle, book, chapter);
+                                        mScrollYPos = 0;
+                                    } else {
+                                        mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
+                                        showDialog(CHAPTER_NONEXIST);
+                                    }
+                                } else {
+                                    mDialogFilename = book;
+                                    showDialog(FILE_NONEXIST);
+                                }
+                            } catch (IOException ioe) {
+                                mDialogFilename = book;
+                                showDialog(FILE_NONEXIST);
+                            } finally {
+                                if (ybkRdr != null) {
+                                    ybkRdr.unuse();
+                                    ybkRdr = null;
+                                }
+                            }
                         }
+
                     }
 
                     return urlHandler;
@@ -559,7 +537,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     try {
                         if (loadChapter(filePath, "index")) {
                             setBookBtn(shortTitle, filePath, fileToOpen);
-                            // Log.d(TAG, "Book loaded");
                         }
                     } catch (IOException ioe) {
                         Log.w(TAG, "Could not load index page of " + filePath);
@@ -574,9 +551,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         if (chapBtn != null) {
             /*
-             * Checks to see if the title is too long for the button. This
-             * prevents the buttons becoming too large and the view window being
-             * smaller. - Adam Gessel
+             * Checks to see if the title is too long for the button. This prevents the buttons becoming too large and
+             * the view window being smaller. - Adam Gessel
              */
 
             if (mChapBtnText.length() > 20) {
@@ -849,8 +825,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     /**
-     * Uses a YbkFileReader to get the content of a chapter and loads into the
-     * WebView.
+     * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
      * 
      * @param filePath
      *            The path to the YBK file from which to read the chapter.
@@ -863,17 +838,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         WebView ybkView = mYbkView;
         YbkFileReader ybkReader = mYbkReader;
 
-        boolean showInPopup = (!mBackButtonPressed && mNavFile.equals("0") && !mThemeIsDialog && !mBookWalk && !chapter
-                .equals("index"));
-
-        YbkDAO ybkDao = YbkDAO.getInstance(this);
-
-        if (!showInPopup && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+        if (needToSaveBookChapterToHistory(chapter)) {
             // Save the book and chapter to history if there is one
-            ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+            YbkDAO.getInstance(this).insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
 
             if (mBackButtonPressed) {
-                ybkDao.popBackStack();
+                YbkDAO.getInstance(this).popBackStack();
             }
         }
 
@@ -881,201 +851,214 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (!chapter.equals("index") && chapter.toLowerCase().indexOf(".html") == -1) {
             showDialog(INVALID_CHAPTER);
             Log.e(TAG, "The chapter is invalid: " + chapter);
-        } else {
+        }
 
-            // get rid of any urlencoded spaces
-            filePath = filePath.replace("%20", " ");
-            String chap = chapter.replace("%20", " ");
+        // get rid of any urlencoded spaces
+        filePath = filePath.replace("%20", " ");
+        String chap = chapter.replace("%20", " ");
 
-            String content = "";
-            String fragment = mFragment = null;
+        String content = "";
+        String fragment = mFragment = null;
 
-            // Log.d(TAG, "FilePath: " + filePath);
-
-            File testFile = new File(mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                    Settings.DEFAULT_EBOOK_DIRECTORY), filePath);
-            if (!testFile.exists()) {
-                // set the member property that holds the name of the book file
-                // we couldn't find
-                if (TextUtils.isEmpty(filePath)) {
-                    mDialogFilename = "No file";
-                } else {
-                    mDialogFilename = testFile.getName();
-                }
-
-                showDialog(FILE_NONEXIST);
+        File testFile = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                Settings.DEFAULT_EBOOK_DIRECTORY), filePath);
+        if (!testFile.exists()) {
+            // set the member property that holds the name of the book file
+            // we couldn't find
+            if (TextUtils.isEmpty(filePath)) {
+                mDialogFilename = "No file";
             } else {
-                // Only create a new YbkFileReader if we're opening a different
-                // book
-                if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
-                    ybkReader.unuse();
-                    ybkReader = mYbkReader = YbkFileReader.getReader(this, filePath);
+                mDialogFilename = testFile.getName();
+            }
+
+            showDialog(FILE_NONEXIST);
+        }
+
+        // Only create a new YbkFileReader if we're opening a different book
+        if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
+            ybkReader.unuse();
+            ybkReader = mYbkReader = YbkFileReader.getReader(this, filePath);
+        }
+
+        Book book = ybkReader.getBook();
+
+        try {
+            if (chap.equals("index")) {
+                String shortTitle = book.shortTitle;
+                String tryFileToOpen = "\\" + shortTitle + ".html.gz";
+                content = ybkReader.readInternalFile(tryFileToOpen);
+                if (content == null) {
+                    tryFileToOpen = "\\" + shortTitle + ".html";
+                    content = ybkReader.readInternalFile(tryFileToOpen);
                 }
 
-                Book book = ybkReader.getBook();
+                if (content == null) {
+                    ybkView.loadData("YBK file has no index page.", "text/plain", "utf-8");
 
-                try {
-                    if (chap.equals("index")) {
-                        String shortTitle = book.shortTitle;
-                        String tryFileToOpen = "\\" + shortTitle + ".html.gz";
-                        content = ybkReader.readInternalFile(tryFileToOpen);
-                        if (content == null) {
-                            tryFileToOpen = "\\" + shortTitle + ".html";
-                            content = ybkReader.readInternalFile(tryFileToOpen);
-                        }
+                    Log.e(TAG, "YBK file has no index page.");
+                } else {
+                    chap = tryFileToOpen;
+                }
+            } else {
 
-                        if (content == null) {
-                            ybkView.loadData("YBK file has no index page.", "text/plain", "utf-8");
+                int hashLoc = -1;
 
-                            Log.e(TAG, "YBK file has no index page.");
-                        } else {
-                            chap = tryFileToOpen;
+                hashLoc = chap.indexOf("#");
+                if (hashLoc + 1 == chap.length()) {
+                    // if # is the last character get rid of it.
+                    hashLoc = -1;
+                    chap = Util.independentSubstring(chap, 0, chap.length() - 1);
+                }
+
+                // use the dreaded break <label> in order to simplify conditional nesting
+                label_get_content: if (hashLoc != -1) {
+                    fragment = Util.independentSubstring(chap, hashLoc + 1);
+                    if (fragment.indexOf(".") != -1) {
+                        fragment = Util.independentSubstring(fragment, 0, fragment.indexOf("."));
+                    }
+
+                    mFragment = fragment;
+
+                    if (!mYbkReader.chapterExists(chap.substring(0, hashLoc))) {
+
+                        // need to read a special footnote chapter
+                        content = readConcatFile(chap, mYbkReader);
+
+                        if (content != null) {
+                            break label_get_content;
                         }
                     } else {
-
-                        int hashLoc = -1;
-
-                        hashLoc = chap.indexOf("#");
-                        if (hashLoc + 1 == chap.length()) {
-                            // if # is the last character get rid of it.
-                            hashLoc = -1;
-                            chap = Util.independentSubstring(chap, 0, chap.length() - 1);
+                        chap = Util.independentSubstring(chap, 0, hashLoc);
+                        content = mYbkReader.readInternalFile(chap);
+                        if (content != null) {
+                            break label_get_content;
                         }
 
-                        // use the dreaded break <label> in order to simplify
-                        // conditional nesting
-                        label_get_content: if (hashLoc != -1) {
-                            fragment = Util.independentSubstring(chap, hashLoc + 1);
-                            if (fragment.indexOf(".") != -1) {
-                                fragment = Util.independentSubstring(fragment, 0, fragment.indexOf("."));
-                            }
-
-                            mFragment = fragment;
-
-                            if (!mYbkReader.chapterExists(chap.substring(0, hashLoc))) {
-
-                                // need to read a special footnote chapter
-                                content = readConcatFile(chap, mYbkReader);
-
-                                if (content != null) {
-                                    break label_get_content;
-                                }
-                            } else {
-                                chap = Util.independentSubstring(chap, 0, hashLoc);
-                                content = mYbkReader.readInternalFile(chap);
-                                if (content != null) {
-                                    break label_get_content;
-                                }
-
-                                content = mYbkReader.readInternalFile(chap + ".gz");
-                                if (content != null) {
-                                    break label_get_content;
-                                }
-                            }
-                        } else {
-                            content = mYbkReader.readInternalFile(chap);
-                            if (content != null) {
-                                break label_get_content;
-                            }
-
-                            // Need to read special concatenated file
-                            content = readConcatFile(chap, mYbkReader);
-                            if (content != null) {
-                                break label_get_content;
-                            }
-
-                            // if we haven't reached a break statement yet, we
-                            // have a problem.
-                            Toast.makeText(this, "Could not read chapter '" + chap + "'", Toast.LENGTH_LONG);
-                            ybkView.loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain",
-                                    "utf-8");
-                            return false;
-                        } // label_get_content:
-
-                    }
-
-                    Chapter chapObj = ybkReader.getChapter(chap);
-                    if (chapObj == null) {
-                        String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-                        chapObj = ybkReader.getChapter(concatChap);
-                    }
-
-                    // replace MS-Word "smartquotes" and other extended
-                    // characters with spaces
-                    content = content.replace('\u0093', '"').replace('\u0094', '"');
-
-                    String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
-
-                    int posEnd = content.toLowerCase().indexOf("<end>");
-
-                    String nf = "1";
-                    if (!mBackButtonPressed && posEnd != -1) {
-                        String header = content.substring(0, posEnd);
-                        String headerLower = header.toLowerCase();
-
-                        Log.d(TAG, "Chapter header: " + header);
-
-                        int nfLoc = headerLower.indexOf("<nf>");
-                        int nfEndLoc = headerLower.length();
-                        if (nfLoc != -1) {
-                            if (-1 != (nfEndLoc = headerLower.indexOf('<', nfLoc + 4))) {
-                                nf = Util.independentSubstring(header, nfLoc + 4, nfEndLoc);
-                            }
+                        content = mYbkReader.readInternalFile(chap + ".gz");
+                        if (content != null) {
+                            break label_get_content;
                         }
                     }
-
-                    if (!showInPopup) {
-                        mHistTitle = mChapBtnText;
-                        setChapBtnText(content);
+                } else {
+                    content = mYbkReader.readInternalFile(chap);
+                    if (content != null) {
+                        break label_get_content;
                     }
 
-                    content = Util.processIfbook(content, this);
-
-                    // Convert the ahtags
-                    content = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>",
-                            "<span class=\"ah\" id=\"ah$1\">$2</span>");
-
-                    content = Util.convertIfvar(content);
-
-                    content = Util.htmlize(content, mSharedPref);
-
-                    if (showInPopup) {
-                        // The page should appear in a pop-up
-                        setProgressBarIndeterminateVisibility(true);
-                        Intent popupIntent = new Intent(this, YbkPopupActivity.class);
-                        popupIntent.putExtra("content", content);
-                        popupIntent.putExtra("strUrl", strUrl);
-                        popupIntent.putExtra(YbkDAO.FILENAME, book.fileName);
-                        startActivity(popupIntent);
-                        setProgressBarIndeterminateVisibility(false);
-
-                    } else {
-                        ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-                        if (chapObj != null) {
-                            mChapOrderNbr = chapObj.orderNumber;
-                        } else {
-                            mChapOrderNbr = -1;
-                        }
-                        mNavFile = nf;
-                        mBookFileName = book.fileName;
-                        mChapFileName = chap;
+                    // Need to read special concatenated file
+                    content = readConcatFile(chap, mYbkReader);
+                    if (content != null) {
+                        break label_get_content;
                     }
 
-                    bookLoaded = true;
-
-
-                } catch (IOException e) {
+                    // if we haven't reached a break statement yet, we have a problem.
+                    Toast.makeText(this, "Could not read chapter '" + chap + "'", Toast.LENGTH_LONG);
                     ybkView
                             .loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain",
                                     "utf-8");
-
-                    Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
                     return false;
+                } // label_get_content:
+
+            }
+
+            Chapter chapObj = ybkReader.getChapter(chap);
+            if (chapObj == null) {
+                String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
+                chapObj = ybkReader.getChapter(concatChap);
+            }
+
+            content = fixSmartQuotes(content);
+
+            String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
+
+            int posEnd = content.toLowerCase().indexOf("<end>");
+
+            String nf = "1";
+            if (!mBackButtonPressed && posEnd != -1) {
+                String header = content.substring(0, posEnd);
+                String headerLower = header.toLowerCase();
+
+                Log.d(TAG, "Chapter header: " + header);
+
+                int nfLoc = headerLower.indexOf("<nf>");
+                int nfEndLoc = headerLower.length();
+                if (nfLoc != -1) {
+                    if (-1 != (nfEndLoc = headerLower.indexOf('<', nfLoc + 4))) {
+                        nf = Util.independentSubstring(header, nfLoc + 4, nfEndLoc);
+                    }
                 }
             }
+
+            if (!(isShowInPopup(chapter))) {
+                mHistTitle = mChapBtnText;
+                setChapBtnText(content);
+            }
+
+            content = Util.processIfbook(content, this);
+            content = convertAhtags(content);
+            content = Util.convertIfvar(content);
+            content = Util.htmlize(content, getSharedPrefs());
+
+            if ((isShowInPopup(chapter))) {
+                showChapterInPopup(content, book, strUrl);
+            } else {
+                ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
+                if (chapObj != null) {
+                    mChapOrderNbr = chapObj.orderNumber;
+                } else {
+                    mChapOrderNbr = -1;
+                }
+                mNavFile = nf;
+                mBookFileName = book.fileName;
+                mChapFileName = chap;
+            }
+
+            bookLoaded = true;
+
+        } catch (IOException e) {
+            ybkView.loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain", "utf-8");
+
+            Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
+            return false;
         }
 
         return bookLoaded;
+    }
+
+    private void showChapterInPopup(String content, Book book, String strUrl) {
+        setProgressBarIndeterminateVisibility(true);
+        Intent popupIntent = new Intent(this, YbkPopupActivity.class);
+        popupIntent.putExtra("content", content);
+        popupIntent.putExtra("strUrl", strUrl);
+        popupIntent.putExtra(YbkDAO.FILENAME, book.fileName);
+        startActivity(popupIntent);
+        setProgressBarIndeterminateVisibility(false);
+    }
+
+    private String convertAhtags(String content) {
+        return content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>", "<span class=\"ah\" id=\"ah$1\">$2</span>");
+    }
+
+    private String fixSmartQuotes(String content) {
+        return content.replace('\u0093', '"').replace('\u0094', '"');
+    }
+
+    private boolean needToSaveBookChapterToHistory(final String chapter) {
+        return !(isShowInPopup(chapter)) && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null;
+    }
+
+    private boolean isShowInPopup(final String chapter) {
+        return ((!mBackButtonPressed && currentChapIsNotNavFile() && !mThemeIsDialog 
+                && !chapter.equals("index")) || forceShowInPopup()) && !mBookWalk;
+    }
+
+    private boolean forceShowInPopup() {
+        if (null == mOrigChapName || mOrigChapName.length() < 1) return false;
+        return mOrigChapName.charAt(0) == '^';
+    }
+
+    private boolean currentChapIsNotNavFile() {
+        return mNavFile.equals("0");
     }
 
     /**
@@ -1412,7 +1395,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 } else {
                     setProgressBarIndeterminateVisibility(true);
                     if (loadChapter(mBookFileName, nextChapter.fileName))
-                        setBookBtn(mYbkReader.getBook().shortTitle, mBookFileName, nextChapter.fileName);;
+                        setBookBtn(mYbkReader.getBook().shortTitle, mBookFileName, nextChapter.fileName);
+                    ;
                 }
 
             } catch (IOException e) {
@@ -1481,5 +1465,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     public boolean onSingleTapUp(MotionEvent e) {
         return true;
+    }
+
+    public String getBookFileName() {
+        return mBookFileName;
     }
 }
