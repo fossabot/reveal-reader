@@ -4,5 +4,6 @@
 	<classpathentry kind="lib" path="lib/FlurryAgent.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="lib/trace-0.2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

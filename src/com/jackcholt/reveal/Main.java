@@ -41,6 +41,7 @@ import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
+import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity {
 
@@ -89,6 +90,14 @@ public class Main extends ListActivity {
                         
             if (Global.DEBUG == 2) {
                 Debug.startMethodTracing("reveal");
+            }
+
+            // http://code.google.com/p/android-remote-stacktrace/
+            // we are getting alot of FC's that are not reported.  Flurry shows this.
+            // this lib will will all all "uncaught" to be sent to us via email to see
+            // only for devs
+            if (Global.DEBUG == 1) {
+                ExceptionHandler.register(this, "http://revealreader.thepackhams.com/server.php");
             }
             
             mApplication = this;
