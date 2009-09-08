@@ -97,7 +97,7 @@ public class Main extends ListActivity {
             // this lib will will all all "uncaught" to be sent to us via email to see
             // only for devs
             if (Global.DEBUG == 1) {
-                ExceptionHandler.register(this, "http://revealreader.thepackhams.com/server.php");
+                ExceptionHandler.register(this, "http://revealreader.thepackhams.com/");
             }
             
             mApplication = this;
