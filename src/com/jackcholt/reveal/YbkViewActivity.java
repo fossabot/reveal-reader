@@ -152,15 +152,18 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             if ((this instanceof YbkPopupActivity)) {
                 mThemeIsDialog = true;
+                setContentView(R.layout.view_popup_ybk);
+            
+            } else {
+                setContentView(R.layout.view_ybk);
             }
-
-            setContentView(R.layout.view_ybk);
+            
             super.onCreate(savedInstanceState);
 
-            if ((this instanceof YbkPopupActivity)) {
+            /*if ((this instanceof YbkPopupActivity)) {
                 LinearLayout breadCrumb = (LinearLayout) findViewById(R.id.breadCrumb);
                 breadCrumb.setVisibility(View.GONE);
-            }
+            }*/
 
             final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
             ybkView.getSettings().setJavaScriptEnabled(true);
@@ -169,6 +172,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             checkAndSetFontSize(getSharedPrefs(), ybkView);
 
             if ((this instanceof YbkPopupActivity)) {
+                Log.d(TAG, "strUrl: " + strUrl);
+                Log.d(TAG, "content: " + content);
                 ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
             } else {
                 final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
