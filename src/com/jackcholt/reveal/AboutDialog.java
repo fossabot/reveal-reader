@@ -8,44 +8,44 @@ import android.widget.Button;
 
 import com.flurry.android.FlurryAgent;
 
-
 /**
- * AboutDialog for telling people who we be  :)
+ * AboutDialog for telling people who we be :)
  * 
  * by Dave Packham
  */
 
 public class AboutDialog extends Dialog {
-	public AboutDialog() {
-	    super(Main.getMainApplication());
-		FlurryAgent.onEvent("AboutDialog");
-		
-	    setContentView(R.layout.dialog_about);
-	
-	    Button close = (Button) findViewById(R.id.close_about_btn);
-	    close.setOnClickListener(new View.OnClickListener() {
+    public AboutDialog() {
+        super(Main.getMainApplication());
+        FlurryAgent.onEvent("AboutDialog");
+
+        setContentView(R.layout.dialog_about);
+
+        Button close = (Button) findViewById(R.id.close_about_btn);
+        close.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                    dismiss();
+                dismiss();
             }
-	    });
-	    String title;
-	    try {
-			title = getContext().getString(R.string.app_name) + 
-			" : " + getContext().getPackageManager().getPackageInfo
-			(getContext().getPackageName(), PackageManager.GET_ACTIVITIES).versionName;
-			         
-			//Grab the Global updated version instead of a static one
-			title += String.format(" %d", Global.SVN_VERSION);		                                      
-		    setTitle(title);
-			 
-	        } catch (NameNotFoundException e) {
-	        	title = "Unknown version";
-	    }
-	}
+        });
+        String title;
+        try {
+            title = getContext().getString(R.string.app_name)
+                    + " : "
+                    + getContext().getPackageManager().getPackageInfo(getContext().getPackageName(),
+                            PackageManager.GET_ACTIVITIES).versionName;
+
+            // Grab the Global updated version instead of a static one
+            title += String.format(" %d", Global.SVN_VERSION);
+            setTitle(title);
+
+        } catch (NameNotFoundException e) {
+            title = "Unknown version";
+        }
+    }
 
     public static AboutDialog create() {
-		AboutDialog dlg = new AboutDialog();
-		dlg.show();
-		return dlg;
+        AboutDialog dlg = new AboutDialog();
+        dlg.show();
+        return dlg;
     }
 }

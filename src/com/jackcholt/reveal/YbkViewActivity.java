@@ -91,6 +91,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
+            super.onCreate(savedInstanceState);
+
             setProgressBarIndeterminateVisibility(true);
 
             Util.startFlurrySession(this);
@@ -156,8 +158,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             } else {
                 setContentView(R.layout.view_ybk);
             }
-
-            super.onCreate(savedInstanceState);
 
             final WebView ybkView = mYbkView = (WebView) findViewById(R.id.ybkView);
             ybkView.getSettings().setJavaScriptEnabled(true);
