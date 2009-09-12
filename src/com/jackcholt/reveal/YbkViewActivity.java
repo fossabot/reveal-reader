@@ -169,34 +169,34 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 Log.d(TAG, "strUrl: " + strUrl);
                 Log.d(TAG, "content: " + content);
                 ybkView.loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-                return;
-            }
-            
-            final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
-            mBookBtn = (Button) findViewById(R.id.bookButton);
-            final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
-            chapBtn.setOnClickListener(new OnClickListener() {
-                /**
-                 * set the chapter button so it scrolls the window to the top
-                 */
-                public void onClick(final View v) {
-                    mYbkView.scrollTo(0, 0);
-                }
-            });
+            } else {
 
-            mainBtn.setOnClickListener(new OnClickListener() {
-
-                public void onClick(final View view) {
-
-                    YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
-                    if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
-                        // Save the book and chapter to history if there is one
-                        ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+                final ImageButton mainBtn = (ImageButton) findViewById(R.id.mainMenu);
+                mBookBtn = (Button) findViewById(R.id.bookButton);
+                final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
+                chapBtn.setOnClickListener(new OnClickListener() {
+                    /**
+                     * set the chapter button so it scrolls the window to the top
+                     */
+                    public void onClick(final View v) {
+                        mYbkView.scrollTo(0, 0);
                     }
-                    finish();
-                }
+                });
 
-            });
+                mainBtn.setOnClickListener(new OnClickListener() {
+
+                    public void onClick(final View view) {
+
+                        YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
+                        if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
+                            // Save the book and chapter to history if there is one
+                            ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
+                        }
+                        finish();
+                    }
+
+                });
+            }
 
             try {
                 mYbkReader = YbkFileReader.getReader(this, mBookFileName);
@@ -478,9 +478,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 try {
                     // make it jump to the internal link
                     if (mFragment != null) {
-                        
+
                         view.loadUrl("javascript:location.href=\"#" + mFragment + "\"");
-                        
+
                         mFragment = null;
                     } else if (url.indexOf('@') != -1) {
                         view.scrollTo(0, 0);
@@ -569,7 +569,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public boolean onCreateOptionsMenu(final Menu menu) {
         try {
             super.onCreateOptionsMenu(menu);
-            
+
             menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history).setIcon(
                     android.R.drawable.ic_menu_recent_history);
             menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark)
@@ -589,7 +589,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public boolean onPrepareOptionsMenu(final Menu menu) {
         try {
             super.onPrepareOptionsMenu(menu);
-            
+
             MenuItem prevItem = menu.findItem(PREVIOUS_ID);
             MenuItem nextItem = menu.findItem(NEXT_ID);
             if (mChapOrderNbr < 1) {
