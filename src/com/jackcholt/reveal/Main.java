@@ -91,15 +91,11 @@ public class Main extends ListActivity {
             if (Global.DEBUG == 2) {
                 Debug.startMethodTracing("reveal");
             }
+            // Disable the Flurry Uncaught Exception Handler
+            FlurryAgent.setCaptureUncaughtExceptions(false);
+            // and enable the one that emails us  :)
+            ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
 
-            // http://code.google.com/p/android-remote-stacktrace/
-            // we are getting alot of FC's that are not reported.  Flurry shows this.
-            // this lib will will all all "uncaught" to be sent to us via email to see
-            // only for devs
-            if (Global.DEBUG == 1) {
-                ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
-            }
-            
             mApplication = this;
 
             // Run to check if this is the first time run and init.
