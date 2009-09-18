@@ -13,6 +13,7 @@ import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -716,10 +717,13 @@ public class Util {
         ArrayList<String> downloaded = new ArrayList<String>();
 
         File libDirFile = new File(libDir);
-        String filename = fileName.getName();
+        String prefilename = fileName.getName();
+        String filename = prefilename.replaceAll(" ", "%20");
+        
         File tempFile = new File(libDir, filename + TMP_EXTENSION);
         FileOutputStream out = null;
         BufferedInputStream in = null;
+        
         
         //Get the file that was referred to us
         try {
