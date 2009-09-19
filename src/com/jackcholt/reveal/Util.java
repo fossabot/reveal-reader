@@ -11,6 +11,8 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -727,7 +729,7 @@ public class Util {
         
         //Get the file that was referred to us
         try {
-            URL ourUrl = new URL(DOWNLOAD_MIRROR + filename);
+            URL ourUrl = new URI(null, DOWNLOAD_MIRROR + filename, null).toURL();
             
             try {
                 in = new BufferedInputStream(ourUrl.openStream());
@@ -749,6 +751,9 @@ public class Util {
             success = true;
         } catch (IOException ioe) {
             throw ioe;
+        } catch (URISyntaxException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         } finally {
             if (in != null) {
                 in.close();
