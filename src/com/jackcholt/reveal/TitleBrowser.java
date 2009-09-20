@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -203,7 +204,7 @@ public class TitleBrowser extends ListActivity {
         return false;
     }
 
-    private void downloadTitle(Title title) {
+    private void downloadTitle(final Title title) {
         URL downloadUrl = null;
         StringBuilder information = new StringBuilder();
 
@@ -230,17 +231,26 @@ public class TitleBrowser extends ListActivity {
 
         final String downloadUrlString = downloadUrl.toExternalForm();
         final String fileLocationString = title.fileName;
+        final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++, R.drawable.ebooksmall,
+                MessageFormat.format(getResources().getString(R.string.downloading), title.name));
         final Completion callback = new Completion() {
             // @Override
             public void completed(boolean succeeded, String message) {
                 Main main = Main.getMainApplication();
                 if (main != null) {
                     if (succeeded) {
-                        main.refreshNotify(message);
-                        main.scheduleRefreshBookList();
+                        if (message.endsWith("%")) {
+                            int percent = Integer.parseInt(message.substring(0, message.length()-1));
+                            progressNotification.update(100, percent);
+                        } else {
+                            progressNotification.hide();
+                            main.refreshNotify(message);
+                            main.scheduleRefreshBookList();
+                        }
                     } else {
+                        progressNotification.hide();
                         Util.sendNotification(TitleBrowser.this, message, android.R.drawable.stat_sys_warning,
-                                "Reveal Library", mNotifMgr, mNotifId++, Main.class);
+                                getResources().getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
                     }
                 }
             }
@@ -255,6 +265,7 @@ public class TitleBrowser extends ListActivity {
             public void protectedRun() {
                 YbkService.requestDownloadBook(TitleBrowser.this, downloadUrlString, fileLocationString, callback);
                 Toast.makeText(TitleBrowser.this, R.string.ebook_download_started, Toast.LENGTH_SHORT).show();
+                progressNotification.show();
             }
         };
 

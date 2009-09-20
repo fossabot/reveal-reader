@@ -61,7 +61,6 @@ public class Main extends ListActivity {
     private static final int BOOK_WALKER_ID = Menu.FIRST + 13;
     private static final int PROPERTIES_ID = Menu.FIRST + 14;
 
-    private static int mRefreshNotifId = 0;
     public static int mNotifId = 1;
     public static Main mApplication;
     private static final int ACTIVITY_SETTINGS = 0;
@@ -87,13 +86,13 @@ public class Main extends ListActivity {
     public void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-                        
+
             if (Global.DEBUG == 2) {
                 Debug.startMethodTracing("reveal");
             }
             // Disable the Flurry Uncaught Exception Handler
             FlurryAgent.setCaptureUncaughtExceptions(false);
-            // and enable the one that emails us  :)
+            // and enable the one that emails us :)
             ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
 
             mApplication = this;
@@ -140,19 +139,18 @@ public class Main extends ListActivity {
                 }
             }
 
-            
-            
             // Is Network up or not?
             if (!BOOLcheckedOnline && Util.isNetworkUp(this)) {
                 // only check once per process instantiation
                 BOOLcheckedOnline = true;
-                
-                // and wait a little bit to kick it off so it won't slow down the initial display of the list
-                mHandler.postDelayed(new SafeRunnable() {         
+
+                // and wait a little bit to kick it off so it won't slow down
+                // the initial display of the list
+                mHandler.postDelayed(new SafeRunnable() {
                     @Override
                     public void protectedRun() {
                         // Actually go ONLINE and check... duhhhh
-                        UpdateChecker.checkForNewerVersion(Main.this, Global.SVN_VERSION);                       
+                        UpdateChecker.checkForNewerVersion(Main.this, Global.SVN_VERSION);
                         // Check for a message from US :)
                         MOTDDialog.create(Main.this);
                         // Check for version Notes Unique for this REV
@@ -172,32 +170,26 @@ public class Main extends ListActivity {
                 }
             }
 
-            String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
-                    Settings.DEFAULT_EBOOK_DIRECTORY);
+            String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
             boolean upgrading = false;
 
             // delete old versions of databases
-            File oldDBFiles[] = {
-                    new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db"),
-                    new File(libDir, "reveal_ybk.db"),
-                    new File(libDir, "reveal_ybk.lg")
-            };
-            
+            File oldDBFiles[] = { new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db"),
+                    new File(libDir, "reveal_ybk.db"), new File(libDir, "reveal_ybk.lg") };
+
             for (File oldDBFile : oldDBFiles) {
                 if (oldDBFile.exists()) {
                     oldDBFile.delete();
                     upgrading = true;
                 }
             }
-            
+
             // if new version of db doesn't exist, create it
             if (!(new File(new File(libDir, YbkDAO.DATA_DIR), YbkDAO.BOOKS_FILE).exists())) {
                 if (upgrading) {
                     // had older version, do upgrading message
                     RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
-                } else {
-                    Toast.makeText(this, getResources().getString(R.string.refresh_title), Toast.LENGTH_LONG).show();
                 }
                 updateBookList();
             }
@@ -227,11 +219,11 @@ public class Main extends ListActivity {
         try {
             super.onStop();
             FlurryAgent.onEndSession(this);
-            
+
             if (Global.DEBUG == 2) {
                 Debug.stopMethodTracing();
             }
-            
+
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -261,8 +253,8 @@ public class Main extends ListActivity {
     }
 
     void refreshNotify(String message) {
-        Util.sendNotification(this, message, R.drawable.ebooksmall, "Reveal Library", mNotifMgr, mRefreshNotifId,
-                Main.class);
+        Util.sendNotification(this, message, R.drawable.ebooksmall, getResources().getString(R.string.app_name),
+                mNotifMgr, mNotifId++, Main.class);
     }
 
     /**
@@ -273,8 +265,7 @@ public class Main extends ListActivity {
     }
 
     /**
-     * Convenience method to make calling refreshLibrary() without any
-     * parameters retaining its original behavior.
+     * Convenience method to make calling refreshLibrary() without any parameters retaining its original behavior.
      */
     private void refreshLibrary(final String strLibDir) {
         refreshLibrary(strLibDir, ADD_BOOKS);
@@ -286,9 +277,8 @@ public class Main extends ListActivity {
      * @param strLibDir
      *            the path to the library directory.
      * @param addNewBooks
-     *            If true, run the code that will add new books to the database
-     *            as well as the code that removes missing books from the
-     *            database (which runs regardless).
+     *            If true, run the code that will add new books to the database as well as the code that removes missing
+     *            books from the database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -322,7 +312,7 @@ public class Main extends ListActivity {
         Set<String> addFiles;
         if (addNewBooks) {
             addFiles = new HashSet<String>(fileSet);
-            // addFiles.removeAll(dbSet);
+            addFiles.removeAll(dbSet);
         } else {
             addFiles = Collections.emptySet();
         }
@@ -333,25 +323,32 @@ public class Main extends ListActivity {
 
         final int count = addFiles.size() + removeFiles.size();
         if (count != 0) {
+
+            final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++,
+                    R.drawable.ebooksmall, getResources().getString(R.string.refreshing_library));
+            progressNotification.update(count, 0);
+
             Completion callback = new Completion() {
                 volatile int remaining = count;
 
                 public void completed(boolean succeeded, String message) {
                     if (succeeded) {
-                        refreshNotify(message);
                         scheduleRefreshBookList();
                     } else {
-                        Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
-                                "Reveal Library", mNotifMgr, mNotifId++, Main.class);
+                        Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning, getResources()
+                                .getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
                     }
-                    if (--remaining <= 0) {
-                        refreshNotify("Refreshing of library complete.");
+                    remaining--;
+                    progressNotification.update(count, count - remaining);
+                    if (remaining <= 0) {
+                        progressNotification.hide();
+                        refreshNotify(getResources().getString(R.string.refreshed_library));
                     }
                 }
             };
 
-            // refreshNotify("Refreshing the library");
-            Toast.makeText(this, "Refreshing the library", Toast.LENGTH_LONG).show();
+            // Toast.makeText(this, getResources().getString(R.string.refreshing_library), Toast.LENGTH_LONG).show();
+            progressNotification.show();
 
             // schedule the deletion of the db entries that are not on disk
             for (String file : removeFiles)
@@ -499,7 +496,7 @@ public class Main extends ListActivity {
                             scheduleRefreshBookList();
                         } else {
                             Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning,
-                                    "Reveal Library", mNotifMgr, mNotifId++, Main.class);
+                                    getResources().getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
                         }
                     }
                 });
@@ -844,24 +841,6 @@ public class Main extends ListActivity {
         return mApplication;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onDestroy()
-     */
-    @Override
-    protected void onDestroy() {
-        try {
-            YbkService.stop(this);
-        } catch (RuntimeException rte) {
-            Util.unexpectedError(this, rte);
-        } catch (Error e) {
-            Util.unexpectedError(this, e);
-        }
-
-        super.onDestroy();
-    }
-
     private void resetApp() {
         SafeRunnable action = new SafeRunnable() {
             @Override
@@ -882,7 +861,7 @@ public class Main extends ListActivity {
                 }
                 // cleanup any sqlite databases
                 Util.deleteFiles(new File("/data/data/com.jackcholt.reveal/databases"), ".*\\.db");
-                
+
                 // cleanup preferences (can't seem to delete file, so tell the
                 // preferences manager to clear them all)
                 getSharedPrefs().edit().clear().commit();
@@ -907,11 +886,10 @@ public class Main extends ListActivity {
     public static void StartupFirstTime() {
 
     }
-    
+
     // Display Toast-Message
     public static void displayToastMessage(String message) {
         Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG).show();
     }
-    
 
 }

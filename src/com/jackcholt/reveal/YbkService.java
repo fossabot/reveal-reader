@@ -25,9 +25,8 @@ import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
 /**
- * Service that initiates and coordinates all the background activities of
- * downloading books and updating the library so the don't step on each other's
- * feet.
+ * Service that initiates and coordinates all the background activities of downloading books and updating the library so
+ * the don't step on each other's feet.
  * 
  * @author Shon Vella
  * 
@@ -52,7 +51,9 @@ public class YbkService extends Service {
     private volatile Handler mLibHandler;
     private volatile Looper mDownloadLooper;
     private volatile Handler mDownloadHandler;
+    @SuppressWarnings("unused")
     private NotificationManager mNotifMgr;
+    @SuppressWarnings("unused")
     private volatile int mNotifId = Integer.MIN_VALUE;
 
     private SharedPreferences mSharedPref;
@@ -117,7 +118,7 @@ public class YbkService extends Service {
                                 ybkDao.deleteBook(target);
 
                                 String useCharset = charset;
-                                
+
                                 // kludge for the known Cyrillic books
                                 if (useCharset == null) {
                                     if (target.equalsIgnoreCase("km.ybk") || target.equalsIgnoreCase("vz.ybk")
@@ -131,7 +132,7 @@ public class YbkService extends Service {
                                 // Add the book.
                                 ybkRdr = YbkFileReader.addBook(YbkService.this, target, useCharset);
                                 Book book = ybkRdr.getBook();
-                                bookName = book.title;
+                                bookName = book.title == null ? bookName : book.title;
                                 message = "Added '" + bookName + "' to the library";
                                 succeeded = true;
                             } catch (InvalidFileFormatException ioe) {
@@ -209,16 +210,18 @@ public class YbkService extends Service {
                         @Override
                         public void protectedRun() {
                             try {
+                                Completion callbacks[] = callbackMap.get(Long.valueOf(callbacksID));
                                 List<String> downloads = Util.fetchTitle(new File(target), new URL(source), libDir,
-                                        context);
+                                        context, callbacks);
                                 for (String download : downloads) {
-                                    requestAddBook(context, download, null, callbackMap.get(Long.valueOf(callbacksID)));
+                                    requestAddBook(context, download, null, callbacks);
                                 }
                             } catch (IOException ioe) {
+                                String targetFileName = new File(target).getName(); 
                                 Log.e(TAG, "Unable to download '" + source + "': " + ioe.toString());
-                                Util.sendNotification(YbkService.this, "Could not download '" + source + "'. "
-                                        + ioe.toString(), android.R.drawable.stat_sys_warning, "Reveal Library",
-                                        mNotifMgr, mNotifId++, Main.class);
+                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                                    callback.completed(false, "Could not download '" + targetFileName + "'. " + ioe.toString());
+                                }
                             }
                         }
                     };

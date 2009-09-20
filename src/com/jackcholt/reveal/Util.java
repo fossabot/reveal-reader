@@ -1,6 +1,5 @@
 package com.jackcholt.reveal;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,8 +10,6 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -49,6 +46,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -70,7 +68,7 @@ public class Util {
     public static void displayToastMessage(String message) {
         Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG).show();
     }
-    
+
     /**
      * Dave Packham Check for network connectivity before trying to go to the net and hanging :) hitting F8 in the
      * emulator will turn network on/off
@@ -163,7 +161,7 @@ public class Util {
         final String firstGroup = "$1";
 
         // parse binding text to populate book title
-        String bookShortTitle = Html.fromHtml(  // handle character references
+        String bookShortTitle = Html.fromHtml( // handle character references
                 binding.replaceAll(start + caseInsensSingleLineFlags + zeroOrMoreChars + "<a" + oneOrMoreSpaces
                         + "href=" + singleOrDoubleQuote + oneOrNoBangs + shortTitleGroup + period + zeroOrMoreChars
                         + ">" + zeroOrMoreChars, firstGroup)).toString();
@@ -279,7 +277,7 @@ public class Util {
 
         return i;
     }
-    
+
     /**
      * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
      * byte (LSB) &quot;little endian&quot; order.
@@ -289,13 +287,12 @@ public class Util {
      * @return The numeric value of the four bytes.
      */
     public static final int readVBInt(final byte[] bytes, int off) {
-        int i = ((int)bytes[off++]) & 0xFF;
-        i += (((int)bytes[off++]) & 0xFF) << 8;
-        i += (((int)bytes[off++]) & 0xFF) << 16;
-        i += (((int)bytes[off++]) & 0xFF) << 24;
+        int i = ((int) bytes[off++]) & 0xFF;
+        i += (((int) bytes[off++]) & 0xFF) << 8;
+        i += (((int) bytes[off++]) & 0xFF) << 16;
+        i += (((int) bytes[off++]) & 0xFF) << 24;
         return i;
     }
-
 
     public static final String htmlize(final String text, final SharedPreferences sharedPref) {
         if (text == null) {
@@ -702,58 +699,66 @@ public class Util {
      *            library directory
      * @param context
      *            the caller's context
+     * @param completion
+     *            callbacks
      * @return list of file paths to add to library
      * @throws IOException
      *             if download fails
      */
     public static List<String> fetchTitle(final File fileName, final URL downloadUrl, final String libDir,
-            final Context context) throws IOException {
+            final Context context, Completion... callbacks) throws IOException {
 
         boolean success = false;
+        boolean isZip = true;
 
         YbkDAO ybkDao = YbkDAO.getInstance(context);
-        
-        final byte[] buffer = new byte[255];
+
+        final byte[] buffer = new byte[512];
 
         ArrayList<File> files = new ArrayList<File>();
         ArrayList<String> downloaded = new ArrayList<String>();
 
         File libDirFile = new File(libDir);
-        String prefilename = fileName.getName();
-        String filename = prefilename.replaceAll(" ", "%20");
-        
+        String filename = fileName.getName();
+
+        // URL encode the filename, but apparently our server code can't handle
+        // the standard substitution of plus for space :(
+        String urlFileName = URLEncoder.encode(filename, "UTF-8").replace("+", "%20");
+
         File tempFile = new File(libDir, filename + TMP_EXTENSION);
         FileOutputStream out = null;
-        BufferedInputStream in = null;
-        
-        
-        //Get the file that was referred to us
+        InputStream in = null;
+
+        // Get the file that was referred to us
         try {
-            URL ourUrl = new URI(null, DOWNLOAD_MIRROR + filename, null).toURL();
-            
-            try {
-                in = new BufferedInputStream(ourUrl.openStream());
-                Log.d(TAG, "download from " + ourUrl);
-            } catch (IOException ioe1) {
-                FlurryAgent.onError("fetchTitle", filename, "WARNING");
-                ReportError.reportError("MISSING_EBOOK_" + filename, false);
-                in = new BufferedInputStream(downloadUrl.openStream());
-                Log.d(TAG, "download from " + downloadUrl);
-            }
-            
+            URL mirrorURL = new URL(DOWNLOAD_MIRROR);
+            URL ourUrl = new URL(mirrorURL, urlFileName);
+            URLConnection connection = ourUrl.openConnection();
+            int totalBytes = connection.getContentLength();
+            in = connection.getInputStream();
+            Log.d(TAG, "download from " + ourUrl);
+
             out = new FileOutputStream(tempFile);
-            
+
             int bytesRead = 0;
-            while (-1 != (bytesRead = in.read(buffer, 0, 255))) {
+            int totalBytesRead = 0;
+            while (-1 != (bytesRead = in.read(buffer, 0, buffer.length))) {
+                if ((totalBytesRead == 0) && buffer[0] == 0x50 && buffer[1] == 0x4b && buffer[2] == 0x03
+                        && buffer[3] == 0x04) {
+                    isZip = true;
+                }
+                totalBytesRead += bytesRead;
                 out.write(buffer, 0, bytesRead);
+                int percent = ((totalBytesRead * 100) / totalBytes);
+                for (Completion callback : callbacks) {
+                    callback.completed(true, percent + "%");
+                }
             }
-            
             success = true;
         } catch (IOException ioe) {
+            FlurryAgent.onError("fetchTitle", filename, "WARNING");
+            ReportError.reportError("MISSING_EBOOK_" + filename, false);
             throw ioe;
-        } catch (URISyntaxException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         } finally {
             if (in != null) {
                 in.close();
@@ -765,54 +770,56 @@ public class Util {
                 tempFile.delete();
             }
         }
-        
+
         Log.d(TAG, tempFile.getAbsolutePath());
         if (tempFile.exists()) {
-            try {
+            if (isZip) {
                 ZipInputStream zip = new ZipInputStream(new FileInputStream(tempFile));
+                try {
+                    ZipEntry entry;
+                    while ((entry = zip.getNextEntry()) != null) {
+                        // unpack all the files
+                        File file = new File(libDirFile, entry.getName());
 
-                ZipEntry entry;
-                while ((entry = zip.getNextEntry()) != null) {
-                    // unpack all the files
-                    File file = new File(libDirFile, entry.getName());
-
-                    // check to see if they already have this title
-                    if (file.exists()) {
-                        file.delete();
-                        ybkDao.deleteBook(entry.getName());
-                    }
-
-                    file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
-                    out = new FileOutputStream(file);
-                    files.add(file);
-                    try {
-                        int bytesRead = 0;
-                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                            out.write(buffer, 0, bytesRead);
+                        // check to see if they already have this title
+                        if (file.exists()) {
+                            file.delete();
+                            ybkDao.deleteBook(entry.getName());
                         }
-                    } finally {
-                        out.close();
+
+                        file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+                        out = new FileOutputStream(file);
+                        files.add(file);
+                        try {
+                            int bytesRead = 0;
+                            while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                                out.write(buffer, 0, bytesRead);
+                            }
+                        } finally {
+                            out.close();
+                        }
                     }
+                } catch (IOException ioe) {
+                    Log.w(TAG, ioe.toString());
+                    throw ioe;
+                } finally {
+                    zip.close();
                 }
-            } catch (IOException ioe) {
-                Log.w(TAG, ioe.toString());
+            } else {
                 files.add(tempFile);
-            } finally {
-                for (File file : files) {
-                    // rename from tmp
-                    String realNameString = file.getAbsolutePath();
-                    realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
-                    File realName = new File(realNameString);
-                    file.renameTo(realName);
-                    downloaded.add(realName.getName());
-                }
-                
-                if (tempFile.exists()) {
-                    tempFile.delete();
-                }
+            }
+            for (File file : files) {
+                // rename from tmp
+                String realNameString = file.getAbsolutePath();
+                realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
+                File realName = new File(realNameString);
+                file.renameTo(realName);
+                downloaded.add(realName.getName());
+            }
+            if (tempFile.exists()) {
+                tempFile.delete();
             }
         }
-
         return downloaded;
     }
 
@@ -1169,7 +1176,7 @@ public class Util {
         if (Global.DEBUG == 0) {
             // Release Key for use of the END USERS
             if (BOOLdisableAnalytics) {
-                
+
                 FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
                 FlurryAgent.setReportLocation(false);
                 FlurryAgent.onEvent("LocationDisabled");
@@ -1184,7 +1191,7 @@ public class Util {
                 FlurryAgent.setReportLocation(false);
             } else {
                 FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
-                
+
             }
         }
     }
