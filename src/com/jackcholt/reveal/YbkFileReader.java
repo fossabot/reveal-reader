@@ -77,15 +77,15 @@ public class YbkFileReader {
     private boolean mClosed = false;
 
     private static final int READER_CACHE_SIZE = 10;
-    
+
     private static List<YbkFileReader> readerCache = new ArrayList<YbkFileReader>(READER_CACHE_SIZE);
-    
+
     private static synchronized YbkFileReader getReaderFromCache(String fileName) {
         int cacheCount = readerCache.size();
         for (int i = cacheCount - 1; i >= 0; i--) {
             YbkFileReader reader = readerCache.get(i);
             if (reader.mFilename.equalsIgnoreCase(fileName)) {
-                if (i != cacheCount -1) {
+                if (i != cacheCount - 1) {
                     readerCache.remove(i);
                     readerCache.add(reader);
                 }
@@ -94,7 +94,7 @@ public class YbkFileReader {
         }
         return null;
     }
-    
+
     private static synchronized void cacheReader(YbkFileReader reader) {
         while (readerCache.size() >= READER_CACHE_SIZE) {
             YbkFileReader oldReader = readerCache.remove(0);
@@ -114,13 +114,10 @@ public class YbkFileReader {
         }
     }
 
-
     /**
-     * Get a YbkFileReader on the given file named <code>filename</code>. If the
-     * <code>filename</code> specified cannot be found, throw a
-     * FileNotFoundException. Construct a new YbkFileReader on the given file
-     * named <code>filename</code>. If the <code>filename</code> specified
-     * cannot be found, throw a FileNotFoundException.
+     * Get a YbkFileReader on the given file named <code>filename</code>. If the <code>filename</code> specified cannot
+     * be found, throw a FileNotFoundException. Construct a new YbkFileReader on the given file named
+     * <code>filename</code>. If the <code>filename</code> specified cannot be found, throw a FileNotFoundException.
      * 
      * @param context
      * @param fileName
@@ -194,11 +191,9 @@ public class YbkFileReader {
     }
 
     /**
-     * Construct a new YbkFileReader on the given file named
-     * <code>filename</code>. If the <code>filename</code> specified cannot be
-     * found, throw a FileNotFoundException. Construct a new YbkFileReader on
-     * the given file named <code>filename</code>. If the <code>filename</code>
-     * specified cannot be found, throw a FileNotFoundException.
+     * Construct a new YbkFileReader on the given file named <code>filename</code>. If the <code>filename</code>
+     * specified cannot be found, throw a FileNotFoundException. Construct a new YbkFileReader on the given file named
+     * <code>filename</code>. If the <code>filename</code> specified cannot be found, throw a FileNotFoundException.
      * 
      * @param context
      * @param fileName
@@ -385,7 +380,7 @@ public class YbkFileReader {
         mBook = ybkDao.insertBook(fileName, mCharset, mTitle, mShortTitle, mChapterIndex);
         return mBook;
     }
-    
+
     /**
      * Gets a chapter object.
      * 
@@ -464,13 +459,11 @@ public class YbkFileReader {
      * @throws IOException
      *             If the chapter cannot be read.
      */
-    public String readInternalFile(String chapName) throws IOException {
-        String fileText = null;
+    public String readInternalFile(final String chapName) throws IOException {
+
         Chapter chap = getChapter(chapName);
-        if (chap != null) {
-            fileText = readInternalFile(chap.offset, chap.length);
-        }
-        return fileText;
+
+        return (null == chap) ? null : readInternalFile(chap.offset, chap.length);
     }
 
     /**
@@ -485,20 +478,17 @@ public class YbkFileReader {
      *             If the chapter cannot be read.
      */
     public String readInternalFile(int offset, int length) throws IOException {
-        byte buf[] = readChunk(offset, length);
-        String fileText;
-        if (length > 1 && buf[0] == 31 && buf[1] == (byte) 139) {
-            fileText = Util.decompressGzip(buf, mCharset);
-        } else {
-            fileText = new String(buf, mCharset);
-        }
+        byte[] buf = readChunk(offset, length);
+        return (hasGzipHeader(length, buf)) ? Util.decompressGzip(buf, mCharset) : new String(buf, mCharset);
+    }
 
-        return fileText;
+    private boolean hasGzipHeader(int length, byte[] buf) {
+        return length > 1 && buf[0] == 31 && buf[1] == (byte) 139;
     }
 
     /**
-     * Return the uncompressed contents of Book Metadata internal file as a
-     * String or null if the YBK file doesn't contain one.
+     * Return the uncompressed contents of Book Metadata internal file as a String or null if the YBK file doesn't
+     * contain one.
      * 
      * @return The uncompressed contents of the Book Metadata file.
      * @throws IOException
@@ -544,11 +534,11 @@ public class YbkFileReader {
      *             If the chapter cannot be read.
      */
     private byte[] readChunk(int offset, int length) throws IOException {
-        byte arrayBuf[] = new byte[length];
+        byte[] arrayBuf = new byte[length];
         ByteBuffer buf = ByteBuffer.wrap(arrayBuf);
         int amountRead = mChannel.read(buf, offset);
         if (amountRead < length) {
-            throw new EOFException();
+            throw new EOFException("Was not able to read as many bytes the length parameter specified.");
         }
         return arrayBuf;
     }

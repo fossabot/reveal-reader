@@ -144,7 +144,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             if (mBookFileName == null) {
                 Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
-                Log.e(TAG, "Book not loaded");
+                Log.e(TAG, "In onCreate(): Book not loaded");
                 finish();
                 return;
             }
@@ -1180,12 +1180,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private String readConcatFile(final String chap, final YbkFileReader ybkReader) throws IOException {
         // need to read a special footnote chapter
         String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
-        // Log.d(TAG, "concat file: " + concatChap);
 
-        String endString = ".";
-        if (chap.contains(".html")) {
-            endString = ".html";
-        }
+        String endString = (chap.contains(".html")) ? ".html" : ".";
 
         String verse = chap.substring(chap.lastIndexOf("\\") + 1, chap.lastIndexOf(endString));
 
@@ -1193,17 +1189,19 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         String content = ybkReader.readInternalFile(concatChap);
 
-        if (content != null) {
-            content = content.substring(content.indexOf('\002' + verse + '\002') + verse.length() + 2);
-
-            if (content.indexOf('\002') != -1) {
-                content = content.substring(0, content.indexOf('\002'));
-            }
-            return new String(content.toCharArray());
-        } else {
+        if (content == null) {
             Log.e(TAG, "Couldn't find a concatenated chapter for: " + chap);
             return null;
         }
+
+        content = content.substring(content.indexOf('\002' + verse + '\002') + verse.length() + 2);
+
+        if (content.indexOf('\002') != -1) {
+            content = content.substring(0, content.indexOf('\002'));
+        }
+
+        return content;
+
     }
 
     /**
