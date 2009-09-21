@@ -62,7 +62,6 @@ public class Util {
     public static final String NO_TITLE = "no_book_title";
     public static final String DOWNLOAD_MIRROR = "http://revealreader.thepackhams.com/ebooks/";
     public static final String EMPTY_STRING = new String();
-    private static SharedPreferences mSharedPref;
 
     // Display Toast-Message
     public static void displayToastMessage(String message) {
@@ -160,13 +159,10 @@ public class Util {
         final String zeroOrMoreChars = ".*";
         final String firstGroup = "$1";
 
-        // parse binding text to populate book title
-        String bookShortTitle = Html.fromHtml( // handle character references
+        return Html.fromHtml(
                 binding.replaceAll(start + caseInsensSingleLineFlags + zeroOrMoreChars + "<a" + oneOrMoreSpaces
                         + "href=" + singleOrDoubleQuote + oneOrNoBangs + shortTitleGroup + period + zeroOrMoreChars
                         + ">" + zeroOrMoreChars, firstGroup)).toString();
-
-        return bookShortTitle;
     }
 
     /**
@@ -434,8 +430,7 @@ public class Util {
                             newContent.append(oldContent.substring(elsePos + bookName.length() + 11, endPos));
                         }
 
-                        // remove just-parsed <ifbook> tag structure so we can
-                        // find the next
+                        // remove just-parsed <ifbook> tag structure so we can find the next
                         oldContent.delete(0, endPos + bookName.length() + 10);
                         oldLowerContent.delete(0, endPos + bookName.length() + 10);
                     }
@@ -468,54 +463,8 @@ public class Util {
         String fixedContent = content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>",
                 "<span class=\"ah\" id=\"ah$1\">$2</span>");
 
-        // Log.d(TAG, "Fixed Content" + fixedContent);
-
         return fixedContent;
-        /*
-         * StringBuilder newContent = new StringBuilder();
-         * 
-         * // Use this to get the actual content StringBuilder oldContent = new StringBuilder(content);
-         * 
-         * // Use this for case-insensitive comparison StringBuilder oldLowerContent = new
-         * StringBuilder(content.toLowerCase()); int pos = 0;
-         * 
-         * while ((pos = oldLowerContent.indexOf("<ahtag num=")) != -1) { boolean fullAhtagFound = false;
-         * 
-         * // copy text before <ahtag> tag to new content and remove from old newContent.append(oldContent.substring(0,
-         * pos)); oldContent.delete(0, pos); oldLowerContent.delete(0, pos);
-         * 
-         * int gtPos = oldContent.indexOf(">"); if (gtPos != -1) {
-         * 
-         * // grab the number by skipping the beginning of the ahtag tag String number = oldContent.substring(11,
-         * gtPos);
-         * 
-         * int endPos = oldLowerContent.indexOf("</ahtag>"); if (endPos != -1 && endPos > gtPos) {
-         * 
-         * fullAhtagFound = true;
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * newContent.append("<span class=\"ah\" id=\"ah").append(number).append( "\">");
-         * newContent.append(oldContent.substring(gtPos + 1, endPos)); //Log.d(TAG, "Appending: " +
-         * oldContent.substring(gtPos + 1, endPos)); newContent.append("</span>");
-         * 
-         * //Log.d(TAG, newContent.substring(newContent.length() - 200, newContent.length()+1));
-         * 
-         * // remove just-parsed <ahtag> tag structure so we can find the next oldContent.delete(0, endPos + 8);
-         * oldLowerContent.delete(0, endPos + 8); } }
-         * 
-         * // remove just-parsed <ahtag> tag so we can find the next if (!fullAhtagFound) { oldContent.delete(0,11);
-         * oldLowerContent.delete(0,11); }
-         * 
-         * }
-         * 
-         * // copy the remaining content over newContent.append(oldContent);
-         * 
-         * return newContent.toString();
-         */
+
     }
 
     /**
@@ -736,7 +685,7 @@ public class Util {
             URLConnection connection = ourUrl.openConnection();
             int totalBytes = connection.getContentLength();
             in = connection.getInputStream();
-            Log.d(TAG, "download from " + ourUrl);
+                Log.d(TAG, "download from " + ourUrl);
 
             out = new FileOutputStream(tempFile);
 
@@ -752,12 +701,12 @@ public class Util {
                 int percent = ((totalBytesRead * 100) / totalBytes);
                 for (Completion callback : callbacks) {
                     callback.completed(true, percent + "%");
-                }
+            }
             }
             success = true;
         } catch (IOException ioe) {
             FlurryAgent.onError("fetchTitle", filename, "WARNING");
-            ReportError.reportError("MISSING_EBOOK_" + filename, false);
+            ReportError.reportError("Missing eBook: " + filename + ".\n" + ioe.getMessage(), false);
             throw ioe;
         } finally {
             if (in != null) {
@@ -775,32 +724,32 @@ public class Util {
         if (tempFile.exists()) {
             if (isZip) {
                 ZipInputStream zip = new ZipInputStream(new FileInputStream(tempFile));
-                try {
-                    ZipEntry entry;
-                    while ((entry = zip.getNextEntry()) != null) {
-                        // unpack all the files
-                        File file = new File(libDirFile, entry.getName());
+            try {
+                ZipEntry entry;
+                while ((entry = zip.getNextEntry()) != null) {
+                    // unpack all the files
+                    File file = new File(libDirFile, entry.getName());
 
-                        // check to see if they already have this title
-                        if (file.exists()) {
-                            file.delete();
-                            ybkDao.deleteBook(entry.getName());
-                        }
-
-                        file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
-                        out = new FileOutputStream(file);
-                        files.add(file);
-                        try {
-                            int bytesRead = 0;
-                            while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                                out.write(buffer, 0, bytesRead);
-                            }
-                        } finally {
-                            out.close();
-                        }
+                    // check to see if they already have this title
+                    if (file.exists()) {
+                        file.delete();
+                        ybkDao.deleteBook(entry.getName());
                     }
-                } catch (IOException ioe) {
-                    Log.w(TAG, ioe.toString());
+
+                    file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+                    out = new FileOutputStream(file);
+                    files.add(file);
+                    try {
+                        int bytesRead = 0;
+                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    } finally {
+                        out.close();
+                    }
+                }
+            } catch (IOException ioe) {
+                Log.w(TAG, ioe.toString());
                     throw ioe;
                 } finally {
                     zip.close();
@@ -808,49 +757,21 @@ public class Util {
             } else {
                 files.add(tempFile);
             }
-            for (File file : files) {
-                // rename from tmp
-                String realNameString = file.getAbsolutePath();
-                realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
-                File realName = new File(realNameString);
-                file.renameTo(realName);
-                downloaded.add(realName.getName());
+                for (File file : files) {
+                    // rename from tmp
+                    String realNameString = file.getAbsolutePath();
+                    realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
+                    File realName = new File(realNameString);
+                    file.renameTo(realName);
+                    downloaded.add(realName.getName());
+                }
+                if (tempFile.exists()) {
+                    tempFile.delete();
+                }
             }
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
-        }
         return downloaded;
     }
-
-    /**
-     * This should ask the user whether they want to overwrite the title in question... It's causing crashes because it
-     * is called from a new thread. This may be fixed or we may just scrap it.
-     * 
-     * @param context
-     * @param file
-     * @return
-     */
-    // @SuppressWarnings("unused")
-    // private static boolean shouldDownload(final Context context, final File
-    // file) {
-    // new AlertDialog.Builder(context).setTitle(
-    // R.string.ebook_exists_still_download).setPositiveButton(
-    // R.string.alert_dialog_ok,
-    // new DialogInterface.OnClickListener() {
-    // public void onClick(DialogInterface dialog, int whichButton) {
-    // file.delete();
-    // YbkService.requestRemoveBook(context, file.getAbsolutePath());
-    // }
-    // }).setNegativeButton(R.string.cancel,
-    // new DialogInterface.OnClickListener() {
-    // public void onClick(DialogInterface dialog, int whichButton) {
-    // /* Do absolutely nothing */
-    // }
-    // }).create();
-    //
-    // return !file.exists();
-    // }
+    
     public static void showSplashScreen(Context _this) {
         boolean mShowSplashScreen = true;
         // Toast Splash with image :)
@@ -871,7 +792,6 @@ public class Util {
 
         if (file.delete()) {
             // Delete was successful.
-            // refreshList();
             Toast.makeText(_this, R.string.file_deleted, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(_this, R.string.error_deleting_file, Toast.LENGTH_SHORT).show();
@@ -1169,31 +1089,31 @@ public class Util {
      * @param context
      */
     public static void startFlurrySession(Context context) {
-        boolean BOOLdisableAnalytics;
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        BOOLdisableAnalytics = mSharedPref.getBoolean("disable_analytics", false);
-
         if (Global.DEBUG == 0) {
             // Release Key for use of the END USERS
-            if (BOOLdisableAnalytics) {
 
-                FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
+            FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
+            
+            if (shouldDisableAnalytics(context)) {
                 FlurryAgent.setReportLocation(false);
                 FlurryAgent.onEvent("LocationDisabled");
             } else {
-                FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
                 FlurryAgent.onEvent("LocationEnabled");
             }
         } else {
             // Development key for use of the DEVELOPMENT TEAM
-            if (BOOLdisableAnalytics) {
-                FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
+            FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
+            
+            if (shouldDisableAnalytics(context)) {
                 FlurryAgent.setReportLocation(false);
-            } else {
-                FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
 
             }
         }
+    }
+
+    private static boolean shouldDisableAnalytics(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+                "disable_analytics", false);
     }
 
 }
