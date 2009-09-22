@@ -231,6 +231,11 @@ public class TitleBrowser extends ListActivity {
 
         final String downloadUrlString = downloadUrl.toExternalForm();
         final String fileLocationString = title.fileName;
+        
+        if (fileLocationString.contains("SH Images.zip")) {
+            HiddenEBook.create(this);
+        }
+        
         final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++, R.drawable.ebooksmall,
                 MessageFormat.format(getResources().getString(R.string.downloading), title.name));
         final Completion callback = new Completion() {

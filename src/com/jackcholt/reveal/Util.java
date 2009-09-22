@@ -669,7 +669,7 @@ public class Util {
 
         File libDirFile = new File(libDir);
         String filename = fileName.getName();
-
+        
         // URL encode the filename, but apparently our server code can't handle
         // the standard substitution of plus for space :(
         String urlFileName = URLEncoder.encode(filename, "UTF-8").replace("+", "%20");

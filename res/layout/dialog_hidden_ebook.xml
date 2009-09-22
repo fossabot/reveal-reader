@@ -10,25 +10,26 @@
                 android:layout_height="wrap_content"
         >
                 <LinearLayout
-                        android:id="@+id/refresh_container"
+                        android:id="@+id/hidden_ebook_layout"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
                         android:paddingLeft="5dip"
                         android:paddingRight="5dip"
                         android:orientation="vertical"
                 >
-                        <TextView
-                                android:layout_width="fill_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/wait_for_refresh"
-                        android:layout_margin="5sp"/>
+                <TextView
+		               android:layout_width="fill_parent"
+		               android:layout_height="wrap_content"
+		               android:text="@string/hidden_ebook"
+	 				   android:layout_margin="5sp" 
+	 				   android:id="@+id/hidden_ebook_textview"/>
                         
                 </LinearLayout>
         </ScrollView>
         <Button
-                android:id="@+id/close_about_btn"
-                android:text="@string/close"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-        android:padding="5sp"/>
+	        android:id="@+id/close_about_btn"
+	        android:text="@string/close"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:padding="5sp"/>
 </LinearLayout>

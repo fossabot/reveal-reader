@@ -138,6 +138,7 @@ public class Main extends ListActivity {
                     BOOLsplashed = true;
                 }
             }
+           
 
             // Is Network up or not?
             if (!BOOLcheckedOnline && Util.isNetworkUp(this)) {
