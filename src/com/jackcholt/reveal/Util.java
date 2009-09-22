@@ -683,6 +683,11 @@ public class Util {
             URL mirrorURL = new URL(DOWNLOAD_MIRROR);
             URL ourUrl = new URL(mirrorURL, urlFileName);
             URLConnection connection = ourUrl.openConnection();
+            // set timeouts for 5 minutes
+            // this will give generous time to deal with network and server glitches
+            // but won't cause us to block forever
+            connection.setConnectTimeout(300000);
+            connection.setReadTimeout(300000);
             int totalBytes = connection.getContentLength();
             in = connection.getInputStream();
                 Log.d(TAG, "download from " + ourUrl);

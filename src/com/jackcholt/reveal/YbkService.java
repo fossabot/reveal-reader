@@ -1,6 +1,7 @@
 package com.jackcholt.reveal;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -213,6 +214,9 @@ public class YbkService extends Service {
                                 Completion callbacks[] = callbackMap.get(Long.valueOf(callbacksID));
                                 List<String> downloads = Util.fetchTitle(new File(target), new URL(source), libDir,
                                         context, callbacks);
+                                if (downloads.isEmpty()) {
+                                    throw new FileNotFoundException();
+                                }
                                 for (String download : downloads) {
                                     requestAddBook(context, download, null, callbacks);
                                 }
