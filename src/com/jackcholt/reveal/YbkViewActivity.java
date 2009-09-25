@@ -84,6 +84,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private static final int BOOKMARK_ID = Menu.FIRST + 3;
     public static final int CALL_HISTORY = 1;
     public static final int CALL_BOOKMARK = 2;
+    public static final int CALL_VERSE_CONTEXT_MENU = 3;
+    public static final int CALL_NOTE_EDITED = 4;
 
     private GestureDetector gestureScanner;
 
@@ -176,7 +178,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 final Button chapBtn = mChapBtn = (Button) findViewById(R.id.chapterButton);
                 chapBtn.setOnClickListener(new OnClickListener() {
                     /**
-                     * set the chapter button so it scrolls the window to the top
+                     * set the chapter button so it scrolls the window to the
+                     * top
                      */
                     public void onClick(final View v) {
                         mYbkView.scrollTo(0, 0);
@@ -189,7 +192,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                         YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
                         if (!mBackButtonPressed && !mThemeIsDialog && mChapBtnText != null && mChapFileName != null) {
-                            // Save the book and chapter to history if there is one
+                            // Save the book and chapter to history if there is
+                            // one
                             ybkDao.insertHistory(mBookFileName, mChapBtnText, mChapFileName, mYbkView.getScrollY());
                         }
                         finish();
@@ -375,7 +379,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 Intent emailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url));
                                 startActivity(emailIntent);
                             } else {
-                                view.scrollTo(0, 0);
+                                // pop up a context menu
+                                startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class)
+                                        .putExtra("verseStartPos", obtainVerseStartPos(url)).putExtra("bookFileName",
+                                                mBookFileName).putExtra("chapterName", mChapFileName),
+                                        CALL_VERSE_CONTEXT_MENU);
+                                return true;
                             }
                         } else {
 
@@ -401,9 +410,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                             String[] urlParts = dataString.split("/");
 
-                            // keep original chapter name around so we can check for leading characters later
+                            // keep original chapter name around so we can check
+                            // for leading characters later
                             mOrigChapName = urlParts[0];
-                            // get rid of the book indicator since it is only used in some cases.
+                            // get rid of the book indicator since it is only
+                            // used in some cases.
                             book = shortTitle = mOrigChapName;
                             if (book.charAt(0) == '!' || book.charAt(0) == '^') {
                                 shortTitle = urlParts[0] = book.substring(1);
@@ -504,6 +515,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         });
     }
 
+    private String obtainVerseStartPos(final String url) {
+        return url.split(",")[1];
+    }
+
     /**
      * Set the book and chapter buttons.
      * 
@@ -545,8 +560,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         if (chapBtn != null) {
             /*
-             * Checks to see if the title is too long for the button. This prevents the buttons becoming too large and
-             * the view window being smaller. - Adam Gessel
+             * Checks to see if the title is too long for the button. This
+             * prevents the buttons becoming too large and the view window being
+             * smaller. - Adam Gessel
              */
 
             if (mChapBtnText.length() > 20) {
@@ -778,7 +794,18 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                     return;
 
+                case CALL_VERSE_CONTEXT_MENU:
+                    switch (data.getExtras().getInt(VerseContextDialog.MENU_ITEM_TAG)) {
+                    case VerseContextDialog.ANNOTATE_ID:
+                        startNoteEditForResult(data);
+                        break;
+
+                    case VerseContextDialog.GOTO_TOP_ID:
+                        mYbkView.scrollTo(0, 0);
+                        break;
+                    }
                 }
+
             }
             super.onActivityResult(requestCode, resultCode, data);
         } catch (RuntimeException rte) {
@@ -786,6 +813,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         } catch (Error e) {
             unexpectedError(e);
         }
+    }
+
+    private void startNoteEditForResult(final Intent data) {
+        startActivityForResult(new Intent(getBaseContext(), NoteEdit.class).putExtra("verseStartPos",
+                data.getExtras().getString("verseStartPos")).putExtra("chapterName",
+                data.getExtras().getString("chapterName")).putExtra("bookFileName",
+                data.getExtras().getString("bookFileName")), CALL_NOTE_EDITED);
     }
 
     /**
@@ -821,7 +855,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     /**
-     * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
+     * Uses a YbkFileReader to get the content of a chapter and loads into the
+     * WebView.
      * 
      * @param filePath
      *            The path to the YBK file from which to read the chapter.
@@ -906,7 +941,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     chap = Util.independentSubstring(chap, 0, chap.length() - 1);
                 }
 
-                // use the dreaded break <label> in order to simplify conditional nesting
+                // use the dreaded break <label> in order to simplify
+                // conditional nesting
                 label_get_content: if (hashLoc != -1) {
                     fragment = Util.independentSubstring(chap, hashLoc + 1);
                     if (fragment.indexOf(".") != -1) {
@@ -947,7 +983,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         break label_get_content;
                     }
 
-                    // if we haven't reached a break statement yet, we have a problem.
+                    // if we haven't reached a break statement yet, we have a
+                    // problem.
                     Toast.makeText(this, "Could not read chapter '" + chap + "'", Toast.LENGTH_LONG);
                     ybkView
                             .loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain",

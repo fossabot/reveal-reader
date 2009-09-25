@@ -47,10 +47,7 @@ public class VerseContextDialog extends ListActivity {
         data.add(this.getResources().getString(R.string.menu_highlight));
         data.add(this.getResources().getString(R.string.menu_goto_top));
 
-        // Now create a simple array adapter and set it to display
-        ArrayAdapter<String> menuAdapter = new ArrayAdapter<String>(this, R.layout.verse_menu_row, data);
-
-        setListAdapter(menuAdapter);
+        setListAdapter(new ArrayAdapter<String>(this, R.layout.verse_menu_row, data));
     }
 
     @Override
@@ -58,8 +55,8 @@ public class VerseContextDialog extends ListActivity {
         Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
 
         setResult(RESULT_OK, new Intent().putExtra(MENU_ITEM_TAG, selectionRowId).putExtra("verseStartPos",
-                getIntent().getExtras().getString("verseStartPos")).putExtra("bookId",
-                getIntent().getExtras().getLong("bookId")).putExtra("chapterName",
+                getIntent().getExtras().getString("verseStartPos")).putExtra("bookFileName",
+                getIntent().getExtras().getString("bookFileName")).putExtra("chapterName",
                 getIntent().getExtras().getString("chapterName")));
 
         finish();
@@ -70,7 +67,7 @@ public class VerseContextDialog extends ListActivity {
     protected void onStop() {
         try {
             super.onStop();
-            FlurryAgent.onEndSession(Main.getMainApplication());
+            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

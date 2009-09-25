@@ -2,29 +2,30 @@ package com.jackcholt.reveal.data;
 
 public class Note {
     private Long id = null;
-    private long bookId;
-    private long chapterId;
+    private String bookFileName;
+    private String chapterName;
     private long verseStartPos;
     private String body;
     private String chapterVerse;
 
-    public Note(Long id, long bookId, long chapterId, long verseStartPos, String body, String chapterVerse) {
+    public Note(Long id, String bookFileName, String chapterName, long verseStartPos, String body, String chapterVerse) {
         this.id = id;
-        this.bookId = bookId;
-        this.chapterId = chapterId;
+        this.bookFileName = bookFileName;
+        this.chapterName = chapterName;
         this.verseStartPos = verseStartPos;
         this.body = body;
         this.chapterVerse = chapterVerse;
     }
-    
+
     /**
      * Constructor for creating a new Note.
+     * 
      * @see Note(Long, long, long, long, String);
      */
-    public Note(long bookId, long chapterId, long verseStartPos, String body, String chapterVerse) {
-        this(null, bookId, chapterId, verseStartPos, body, chapterVerse);
+    public Note(String bookFileName, String chapterName, long verseStartPos, String body, String chapterVerse) {
+        this(null, bookFileName, chapterName, verseStartPos, body, chapterVerse);
     }
-    
+
     /**
      * @return the id
      */
@@ -42,15 +43,15 @@ public class Note {
     /**
      * @return the bookId
      */
-    public final long getBookId() {
-        return bookId;
+    public final String getBookFileName() {
+        return bookFileName;
     }
 
     /**
      * @return the chapterId
      */
-    public final long getChapterId() {
-        return chapterId;
+    public final String getChapterName() {
+        return chapterName;
     }
 
     /**

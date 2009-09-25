@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.jackcholt.reveal" android:versionName="1.2" android:versionCode="531">
-	<application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true" android:name="RevealApplication">
-		<activity android:name=".Main" android:screenOrientation="sensor" 
-			android:multiprocess="true" android:label="@string/app_name" android:clearTaskOnLaunch="true">
+	package="com.jackcholt.reveal" android:versionName="1.2"
+	android:versionCode="531">
+	<application android:icon="@drawable/icon" android:label="@string/app_name"
+		android:debuggable="true" android:name="RevealApplication">
+		<activity android:name=".Main" android:screenOrientation="sensor"
+			android:multiprocess="true" android:label="@string/app_name"
+			android:clearTaskOnLaunch="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
@@ -27,21 +30,20 @@
 
 		<activity android:name=".ErrorDialog" android:label="@string/error_title"
 			android:theme="@android:style/Theme.Dialog"
-			android:screenOrientation="sensor" android:multiprocess="false"/>
+			android:screenOrientation="sensor" android:multiprocess="false" />
 		<service android:name=".YbkService" android:exported="false" />
 
 		<activity android:name=".YbkPopupActivity" android:label="@string/reveal_ybk_view"
-			android:theme="@android:style/Theme.Dialog"/>
+			android:theme="@android:style/Theme.Dialog" />
+		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog" />
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />
-	<!--<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-	--><uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-	
-	<uses-sdk android:minSdkVersion="3"/>
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.READ_PHONE_STATE" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"></uses-permission>
+	<uses-sdk android:minSdkVersion="3" />
+
 </manifest> 
