@@ -147,10 +147,11 @@
 	<string name="disable_analytics">Disable Analytics</string>
 	<string name="paypalURL">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4146444</string>
 	<string name="title_download_url_ourDB">http://revealreader.thepackhams.com/ebooks</string>
-<string name="no_swipe_available">No Swipe Info Available Here...</string>
-<string name="refreshing_library">Refreshing library...</string>
-<string name="refreshed_library">Refreshed library.</string>
-<string name="downloading">&quot;Downloading ''{0}''.&quot;</string>
-<string name="hidden_ebook">The eBook you are about to download is what we call a &quot;Hidden eBook&quot; and does NOT display on the main list of eBooks beacuse it's only referenced by other eBooks.  An example of this is the &quot;Study Help Images&quot; eBook that cannot be opened by itself and used by the &quot;Study Helps&quot; eBook to display images.</string>
-<string name="hidden_ebook_title">What Are Hidden eBooks?</string>
+	<string name="no_swipe_available">No Swipe Info Available Here...</string>
+	<string name="refreshing_library">Refreshing library...</string>
+	<string name="refreshed_library">Refreshed library.</string>
+	<string name="downloading">&quot;Downloading ''{0}''.&quot;</string>
+	<string name="hidden_ebook">The eBook you are about to download is what we call a &quot;Hidden eBook&quot; and does NOT display on the main list of eBooks beacuse it's only referenced by other eBooks.  An example of this is the &quot;Study Help Images&quot; eBook that cannot be opened by itself and used by the &quot;Study Helps&quot; eBook to display images.</string>
+	<string name="hidden_ebook_title">What Are Hidden eBooks?</string>
+	<string name="base_url">http://revealreader.thepackhams.com/</string>
 </resources>

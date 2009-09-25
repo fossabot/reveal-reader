@@ -87,7 +87,7 @@ public class Settings extends PreferenceActivity {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
-
+        
     }
 
     /*

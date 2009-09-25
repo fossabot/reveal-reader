@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -24,15 +25,20 @@ import android.os.Debug;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.webkit.WebView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
@@ -77,6 +83,8 @@ public class Main extends ListActivity {
     private static boolean BOOLcheckedOnline = false;
     private boolean BOOLshowFullScreen;
     private final Handler mHandler = new Handler();
+    private TextView selection;
+    private String strFontSize = "";
 
     // private static boolean mUpdating = false;
     private List<Book> mBookTitleList;
@@ -370,12 +378,46 @@ public class Main extends ListActivity {
         ybkDao = YbkDAO.getInstance(this);
 
         mBookTitleList = ybkDao.getBookTitles();
-        // Now create a simple adapter and set it to display
-        ArrayAdapter<Book> bookAdapter = new ArrayAdapter<Book>(this, R.layout.book_list_row, mBookTitleList);
-
-        setListAdapter(bookAdapter);
+        // Now create a simple adapter that finds icons and set it to display
+        setListAdapter(new IconicAdapter(this));
+        selection = (TextView) findViewById(R.id.label);
     }
+    
+    
+    class IconicAdapter extends ArrayAdapter {
+        Activity context;
 
+        IconicAdapter(Activity context) {
+            super(context, R.layout.book_list_row, mBookTitleList);
+        }
+
+        public View getView(int location, View convertView, ViewGroup parent) {
+            View row = convertView;
+
+            if (row == null) {
+                LayoutInflater inflater = getLayoutInflater();
+                row = inflater.inflate(R.layout.book_list_row, null);
+            }
+
+            
+            TextView label = (TextView) row.findViewById(R.id.label);
+
+            strFontSize = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
+            int fontSize = Integer.parseInt(strFontSize);
+
+            label.setTextSize(fontSize);
+            label.setText(mBookTitleList.get(location).title);
+            ImageView icon = (ImageView) row.findViewById(R.id.icon);
+
+            //if (mBookTitleList.get(location).) {
+                icon.setImageResource(R.drawable.ebooksmall);
+            /*} else {
+                icon.setImageResource(R.drawable.reveal);
+            }*/
+            return (row);
+        }
+    }
+    
     /**
      * Class for filtering non-YBK files out of a list of files
      */
