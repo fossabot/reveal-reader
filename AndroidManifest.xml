@@ -36,6 +36,7 @@
 		<activity android:name=".YbkPopupActivity" android:label="@string/reveal_ybk_view"
 			android:theme="@android:style/Theme.Dialog" />
 		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog" />
+		<activity android:name=".NoteEdit" android:theme="@android:style/Theme.Dialog" />
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />

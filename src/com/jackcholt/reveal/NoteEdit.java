@@ -16,8 +16,8 @@ public class NoteEdit extends Activity {
     private TextView mChapterVerse;
     private Long mRowId;
     private NotesDbAdapter mDbHelper;
-    private long mBookId;
-    private long mChapterId;
+    private String mBookFileName;
+    private String mChapterName;
     private long mVerseStartPos;
 
     @Override
@@ -66,8 +66,8 @@ public class NoteEdit extends Activity {
             mChapterVerse.setText(noteCursor.getString(noteCursor
                     .getColumnIndexOrThrow(NotesDbAdapter.KEY_CHAPTER_VERSE)));
 
-            mBookId = noteCursor.getLong(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BOOK_ID));
-            mChapterId = noteCursor.getLong(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_CHAPTER_ID));
+            mBookFileName = noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BOOK_FILENAME));
+            mChapterName = noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_CHAPTER_NAME));
             mVerseStartPos = noteCursor.getLong(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_VERSE_START_POS));
         }
     }
@@ -93,13 +93,13 @@ public class NoteEdit extends Activity {
     private void saveState() {
 
         if (null == mRowId) {
-            long id = mDbHelper.createNote(new Note(mBookId, mChapterId, mVerseStartPos,
+            long id = mDbHelper.createNote(new Note(mBookFileName, mChapterName, mVerseStartPos,
                     mBodyText.getText().toString(), mChapterVerse.getText().toString()));
             if (id > 0) {
                 mRowId = id;
             }
         } else {
-            mDbHelper.updateNote(new Note(mRowId, mBookId, mChapterId, mVerseStartPos, mBodyText.getText().toString(),
+            mDbHelper.updateNote(new Note(mRowId, mBookFileName, mChapterName, mVerseStartPos, mBodyText.getText().toString(),
                     mChapterVerse.getText().toString()));
         }
     }
