@@ -12,8 +12,8 @@ import com.jackcholt.reveal.data.Note;
 
 public class NoteEdit extends Activity {
 
-    private EditText mBodyText;
-    private TextView mChapterVerse;
+    //private EditText mBodyTextField;
+    //private TextView mChapterVerseField;
     private Long mRowId;
     private NotesDbAdapter mDbHelper;
     private String mBookFileName;
@@ -27,27 +27,20 @@ public class NoteEdit extends Activity {
         mDbHelper = new NotesDbAdapter(this);
         mDbHelper.open();
 
-        setContentView(R.layout.note_edit); 
+        setContentView(R.layout.note_edit);
 
-        mChapterVerse = (TextView) findViewById(R.id.chapter_verse);
-        mBodyText = (EditText) findViewById(R.id.body);
-
-        Button confirmButton = (Button) findViewById(R.id.confirm);
-
-        if (null == savedInstanceState) {
-            mRowId = null;
-        } else {
-            mRowId = savedInstanceState.getLong(NotesDbAdapter.KEY_ROWID);
-        }
+        mRowId = (null == savedInstanceState || savedInstanceState.getLong(NotesDbAdapter.KEY_ROWID) == 0) ? null
+                : savedInstanceState.getLong(NotesDbAdapter.KEY_ROWID);
 
         if (null == mRowId) {
-            Bundle extras = getIntent().getExtras();
-            mRowId = extras != null ? extras.getLong(NotesDbAdapter.KEY_ROWID) : null;
+            mRowId = (getIntent().getExtras() != null && getIntent().getExtras().getLong(NotesDbAdapter.KEY_ROWID) != 0) ? getIntent()
+                    .getExtras().getLong(NotesDbAdapter.KEY_ROWID)
+                    : null;
         }
 
         populateFields();
 
-        confirmButton.setOnClickListener(new View.OnClickListener() {
+        findConfirmButton().setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
                 setResult(RESULT_OK);
@@ -57,19 +50,32 @@ public class NoteEdit extends Activity {
         });
     }
 
+    private EditText findBodyTextField() {
+        return (EditText) findViewById(R.id.body);
+    }
+
+    private TextView findChapterVerseField() {
+        return (TextView) findViewById(R.id.chapter_verse);
+    }
+
+    private Button findConfirmButton() {
+        return (Button) findViewById(R.id.confirm);
+    }
+
     private void populateFields() {
-        if (mRowId != null) {
-            Cursor noteCursor = mDbHelper.fetchNote(mRowId);
-            startManagingCursor(noteCursor);
+        if (mRowId == null)
+            return;
 
-            mBodyText.setText(noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)));
-            mChapterVerse.setText(noteCursor.getString(noteCursor
-                    .getColumnIndexOrThrow(NotesDbAdapter.KEY_CHAPTER_VERSE)));
+        Cursor noteCursor = mDbHelper.fetchNote(mRowId);
+        startManagingCursor(noteCursor);
 
-            mBookFileName = noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BOOK_FILENAME));
-            mChapterName = noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_CHAPTER_NAME));
-            mVerseStartPos = noteCursor.getLong(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_VERSE_START_POS));
-        }
+        findBodyTextField().setText(noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)));
+        findChapterVerseField().setText(noteCursor.getString(noteCursor
+                .getColumnIndexOrThrow(NotesDbAdapter.KEY_CHAPTER_VERSE)));
+
+        mBookFileName = noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BOOK_FILENAME));
+        mChapterName = noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_CHAPTER_NAME));
+        mVerseStartPos = noteCursor.getLong(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_VERSE_START_POS));
     }
 
     @Override
@@ -93,14 +99,14 @@ public class NoteEdit extends Activity {
     private void saveState() {
 
         if (null == mRowId) {
-            long id = mDbHelper.createNote(new Note(mBookFileName, mChapterName, mVerseStartPos,
-                    mBodyText.getText().toString(), mChapterVerse.getText().toString()));
+            long id = mDbHelper.createNote(new Note(mBookFileName, mChapterName, mVerseStartPos, findBodyTextField()
+                    .getText().toString(), findChapterVerseField().getText().toString()));
             if (id > 0) {
                 mRowId = id;
             }
         } else {
-            mDbHelper.updateNote(new Note(mRowId, mBookFileName, mChapterName, mVerseStartPos, mBodyText.getText().toString(),
-                    mChapterVerse.getText().toString()));
+            mDbHelper.updateNote(new Note(mRowId, mBookFileName, mChapterName, mVerseStartPos, findBodyTextField().getText()
+                    .toString(), findChapterVerseField().getText().toString()));
         }
     }
 }
