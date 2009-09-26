@@ -51,7 +51,7 @@ public class TitleBrowser extends ListActivity {
     public static final String TITLE_LOOKUP_URL = "http://revealreader.thepackhams.com/catalog/getTitle.php?file=";
     public static final int POPULATE_TIMEOUT = 5000;
     private NotificationManager mNotifMgr;
-    private int mNotifId = 0;
+    private int mNotifId = Integer.MIN_VALUE;
     private static final String TAG = "Reveal TitleBrowser";
     private Stack<URL> mBreadCrumb = new Stack<URL>();
     private List<Title> mListTitles;
