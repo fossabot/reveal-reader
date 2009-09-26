@@ -33,7 +33,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -83,6 +82,7 @@ public class Main extends ListActivity {
     private static boolean BOOLcheckedOnline = false;
     private boolean BOOLshowFullScreen;
     private final Handler mHandler = new Handler();
+    @SuppressWarnings("unused")
     private TextView selection;
     private String strFontSize = "";
 
@@ -384,6 +384,7 @@ public class Main extends ListActivity {
     }
     
     
+    @SuppressWarnings("unchecked")
     class IconicAdapter extends ArrayAdapter {
         Activity context;
 
