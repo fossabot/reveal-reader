@@ -877,8 +877,10 @@ public class Util {
         }
 
         File imagesDir = new File(strRevealDir + "images/");
-        if (!imagesDir.exists()) {
+        File thumbsDir = new File(strRevealDir + "thumbnails/");
+        if (!imagesDir.exists() || !thumbsDir.exists()) {
             imagesDir.mkdirs();
+            thumbsDir.mkdirs();
             // Log.i(Global.TAG, "Create images dir on sdcard ok");
         }
     }

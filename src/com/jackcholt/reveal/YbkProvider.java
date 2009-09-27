@@ -220,6 +220,7 @@ public class YbkProvider extends ContentProvider {
             HashMap<Uri, ImgFileInfo> tempImgFiles = mTempImgFiles;
             ImgFileInfo info;
             File outFile;
+            File outThumbnail;
 
             String strUri = uri.toString();
             String fileExt = strUri.substring(strUri.lastIndexOf("."));
@@ -239,12 +240,16 @@ public class YbkProvider extends ContentProvider {
                     for (int i = 1; i < fileParts.length; i++) {
                         tempFileName += fileParts[i] + "_";
                     }
+                    String tempThumbFileName = "";
+                    tempThumbFileName += fileParts[1] + fileExt;
+                   
                     tempFileName = tempFileName.substring(0, tempFileName.length() - 1);
 
                     String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
                             Settings.DEFAULT_EBOOK_DIRECTORY);
 
                     outFile = new File(libDir + "images/", tempFileName);
+                    outThumbnail = new File(libDir + "thumbnails/", tempThumbFileName);
 
                     if (!outFile.exists()) {
                         HashMap<String, String> chapterMap = Util.getFileNameChapterFromUri(strUri, false);
@@ -257,11 +262,17 @@ public class YbkProvider extends ContentProvider {
                             if (contents != null) {
                                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),
                                         BUFFER_SIZE);
+                                BufferedOutputStream outThumb = new BufferedOutputStream(new FileOutputStream(outThumbnail),
+                                        BUFFER_SIZE);
                                 try {
                                     out.write(contents);
                                     out.flush();
+                                    outThumb.write(contents);
+                                    outThumb.flush();
+
                                 } finally {
                                     out.close();
+                                    outThumb.close();
                                 }
                             } else {
                                 throw new FileNotFoundException("Couldn't read internal image file.");
@@ -271,7 +282,7 @@ public class YbkProvider extends ContentProvider {
                                     + e.getMessage() + " " + e.getCause());
                         } finally {
                             if (ybkRdr != null) {
-                                ybkRdr.unuse();
+                                //ybkRdr.unuse();
                                 ybkRdr = null;
                             }
                         }
@@ -312,8 +323,8 @@ public class YbkProvider extends ContentProvider {
         int unuse() {
             synchronized (mTempImgFiles) {
                 if (--useCount <= 0) {
-                    mTempImgFiles.remove(uri);
-                    file.delete();
+                    //mTempImgFiles.remove(uri);
+                    //file.delete();
                 }
                 return useCount;
             }

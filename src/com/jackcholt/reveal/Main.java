@@ -2,6 +2,8 @@ package com.jackcholt.reveal;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Collections;
@@ -20,8 +22,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Debug;
+import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
@@ -409,12 +416,41 @@ public class Main extends ListActivity {
             label.setTextSize(fontSize);
             label.setText(mBookTitleList.get(location).title);
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
+            
+            String eBookname = mBookTitleList.get(location).shortTitle;
+            
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
+            String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
-            //if (mBookTitleList.get(location).) {
+            File eBookIcon = new File(strRevealDir, "/thumbnails/" + eBookname + ".jpg");
+            
+            FileInputStream is = null;
+            try {
+                is = new FileInputStream(eBookIcon);
+            } catch (FileNotFoundException e) {
+                    Log.d("ICON: ", "file Not Found");
+            }
+
+            if (is  != null) {
+                Bitmap bm;
+                bm = BitmapFactory.decodeStream(is, null, null);
+
+                int width = bm.getWidth();
+                int height = bm.getHeight();
+                int newWidth = 20;
+                int newHeight = 20;
+               
+                float scaleWidth = ((float) newWidth) / width;
+                float scaleHeight = ((float) newHeight) / height;
+               
+                Matrix matrix = new Matrix();
+                matrix.postScale(scaleWidth, scaleHeight);
+                Bitmap resizedBm = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, true);
+                BitmapDrawable bmd = new BitmapDrawable(resizedBm); 
+                icon.setImageDrawable(bmd);
+            } else {
                 icon.setImageResource(R.drawable.ebooksmall);
-            /*} else {
-                icon.setImageResource(R.drawable.reveal);
-            }*/
+            }
             return (row);
         }
     }
