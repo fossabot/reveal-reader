@@ -282,7 +282,7 @@ public class YbkProvider extends ContentProvider {
                                     + e.getMessage() + " " + e.getCause());
                         } finally {
                             if (ybkRdr != null) {
-                                //ybkRdr.unuse();
+                                ybkRdr.unuse();
                                 ybkRdr = null;
                             }
                         }
