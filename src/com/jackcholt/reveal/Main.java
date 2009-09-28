@@ -438,7 +438,7 @@ public class Main extends ListActivity {
                 int width = bm.getWidth();
                 int height = bm.getHeight();
                 int newWidth = 20;
-                int newHeight = 20;
+                int newHeight = 25;
                
                 float scaleWidth = ((float) newWidth) / width;
                 float scaleHeight = ((float) newHeight) / height;
