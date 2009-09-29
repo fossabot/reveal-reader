@@ -381,10 +381,7 @@ public class Main extends ListActivity {
      * Refresh the list of books in the main list.
      */
     private void refreshBookList() {
-        YbkDAO ybkDao;
-        ybkDao = YbkDAO.getInstance(this);
-
-        mBookTitleList = ybkDao.getBookTitles();
+        mBookTitleList = YbkDAO.getInstance(this).getBookTitles();
         // Now create a simple adapter that finds icons and set it to display
         setListAdapter(new IconicAdapter(this));
         selection = (TextView) findViewById(R.id.label);
