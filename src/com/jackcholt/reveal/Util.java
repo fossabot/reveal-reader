@@ -669,7 +669,7 @@ public class Util {
 
         File libDirFile = new File(libDir);
         String filename = fileName.getName();
-        
+
         // URL encode the filename, but apparently our server code can't handle
         // the standard substitution of plus for space :(
         String urlFileName = URLEncoder.encode(filename, "UTF-8").replace("+", "%20");
@@ -690,7 +690,7 @@ public class Util {
             connection.setReadTimeout(300000);
             int totalBytes = connection.getContentLength();
             in = connection.getInputStream();
-                Log.d(TAG, "download from " + ourUrl);
+            Log.d(TAG, "download from " + ourUrl);
 
             out = new FileOutputStream(tempFile);
 
@@ -706,7 +706,7 @@ public class Util {
                 int percent = ((totalBytesRead * 100) / totalBytes);
                 for (Completion callback : callbacks) {
                     callback.completed(true, percent + "%");
-            }
+                }
             }
             success = true;
         } catch (IOException ioe) {
@@ -729,32 +729,32 @@ public class Util {
         if (tempFile.exists()) {
             if (isZip) {
                 ZipInputStream zip = new ZipInputStream(new FileInputStream(tempFile));
-            try {
-                ZipEntry entry;
-                while ((entry = zip.getNextEntry()) != null) {
-                    // unpack all the files
-                    File file = new File(libDirFile, entry.getName());
+                try {
+                    ZipEntry entry;
+                    while ((entry = zip.getNextEntry()) != null) {
+                        // unpack all the files
+                        File file = new File(libDirFile, entry.getName());
 
-                    // check to see if they already have this title
-                    if (file.exists()) {
-                        file.delete();
-                        ybkDao.deleteBook(entry.getName());
-                    }
-
-                    file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
-                    out = new FileOutputStream(file);
-                    files.add(file);
-                    try {
-                        int bytesRead = 0;
-                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                            out.write(buffer, 0, bytesRead);
+                        // check to see if they already have this title
+                        if (file.exists()) {
+                            file.delete();
+                            ybkDao.deleteBook(entry.getName());
                         }
-                    } finally {
-                        out.close();
+
+                        file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+                        out = new FileOutputStream(file);
+                        files.add(file);
+                        try {
+                            int bytesRead = 0;
+                            while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                                out.write(buffer, 0, bytesRead);
+                            }
+                        } finally {
+                            out.close();
+                        }
                     }
-                }
-            } catch (IOException ioe) {
-                Log.w(TAG, ioe.toString());
+                } catch (IOException ioe) {
+                    Log.w(TAG, ioe.toString());
                     throw ioe;
                 } finally {
                     zip.close();
@@ -762,21 +762,21 @@ public class Util {
             } else {
                 files.add(tempFile);
             }
-                for (File file : files) {
-                    // rename from tmp
-                    String realNameString = file.getAbsolutePath();
-                    realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
-                    File realName = new File(realNameString);
-                    file.renameTo(realName);
-                    downloaded.add(realName.getName());
-                }
-                if (tempFile.exists()) {
-                    tempFile.delete();
-                }
+            for (File file : files) {
+                // rename from tmp
+                String realNameString = file.getAbsolutePath();
+                realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
+                File realName = new File(realNameString);
+                file.renameTo(realName);
+                downloaded.add(realName.getName());
             }
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+        }
         return downloaded;
     }
-    
+
     public static void showSplashScreen(Context _this) {
         boolean mShowSplashScreen = true;
         // Toast Splash with image :)
@@ -1100,7 +1100,7 @@ public class Util {
             // Release Key for use of the END USERS
 
             FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
-            
+
             if (shouldDisableAnalytics(context)) {
                 FlurryAgent.setReportLocation(false);
                 FlurryAgent.onEvent("LocationDisabled");
@@ -1110,7 +1110,7 @@ public class Util {
         } else {
             // Development key for use of the DEVELOPMENT TEAM
             FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
-            
+
             if (shouldDisableAnalytics(context)) {
                 FlurryAgent.setReportLocation(false);
 
@@ -1119,8 +1119,7 @@ public class Util {
     }
 
     private static boolean shouldDisableAnalytics(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
-                "disable_analytics", false);
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean("disable_analytics", false);
     }
 
 }
