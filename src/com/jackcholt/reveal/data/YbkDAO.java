@@ -178,12 +178,9 @@ public class YbkDAO {
             deleteBook(fileName);
             Log.d(TAG, "Inserting book: " + fileName);
             storeChapterIndex(fileName, chapterIndex);
-            // long id = Util.getUniqueTimeStamp();
             Book book = new Book();
-            // book.id = id;
             book.fileName = fileName;
             book.charset = charset;
-            // book.active = true;
             book.title = title;
             book.shortTitle = shortTitle;
             mBookList.add(book);

@@ -214,13 +214,12 @@ public class YbkFileReader {
         mFileIO = new RandomAccessFile(mFile, "r");
         mChannel = mFileIO.getChannel();
 
-        YbkDAO ybkDao = YbkDAO.getInstance(ctx);
-        mBook = ybkDao.getBook(fileName);
+        mBook = YbkDAO.getInstance(ctx).getBook(fileName);
         if (mBook != null) {
             if (mBook.charset != null) {
                 mCharset = mBook.charset;
             }
-            mChapterIndex = ybkDao.getChapterIndex(fileName);
+            mChapterIndex = YbkDAO.getInstance(ctx).getChapterIndex(fileName);
         }
     }
 
@@ -340,6 +339,8 @@ public class YbkFileReader {
 
             if (bindingChapter != null) {
                 String bindingText = readInternalFile(bindingChapter.offset, bindingChapter.length);
+                Log.d(TAG, "Binding text: " + bindingText);
+                
                 String bookTitle = null;
                 String shortTitle = null;
 
@@ -350,13 +351,16 @@ public class YbkFileReader {
                     }
                     shortTitle = Util.getBookShortTitleFromBindingText(bindingText);
                     if (shortTitle.length() == 0) {
+                        Log.d(TAG,"Using the backup method of determining shortTitle");
                         shortTitle = new File(mFilename).getName().replaceFirst("(?s)\\..*", "");
                     }
+                    Log.d(TAG, "shortTitle: " + shortTitle);
                 }
                 mTitle = bookTitle;
                 mShortTitle = shortTitle;
             }
-            String orderString = orderChapter != null ? readInternalFile(orderChapter.offset, orderChapter.length)
+            
+            String orderString = (orderChapter != null) ? readInternalFile(orderChapter.offset, orderChapter.length)
                     : Util.EMPTY_STRING;
             mChapterIndex = new ChapterIndex(chapters, orderString, mCharset);
 
@@ -375,9 +379,8 @@ public class YbkFileReader {
      */
     public Book populateBook() throws IOException {
         String fileName = mFilename;
-        YbkDAO ybkDao = YbkDAO.getInstance(mCtx);
         populateFileData();
-        mBook = ybkDao.insertBook(fileName, mCharset, mTitle, mShortTitle, mChapterIndex);
+        mBook = YbkDAO.getInstance(mCtx).insertBook(fileName, mCharset, mTitle, mShortTitle, mChapterIndex);
         return mBook;
     }
 

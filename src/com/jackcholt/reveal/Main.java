@@ -28,7 +28,6 @@ import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Debug;
-import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
@@ -93,7 +92,6 @@ public class Main extends ListActivity {
     private TextView selection;
     private String strFontSize = "";
 
-    // private static boolean mUpdating = false;
     private List<Book> mBookTitleList;
 
     /** Called when the activity is first created. */
@@ -153,7 +151,6 @@ public class Main extends ListActivity {
                     BOOLsplashed = true;
                 }
             }
-           
 
             // Is Network up or not?
             if (!BOOLcheckedOnline && Util.isNetworkUp(this)) {
@@ -323,8 +320,7 @@ public class Main extends ListActivity {
             dbSet.add(book.fileName);
         }
 
-        // if adding files, then calculate set of files on disk, but not in the
-        // db
+        // if adding files, then calculate set of files on disk, but not in the db
         Set<String> addFiles;
         if (addNewBooks) {
             addFiles = new HashSet<String>(fileSet);
@@ -363,7 +359,6 @@ public class Main extends ListActivity {
                 }
             };
 
-            // Toast.makeText(this, getResources().getString(R.string.refreshing_library), Toast.LENGTH_LONG).show();
             progressNotification.show();
 
             // schedule the deletion of the db entries that are not on disk
@@ -386,8 +381,7 @@ public class Main extends ListActivity {
         setListAdapter(new IconicAdapter(this));
         selection = (TextView) findViewById(R.id.label);
     }
-    
-    
+
     @SuppressWarnings("unchecked")
     class IconicAdapter extends ArrayAdapter {
         Activity context;
@@ -404,7 +398,6 @@ public class Main extends ListActivity {
                 row = inflater.inflate(R.layout.book_list_row, null);
             }
 
-            
             TextView label = (TextView) row.findViewById(R.id.label);
 
             strFontSize = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
@@ -413,22 +406,22 @@ public class Main extends ListActivity {
             label.setTextSize(fontSize);
             label.setText(mBookTitleList.get(location).title);
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
-            
+
             String eBookname = mBookTitleList.get(location).shortTitle;
-            
+
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
             String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
             File eBookIcon = new File(strRevealDir, "/thumbnails/" + eBookname + ".jpg");
-            
+
             FileInputStream is = null;
             try {
                 is = new FileInputStream(eBookIcon);
             } catch (FileNotFoundException e) {
-                    Log.d("ICON: ", "file Not Found");
+                Log.d("ICON: ", "file Not Found");
             }
 
-            if (is  != null) {
+            if (is != null) {
                 Bitmap bm;
                 bm = BitmapFactory.decodeStream(is, null, null);
 
@@ -436,14 +429,14 @@ public class Main extends ListActivity {
                 int height = bm.getHeight();
                 int newWidth = 20;
                 int newHeight = 25;
-               
+
                 float scaleWidth = ((float) newWidth) / width;
                 float scaleHeight = ((float) newHeight) / height;
-               
+
                 Matrix matrix = new Matrix();
                 matrix.postScale(scaleWidth, scaleHeight);
                 Bitmap resizedBm = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, true);
-                BitmapDrawable bmd = new BitmapDrawable(resizedBm); 
+                BitmapDrawable bmd = new BitmapDrawable(resizedBm);
                 icon.setImageDrawable(bmd);
             } else {
                 icon.setImageResource(R.drawable.ebooksmall);
@@ -451,7 +444,7 @@ public class Main extends ListActivity {
             return (row);
         }
     }
-    
+
     /**
      * Class for filtering non-YBK files out of a list of files
      */
