@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
@@ -34,6 +35,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
@@ -1121,5 +1126,31 @@ public class Util {
     private static boolean shouldDisableAnalytics(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean("disable_analytics", false);
     }
+    
+    public static void thumbOnlineUpdate(String eBookName) {
+        InputStream fis = null;
+        FileOutputStream fos = null;
 
+        try {
+            int b;
+            fos = new FileOutputStream("image1.gif");
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            Log.i("file status", "file created");
+            URL rurl = new URL("http://revealreader.thepackhams.com/thumbnail/" + eBookName + ".png");
+            URLConnection con= rurl.openConnection();
+            con.connect();
+            fis=con.getInputStream();
+            
+            while((b=fis.read())!=-1) {
+                osw.write(b);
+            }
+
+            Log.i("writing"," done");
+            fis.close();
+            fos.close();
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

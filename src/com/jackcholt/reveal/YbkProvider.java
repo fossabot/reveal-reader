@@ -242,7 +242,7 @@ public class YbkProvider extends ContentProvider {
                     }
                     String tempThumbFileName = "";
                     tempThumbFileName += fileParts[1] + fileExt;
-                   
+
                     tempFileName = tempFileName.substring(0, tempFileName.length() - 1);
 
                     String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
@@ -262,8 +262,8 @@ public class YbkProvider extends ContentProvider {
                             if (contents != null) {
                                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile),
                                         BUFFER_SIZE);
-                                BufferedOutputStream outThumb = new BufferedOutputStream(new FileOutputStream(outThumbnail),
-                                        BUFFER_SIZE);
+                                BufferedOutputStream outThumb = new BufferedOutputStream(new FileOutputStream(
+                                        outThumbnail), BUFFER_SIZE);
                                 try {
                                     out.write(contents);
                                     out.flush();
@@ -307,6 +307,7 @@ public class YbkProvider extends ContentProvider {
     private class ImgFileInfo {
         File file;
         int useCount = 1;
+        @SuppressWarnings("unused")
         Uri uri;
 
         ImgFileInfo(Uri uri, File file) {
@@ -323,8 +324,8 @@ public class YbkProvider extends ContentProvider {
         int unuse() {
             synchronized (mTempImgFiles) {
                 if (--useCount <= 0) {
-                    //mTempImgFiles.remove(uri);
-                    //file.delete();
+                    // mTempImgFiles.remove(uri);
+                    // file.delete();
                 }
                 return useCount;
             }

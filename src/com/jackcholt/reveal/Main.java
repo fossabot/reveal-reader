@@ -405,14 +405,17 @@ public class Main extends ListActivity {
 
             label.setTextSize(fontSize);
             label.setText(mBookTitleList.get(location).title);
+            String eBookName = mBookTitleList.get(location).shortTitle;
+            
+            //check online for updated thumbnail
+            Util.thumbOnlineUpdate(eBookName);
+            
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
-
-            String eBookname = mBookTitleList.get(location).shortTitle;
 
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
             String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
-            File eBookIcon = new File(strRevealDir, "/thumbnails/" + eBookname + ".jpg");
+            File eBookIcon = new File(strRevealDir, "/thumbnails/" + eBookName + ".jpg");
 
             FileInputStream is = null;
             try {
