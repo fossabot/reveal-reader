@@ -155,13 +155,13 @@ public class Util {
         final String singleOrDoubleQuote = "['\"]";
         final String oneOrNoBangs = "!?";
         final String shortTitleGroup = "(.+)";
-        final String period = "\\.";
+        final String htmExt = "\\.htm";
         final String zeroOrMoreChars = ".*";
         final String firstGroup = "$1";
 
         return Html.fromHtml(
                 binding.replaceAll(start + caseInsensSingleLineFlags + zeroOrMoreChars + "<a" + oneOrMoreSpaces
-                        + "href=" + singleOrDoubleQuote + oneOrNoBangs + shortTitleGroup + period + zeroOrMoreChars
+                        + "href=" + singleOrDoubleQuote + oneOrNoBangs + shortTitleGroup + htmExt + zeroOrMoreChars
                         + ">" + zeroOrMoreChars, firstGroup)).toString();
     }
 

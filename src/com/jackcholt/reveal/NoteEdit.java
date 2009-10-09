@@ -66,7 +66,7 @@ public class NoteEdit extends Activity {
         if (mRowId == null)
             return;
 
-        Cursor noteCursor = mDbHelper.fetchNote(mRowId);
+        Cursor noteCursor = mDbHelper.fetchNoteCursor(mRowId);
         startManagingCursor(noteCursor);
 
         findBodyTextField().setText(noteCursor.getString(noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)));

@@ -273,6 +273,7 @@ public class YbkService extends Service {
     public static void requestAddBook(Context context, String target, String charset, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_BOOK).putExtra(TARGET_KEY,
                 target).putExtra(CHARSET_KEY, charset);
+        
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
             callbackMap.put(callbackID, callbacks);

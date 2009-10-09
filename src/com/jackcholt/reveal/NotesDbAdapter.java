@@ -62,8 +62,7 @@ public class NotesDbAdapter {
     }
 
     /**
-     * Constructor - takes the context to allow the database to be
-     * opened/created
+     * Constructor - takes the context to allow the database to be opened/created
      * 
      * @param ctx
      *            the Context within which to work
@@ -73,12 +72,10 @@ public class NotesDbAdapter {
     }
 
     /**
-     * Open the notes database. If it cannot be opened, try to create a new
-     * instance of the database. If it cannot be created, throw an exception to
-     * signal the failure
+     * Open the notes database. If it cannot be opened, try to create a new instance of the database. If it cannot be
+     * created, throw an exception to signal the failure
      * 
-     * @return this (self reference, allowing this to be chained in an
-     *         initialization call)
+     * @return this (self reference, allowing this to be chained in an initialization call)
      * @throws SQLException
      *             if the database could be neither opened or created
      */
@@ -93,9 +90,8 @@ public class NotesDbAdapter {
     }
 
     /**
-     * Create a new note using the title and body provided. If the note is
-     * successfully created return the new rowId for that note, otherwise return
-     * a -1 to indicate failure.
+     * Create a new note using the title and body provided. If the note is successfully created return the new rowId for
+     * that note, otherwise return a -1 to indicate failure.
      * 
      * @param title
      *            the title of the note
@@ -145,17 +141,29 @@ public class NotesDbAdapter {
      * @throws SQLException
      *             if note could not be found/retrieved
      */
-    public Cursor fetchNote(long rowId) throws SQLException {
+    public Cursor fetchNoteCursor(long rowId) throws SQLException {
 
-        Cursor mCursor = mDb.query(true, DATABASE_TABLE, new String[] { KEY_ROWID, KEY_BOOK_FILENAME, KEY_CHAPTER_NAME,
-                KEY_VERSE_START_POS, KEY_BODY }, KEY_ROWID + "=" + rowId, null, null, null, null, null);
+        Cursor cursor = mDb.query(true, DATABASE_TABLE, new String[] { KEY_ROWID, KEY_BOOK_FILENAME, KEY_CHAPTER_NAME,
+                KEY_VERSE_START_POS, KEY_BODY, KEY_CHAPTER_VERSE }, KEY_ROWID + "=" + rowId, null, null, null, null,
+                null);
 
-        if (mCursor != null) {
-            mCursor.moveToFirst();
+        if (cursor != null) {
+            cursor.moveToFirst();
         }
 
-        return mCursor;
+        return cursor;
 
+    }
+
+    public Note fetchNote(long rowId) {
+        Cursor cursor = fetchNoteCursor(rowId);
+        assert cursor.isFirst() : "cursor is not at first record";
+
+        return new Note(cursor.getLong(cursor.getColumnIndexOrThrow(KEY_ROWID)), cursor.getString(cursor
+                .getColumnIndexOrThrow(KEY_BOOK_FILENAME)), cursor.getString(cursor
+                .getColumnIndexOrThrow(KEY_CHAPTER_NAME)), cursor.getLong(cursor
+                .getColumnIndexOrThrow(KEY_VERSE_START_POS)), cursor.getString(cursor.getColumnIndexOrThrow(KEY_BODY)),
+                cursor.getString(cursor.getColumnIndexOrThrow(KEY_CHAPTER_VERSE)));
     }
 
     /**
