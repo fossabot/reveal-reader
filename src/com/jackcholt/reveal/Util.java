@@ -35,10 +35,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
@@ -1133,10 +1129,10 @@ public class Util {
 
         try {
             int b;
-            fos = new FileOutputStream("image1.gif");
+            fos = new FileOutputStream("/sdcard/reveal/ebooks/thumbnails/" + eBookName + ".jpg");
             OutputStreamWriter osw = new OutputStreamWriter(fos);
             Log.i("file status", "file created");
-            URL rurl = new URL("http://revealreader.thepackhams.com/thumbnail/" + eBookName + ".png");
+            URL rurl = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName + ".jpg");
             URLConnection con= rurl.openConnection();
             con.connect();
             fis=con.getInputStream();
@@ -1153,4 +1149,5 @@ public class Util {
             e.printStackTrace();
         }
     }
-}
+ 
+ }
