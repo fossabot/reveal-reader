@@ -406,7 +406,7 @@ public class Main extends ListActivity {
             String eBookName = mBookTitleList.get(location).shortTitle;
 
             // check online for updated thumbnail
-            Util.thumbOnlineUpdate(eBookName);
+            //Util.thumbOnlineUpdate(eBookName);
 
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
 
