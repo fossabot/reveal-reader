@@ -661,10 +661,6 @@ public class Util {
         boolean success = false;
         boolean isZip = true;
 
-        YbkDAO ybkDao = YbkDAO.getInstance(context);
-
-        final byte[] buffer = new byte[512];
-
         ArrayList<File> files = new ArrayList<File>();
         ArrayList<String> downloaded = new ArrayList<String>();
 
@@ -680,12 +676,12 @@ public class Util {
         InputStream in = null;
 
         // Get the file that was referred to us
+        final byte[] buffer = new byte[512];
         try {
             URL mirrorURL = new URL(DOWNLOAD_MIRROR);
             URL ourUrl = new URL(mirrorURL, urlFileName);
             URLConnection connection = ourUrl.openConnection();
-            // set timeouts for 5 minutes
-            // this will give generous time to deal with network and server glitches
+            // set timeouts for 5 minutes. This will give generous time to deal with network and server glitches
             // but won't cause us to block forever
             connection.setConnectTimeout(300000);
             connection.setReadTimeout(300000);
@@ -698,15 +694,13 @@ public class Util {
             int bytesRead = 0;
             int totalBytesRead = 0;
             while (-1 != (bytesRead = in.read(buffer, 0, buffer.length))) {
-                if ((totalBytesRead == 0) && buffer[0] == 0x50 && buffer[1] == 0x4b && buffer[2] == 0x03
-                        && buffer[3] == 0x04) {
+                if ((0 == totalBytesRead) && hasZipHeader(buffer)) {
                     isZip = true;
                 }
                 totalBytesRead += bytesRead;
                 out.write(buffer, 0, bytesRead);
-                int percent = ((totalBytesRead * 100) / totalBytes);
                 for (Completion callback : callbacks) {
-                    callback.completed(true, percent + "%");
+                    callback.completed(true, ((totalBytesRead * 100) / totalBytes) + "%");
                 }
             }
             success = true;
@@ -726,58 +720,66 @@ public class Util {
             }
         }
 
-        Log.d(TAG, tempFile.getAbsolutePath());
-        if (tempFile.exists()) {
-            if (isZip) {
-                ZipInputStream zip = new ZipInputStream(new FileInputStream(tempFile));
-                try {
-                    ZipEntry entry;
-                    while ((entry = zip.getNextEntry()) != null) {
-                        // unpack all the files
-                        File file = new File(libDirFile, entry.getName());
-
-                        // check to see if they already have this title
-                        if (file.exists()) {
-                            file.delete();
-                            ybkDao.deleteBook(entry.getName());
-                        }
-
-                        file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
-                        out = new FileOutputStream(file);
-                        files.add(file);
-                        try {
-                            int bytesRead = 0;
-                            while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                                out.write(buffer, 0, bytesRead);
-                            }
-                        } finally {
-                            out.close();
-                        }
-                    }
-                } catch (IOException ioe) {
-                    Log.w(TAG, ioe.toString());
-                    throw ioe;
-                } finally {
-                    zip.close();
-                }
-            } else {
-                files.add(tempFile);
-            }
-            for (File file : files) {
-                // rename from tmp
-                String realNameString = file.getAbsolutePath();
-                realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
-                File realName = new File(realNameString);
-                file.renameTo(realName);
-                downloaded.add(realName.getName());
-            }
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
+        if (!tempFile.exists()) {
+            return downloaded;
         }
+        
+        if (isZip) {
+            ZipInputStream zip = new ZipInputStream(new FileInputStream(tempFile));
+            try {
+                ZipEntry entry;
+                while ((entry = zip.getNextEntry()) != null) {
+                    // unpack all the files
+                    File file = new File(libDirFile, entry.getName());
+
+                    // check to see if they already have this title
+                    if (file.exists()) {
+                        file.delete();
+                        YbkDAO.getInstance(context).deleteBook(entry.getName());
+                    }
+
+                    file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
+                    out = new FileOutputStream(file);
+                    files.add(file);
+                    try {
+                        int bytesRead = 0;
+                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    } finally {
+                        out.close();
+                    }
+                }
+            } catch (IOException ioe) {
+                Log.w(TAG, ioe.toString());
+                throw ioe;
+            } finally {
+                zip.close();
+            }
+        } else {
+            files.add(tempFile);
+        }
+        
+        for (File file : files) {
+            // rename from tmp
+            String realNameString = file.getAbsolutePath();
+            realNameString = realNameString.substring(0, realNameString.lastIndexOf(TMP_EXTENSION));
+            File realName = new File(realNameString);
+            file.renameTo(realName);
+            downloaded.add(realName.getName());
+        }
+        if (tempFile.exists()) {
+            tempFile.delete();
+        }
+
         return downloaded;
     }
 
+    private static boolean hasZipHeader(byte[] buffer) {
+        return buffer[0] == 0x50 && buffer[1] == 0x4b && buffer[2] == 0x03
+        && buffer[3] == 0x04;
+    }
+    
     public static void showSplashScreen(Context _this) {
         boolean mShowSplashScreen = true;
         // Toast Splash with image :)
@@ -1122,7 +1124,7 @@ public class Util {
     private static boolean shouldDisableAnalytics(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean("disable_analytics", false);
     }
-    
+
     public static void thumbOnlineUpdate(String eBookName) {
         InputStream fis = null;
         FileOutputStream fos = null;
@@ -1133,21 +1135,20 @@ public class Util {
             OutputStreamWriter osw = new OutputStreamWriter(fos);
             Log.i("file status", "file created");
             URL rurl = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName + ".jpg");
-            URLConnection con= rurl.openConnection();
+            URLConnection con = rurl.openConnection();
             con.connect();
-            fis=con.getInputStream();
-            
-            while((b=fis.read())!=-1) {
+            fis = con.getInputStream();
+
+            while ((b = fis.read()) != -1) {
                 osw.write(b);
             }
 
-            Log.i("writing"," done");
+            Log.i("writing", " done");
             fis.close();
             fos.close();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
- 
- }
+
+}

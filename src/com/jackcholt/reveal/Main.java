@@ -401,15 +401,13 @@ public class Main extends ListActivity {
             TextView label = (TextView) row.findViewById(R.id.label);
 
             strFontSize = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
-            int fontSize = Integer.parseInt(strFontSize);
-
-            label.setTextSize(fontSize);
+            label.setTextSize(Integer.parseInt(strFontSize));
             label.setText(mBookTitleList.get(location).title);
             String eBookName = mBookTitleList.get(location).shortTitle;
-            
-            //check online for updated thumbnail
+
+            // check online for updated thumbnail
             Util.thumbOnlineUpdate(eBookName);
-            
+
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
 
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
@@ -424,26 +422,26 @@ public class Main extends ListActivity {
                 Log.d("ICON: ", "file Not Found");
             }
 
-            if (is != null) {
-                Bitmap bm;
-                bm = BitmapFactory.decodeStream(is, null, null);
-
-                int width = bm.getWidth();
-                int height = bm.getHeight();
-                int newWidth = 20;
-                int newHeight = 25;
-
-                float scaleWidth = ((float) newWidth) / width;
-                float scaleHeight = ((float) newHeight) / height;
-
-                Matrix matrix = new Matrix();
-                matrix.postScale(scaleWidth, scaleHeight);
-                Bitmap resizedBm = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, true);
-                BitmapDrawable bmd = new BitmapDrawable(resizedBm);
-                icon.setImageDrawable(bmd);
-            } else {
+            if (null == is) {
                 icon.setImageResource(R.drawable.ebooksmall);
+                return row;
             }
+
+            Bitmap bm = BitmapFactory.decodeStream(is, null, null);
+
+            if (null == bm) {
+                icon.setImageResource(R.drawable.ebooksmall);
+                return row;
+            }
+            
+            final float newWidth = 20;
+            final float newHeight = 25;
+
+            Matrix matrix = new Matrix();
+            matrix.postScale(newWidth / bm.getWidth(), newHeight / bm.getHeight());
+            icon.setImageDrawable(new BitmapDrawable(Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(),
+                    matrix, true)));
+
             return (row);
         }
     }

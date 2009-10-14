@@ -13,7 +13,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -57,8 +56,6 @@ public class YbkService extends Service {
     @SuppressWarnings("unused")
     private volatile int mNotifId = Integer.MIN_VALUE;
 
-    private SharedPreferences mSharedPref;
-
     // kludge to get around the fact that we can't pass callbacks through the
     // service simply even though
     // the service is only for the local process.
@@ -82,7 +79,6 @@ public class YbkService extends Service {
             mDownloadLooper = downloadThread.getLooper();
             mDownloadHandler = new Handler(mDownloadLooper);
 
-            mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -90,40 +86,38 @@ public class YbkService extends Service {
         }
     }
 
-    @Override
-    public void onStart(Intent intent, int startId) {
-        try {
-            Bundle extras = intent.getExtras();
-            int action = extras.getInt(ACTION_KEY);
-            final String target = extras.getString(TARGET_KEY);
-            final String source = extras.getString(SOURCE_KEY);
-            final String charset = extras.getString(CHARSET_KEY);
-            final long callbacksID = Long.valueOf(extras.getLong(CALLBACKS_KEY));
+    private SharedPreferences getSharedPrefs() {
+        return PreferenceManager.getDefaultSharedPreferences(this);
+    }
 
-            switch (action) {
+    @Override
+    public void onStart(final Intent intent, final int startId) {
+        try {
+            switch (intent.getExtras().getInt(ACTION_KEY)) {
             case ADD_BOOK:
-                Log.i(TAG, "Received request to add book: " + target);
-                if (target != null) {
+                Log.i(TAG, "Received request to add book: " + intent.getExtras().getString(TARGET_KEY));
+                if (intent.getExtras().getString(TARGET_KEY) != null) {
                     Runnable job = new SafeRunnable() {
 
                         @Override
                         public void protectedRun() {
-                            String bookName = target.replaceFirst("\\.[^\\.]$", "");
+                            String bookName = intent.getExtras().getString(TARGET_KEY).replaceFirst("\\.[^\\.]$", "");
                             boolean succeeded;
                             String message;
                             YbkFileReader ybkRdr = null;
                             try {
                                 // clean up any previous instance of the book
-                                YbkFileReader.closeReader(target);
+                                YbkFileReader.closeReader(intent.getExtras().getString(TARGET_KEY));
                                 YbkDAO ybkDao = YbkDAO.getInstance(YbkService.this);
-                                ybkDao.deleteBook(target);
+                                ybkDao.deleteBook(intent.getExtras().getString(TARGET_KEY));
 
-                                String useCharset = charset;
+                                String useCharset = intent.getExtras().getString(CHARSET_KEY);
 
                                 // kludge for the known Cyrillic books
                                 if (useCharset == null) {
-                                    if (target.equalsIgnoreCase("km.ybk") || target.equalsIgnoreCase("vz.ybk")
-                                            || target.equalsIgnoreCase("nz.ybk")) {
+                                    if (intent.getExtras().getString(TARGET_KEY).equalsIgnoreCase("km.ybk")
+                                            || intent.getExtras().getString(TARGET_KEY).equalsIgnoreCase("vz.ybk")
+                                            || intent.getExtras().getString(TARGET_KEY).equalsIgnoreCase("nz.ybk")) {
                                         useCharset = "CP1251";
                                     } else {
                                         useCharset = YbkFileReader.DEFAULT_YBK_CHARSET;
@@ -131,7 +125,8 @@ public class YbkService extends Service {
                                 }
 
                                 // Add the book.
-                                ybkRdr = YbkFileReader.addBook(YbkService.this, target, useCharset);
+                                ybkRdr = YbkFileReader.addBook(YbkService.this, intent.getExtras()
+                                        .getString(TARGET_KEY), useCharset);
                                 Book book = ybkRdr.getBook();
                                 bookName = book.title == null ? bookName : book.title;
                                 message = "Added '" + bookName + "' to the library";
@@ -144,7 +139,8 @@ public class YbkService extends Service {
                             } catch (IOException ioe) {
                                 succeeded = false;
                                 message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
-                                Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + target);
+                                Util.unexpectedError(Main.getMainApplication(), ioe, "book: "
+                                        + intent.getExtras().getString(TARGET_KEY));
                             } finally {
                                 if (ybkRdr != null) {
                                     ybkRdr.unuse();
@@ -155,8 +151,9 @@ public class YbkService extends Service {
                                 Log.i(TAG, message);
                             else
                                 Log.e(TAG, message);
-                            if (callbacksID != 0) {
-                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                            if ((long) Long.valueOf(intent.getExtras().getLong(CALLBACKS_KEY)) != 0) {
+                                for (Completion callback : callbackMap.remove(Long.valueOf((long) Long.valueOf(intent
+                                        .getExtras().getLong(CALLBACKS_KEY))))) {
                                     callback.completed(succeeded, message);
                                 }
                             }
@@ -168,16 +165,17 @@ public class YbkService extends Service {
                 }
                 break;
             case REMOVE_BOOK:
-                Log.i(TAG, "Received request to remove book: " + target);
-                if (target != null) {
+                Log.i(TAG, "Received request to remove book: " + intent.getExtras().getString(TARGET_KEY));
+                if (intent.getExtras().getString(TARGET_KEY) != null) {
                     Runnable job = new SafeRunnable() {
                         @Override
                         public void protectedRun() {
-                            String bookName = new File(target).getName().replaceFirst("\\.[^\\.]$", "");
+                            String bookName = new File(intent.getExtras().getString(TARGET_KEY)).getName()
+                                    .replaceFirst("\\.[^\\.]$", "");
                             boolean succeeded;
                             String message;
                             YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                            if (ybkDAO.deleteBook(target)) {
+                            if (ybkDAO.deleteBook(intent.getExtras().getString(TARGET_KEY))) {
                                 succeeded = true;
                                 message = "Removed '" + bookName + "' from the library";
                             } else {
@@ -188,8 +186,9 @@ public class YbkService extends Service {
                                 Log.i(TAG, message);
                             else
                                 Log.e(TAG, message);
-                            if (callbacksID != 0) {
-                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
+                            if ((long) Long.valueOf(intent.getExtras().getLong(CALLBACKS_KEY)) != 0) {
+                                for (Completion callback : callbackMap.remove(Long.valueOf((long) Long.valueOf(intent
+                                        .getExtras().getLong(CALLBACKS_KEY))))) {
                                     callback.completed(succeeded, message);
                                 }
                             }
@@ -201,41 +200,10 @@ public class YbkService extends Service {
                 }
                 break;
             case DOWNLOAD_BOOK:
-                Log.i(TAG, "Received request to download book: " + source + " to: " + target);
-
-                if (target != null && source != null) {
-                    final String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
-                            Settings.DEFAULT_EBOOK_DIRECTORY);
-                    final Context context = this;
-                    Runnable job = new SafeRunnable() {
-                        @Override
-                        public void protectedRun() {
-                            try {
-                                Completion callbacks[] = callbackMap.get(Long.valueOf(callbacksID));
-                                List<String> downloads = Util.fetchTitle(new File(target), new URL(source), libDir,
-                                        context, callbacks);
-                                if (downloads.isEmpty()) {
-                                    throw new FileNotFoundException();
-                                }
-                                for (String download : downloads) {
-                                    requestAddBook(context, download, null, callbacks);
-                                }
-                            } catch (IOException ioe) {
-                                String targetFileName = new File(target).getName(); 
-                                Log.e(TAG, "Unable to download '" + source + "': " + ioe.toString());
-                                for (Completion callback : callbackMap.remove(Long.valueOf(callbacksID))) {
-                                    callback.completed(false, "Could not download '" + targetFileName + "'. " + ioe.toString());
-                                }
-                            }
-                        }
-                    };
-                    mDownloadHandler.post(job);
-                } else {
-                    Log.e(TAG, "Download book request missing target or filename.");
-                }
+                downloadBook(intent);
                 break;
             default:
-                Log.w(TAG, "Received request to perform unrecognized action: " + action);
+                Log.w(TAG, "Received request to perform unrecognized action: " + intent.getExtras().getInt(ACTION_KEY));
                 return;
             }
         } catch (RuntimeException rte) {
@@ -243,6 +211,57 @@ public class YbkService extends Service {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
+    }
+
+    private void downloadBook(final Intent intent) {
+
+        if (null == intent) {
+            throw new IllegalArgumentException("Intent for downloading a book is null.");
+        }
+        
+        if (null == intent.getExtras().getString(TARGET_KEY) || null == intent.getExtras().getString(SOURCE_KEY)) {
+            Log.e(TAG, "Download book request missing target or filename.");
+            return;
+        }
+
+        Log.i(TAG, "Received request to download book: " + intent.getExtras().getString(SOURCE_KEY) + " to: "
+                + intent.getExtras().getString(TARGET_KEY));
+
+        final Context context = this;
+        Runnable job = new SafeRunnable() {
+            @Override
+            public void protectedRun() {
+                try {
+                    Completion callbacks[] = callbackMap.get(Long.valueOf((long) Long.valueOf(intent.getExtras()
+                            .getLong(CALLBACKS_KEY))));
+                    List<String> downloads = Util
+                            .fetchTitle(new File(intent.getExtras().getString(TARGET_KEY)), new URL(intent.getExtras()
+                                    .getString(SOURCE_KEY)), getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                                    Settings.DEFAULT_EBOOK_DIRECTORY), context, callbacks);
+                    
+                    if (downloads.isEmpty()) {
+                        throw new FileNotFoundException();
+                    }
+                    
+                    for (String download : downloads) {
+                        requestAddBook(context, download, null, callbacks);
+                    }
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Unable to download '" + intent.getExtras().getString(SOURCE_KEY) + "': "
+                            + ioe.toString());
+                    for (Completion callback : callbackMap.remove(Long.valueOf((long) Long.valueOf(intent.getExtras()
+                            .getLong(CALLBACKS_KEY))))) {
+                        callback
+                                .completed(false, "Could not download '"
+                                        + new File(intent.getExtras().getString(TARGET_KEY)).getName() + "'. "
+                                        + ioe.toString());
+                    }
+                }
+            }
+        };
+
+        mDownloadHandler.post(job);
+
     }
 
     @Override
@@ -277,7 +296,7 @@ public class YbkService extends Service {
     public static void requestAddBook(Context context, String target, String charset, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_BOOK).putExtra(TARGET_KEY,
                 target).putExtra(CHARSET_KEY, charset);
-        
+
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
             callbackMap.put(callbackID, callbacks);
