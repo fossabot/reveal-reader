@@ -3,6 +3,7 @@ package com.jackcholt.reveal;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -687,6 +689,13 @@ public class Util {
             connection.setReadTimeout(300000);
             int totalBytes = connection.getContentLength();
             in = connection.getInputStream();
+            if (in == null) {
+                // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception later on
+                // that could only happen if it does. Best guess is that it happens with HTTP responses that don't
+                // actually have content, but by throwing an exception with the response message we might be able to
+                // diagnose what is going on.
+                throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
+            }
             Log.d(TAG, "download from " + ourUrl);
 
             out = new FileOutputStream(tempFile);
@@ -723,7 +732,7 @@ public class Util {
         if (!tempFile.exists()) {
             return downloaded;
         }
-        
+
         if (isZip) {
             ZipInputStream zip = new ZipInputStream(new FileInputStream(tempFile));
             try {
@@ -759,7 +768,7 @@ public class Util {
         } else {
             files.add(tempFile);
         }
-        
+
         for (File file : files) {
             // rename from tmp
             String realNameString = file.getAbsolutePath();
@@ -776,10 +785,9 @@ public class Util {
     }
 
     private static boolean hasZipHeader(byte[] buffer) {
-        return buffer[0] == 0x50 && buffer[1] == 0x4b && buffer[2] == 0x03
-        && buffer[3] == 0x04;
+        return buffer[0] == 0x50 && buffer[1] == 0x4b && buffer[2] == 0x03 && buffer[3] == 0x04;
     }
-    
+
     public static void showSplashScreen(Context _this) {
         boolean mShowSplashScreen = true;
         // Toast Splash with image :)
