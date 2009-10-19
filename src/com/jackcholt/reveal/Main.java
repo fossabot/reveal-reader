@@ -110,9 +110,6 @@ public class Main extends ListActivity {
 
             mApplication = this;
 
-            // Run to check if this is the first time run and init.
-            StartupFirstTime();
-
             Util.startFlurrySession(this);
             FlurryAgent.onEvent("Main");
 
@@ -121,7 +118,7 @@ public class Main extends ListActivity {
             if (getSharedPrefs().getBoolean("first_run", true)) {
                 SharedPreferences.Editor editor = getSharedPrefs().edit();
                 editor.putBoolean("first_run", false);
-                editor.putBoolean("show_splash_screen", false);
+                editor.putBoolean("show_splash_screen", true);
                 editor.putBoolean("show_fullscreen", false);
                 editor.commit();
             }
@@ -405,9 +402,6 @@ public class Main extends ListActivity {
             label.setText(mBookTitleList.get(location).title);
             String eBookName = mBookTitleList.get(location).shortTitle;
 
-            // check online for updated thumbnail
-            //Util.thumbOnlineUpdate(eBookName);
-
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
 
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
@@ -419,7 +413,9 @@ public class Main extends ListActivity {
             try {
                 is = new FileInputStream(eBookIcon);
             } catch (FileNotFoundException e) {
-                Log.d("ICON: ", "file Not Found");
+                Log.d("ICON: ", "file Not Found Looking online for update");
+                // check online for updated thumbnail
+                Util.thumbOnlineUpdate(eBookName);
             }
 
             if (null == is) {
@@ -921,12 +917,14 @@ public class Main extends ListActivity {
                 File libDir = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                         Settings.DEFAULT_EBOOK_DIRECTORY));
                 Util.deleteFiles(new File(libDir, "images"), ".*");
+                Util.deleteFiles(new File(libDir, "thumbnails"), ".*");
                 Util.deleteFiles(libDir, ".*\\.(tmp|lg|db)");
                 Util.deleteFiles(new File(libDir, "data"), "books\\.dat|.*\\.chp");
                 if (!libDir.getAbsoluteFile().toString().equalsIgnoreCase(Settings.DEFAULT_EBOOK_DIRECTORY)) {
                     // cleanup default library directory if it wasn't the one we
                     // were using
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "images"), ".*");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "thumbnails"), ".*");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY), ".*\\.(tmp|lg|db)");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "data"), "books\\.dat|.*\\.chp");
                 }
@@ -949,13 +947,6 @@ public class Main extends ListActivity {
 
     private SharedPreferences getSharedPrefs() {
         return PreferenceManager.getDefaultSharedPreferences(this);
-    }
-
-    /**
-     * First Run startup to initialize preferences and etc.
-     */
-    public static void StartupFirstTime() {
-
     }
 
     // Display Toast-Message
