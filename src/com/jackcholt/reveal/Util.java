@@ -1143,10 +1143,10 @@ public class Util {
     
     public static void thumbOnlineUpdate(final String eBookName) {
  
-        Thread t = new Thread() {
-            public void run() {
-                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-                Looper.prepare();
+//       Thread t = new Thread() {
+//           public void run() {
+//                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+//                Looper.prepare();
                 Bitmap bmImg;
                 try {
                     URL myFileUrl  = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName + ".jpg");
@@ -1187,7 +1187,7 @@ public class Util {
                     Log.d("file", "not created");
                 }
             }
-        };
-        t.start();
-    }
+//        };
+//        t.start();
+
 }    

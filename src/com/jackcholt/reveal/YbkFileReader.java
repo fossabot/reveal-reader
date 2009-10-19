@@ -360,6 +360,10 @@ public class YbkFileReader {
                 mShortTitle = shortTitle;
             }
             
+            // check online for updated thumbnail
+            Util.thumbOnlineUpdate(mShortTitle);
+            
+            
             String orderString = (orderChapter != null) ? readInternalFile(orderChapter.offset, orderChapter.length)
                     : Util.EMPTY_STRING;
             mChapterIndex = new ChapterIndex(chapters, orderString, mCharset);

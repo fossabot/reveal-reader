@@ -151,6 +151,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             Log.d(TAG, "BookFileName: " + mBookFileName);
 
+            
+            // check online for updated thumbnail
+            Util.thumbOnlineUpdate(mBookFileName.replaceAll(".ybk$", ""));
+            
+            
             if ((this instanceof YbkPopupActivity)) {
                 mThemeIsDialog = true;
                 setContentView(R.layout.view_popup_ybk);

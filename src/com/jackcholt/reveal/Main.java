@@ -413,9 +413,7 @@ public class Main extends ListActivity {
             try {
                 is = new FileInputStream(eBookIcon);
             } catch (FileNotFoundException e) {
-                Log.d("ICON: ", "file Not Found Looking online for update");
-                // check online for updated thumbnail
-                Util.thumbOnlineUpdate(eBookName);
+                Log.d("ICON: ", "file Not Found Look online for update");
             }
 
             if (null == is) {
