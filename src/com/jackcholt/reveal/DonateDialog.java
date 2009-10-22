@@ -24,7 +24,7 @@ public class DonateDialog extends Dialog {
         WebView wv = (WebView) findViewById(R.id.donateView);
         wv.clearCache(true);
         wv.getSettings().setJavaScriptEnabled(true);
-        if (Util.isNetworkUp(_this)) {
+        if (Util.areNetworksUp(_this)) {
             Uri uri = Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7668278");
             _this.startActivity(new Intent(Intent.ACTION_VIEW, uri));
         } else {

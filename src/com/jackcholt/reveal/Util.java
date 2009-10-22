@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
@@ -72,32 +71,25 @@ public class Util {
     public static final String DOWNLOAD_MIRROR = "http://revealreader.thepackhams.com/ebooks/";
     public static final String EMPTY_STRING = new String();
 
-    // Display Toast-Message
     public static void displayToastMessage(String message) {
         Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG).show();
     }
 
     /**
-     * Dave Packham Check for network connectivity before trying to go to the net and hanging :) hitting F8 in the
-     * emulator will turn network on/off
+     * Check for network connectivity before trying to go to the net and hanging :) hitting F8 in the emulator will turn
+     * network on/off.
+     * 
+     * @author Dave Packham
+     * @author Jack C. Holt
      */
-    public static boolean isNetworkUp(Context _this) {
-        boolean networkUp;
+    public static boolean areNetworksUp(Context context) {
+        return isNetworkUp(context, ConnectivityManager.TYPE_MOBILE)
+                || isNetworkUp(context, ConnectivityManager.TYPE_WIFI);
+    }
 
-        ConnectivityManager connectivityManager = (ConnectivityManager) _this
-                .getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo mobNetInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        NetworkInfo wifiNetInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
-        if (mobNetInfo.getState() == NetworkInfo.State.CONNECTED
-                || wifiNetInfo.getState() == NetworkInfo.State.CONNECTED) {
-            networkUp = true;
-        } else {
-            networkUp = false;
-        }
-
-        return networkUp;
+    private static boolean isNetworkUp(Context context, int netType) {
+        return ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getNetworkInfo(netType)
+                .getState() == NetworkInfo.State.CONNECTED;
     }
 
     /**
@@ -1139,49 +1131,51 @@ public class Util {
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean("disable_analytics", false);
     }
 
- 
-    
     public static void thumbOnlineUpdate(final String eBookName) {
- 
-       Thread t = new Thread() {
-           public void run() {
+
+        Thread t = new Thread() {
+            public void run() {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 Looper.prepare();
                 Bitmap bmImg;
                 try {
-                    URL myFileUrl  = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName + ".jpg");
-                    HttpURLConnection connection= (HttpURLConnection)myFileUrl.openConnection();
-        
+                    URL myFileUrl = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName
+                            + ".jpg");
+                    HttpURLConnection connection = (HttpURLConnection) myFileUrl.openConnection();
+
                     connection.setConnectTimeout(300000);
                     connection.setReadTimeout(300000);
                     connection.setDoInput(true);
                     connection.connect();
-                    
+
                     InputStream is = connection.getInputStream();
 
                     if (is == null) {
-                        // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception later on
-                        // that could only happen if it does. Best guess is that it happens with HTTP responses that don't
-                        // actually have content, but by throwing an exception with the response message we might be able to
+                        // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception
+                        // later on
+                        // that could only happen if it does. Best guess is that it happens with HTTP responses that
+                        // don't
+                        // actually have content, but by throwing an exception with the response message we might be
+                        // able to
                         // diagnose what is going on.
                         throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
                     }
                     Log.d(TAG, "download from " + myFileUrl);
 
                     bmImg = BitmapFactory.decodeStream(is);
-        
+
                     byte[] b;
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     bmImg.compress(Bitmap.CompressFormat.PNG, 75, bytes);
                     b = bytes.toByteArray();
-        
+
                     File myFile = new File("/sdcard/reveal/ebooks/thumbnails/" + eBookName + ".jpg");
                     myFile.createNewFile();
                     OutputStream filoutputStream = new FileOutputStream(myFile);
                     filoutputStream.write(b);
                     filoutputStream.flush();
                     filoutputStream.close();
-                    
+
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.d("file", "not created");
@@ -1190,4 +1184,4 @@ public class Util {
         };
         t.start();
     }
-}    
+}

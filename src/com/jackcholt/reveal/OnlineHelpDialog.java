@@ -26,7 +26,7 @@ public class OnlineHelpDialog extends Dialog {
         WebView wv = (WebView) findViewById(R.id.helpView);
         wv.clearCache(true);
         wv.getSettings().setJavaScriptEnabled(true);
-        if (Util.isNetworkUp(_this)) {
+        if (Util.areNetworksUp(_this)) {
             wv.loadUrl("http://sites.google.com/site/revealonlinehelp/");
         } else {
             wv.loadData("Cannot get online help.  Your network is currently down.", "text/plain", "utf-8");

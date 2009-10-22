@@ -150,7 +150,7 @@ public class Main extends ListActivity {
             }
 
             // Is Network up or not?
-            if (!BOOLcheckedOnline && Util.isNetworkUp(this)) {
+            if (!BOOLcheckedOnline && Util.areNetworksUp(this)) {
                 // only check once per process instantiation
                 BOOLcheckedOnline = true;
 
