@@ -1105,25 +1105,18 @@ public class Util {
      * @param context
      */
     public static void startFlurrySession(Context context) {
+
         if (Global.DEBUG == 0) {
             // Release Key for use of the END USERS
-
             FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
-
-            if (shouldDisableAnalytics(context)) {
-                FlurryAgent.setReportLocation(false);
-                FlurryAgent.onEvent("LocationDisabled");
-            } else {
-                FlurryAgent.onEvent("LocationEnabled");
-            }
+            FlurryAgent.onEvent(shouldDisableAnalytics(context) ? "LocationDisabled" : "LocationEnabled");
         } else {
             // Development key for use of the DEVELOPMENT TEAM
             FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
+        }
 
-            if (shouldDisableAnalytics(context)) {
-                FlurryAgent.setReportLocation(false);
-
-            }
+        if (shouldDisableAnalytics(context)) {
+            FlurryAgent.setReportLocation(false);
         }
     }
 

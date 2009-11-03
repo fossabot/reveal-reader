@@ -22,4 +22,14 @@ public class YbkPopupActivity extends YbkViewActivity {
 
         return false;
     }
+    
+    @Override
+    protected boolean isPopup() {
+        return true;
+    }
+    
+    @Override
+    protected void setContentView() {
+        setContentView(R.layout.view_popup_ybk);
+    }
 }

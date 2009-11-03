@@ -38,37 +38,23 @@ public class BookmarkDialog extends ListActivity {
             Util.startFlurrySession(this);
             FlurryAgent.onEvent("BookMarkDialog");
 
-            Bundle extras = getIntent().getExtras();
-
             setContentView(R.layout.dialog_bookmark);
-
             registerForContextMenu(getListView());
 
             Button addBtn = (Button) findViewById(R.id.addBMButton);
 
-            if (extras != null && extras.getBoolean("fromMain") == true) {
+            if (isCalledFromMain(getIntent().getExtras())) {
                 addBtn.setVisibility(View.GONE);
             }
 
-            YbkDAO ybkDao = YbkDAO.getInstance(this);
-
-            List<History> data = ybkDao.getBookmarkList();
-
-            // Now create a simple array adapter and set it to display
-            ArrayAdapter<History> histAdapter = new ArrayAdapter<History>(this, R.layout.history_list_row, data);
-
-            setListAdapter(histAdapter);
+            setListAdapter(new ArrayAdapter<History>(this, R.layout.history_list_row, YbkDAO.getInstance(this)
+                    .getBookmarkList()));
 
             addBtn.setOnClickListener(new OnClickListener() {
-
                 public void onClick(final View view) {
-
                     Log.d(TAG, "Adding a bookmark");
-
-                    Intent intent = new Intent(getBaseContext(), YbkViewActivity.class);
-                    intent.putExtra(ADD_BOOKMARK, true);
-                    setResult(RESULT_OK, intent);
-
+                    setResult(RESULT_OK, new Intent(getBaseContext(), YbkViewActivity.class).putExtra(ADD_BOOKMARK,
+                            true));
                     finish();
                 }
 
@@ -81,15 +67,17 @@ public class BookmarkDialog extends ListActivity {
 
     }
 
+    private boolean isCalledFromMain(Bundle extras) {
+        return extras != null && extras.getBoolean("fromMain");
+    }
+
     @Override
     protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
         try {
             Log.d(TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
             History hist = (History) listView.getItemAtPosition(selectionRowId);
 
-            Intent intent = new Intent(this, YbkViewActivity.class);
-            intent.putExtra(YbkDAO.HISTORY_ID, hist.id);
-            setResult(RESULT_OK, intent);
+            setResult(RESULT_OK, new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.HISTORY_ID, hist.id));
 
             finish();
         } catch (RuntimeException rte) {

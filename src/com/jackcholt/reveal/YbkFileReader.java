@@ -340,7 +340,7 @@ public class YbkFileReader {
             if (bindingChapter != null) {
                 String bindingText = readInternalFile(bindingChapter.offset, bindingChapter.length);
                 Log.d(TAG, "Binding text: " + bindingText);
-                
+
                 String bookTitle = null;
                 String shortTitle = null;
 
@@ -351,7 +351,7 @@ public class YbkFileReader {
                     }
                     shortTitle = Util.getBookShortTitleFromBindingText(bindingText);
                     if (shortTitle.length() == 0) {
-                        Log.d(TAG,"Using the backup method of determining shortTitle");
+                        Log.d(TAG, "Using the backup method of determining shortTitle");
                         shortTitle = new File(mFilename).getName().replaceFirst("(?s)\\..*", "");
                     }
                     Log.d(TAG, "shortTitle: " + shortTitle);
@@ -359,11 +359,10 @@ public class YbkFileReader {
                 mTitle = bookTitle;
                 mShortTitle = shortTitle;
             }
-            
+
             // check online for updated thumbnail
             Util.thumbOnlineUpdate(mShortTitle);
-            
-            
+
             String orderString = (orderChapter != null) ? readInternalFile(orderChapter.offset, orderChapter.length)
                     : Util.EMPTY_STRING;
             mChapterIndex = new ChapterIndex(chapters, orderString, mCharset);
@@ -395,15 +394,10 @@ public class YbkFileReader {
      *            the name of the chapter
      * @return the chapter object, or null if it doesn't exist.
      */
-    public Chapter getChapter(String chapName) {
-        Chapter chap = null;
-        try {
-            chap = mChapterIndex.getChapter(mChannel, chapName);
-            if (chap == null) {
-                chap = mChapterIndex.getChapter(mChannel, chapName + ".gz");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    public Chapter getChapter(String chapName) throws IOException {
+        Chapter chap = mChapterIndex.getChapter(mChannel, chapName);
+        if (chap == null) {
+            chap = mChapterIndex.getChapter(mChannel, chapName + ".gz");
         }
         return chap;
     }
@@ -467,9 +461,7 @@ public class YbkFileReader {
      *             If the chapter cannot be read.
      */
     public String readInternalFile(final String chapName) throws IOException {
-
         Chapter chap = getChapter(chapName);
-
         return (null == chap) ? null : readInternalFile(chap.offset, chap.length);
     }
 

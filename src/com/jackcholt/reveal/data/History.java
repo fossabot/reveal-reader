@@ -17,7 +17,6 @@ public class History implements Serializable {
     private static final long serialVersionUID = -1L;
 
     public long id = Util.getUniqueTimeStamp();
-    // public long bookId;
     public String bookFileName;
     public String chapterName;
     public int scrollYPos;

@@ -233,12 +233,24 @@ public class YbkDAO {
                 }
             }
             mHistoryList.add(0, hist);
-            backStack.push(hist);
-            Log.d(TAG, "Added " + hist.chapterName + " to backStack");
             deleteHistories();
             storeHistoryList();
         }
         return true;
+    }
+
+    public void addToBackStack(final String bookFileName, final String title, final String chapterName,
+            final int scrollYPos) {
+        History hist = new History();
+        hist.bookFileName = bookFileName;
+        hist.bookmarkNumber = 0;
+        hist.chapterName = chapterName.replaceFirst("(?i)\\.gz$", "");
+        hist.scrollYPos = scrollYPos;
+        hist.title = title;
+        synchronized (mHistoryList) {
+            backStack.push(hist);
+            Log.d(TAG, "Added " + hist.chapterName + " to backStack");
+        }
     }
 
     /**
@@ -509,7 +521,6 @@ public class YbkDAO {
 
     /**
      * Clears all Histories off the stack.
-     * 
      */
     public void clearBackStack() {
         backStack.clear();
@@ -698,8 +709,9 @@ public class YbkDAO {
             finished = true;
         } finally {
             os.close();
-            if (!finished)
+            if (!finished) {
                 file.delete();
+            }
         }
     }
 

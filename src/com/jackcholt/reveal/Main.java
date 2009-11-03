@@ -50,7 +50,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
-import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 import com.nullwire.trace.ExceptionHandler;
 
@@ -427,7 +426,7 @@ public class Main extends ListActivity {
                 icon.setImageResource(R.drawable.ebooksmall);
                 return row;
             }
-            
+
             final float newWidth = 20;
             final float newHeight = 25;
 
@@ -593,18 +592,14 @@ public class Main extends ListActivity {
         }
     }
 
-    protected boolean onBookWalker(int index) {
-        if (index >= 0 && index < mBookTitleList.size()) {
-            Book book = mBookTitleList.get(index);
-            if (book != null) {
-                setProgressBarIndeterminateVisibility(true);
-                Intent intent = new Intent(this, YbkViewActivity.class);
-                intent.putExtra(YbkDAO.FILENAME, book.fileName);
-                intent.putExtra(BOOK_WALK_INDEX, index);
-                startActivityForResult(intent, WALK_BOOK);
-            }
+    protected void walkBook(final int index) {
+        if (index < 0 || index < mBookTitleList.size() || null == mBookTitleList.get(index)) {
+            return;
         }
-        return true;
+        
+        setProgressBarIndeterminateVisibility(true);
+        startActivityForResult(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME,
+                mBookTitleList.get(index).fileName).putExtra(BOOK_WALK_INDEX, index), WALK_BOOK);
 
     }
 
@@ -768,9 +763,8 @@ public class Main extends ListActivity {
                 return true;
 
             case BOOKMARK_ID:
-                Intent bmIntent = new Intent(this, BookmarkDialog.class);
-                bmIntent.putExtra("fromMain", true);
-                startActivityForResult(bmIntent, YbkViewActivity.CALL_BOOKMARK);
+                startActivityForResult(new Intent(this, BookmarkDialog.class).putExtra("fromMain", true),
+                        YbkViewActivity.CALL_BOOKMARK);
                 return true;
 
             case OPEN_ID:
@@ -783,7 +777,8 @@ public class Main extends ListActivity {
                 return onEBookProperties(item);
 
             case BOOK_WALKER_ID:
-                return onBookWalker(0);
+                walkBook(0);
+                return true;
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -839,58 +834,47 @@ public class Main extends ListActivity {
 
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        Bundle extras;
-        long histId;
-        Intent intent;
 
         try {
-            if (resultCode == RESULT_OK) {
-                switch (requestCode) {
-                case YbkViewActivity.CALL_HISTORY:
-                case YbkViewActivity.CALL_BOOKMARK:
-                    setProgressBarIndeterminateVisibility(true);
-
-                    YbkDAO ybkDao = YbkDAO.getInstance(this);
-
-                    extras = data.getExtras();
-
-                    boolean deleteBookmark = extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK);
-
-                    histId = extras.getLong(YbkDAO.HISTORY_ID);
-
-                    if (deleteBookmark) {
-                        int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
-                        History hist = ybkDao.getBookmark(bmId);
-                        DeleteBookmarkDialog.create(this, hist);
-                    } else if (histId != 0) {
-                        intent = new Intent(this, YbkViewActivity.class);
-                        intent.putExtra(YbkDAO.HISTORY_ID, histId);
-                        startActivity(intent);
-                    }
-
-                    break;
-
-                case ACTIVITY_SETTINGS:
-                    extras = data.getExtras();
-                    boolean libDirChanged = extras.getBoolean(Settings.EBOOK_DIR_CHANGED);
-
-                    if (libDirChanged) {
-
-                        String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
-                                Settings.DEFAULT_EBOOK_DIRECTORY);
-
-                        YbkDAO.getInstance(this).open(this);
-                        refreshLibrary(libDir, ADD_BOOKS);
-                        refreshBookList();
-                    }
-
-                case WALK_BOOK:
-                    int lastIndex = data.getIntExtra(BOOK_WALK_INDEX, -1);
-                    if (lastIndex != -1)
-                        onBookWalker(lastIndex + 1);
-                    break;
-                }
+            if (resultCode != RESULT_OK) {
+                return;
             }
+
+            Bundle extras = data.getExtras();
+
+            switch (requestCode) {
+            case YbkViewActivity.CALL_HISTORY:
+            case YbkViewActivity.CALL_BOOKMARK:
+                setProgressBarIndeterminateVisibility(true);
+
+                if (extras.getBoolean(BookmarkDialog.DELETE_BOOKMARK)) {
+                    DeleteBookmarkDialog.create(this, YbkDAO.getInstance(this).getBookmark(
+                            extras.getInt(YbkDAO.BOOKMARK_NUMBER)));
+                } else if (extras.getLong(YbkDAO.HISTORY_ID) != 0) {
+                    startActivity(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.HISTORY_ID, extras
+                            .getLong(YbkDAO.HISTORY_ID)));
+                }
+
+                break;
+
+            case ACTIVITY_SETTINGS:
+                if (extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
+
+                    YbkDAO.getInstance(this).open(this);
+                    refreshLibrary(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                            Settings.DEFAULT_EBOOK_DIRECTORY), ADD_BOOKS);
+                    refreshBookList();
+                }
+                break;
+
+            case WALK_BOOK:
+                if (data.getIntExtra(BOOK_WALK_INDEX, -1) != -1) {
+                    walkBook(data.getIntExtra(BOOK_WALK_INDEX, -1) + 1);
+                }
+
+                break;
+            }
+
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
