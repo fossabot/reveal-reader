@@ -125,6 +125,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     History hist = YbkDAO.getInstance(this).getHistory(historyId);
                     mCurrChap.setBookFileName(hist.bookFileName);
                     mCurrChap.setChapFileName(hist.chapterName);
+                    mCurrChap.setScrollYPos(hist.scrollYPos);
                     mHistTitle = hist.title;
                 }
             }
@@ -178,7 +179,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     throw new FileNotFoundException(mCurrChap.getBookFileName());
                 }
 
-                String shortTitle = book.shortTitle;
                 if (null == mCurrChap.getChapFileName()) {
                     if (mBookWalk) {
                         mBookWalkIndex = -1;
@@ -191,13 +191,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             mCurrChap.setChapFileName(firstChapter.fileName);
                         }
                     } else
-                        mCurrChap.setChapFileName("\\" + shortTitle + ".html");
+                        mCurrChap.setChapFileName("\\" + book.shortTitle + ".html");
                 }
 
-                if (!(isPopup())) {
-                    if (loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
-                        initBookChapButtons(shortTitle, mCurrChap.getBookFileName(), mCurrChap.getChapFileName());
-                    }
+                if (!(isPopup()) && loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
+                    initBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap.getChapFileName());
                 }
 
             } catch (IOException ioe) {
@@ -470,8 +468,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             private boolean chapterExists(String chapter, YbkFileReader ybkRdr, String chap) throws IOException {
                 return ybkRdr.chapterExists(chap)
-                        || ybkRdr.chapterExists(chapter.substring(0, chap.lastIndexOf("\\"))
-                                + "_.html.gz");
+                        || ybkRdr.chapterExists(chapter.substring(0, chap.lastIndexOf("\\")) + "_.html.gz");
             }
 
             @Override
@@ -597,7 +594,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private boolean hasNextChapter() {
         Chapter chap = mYbkReader.getChapterByOrder(mCurrChap.getChapOrderNbr() + 1);
-        return  chap != null && !chap.fileName.toLowerCase().contains("binding.htm");
+        return chap != null && !chap.fileName.toLowerCase().contains("binding.htm");
     }
 
     @Override
@@ -647,7 +644,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
 
         Bundle extras;
-        long histId;
 
         try {
             YbkDAO ybkDao = YbkDAO.getInstance(this);
@@ -658,9 +654,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     setProgressBarIndeterminateVisibility(true);
 
                     extras = data.getExtras();
-                    histId = extras.getLong(YbkDAO.HISTORY_ID);
-
-                    History hist = ybkDao.getHistory(histId);
+                    History hist = ybkDao.getHistory(extras.getLong(YbkDAO.HISTORY_ID));
 
                     if (hist != null) {
                         mCurrChap.setBookFileName(hist.bookFileName);
@@ -711,15 +705,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         ybkDao.updateBookmark(bmId, mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), mYbkView
                                 .getScrollY());
                     } else if (deleteBookmark) {
-                        int bmId = extras.getInt(YbkDAO.BOOKMARK_NUMBER);
-                        hist = ybkDao.getBookmark(bmId);
-                        DeleteBookmarkDialog.create(this, hist);
+                        DeleteBookmarkDialog.create(this, ybkDao.getBookmark(extras.getInt(YbkDAO.BOOKMARK_NUMBER)));
                     } else {
                         // go to bookmark
                         setProgressBarIndeterminateVisibility(true);
-                        histId = extras.getLong(YbkDAO.HISTORY_ID);
-
-                        History bm = ybkDao.getHistory(histId);
+                        History bm = ybkDao.getHistory(extras.getLong(YbkDAO.HISTORY_ID));
 
                         if (bm != null) {
                             Book book = ybkDao.getBook(bm.bookFileName);

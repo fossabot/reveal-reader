@@ -41,16 +41,14 @@ public class BookmarkDialog extends ListActivity {
             setContentView(R.layout.dialog_bookmark);
             registerForContextMenu(getListView());
 
-            Button addBtn = (Button) findViewById(R.id.addBMButton);
-
             if (isCalledFromMain(getIntent().getExtras())) {
-                addBtn.setVisibility(View.GONE);
+                findAddButton().setVisibility(View.GONE);
             }
 
             setListAdapter(new ArrayAdapter<History>(this, R.layout.history_list_row, YbkDAO.getInstance(this)
                     .getBookmarkList()));
 
-            addBtn.setOnClickListener(new OnClickListener() {
+            findAddButton().setOnClickListener(new OnClickListener() {
                 public void onClick(final View view) {
                     Log.d(TAG, "Adding a bookmark");
                     setResult(RESULT_OK, new Intent(getBaseContext(), YbkViewActivity.class).putExtra(ADD_BOOKMARK,
@@ -67,6 +65,10 @@ public class BookmarkDialog extends ListActivity {
 
     }
 
+    private Button findAddButton() {
+        return (Button) findViewById(R.id.addBMButton);
+    }
+
     private boolean isCalledFromMain(Bundle extras) {
         return extras != null && extras.getBoolean("fromMain");
     }
@@ -75,9 +77,8 @@ public class BookmarkDialog extends ListActivity {
     protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
         try {
             Log.d(TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
-            History hist = (History) listView.getItemAtPosition(selectionRowId);
-
-            setResult(RESULT_OK, new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.HISTORY_ID, hist.id));
+            setResult(RESULT_OK, new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.HISTORY_ID,
+                    ((History) listView.getItemAtPosition(selectionRowId)).id));
 
             finish();
         } catch (RuntimeException rte) {
