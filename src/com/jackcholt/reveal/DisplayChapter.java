@@ -1,5 +1,7 @@
 package com.jackcholt.reveal;
 
+import com.jackcholt.reveal.data.History;
+
 /**
  * Class for holding data and behavior for the currently displaying chapter in YbkViewActivity and its children. 
  * @author Jack C. Holt
@@ -12,6 +14,14 @@ public class DisplayChapter {
     private int chapOrderNbr = 0;
     private String navFile = "1";
 
+    public DisplayChapter() {};
+    
+    public DisplayChapter(History history) {
+        bookFileName = history.bookFileName;
+        chapFileName = history.chapterName;
+        scrollYPos = history.scrollYPos;
+    }
+    
     public void setBookFileName(String bookFileName) {
         this.bookFileName = bookFileName;
     }

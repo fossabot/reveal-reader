@@ -34,7 +34,7 @@ import com.jackcholt.reveal.Settings;
  */
 public class YbkDAO {
     private SharedPreferences mSharedPref;
-    private Stack<History> backStack = new Stack<History>();
+    private Stack<History> mBackStack = new Stack<History>();
 
     private static final String TAG = "YbkDAO";
 
@@ -42,6 +42,7 @@ public class YbkDAO {
     public static final String BOOKS_FILE = "books.dat";
     public static final String HISTORY_FILE = "history.dat";
     public static final String BOOKMARKS_FILE = "bookmarks.dat";
+    public static final String BACKSTACK_FILE = "backstack.dat";
     public static final String CHAPTER_EXT = ".chp";
 
     public static final String FILENAME = "FILENAME";
@@ -248,7 +249,7 @@ public class YbkDAO {
         hist.scrollYPos = scrollYPos;
         hist.title = title;
         synchronized (mHistoryList) {
-            backStack.push(hist);
+            mBackStack.push(hist);
             Log.d(TAG, "Added " + hist.chapterName + " to backStack");
         }
     }
@@ -330,8 +331,8 @@ public class YbkDAO {
             while (mHistoryList.size() > histToKeep) {
                 mHistoryList.remove(mHistoryList.size() - 1);
             }
-            while (backStack.size() > stackToKeep) {
-                backStack.remove(0);
+            while (mBackStack.size() > stackToKeep) {
+                mBackStack.remove(0);
             }
         }
     }
@@ -511,7 +512,7 @@ public class YbkDAO {
         History hist = null;
 
         try {
-            hist = backStack.pop();
+            hist = mBackStack.pop();
         } catch (EmptyStackException ese) {
             // do nothing
         }
@@ -523,7 +524,23 @@ public class YbkDAO {
      * Clears all Histories off the stack.
      */
     public void clearBackStack() {
-        backStack.clear();
+        mBackStack.clear();
+    }
+
+
+    /**
+     * Stores the history list.
+     * 
+     * @throws IOException
+     */
+    private void storeHistoryList() {
+        synchronized (mHistoryList) {
+            try {
+                store(HISTORY_FILE, mHistoryList);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -537,9 +554,8 @@ public class YbkDAO {
         try {
             historyList = (ArrayList<History>) load(HISTORY_FILE);
             if (historyList.size() != 0) {
-                @SuppressWarnings("unused")
-                History history = historyList.get(0);
                 // perform a sanity check on the type
+                historyList.get(0);
             }
         } catch (Exception e) {
             Log.w(TAG, "Unable to load existing book list, creating a new one instead.");
@@ -551,14 +567,35 @@ public class YbkDAO {
     }
 
     /**
-     * Stores the history list.
+     * Gets a the stored history list (or creates a new one if it can't be read)
+     * 
+     * @return the history list
+     */
+    @SuppressWarnings("unchecked")
+    public void loadStoredBackstack() {
+        try {
+            mBackStack = (Stack<History>) load(HISTORY_FILE);
+            if (mBackStack.size() != 0) {
+                // perform a sanity check on the type
+                mBackStack.get(0);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to load existing book list, creating a new one instead.");
+        }
+        if (null == mBackStack) {
+            mBackStack = new Stack<History>();
+        }
+    }
+
+    /**
+     * Stores the backstack.
      * 
      * @throws IOException
      */
-    private void storeHistoryList() {
-        synchronized (mHistoryList) {
+    public void storeBackstack() {
+        synchronized (mBackStack) {
             try {
-                store(HISTORY_FILE, mHistoryList);
+                store(BACKSTACK_FILE, mBackStack);
             } catch (IOException e) {
                 e.printStackTrace();
             }
