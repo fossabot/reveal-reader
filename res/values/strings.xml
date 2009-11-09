@@ -45,7 +45,7 @@
 	<string name="close">Close</string>
 	<string name="delete">Delete</string>
 	<string name="title_download_url">http://www.thecoffeys.NOT/ebooks/xmlbooks.asp</string>
-	<string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
+	<string name="credit_to_others">Special Thanks to Bryce Yancey\, Mark Coffey and Darren Remington for the wonderful resources\, YBK\'s\, Format and other eBook tools</string>
 	<string name="download">Download</string>
 	<string name="ok">OK</string>
 	<string name="cancel">Cancel</string>
@@ -122,7 +122,7 @@
 	<string name="send_email_button">Send Email</string>
 	<string name="error_reporting_email">If you would like to Get HELP from the developers with this bug please check &quot;Send Email&quot; checkbox.  This will allow us to reply back to your email and help you with your bug.</string>
 	<string name="error_reporting_email_pop">Selecting this checkbox will open an Email message for you send review and send. Thanks</string>
-	<string name="donate">If you would like to Donate via PayPal to our continued development of this Reveal Reader Please click on the PayPal icon below to be redirected to PayPal's official website.</string>
+	<string name="donate">If you would like to Donate via PayPal to our continued development of this Reveal Reader Please click on the PayPal icon below to be redirected to PayPal\'s official website.</string>
 	<string name="donate_menu">PayPal Donate</string>
 	<string name="book_walker">Book Walker</string>
 	<string name="menu_ebook_properties">eBook Info</string>
@@ -151,7 +151,7 @@
 	<string name="refreshing_library">Refreshing library...</string>
 	<string name="refreshed_library">Refreshed library.</string>
 	<string name="downloading">&quot;Downloading ''{0}''.&quot;</string>
-	<string name="hidden_ebook">The eBook you are about to download is what we call a &quot;Hidden eBook&quot; and does NOT display on the main list of eBooks beacuse it's only referenced by other eBooks.  An example of this is the &quot;Study Help Images&quot; eBook that cannot be opened by itself and used by the &quot;Study Helps&quot; eBook to display images.</string>
+	<string name="hidden_ebook">The eBook you are about to download is what we call a &quot;Hidden eBook&quot; and does NOT display on the main list of eBooks beacuse it\'s only referenced by other eBooks.  An example of this is the &quot;Study Help Images&quot; eBook that cannot be opened by itself and used by the &quot;Study Helps&quot; eBook to display images.</string>
 	<string name="hidden_ebook_title">What Are Hidden eBooks?</string>
 	<string name="base_url">http://revealreader.thepackhams.com/</string>
 </resources>
