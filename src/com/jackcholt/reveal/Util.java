@@ -27,6 +27,14 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import android.app.Activity;
@@ -83,8 +91,43 @@ public class Util {
      * @author Jack C. Holt
      */
     public static boolean areNetworksUp(Context context) {
-        return isNetworkUp(context, ConnectivityManager.TYPE_MOBILE)
-                || isNetworkUp(context, ConnectivityManager.TYPE_WIFI);
+
+    	boolean bResult = false;
+    	
+    	if (isNetworkUp(context, ConnectivityManager.TYPE_MOBILE)
+                || isNetworkUp(context, ConnectivityManager.TYPE_WIFI)) {
+
+    		// just because the network transport layer is up doesn't mean we have an actual connection
+    		// to the internet. if the user does not have a data plan with their provider, for example
+    		// the network layer will report up even though we can't connect to the internet
+    		try {
+    			URLConnection cnVersion;
+				URL urlVersion = new URL(
+						"http://revealreader.thepackhams.com/revealVersion.xml?ClientVer="
+								+ Global.SVN_VERSION);
+				cnVersion = urlVersion.openConnection();
+				cnVersion.setReadTimeout(10000);
+				cnVersion.setConnectTimeout(10000);
+				cnVersion.setDefaultUseCaches(false);
+				cnVersion.connect();
+				InputStream streamVersion = cnVersion.getInputStream();
+				
+				if (streamVersion != null) {
+					DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+					Document manifestDoc = docBuild.parse(streamVersion);
+					NodeList manifestNodeList = manifestDoc.getElementsByTagName("manifest");
+					bResult = (manifestNodeList.getLength() > 0);
+					streamVersion.close();
+				}
+				
+    		} catch (SAXException e) {
+    		} catch (ParserConfigurationException e) {
+    		} catch (FactoryConfigurationError e) {
+    		} catch (IOException e) {
+    		}
+        }
+    		
+    	return bResult;
     }
 
     private static boolean isNetworkUp(Context context, int netType) {
