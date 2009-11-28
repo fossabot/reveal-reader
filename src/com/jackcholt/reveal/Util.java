@@ -1179,8 +1179,10 @@ public class Util {
                     e.printStackTrace();
                     Log.d("file", "not created");
                 } finally {
-                	connection.disconnect();
-                	connection = null;
+					if (connection != null) {
+						connection.disconnect();
+						connection = null;
+					}
                 }
             }
         };
