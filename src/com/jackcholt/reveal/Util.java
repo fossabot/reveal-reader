@@ -1131,47 +1131,56 @@ public class Util {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 Looper.prepare();
                 Bitmap bmImg;
+                HttpURLConnection connection = null;
                 try {
-                    URL myFileUrl = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName
-                            + ".jpg");
-                    HttpURLConnection connection = (HttpURLConnection) myFileUrl.openConnection();
-
-                    connection.setConnectTimeout(300000);
-                    connection.setReadTimeout(300000);
-                    connection.setDoInput(true);
-                    connection.connect();
-
-                    InputStream is = connection.getInputStream();
-
-                    if (is == null) {
-                        // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception
-                        // later on
-                        // that could only happen if it does. Best guess is that it happens with HTTP responses that
-                        // don't
-                        // actually have content, but by throwing an exception with the response message we might be
-                        // able to
-                        // diagnose what is going on.
-                        throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
-                    }
-                    Log.d(TAG, "download from " + myFileUrl);
-
-                    bmImg = BitmapFactory.decodeStream(is);
-
-                    byte[] b;
-                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    bmImg.compress(Bitmap.CompressFormat.PNG, 75, bytes);
-                    b = bytes.toByteArray();
-
-                    File myFile = new File("/sdcard/reveal/ebooks/thumbnails/" + eBookName + ".jpg");
-                    myFile.createNewFile();
-                    OutputStream filoutputStream = new FileOutputStream(myFile);
-                    filoutputStream.write(b);
-                    filoutputStream.flush();
-                    filoutputStream.close();
-
+                	if (Util.areNetworksUp(Main.getMainApplication()))
+                	{
+	                    URL myFileUrl = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName
+	                            + ".jpg");
+	                    connection = (HttpURLConnection) myFileUrl.openConnection();
+	
+	                    connection.setConnectTimeout(300000);
+	                    connection.setReadTimeout(300000);
+	                    connection.setDoInput(true);
+	                    connection.connect();
+	
+	                    InputStream is = connection.getInputStream();
+	
+	                    if (is == null) {
+	                        // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception
+	                        // later on
+	                        // that could only happen if it does. Best guess is that it happens with HTTP responses that
+	                        // don't
+	                        // actually have content, but by throwing an exception with the response message we might be
+	                        // able to
+	                        // diagnose what is going on.
+	                        throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
+	                    }
+	                    Log.d(TAG, "download from " + myFileUrl);
+	
+	                    bmImg = BitmapFactory.decodeStream(is);
+	
+	                    if (bmImg != null) {
+		                    byte[] b;
+		                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		                    bmImg.compress(Bitmap.CompressFormat.PNG, 75, bytes);
+		                    b = bytes.toByteArray();
+		
+		                    File myFile = new File("/sdcard/reveal/ebooks/thumbnails/" + eBookName + ".jpg");
+		                    myFile.createNewFile();
+		                    OutputStream filoutputStream = new FileOutputStream(myFile);
+		                    filoutputStream.write(b);
+		                    filoutputStream.flush();
+		                    filoutputStream.close();
+	                    }
+                	}
+                	
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.d("file", "not created");
+                } finally {
+                	connection.disconnect();
+                	connection = null;
                 }
             }
         };
