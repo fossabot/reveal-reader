@@ -283,11 +283,9 @@ public class Main extends ListActivity {
     /**
      * Refresh the eBook directory.
      * 
-     * @param strLibDir
-     *            the path to the library directory.
-     * @param addNewBooks
-     *            If true, run the code that will add new books to the database as well as the code that removes missing
-     *            books from the database (which runs regardless).
+     * @param strLibDir the path to the library directory.
+     * @param addNewBooks If true, run the code that will add new books to the database as well as the code that removes
+     *            missing books from the database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -596,7 +594,7 @@ public class Main extends ListActivity {
         if (index < 0 || index < mBookTitleList.size() || null == mBookTitleList.get(index)) {
             return;
         }
-        
+
         setProgressBarIndeterminateVisibility(true);
         startActivityForResult(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME,
                 mBookTitleList.get(index).fileName).putExtra(BOOK_WALK_INDEX, index), WALK_BOOK);
@@ -794,12 +792,8 @@ public class Main extends ListActivity {
         try {
             setProgressBarIndeterminateVisibility(true);
 
-            // Log.d(Global.TAG, "selectionRowId/id: " + selectionRowId + "/" +
-            // id);
-            Book book = (Book) listView.getItemAtPosition(selectionRowId);
-            Intent intent = new Intent(this, YbkViewActivity.class);
-            intent.putExtra(YbkDAO.FILENAME, book.fileName);
-            startActivity(intent);
+            startActivity(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME, ((Book) listView
+                    .getItemAtPosition(selectionRowId)).fileName));
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -819,7 +813,6 @@ public class Main extends ListActivity {
                         R.string.library_not_created).setPositiveButton(R.string.alert_dialog_ok,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-
                                 /* User clicked OK so do some stuff */
                             }
                         }).create();

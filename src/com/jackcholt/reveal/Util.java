@@ -27,13 +27,10 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
@@ -92,42 +89,64 @@ public class Util {
      */
     public static boolean areNetworksUp(Context context) {
 
-    	boolean bResult = false;
-    	
-    	if (isNetworkUp(context, ConnectivityManager.TYPE_MOBILE)
-                || isNetworkUp(context, ConnectivityManager.TYPE_WIFI)) {
-
-    		// just because the network transport layer is up doesn't mean we have an actual connection
-    		// to the internet. if the user does not have a data plan with their provider, for example
-    		// the network layer will report up even though we can't connect to the internet
-    		try {
-    			URLConnection cnVersion;
-				URL urlVersion = new URL(
-						"http://revealreader.thepackhams.com/revealVersion.xml?ClientVer="
-								+ Global.SVN_VERSION);
-				cnVersion = urlVersion.openConnection();
-				cnVersion.setReadTimeout(10000);
-				cnVersion.setConnectTimeout(10000);
-				cnVersion.setDefaultUseCaches(false);
-				cnVersion.connect();
-				InputStream streamVersion = cnVersion.getInputStream();
-				
-				if (streamVersion != null) {
-					DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-					Document manifestDoc = docBuild.parse(streamVersion);
-					NodeList manifestNodeList = manifestDoc.getElementsByTagName("manifest");
-					bResult = (manifestNodeList.getLength() > 0);
-					streamVersion.close();
-				}
-				
-    		} catch (SAXException e) {
-    		} catch (ParserConfigurationException e) {
-    		} catch (FactoryConfigurationError e) {
-    		} catch (IOException e) {
-    		}
+        if (!isNetworkUp(context, ConnectivityManager.TYPE_MOBILE)
+                && !isNetworkUp(context, ConnectivityManager.TYPE_WIFI)) {
+            return false;
         }
-    		
-    	return bResult;
+
+        /*
+         * just because the network transport layer is up doesn't mean we have an actual connection to the internet. if
+         * the user does not have a data plan with their provider, for example the network layer will report up even
+         * though we can't connect to the internet
+         */
+        InputStream streamVersion = getVersionInputStream();
+        if (null == streamVersion) {
+            return false;
+        }
+        try {
+            return (canGetVersionManifest(streamVersion));
+        } finally {
+            try {
+                if (null != streamVersion) streamVersion.close();
+            } catch (IOException e) {
+            }
+        }
+    }
+
+    private static boolean canGetVersionManifest(InputStream streamVersion) {
+        boolean succeeded = false;
+        try {
+            succeeded = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(streamVersion)
+                    .getElementsByTagName("manifest").getLength() > 0;
+        } catch (SAXException e) {
+        } catch (IOException e) {
+        } catch (ParserConfigurationException e) {
+        } catch (FactoryConfigurationError e) {
+        }
+        return succeeded;
+    }
+
+    private static InputStream getVersionInputStream() {
+        InputStream streamVersion = null;
+        URL urlVersion = null;
+        try {
+            urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer="
+                    + Global.SVN_VERSION);
+        } catch (MalformedURLException e) {
+            assert false : "We should never get here since we hardcoded the URL";
+        }
+        if (urlVersion != null) {
+            try {
+                URLConnection cnVersion = urlVersion.openConnection();
+                cnVersion.setReadTimeout(10000);
+                cnVersion.setConnectTimeout(10000);
+                cnVersion.setDefaultUseCaches(false);
+                cnVersion.connect();
+                streamVersion = cnVersion.getInputStream();
+            } catch (IOException ioe) {
+            }
+        }
+        return streamVersion;
     }
 
     private static boolean isNetworkUp(Context context, int netType) {
@@ -138,8 +157,7 @@ public class Util {
     /**
      * Remove HTML, surrounding quotes and Title case a book title.
      * 
-     * @param title
-     *            The unformatted title.
+     * @param title The unformatted title.
      * @return The formatted title.
      */
     public static final String formatTitle(final String title) {
@@ -176,8 +194,7 @@ public class Util {
     /**
      * Parses the binding text from BINDING.HTML to get the Book Title.
      * 
-     * @param binding
-     *            The binding text
+     * @param binding The binding text
      * @return The title of the book.
      */
     public static final String getBookTitleFromBindingText(String binding) {
@@ -187,8 +204,7 @@ public class Util {
     /**
      * Parses the binding text from BINDING.HTML to get the Book Title.
      * 
-     * @param binding
-     *            The binding text
+     * @param binding The binding text
      * @return The title of the book.
      */
     public static final String getBookShortTitleFromBindingText(String binding) {
@@ -212,8 +228,7 @@ public class Util {
     /**
      * Uncompress a GZip file that has been converted to a byte array.
      * 
-     * @param buf
-     *            The byte array that contains the GZip file contents.
+     * @param buf The byte array that contains the GZip file contents.
      * @return The uncompressed String. Returns null if there was an IOException.
      */
     public static final String decompressGzip(final byte[] buf, String encoding) {
@@ -242,13 +257,10 @@ public class Util {
      * Make an array of ints from the next four bytes in the byte array <code>ba</code> starting at position
      * <code>pos</code> in <code>ba</code>.
      * 
-     * @param ba
-     *            The byte array to read from.
-     * @param pos
-     *            The position in <code>ba</code> to start from.
+     * @param ba The byte array to read from.
+     * @param pos The position in <code>ba</code> to start from.
      * @return An array of four bytes which are in least to greatest significance order.
-     * @throws IOException
-     *             When the DataInputStream &quot;is&quot; cannot be read from.
+     * @throws IOException When the DataInputStream &quot;is&quot; cannot be read from.
      */
     public static final int[] makeVBIntArray(final byte[] ba, final int pos) throws IOException {
         int[] iArray = new int[4];
@@ -270,11 +282,9 @@ public class Util {
     /**
      * Make an array of ints from the next four bytes in the DataInputStream.
      * 
-     * @param is
-     *            the InputStream from which to read.
+     * @param is the InputStream from which to read.
      * @return An array of four bytes which are in least to greatest significance order.
-     * @throws IOException
-     *             When the DataInputStream &quot;is&quot; cannot be read from.
+     * @throws IOException When the DataInputStream &quot;is&quot; cannot be read from.
      */
     public static final int[] makeVBIntArray(final RandomAccessFile is) throws IOException {
         int[] iArray = new int[4];
@@ -291,11 +301,9 @@ public class Util {
      * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
      * byte to most significant byte order.
      * 
-     * @param is
-     *            The DataInputStream to read from.
+     * @param is The DataInputStream to read from.
      * @return The numeric value of the four bytes.
-     * @throws IOException
-     *             If the input stream is not readable.
+     * @throws IOException If the input stream is not readable.
      */
     public static final int readVBInt(RandomAccessFile is) throws IOException {
         return readVBInt(makeVBIntArray(is));
@@ -305,8 +313,7 @@ public class Util {
      * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
      * byte (LSB) &quot;little endian&quot; order.
      * 
-     * @param bytes
-     *            byte array to read from.
+     * @param bytes byte array to read from.
      * @return The numeric value of the four bytes.
      */
     public static final int readVBInt(final int[] bytes) {
@@ -322,8 +329,7 @@ public class Util {
      * Read in the four bytes of VB Long as stored in the YBK file. VB Longs are stored as bytes in least significant
      * byte (LSB) &quot;little endian&quot; order.
      * 
-     * @param bytes
-     *            byte array to read from.
+     * @param bytes byte array to read from.
      * @return The numeric value of the four bytes.
      */
     public static final int readVBInt(final byte[] bytes, int off) {
@@ -399,10 +405,8 @@ public class Util {
     /**
      * Return the tail end of the text.
      * 
-     * @param text
-     *            The text to shorten.
-     * @param length
-     *            The maximum length of the string to return.
+     * @param text The text to shorten.
+     * @param length The maximum length of the string to return.
      * @return The tail end of the <code>text</code> passed in if it is longer than <code>length</code>. The entire
      *         <code>text</code> passed if it is shorter than <code>length</code>.
      */
@@ -421,10 +425,8 @@ public class Util {
      * Process ifbook tags to not show links to books that don't exist in the ebook directory. Remove ifbook tags to
      * clean up the HTML.
      * 
-     * @param content
-     *            HTML to process.
-     * @param contRes
-     *            Reference to the environment in which we are working.
+     * @param content HTML to process.
+     * @param contRes Reference to the environment in which we are working.
      * @return The processed content.
      * @throws IOException
      */
@@ -499,8 +501,7 @@ public class Util {
      * Convert ahtags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by the
      * number of the ahtag.
      * 
-     * @param content
-     *            The content containing the ahtags to convert.
+     * @param content The content containing the ahtags to convert.
      * @return The converted content.
      */
     public static String convertAhtag(final String content) {
@@ -515,11 +516,9 @@ public class Util {
      * Convert ifvar tags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by
      * the number of the ahtag.
      * 
-     * @param content
-     *            The content containing the ahtags to convert.
+     * @param content The content containing the ahtags to convert.
      * @return The converted content.
-     * @throws InvalidFileFormatException
-     *             If content is in the wrong format.
+     * @throws InvalidFileFormatException If content is in the wrong format.
      */
     public static String convertIfvar(final String content) throws InvalidFileFormatException {
         /*
@@ -684,19 +683,13 @@ public class Util {
     /**
      * Download and install title into library. Used by the title browser thread.
      * 
-     * @param fileName
-     *            Target file name
-     * @param downloadUrl
-     *            Url from which we are downloading
-     * @param libDir
-     *            library directory
-     * @param context
-     *            the caller's context
-     * @param completion
-     *            callbacks
+     * @param fileName Target file name
+     * @param downloadUrl Url from which we are downloading
+     * @param libDir library directory
+     * @param context the caller's context
+     * @param completion callbacks
      * @return list of file paths to add to library
-     * @throws IOException
-     *             if download fails
+     * @throws IOException if download fails
      */
     public static List<String> fetchTitle(final File fileName, final URL downloadUrl, final String libDir,
             final Context context, Completion... callbacks) throws IOException {
@@ -869,22 +862,14 @@ public class Util {
     /**
      * Encapsulation of the code needed to send a notification.
      * 
-     * @param ctx
-     *            The context in which this notification is being sent. Usually the Activity.
-     * @param text
-     *            The text of the notification.
-     * @param iconId
-     *            The id of icon to use in the notification.
-     * @param title
-     *            The header title of the notification.
-     * @param notifId
-     *            The number you would like to use to identify this notification.
-     * @param notifMgr
-     *            The NotificationManager to send the notification through.
-     * @param classToStart
-     *            The class to start when the notification is tapped on.
-     * @param autoCancel
-     *            True if the notification should automatically disappear from the queue when tapped on.
+     * @param ctx The context in which this notification is being sent. Usually the Activity.
+     * @param text The text of the notification.
+     * @param iconId The id of icon to use in the notification.
+     * @param title The header title of the notification.
+     * @param notifId The number you would like to use to identify this notification.
+     * @param notifMgr The NotificationManager to send the notification through.
+     * @param classToStart The class to start when the notification is tapped on.
+     * @param autoCancel True if the notification should automatically disappear from the queue when tapped on.
      */
     public static void sendNotification(final Context ctx, final String text, final int iconId, final String title,
             final int notifId, final NotificationManager notifMgr, final Class<?> classToStart, final boolean autoCancel) {
@@ -904,8 +889,7 @@ public class Util {
     /**
      * Create the file directories if they don't exist.
      * 
-     * @param ctx
-     *            The context in which we are running.
+     * @param ctx The context in which we are running.
      */
     public static void createDefaultDirs(final Context ctx) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -940,14 +924,10 @@ public class Util {
     /**
      * Displays an error message and optionally the associated exception that caused it in an alert dialog
      * 
-     * @param ctx
-     *            context
-     * @param t
-     *            exception (can be null)
-     * @param messageFormat
-     *            the message format string
-     * @param messageArgs
-     *            (optional) arguments to the message format string
+     * @param ctx context
+     * @param t exception (can be null)
+     * @param messageFormat the message format string
+     * @param messageArgs (optional) arguments to the message format string
      */
     public static void displayError(final Context ctx, final Throwable t, final String messageFormat,
             final Object... messageArgs) {
@@ -988,8 +968,7 @@ public class Util {
      */
     public static synchronized long getUniqueTimeStamp() {
         long timeStamp = System.currentTimeMillis();
-        if (timeStamp <= lastTimeStamp)
-            timeStamp = lastTimeStamp + 1;
+        if (timeStamp <= lastTimeStamp) timeStamp = lastTimeStamp + 1;
         lastTimeStamp = timeStamp;
         return timeStamp;
     }
@@ -997,8 +976,7 @@ public class Util {
     /**
      * Gets the stack trace from a thrown object as a string
      * 
-     * @param t
-     *            the thrown object
+     * @param t the thrown object
      * @return the stack trace string
      */
     public static String getStackTrace(Throwable t) {
@@ -1010,8 +988,7 @@ public class Util {
     /**
      * Handle unexpected errors and runtime exceptions
      * 
-     * @param t
-     *            the exception
+     * @param t the exception
      */
     public static void unexpectedError(final Context ctx, final Throwable t, final String... strings) {
         Activity activity;
@@ -1034,10 +1011,8 @@ public class Util {
     /**
      * Look up the book name based on the ybk file name.
      * 
-     * @param ctx
-     *            the context
-     * @param name
-     *            the ybk file name (without the path)
+     * @param ctx the context
+     * @param name the ybk file name (without the path)
      * @return the book name if found, name if not found
      */
     public static String lookupBookName(Context ctx, String name) {
@@ -1074,10 +1049,8 @@ public class Util {
     /**
      * Delete files that match a pattern.
      * 
-     * @param dir
-     *            directory
-     * @param pattern
-     *            regular expression
+     * @param dir directory
+     * @param pattern regular expression
      */
     public static void deleteFiles(File dir, String pattern) {
         Pattern filter = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
@@ -1085,8 +1058,7 @@ public class Util {
         if (files != null) {
             for (File file : files) {
                 if (filter.matcher(file.getName()).matches()) {
-                    if (!file.delete())
-                        file.deleteOnExit();
+                    if (!file.delete()) file.deleteOnExit();
                 }
             }
         }
@@ -1176,56 +1148,56 @@ public class Util {
                 Bitmap bmImg;
                 HttpURLConnection connection = null;
                 try {
-                	if (Util.areNetworksUp(Main.getMainApplication()))
-                	{
-	                    URL myFileUrl = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName
-	                            + ".jpg");
-	                    connection = (HttpURLConnection) myFileUrl.openConnection();
-	
-	                    connection.setConnectTimeout(300000);
-	                    connection.setReadTimeout(300000);
-	                    connection.setDoInput(true);
-	                    connection.connect();
-	
-	                    InputStream is = connection.getInputStream();
-	
-	                    if (is == null) {
-	                        // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception
-	                        // later on
-	                        // that could only happen if it does. Best guess is that it happens with HTTP responses that
-	                        // don't
-	                        // actually have content, but by throwing an exception with the response message we might be
-	                        // able to
-	                        // diagnose what is going on.
-	                        throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
-	                    }
-	                    Log.d(TAG, "download from " + myFileUrl);
-	
-	                    bmImg = BitmapFactory.decodeStream(is);
-	
-	                    if (bmImg != null) {
-		                    byte[] b;
-		                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		                    bmImg.compress(Bitmap.CompressFormat.PNG, 75, bytes);
-		                    b = bytes.toByteArray();
-		
-		                    File myFile = new File("/sdcard/reveal/ebooks/thumbnails/" + eBookName + ".jpg");
-		                    myFile.createNewFile();
-		                    OutputStream filoutputStream = new FileOutputStream(myFile);
-		                    filoutputStream.write(b);
-		                    filoutputStream.flush();
-		                    filoutputStream.close();
-	                    }
-                	}
-                	
+                    if (Util.areNetworksUp(Main.getMainApplication())) {
+                        URL myFileUrl = new URL("http://revealreader.thepackhams.com/ebooks/thumbnails/" + eBookName
+                                + ".jpg");
+                        connection = (HttpURLConnection) myFileUrl.openConnection();
+
+                        connection.setConnectTimeout(300000);
+                        connection.setReadTimeout(300000);
+                        connection.setDoInput(true);
+                        connection.connect();
+
+                        InputStream is = connection.getInputStream();
+
+                        if (is == null) {
+                            // getInputStream isn't suppose to return null, but we sometimes getting null pointer
+                            // exception
+                            // later on
+                            // that could only happen if it does. Best guess is that it happens with HTTP responses that
+                            // don't
+                            // actually have content, but by throwing an exception with the response message we might be
+                            // able to
+                            // diagnose what is going on.
+                            throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
+                        }
+                        Log.d(TAG, "download from " + myFileUrl);
+
+                        bmImg = BitmapFactory.decodeStream(is);
+
+                        if (bmImg != null) {
+                            byte[] b;
+                            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                            bmImg.compress(Bitmap.CompressFormat.PNG, 75, bytes);
+                            b = bytes.toByteArray();
+
+                            File myFile = new File("/sdcard/reveal/ebooks/thumbnails/" + eBookName + ".jpg");
+                            myFile.createNewFile();
+                            OutputStream filoutputStream = new FileOutputStream(myFile);
+                            filoutputStream.write(b);
+                            filoutputStream.flush();
+                            filoutputStream.close();
+                        }
+                    }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.d("file", "not created");
                 } finally {
-					if (connection != null) {
-						connection.disconnect();
-						connection = null;
-					}
+                    if (connection != null) {
+                        connection.disconnect();
+                        connection = null;
+                    }
                 }
             }
         };

@@ -7,7 +7,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
@@ -80,12 +79,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         try {
             super.onCreate(savedInstanceState);
 
-            setProgressBarIndeterminateVisibility(true);
-
             Util.startFlurrySession(this);
             FlurryAgent.onEvent(TAG);
 
             initDisplayFeatures();
+
+            setProgressBarIndeterminateVisibility(true);
 
             String content = null;
             String strUrl = null;
@@ -102,9 +101,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     content = (String) savedInstanceState.get("content");
                     strUrl = (String) savedInstanceState.getString("strUrl");
                 }
-
             } else {
-
                 long historyId = 0;
                 if (savedInstanceState != null) {
                     mCurrChap.setBookFileName((String) savedInstanceState.get("bookFileName"));
@@ -118,7 +115,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
                     }
                 }
-
                 if (historyId != 0) {
                     History hist = YbkDAO.getInstance(this).getHistory(historyId);
                     mCurrChap.setBookFileName(hist.bookFileName);
@@ -127,7 +123,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     mHistTitle = hist.title;
                 }
             }
-
             if (null == mCurrChap.getBookFileName()) {
                 Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
                 Log.e(TAG, "In onCreate(): Book not loaded");
@@ -275,8 +270,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             getWindow()
                     .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
-        if (isPopup()) requestWindowFeature(Window.FEATURE_NO_TITLE);
-
+        if (isPopup()) {
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }
@@ -332,14 +328,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             @Override
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                 try {
-                    int ContentUriLength = YbkProvider.CONTENT_URI.toString().length();
+                    int contentUriLength = YbkProvider.CONTENT_URI.toString().length();
                     final boolean HANDLED_BY_HOST_APP = true;
                     final boolean HANDLED_BY_WEBVIEW = false;
-                    boolean urlHandler = HANDLED_BY_HOST_APP;
-                    final Pattern emailPattern = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}$",
-                            Pattern.CASE_INSENSITIVE);
-                    final Pattern urlPattern = Pattern.compile("^http://[A-Z0-9.-]+\\.[A-Z]{2,4}.+",
-                            Pattern.CASE_INSENSITIVE);
 
                     int sdkVersion = 2;
                     try {
@@ -353,12 +344,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         return HANDLED_BY_WEBVIEW;
                     }
 
-                    String lowerUrl = url.toLowerCase();
-                    if (lowerUrl.startsWith("mailto:") || lowerUrl.startsWith("geo:") || lowerUrl.startsWith("tel:")
-                            || lowerUrl.startsWith("http://") || lowerUrl.startsWith("https://")) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        startActivity(intent);
-                    } else if (url.length() > ContentUriLength + 1) {
+                    if (isProtocolRemote(url)) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                        return HANDLED_BY_HOST_APP;
+                    }
+
+                    if (url.length() > contentUriLength + 1) {
                         setProgressBarIndeterminateVisibility(true);
 
                         Log.d(TAG, "WebView URL: " + url);
@@ -367,10 +358,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         String shortTitle = null;
 
                         if (url.indexOf('@') != -1) {
-                            Matcher emailMatcher = emailPattern.matcher(url);
-                            if (emailMatcher.matches()) {
-                                Intent emailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url));
-                                startActivity(emailIntent);
+                            if (getEmailPattern().matcher(url).matches()) {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url)));
                             } else {
                                 view.scrollTo(0, 0);
                             }
@@ -378,9 +367,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                             String dataString;
                             try {
-                                dataString = URLDecoder.decode(url.substring(ContentUriLength + 1), "UTF-8");
+                                dataString = URLDecoder.decode(url.substring(contentUriLength + 1), "UTF-8");
                             } catch (UnsupportedEncodingException uee) {
-                                dataString = url.substring(ContentUriLength + 1);
+                                dataString = url.substring(contentUriLength + 1);
                             }
 
                             String httpString = dataString;
@@ -389,11 +378,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 httpString = "http://" + httpString;
                             }
 
-                            Matcher urlMatcher = urlPattern.matcher(httpString);
-                            if (urlMatcher.matches()) {
-                                Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(httpString));
-                                startActivity(webIntent);
-                                return urlHandler;
+                            if (getUrlPattern().matcher(httpString).matches()) {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(httpString)));
+                                return HANDLED_BY_HOST_APP;
                             }
 
                             String[] urlParts = dataString.split("/");
@@ -414,23 +401,16 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                             YbkFileReader ybkRdr = null;
                             try {
+                                setProgressBarIndeterminateVisibility(true);
                                 ybkRdr = YbkFileReader.getReader(YbkViewActivity.this, book);
-                                Book bookObj = ybkRdr.getBook();
+                                if (null != ybkRdr.getBook()) {
 
-                                if (null != bookObj) {
-
-                                    String chap = chapter;
-                                    int pos;
-                                    if ((pos = chapter.indexOf("#")) != -1) {
-                                        chap = chapter.substring(0, pos);
-                                    }
                                     boolean bookLoaded = false;
-                                    if (chapterExists(chapter, ybkRdr, chap)) {
-                                        setProgressBarIndeterminateVisibility(true);
+                                    if (chapterExists(chapter, ybkRdr, removeChapterFragment(chapter))) {
                                         bookLoaded = loadChapter(book, chapter, true);
-                                        setProgressBarIndeterminateVisibility(false);
                                     } else {
-                                        mDialogChapter = chap.substring(chapter.lastIndexOf("\\") + 1);
+                                        mDialogChapter = removeChapterFragment(chapter).substring(
+                                                chapter.lastIndexOf("\\") + 1);
                                         showDialog(CHAPTER_NONEXIST);
                                     }
 
@@ -453,12 +433,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     ybkRdr.unuse();
                                     ybkRdr = null;
                                 }
+                                setProgressBarIndeterminateVisibility(false);
                             }
                         }
-
                     }
 
-                    return urlHandler;
+                    return HANDLED_BY_HOST_APP;
                 } catch (RuntimeException rte) {
                     unexpectedError(rte);
                     return false;
@@ -466,6 +446,24 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     unexpectedError(e);
                     return false;
                 }
+            }
+
+            private String removeChapterFragment(String chapter) {
+                return (chapter.contains("#")) ? chapter.substring(0, chapter.indexOf("#")) : chapter;
+            }
+
+            private Pattern getUrlPattern() {
+                return Pattern.compile("^http://[A-Z0-9.-]+\\.[A-Z]{2,4}.+", Pattern.CASE_INSENSITIVE);
+            }
+
+            private Pattern getEmailPattern() {
+                return Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}$", Pattern.CASE_INSENSITIVE);
+            }
+
+            private boolean isProtocolRemote(final String url) {
+                return url.toLowerCase().startsWith("mailto:") || url.toLowerCase().startsWith("geo:")
+                        || url.toLowerCase().startsWith("tel:") || url.toLowerCase().startsWith("http://")
+                        || url.toLowerCase().startsWith("https://");
             }
 
             private boolean chapterExists(String chapter, YbkFileReader ybkRdr, String chap) throws IOException {
