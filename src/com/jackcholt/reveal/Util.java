@@ -375,6 +375,31 @@ public class Util {
 		return i;
 	}
 
+	// java script that implements the ifvar show/hide functionality
+	private static final String IFVAR_SCRIPT = 
+	    "function chcss(c,e,v) {" +
+	    " var ss = document.styleSheets;" +
+	    " for (var S = 0; S < ss.length; S++) {" +
+	    "  for (var R = 0; R < ss[S].rules.length; R++) {" +
+	    "   var r = ss[S].rules[R];" +
+	    "   if (r.selectorText == c) {" +
+	    "    if(r.style[e]) {" +
+	    "     r.style[e] = v;" +
+	    "     return;" +
+	    "    }" +
+	    "   }" +
+	    "  }" +
+	    " }" +
+	    "}" +
+	    "function showSpan(v) {" +
+	    " chcss('._show' + v, 'display', 'inline');" +
+	    " chcss('._hide' + v, 'display', 'none');" +
+	    "}" +
+	    "function hideSpan(v) {" +
+	    " chcss('._show' + v, 'display', 'none');" +
+	    " chcss('._hide' + v, 'display', 'inline');" +
+	    "}";
+
 	public static final String htmlize(final String text,
 			final SharedPreferences sharedPref) {
 		if (text == null) {
@@ -400,9 +425,15 @@ public class Util {
 				+ "</style>";
 
 		// Log.d(TAG, "style: " + style);
+		
+		String scripts = "<script type='text/javascript'>";
+		if (content.indexOf("class=\"_show") != -1) {
+		    scripts += IFVAR_SCRIPT;
+		}
+        scripts += "</script>";
 
 		return "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
-				+ style + "</head><body>" + content + "</body></html>";
+				+ style + scripts + "</head><body>" + content + "</body></html>";
 	}
 
 	public static final HashMap<String, String> getFileNameChapterFromUri(
