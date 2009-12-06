@@ -16,6 +16,13 @@
         android:summaryOn="@string/summary_on_fullscreen" 
         android:summaryOff="@string/summary_off_fullscreen" 
         android:checked="true"/>
+
+	<CheckBoxPreference
+        android:key="enable_night_mode"
+        android:title="@string/enable_night_mode"
+        android:summaryOn="@string/summaryOn_enable_night_mode" 
+        android:summaryOff="@string/summaryOff_enable_night_mode" 
+        android:checked="false"/>
         
     <EditTextPreference
    		android:key="default_ebook_dir"
@@ -28,7 +35,5 @@
 		android:summary="@string/summary_default_font_size"  
 		android:entries="@array/fontsize"  
 		android:entryValues="@array/fontsize_number"/>
-
-	/>
         
 </PreferenceScreen>

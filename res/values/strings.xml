@@ -24,9 +24,7 @@
 	<string name="default_ebook_dir">/sdcard/reveal/ebooks/</string>
 	<string name="summary_default_ebook_dir">Default is /sdcard/reveal/ebooks/</string>
 	<string name="default_temp_dir">/sdcard/reveal/</string>
-	<string name="midnightmode_off">MidNight Mode is OFF</string>
 	<string name="default_fontsize">12</string>
-	<string name="midnightmode_on">Midnight Mode is ON</string>
 	<string name="title_default_ebook_dir">Default eBook Location</string>
 	<string name="summary_default_temp_dir">Default Directory for Application TEMP</string>
 	<string name="title_list_preference">List preference</string>
@@ -78,6 +76,9 @@
 	<string name="label_fullscreen">Enable Fullscreen View</string>
 	<string name="summary_on_fullscreen">Fullscreen will display</string>
 	<string name="summary_off_fullscreen">Fullscreen will not Display</string>
+	<string name="enable_night_mode">Enable Night Mode</string>
+	<string name="summaryOn_enable_night_mode">Night Mode is on</string>
+	<string name="summaryOff_enable_night_mode">Night Mode is off</string>
 	<string name="support_btn">Support</string>
 	<string name="book_not_loaded">Could not open the eBook.</string>
 	<string name="no_more_history">You\'ve run out of history!</string>

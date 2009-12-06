@@ -10,8 +10,11 @@
           android:textFilterEnabled="true"
           android:textSize="@dimen/font_size"/>
     <TextView android:id="@+id/android:empty"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
           android:text="@string/no_books"
-          android:textSize="@dimen/font_size"/>
+          android:textSize="@dimen/font_size"
+          android:lineSpacingMultiplier="1.1" 
+          android:typeface="normal" 
+          android:gravity="center_vertical|center_horizontal" 
+          android:layout_width="wrap_content" 
+          android:layout_height="fill_parent"/>
 </LinearLayout>
