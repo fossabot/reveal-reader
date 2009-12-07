@@ -6,11 +6,12 @@
 
 	<style name="Theme.DayMode" parent="android:Theme.Light">
 		<item name="android:windowNoTitle">true</item>
-		<item name="android:windowBackground">@color/translucent_blue</item>
+		<item name="android:windowBackground">@color/translucent_brown</item>
 	</style>
 
 	<style name="Theme.NightMode" parent="android:Theme.Black">
 		<item name="android:windowNoTitle">true</item>
-		<item name="android:windowBackground">@color/translucent_blue</item>
+		<item name="android:windowBackground">@color/translucent_brown</item>
+		<!-- <item name="android:textStyle">bold</item>  -->
 	</style>
 </resources>

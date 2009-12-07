@@ -76,6 +76,10 @@ public class Util {
 	public static final String NO_TITLE = "no_book_title";
 	public static final String DOWNLOAD_MIRROR = "http://revealreader.thepackhams.com/ebooks/";
 	public static final String EMPTY_STRING = new String();
+	public static final String NIGHT_MODE_STYLE = "body {background-color:black;color:#b3b3b3;} "
+			+ "hr{border:1px solid #564129} "
+			+ "a:link{color:#6699cc} "
+			+ "a:visited{color:#336699}" + "a:active{color:#3399ff}";
 
 	public static void displayToastMessage(String message) {
 		Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG)
@@ -408,6 +412,7 @@ public class Util {
 
 		boolean showPicture = sharedPref.getBoolean("show_pictures", true);
 		boolean showAH = sharedPref.getBoolean("show_ah", false);
+		boolean nightMode = sharedPref.getBoolean("enable_night_mode", false);
 
 		String content = text;
 		int pos = content.indexOf("<end>");
@@ -422,7 +427,7 @@ public class Util {
 				+ (showPicture ? "display:none;" : "display:inline") + "}"
 				+ "._showtoc {display:inline}" + "._hidetoc {display:none}"
 				+ ".ah {" + (showAH ? "display:inline;" : "display:none") + "}"
-				+ "</style>";
+				+ (nightMode ? NIGHT_MODE_STYLE : "") + "</style>";
 
 		// Log.d(TAG, "style: " + style);
 		

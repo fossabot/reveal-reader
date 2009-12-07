@@ -1066,9 +1066,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 			content = Util.processIfbook(content, this);
 			content = convertAhtags(content);
 			content = Util.convertIfvar(content);
+			// Inside htmlize we now have support for night mode
 			content = Util.htmlize(content, getSharedPrefs());
 
 			if ((isShowInPopup(chapter))) {
+				System.out.println(content);
 				showChapterInPopup(content, book, strUrl);
 			} else {
 				findWebView().loadDataWithBaseURL(strUrl, content, "text/html",
