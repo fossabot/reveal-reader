@@ -279,7 +279,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }
-        Util.setTheme(getSharedPrefs(), this);
+        if (!isPopup()) Util.setTheme(getSharedPrefs(), this);
     }
 
     /**
