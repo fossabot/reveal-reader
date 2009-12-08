@@ -6,9 +6,8 @@
     >
 	<ListView android:id="@+id/android:list"
           android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
           android:textFilterEnabled="true"
-          android:textSize="@dimen/font_size"/>
+          android:textSize="@dimen/font_size" android:layout_height="fill_parent"/>
     <TextView android:id="@+id/android:empty"
           android:text="@string/no_books"
           android:textSize="@dimen/font_size"
