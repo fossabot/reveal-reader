@@ -155,4 +155,7 @@
 	<string name="hidden_ebook">The eBook you are about to download is what we call a &quot;Hidden eBook&quot; and does NOT display on the main list of eBooks beacuse it\'s only referenced by other eBooks.  An example of this is the &quot;Study Help Images&quot; eBook that cannot be opened by itself and used by the &quot;Study Helps&quot; eBook to display images.</string>
 	<string name="hidden_ebook_title">What Are Hidden eBooks?</string>
 	<string name="base_url">http://revealreader.thepackhams.com/</string>
+<string name="prefs_main_title">Reveal Reader Preferences</string>
+<string name="prefs_color_mode">eBook Reading Colors</string>
+<string name="prefs_ebook_info">eBook Defaults</string>
 </resources>
