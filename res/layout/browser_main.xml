@@ -4,16 +4,16 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:textSize="@dimen/font_size"
-    android:padding="5dip"
     >
     <ListView android:id="@+id/android:list"
           android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
+          android:layout_height="fill_parent"
           android:textFilterEnabled="true"
-          android:textSize="@dimen/font_size"/>
+          android:textSize="@dimen/font_size"
+          android:padding="5dp"/>
     <TextView android:id="@+id/android:empty"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent"
           android:text="@string/no_books_xml"
           android:textSize="@dimen/font_size"/>
 </LinearLayout>
