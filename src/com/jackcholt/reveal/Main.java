@@ -663,6 +663,8 @@ public class Main extends ListActivity {
             super.onResume();
             Util.setTheme(getSharedPrefs(), this);
             setContentView(R.layout.main);
+            // To capture LONG_PRESS gestures
+            registerForContextMenu(getListView());
 
             setProgressBarIndeterminateVisibility(false);
 
