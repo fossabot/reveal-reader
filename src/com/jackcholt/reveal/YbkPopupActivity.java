@@ -13,23 +13,24 @@ import android.view.Menu;
  */
 public class YbkPopupActivity extends YbkViewActivity {
 
-    /**
-     * Don't show an options menu.
-     */
-    @Override
-    public boolean onCreateOptionsMenu(final Menu menu) {
-        super.onCreateOptionsMenu(menu);
+	/**
+	 * Don't show an options menu.
+	 */
+	@Override
+	public boolean onCreateOptionsMenu(final Menu menu) {
+		super.onCreateOptionsMenu(menu);
 
-        return false;
-    }
-    
-    @Override
-    protected boolean isPopup() {
-        return true;
-    }
-    
-    @Override
-    protected void setContentView() {
-        setContentView(R.layout.view_popup_ybk);
-    }
+		return false;
+	}
+
+	@Override
+	protected boolean isPopup() {
+		return true;
+	}
+
+	@Override
+	protected void setContentView() {
+
+		setContentView(R.layout.view_popup_ybk);
+	}
 }
