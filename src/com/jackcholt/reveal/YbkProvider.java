@@ -19,30 +19,18 @@ import android.util.Log;
 
 public class YbkProvider extends ContentProvider {
     public static final String KEY_MIMETYPE = "mimetype";
-
     public static final String AUTHORITY = "com.jackcholt.reveal";
-
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/ybk");
-
     public static final int BOOK = 0;
-
     public static final int BOOKS = 1;
-
     public static final int CHAPTER = 2;
-
     public static final int CHAPTERS = 3;
-
     public static final int HISTORY = 4;
-
     public static final int HISTORIES = 5;
-
     public static final int BOOKMARK = 6;
-
     public static final int BOOKMARKS = 7;
-
     public static final int BACK = 8;
-
-    public static final String TAG = "YbkProvider";
+    public static final String TAG = "reveal.YbkProvider";
 
     /**
      * Is the chapter a navigation chapter? Data type: INTEGER. Use
@@ -56,40 +44,25 @@ public class YbkProvider extends ContentProvider {
      * {@link CHAPTER_ZOOM_MENU_ON} to set values.
      */
     public static final String CHAPTER_ZOOM_PICTURE = "zoom_picture";
-
     public static final String BOOK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.book";
-
     public static final String BOOK_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.book";
-
     public static final String CHAPTER_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.chapter";
-
     public static final String CHAPTER_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.chapter";
-
     public static final String HISTORY_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.history";
-
     public static final String HISTORY_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.history";
-
     public static final String BOOKMARK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.bookmark";
-
     public static final String BOOKMARK_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.jackcholt.reveal.ybk.bookmark";
-
     public static final String BACK_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.jackcholt.reveal.ybk.back";
-
     /** Non navigation chapter */
     public static final int CHAPTER_TYPE_NONNAV = 0;
-
     /** Navigation chapter */
     public static final int CHAPTER_TYPE_NAV = 1;
-
     /** All links open according to Popup view settings */
     public static final int CHAPTER_TYPE_SETTINGS = 2;
-
     /** Zoom menu will not be available */
     public static final int CHAPTER_ZOOM_MENU_OFF = 0;
-
     /** Zoom menu will be available */
     public static final int CHAPTER_ZOOM_MENU_ON = 1;
-
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
         sUriMatcher.addURI(AUTHORITY, "ybk/chapter/#", CHAPTER);
@@ -113,9 +86,7 @@ public class YbkProvider extends ContentProvider {
      */
     @Override
     public int delete(final Uri uri, final String selection, final String[] selectionArgs) {
-
         Log.e(TAG, "YbkProvider does not support deletion.");
-
         return 0;
     }
 
@@ -131,28 +102,20 @@ public class YbkProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)) {
         case CHAPTERS:
             return CHAPTER_CONTENT_TYPE;
-
         case CHAPTER:
             return CHAPTER_CONTENT_ITEM_TYPE;
-
         case BOOKS:
             return BOOK_CONTENT_TYPE;
-
         case BOOK:
             return BOOK_CONTENT_ITEM_TYPE;
-
         case HISTORIES:
             return HISTORY_CONTENT_TYPE;
-
         case HISTORY:
             return HISTORY_CONTENT_ITEM_TYPE;
-
         case BOOKMARKS:
             return BOOKMARK_CONTENT_TYPE;
-
         case BOOKMARK:
             return BOOKMARK_CONTENT_ITEM_TYPE;
-
         default:
             throw new IllegalArgumentException("Unknown URI " + uri);
         }
@@ -163,9 +126,7 @@ public class YbkProvider extends ContentProvider {
      */
     @Override
     public Uri insert(final Uri uri, final ContentValues initialValues) {
-
         Log.e(TAG, "The YbkProvider does not support inserts");
-
         return null;
     }
 
@@ -181,9 +142,7 @@ public class YbkProvider extends ContentProvider {
     @Override
     public Cursor query(final Uri uri, final String[] projection, final String selection, final String[] selectionArgs,
             String sortOrder) {
-
         Log.e(TAG, "The YbkProvider does not support queries.");
-
         return null;
     }
 
@@ -193,7 +152,6 @@ public class YbkProvider extends ContentProvider {
     @Override
     public int update(final Uri uri, final ContentValues values, final String selection, final String[] selectionArgs) {
         Log.e(TAG, "The YbkProvider does not support updates.");
-
         return 0;
     }
 
@@ -214,8 +172,6 @@ public class YbkProvider extends ContentProvider {
         final int BUFFER_SIZE = 8096;
         synchronized (mTempImgFiles) {
             ParcelFileDescriptor pfd = null;
-
-            // Log.d(TAG,"In openFile. URI is: " + uri.toString());
 
             HashMap<Uri, ImgFileInfo> tempImgFiles = mTempImgFiles;
             ImgFileInfo info;
@@ -323,11 +279,7 @@ public class YbkProvider extends ContentProvider {
 
         int unuse() {
             synchronized (mTempImgFiles) {
-                if (--useCount <= 0) {
-                    // mTempImgFiles.remove(uri);
-                    // file.delete();
-                }
-                return useCount;
+                return --useCount;
             }
         }
     }

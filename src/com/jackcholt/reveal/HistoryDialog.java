@@ -26,9 +26,6 @@ public class HistoryDialog extends ListActivity {
 
             setContentView(R.layout.dialog_history);
 
-            // SharedPreferences sharedPref =
-            // PreferenceManager.getDefaultSharedPreferences(this);
-
             try {
                 YbkDAO ybkDao = YbkDAO.getInstance(this);
 

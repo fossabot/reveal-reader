@@ -158,4 +158,8 @@
 <string name="prefs_main_title">Reveal Reader Preferences</string>
 <string name="prefs_color_mode">eBook Reading Colors</string>
 <string name="prefs_ebook_info">eBook Defaults</string>
+<string name="hilite_label">Highlight</string>
+<string name="note_label">Note</string>
+<string name="menu_annotate">Note/Highlight</string>
+<string name="menu_goto_top">Go to top</string>
 </resources>

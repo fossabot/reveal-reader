@@ -15,7 +15,7 @@
 		</activity>
 
 		<activity android:name=".Settings" android:label="@string/settings_name"
-			android:screenOrientation="sensor" android:theme="@android:style/Theme.Dialog"/>
+			android:screenOrientation="sensor" android:theme="@android:style/Theme.Dialog" />
 		<activity android:name=".YbkViewActivity" android:label="@string/reveal_ybk_view" />
 		<provider android:multiprocess="true" android:authorities="com.jackcholt.reveal"
 			android:name=".YbkProvider" android:screenOrientation="sensor"></provider>
@@ -23,16 +23,21 @@
 			android:screenOrientation="sensor" android:name="TitleBrowser" />
 
 		<activity android:multiprocess="true" android:name=".HistoryDialog"
-			android:label="@string/menu_history" android:screenOrientation="sensor" android:theme="@android:style/Theme.Dialog"/>
+			android:label="@string/menu_history" android:screenOrientation="sensor"
+			android:theme="@android:style/Theme.Dialog" />
 		<activity android:multiprocess="true" android:name=".BookmarkDialog"
-			android:label="@string/menu_bookmark" android:screenOrientation="sensor" android:theme="@android:style/Theme.Dialog" />
+			android:label="@string/menu_bookmark" android:screenOrientation="sensor"
+			android:theme="@android:style/Theme.Dialog" />
 
 		<activity android:name=".ErrorDialog" android:label="@string/error_title"
-			android:screenOrientation="sensor" android:multiprocess="false" android:theme="@android:style/Theme.Dialog" />
+			android:screenOrientation="sensor" android:multiprocess="false"
+			android:theme="@android:style/Theme.Dialog" />
 		<service android:name=".YbkService" android:exported="false" />
 
 		<activity android:name=".YbkPopupActivity" android:label="@string/reveal_ybk_view"
 			android:theme="@android:style/Theme.Dialog" />
+		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog" />
+		<activity android:name=".AnnotationDialog" android:theme="@android:style/Theme.Dialog" />
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />

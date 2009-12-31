@@ -25,8 +25,7 @@ import android.util.Log;
 import com.jackcholt.reveal.Settings;
 
 /**
- * A class for managing all the database accesses for the OODB and other data
- * related logic.
+ * A class for managing all the database accesses for the OODB and other data related logic.
  * 
  * @author Jack C. Holt
  * @author Shon Vella
@@ -36,13 +35,14 @@ public class YbkDAO {
     private SharedPreferences mSharedPref;
     private Stack<History> mBackStack = new Stack<History>();
 
-    private static final String TAG = "YbkDAO";
+    private static final String TAG = "reveal.YbkDAO";
 
     public static final String DATA_DIR = "data";
     public static final String BOOKS_FILE = "books.dat";
     public static final String HISTORY_FILE = "history.dat";
     public static final String BOOKMARKS_FILE = "bookmarks.dat";
     public static final String BACKSTACK_FILE = "backstack.dat";
+    public static final String ANNOT_HILITE_FILE = "annotHilite.dat";
     public static final String CHAPTER_EXT = ".chp";
 
     public static final String FILENAME = "FILENAME";
@@ -52,13 +52,19 @@ public class YbkDAO {
 
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
 
+    public static final String NOTE = "note";
+    public static final String COLOR = "color";
+    public static final String VERSE = "verse";
+    public static final String BOOK_FILENAME = "book_filename";
+    public static final String CHAPTER_FILENAME = "chapter_filename";
+
     private static YbkDAO instance = null;
 
     private ArrayList<History> mHistoryList;
     private ArrayList<History> mBookmarkList;
     private ArrayList<History>[] mHistoryLists;
-
     private ArrayList<Book> mBookList;
+    private ArrayList<AnnotHilite> mAnnotHiliteList;
 
     private File mDataDirFile;
 
@@ -83,8 +89,6 @@ public class YbkDAO {
 
     /**
      * Make this a singleton by blocking direct access to the constructor.
-     * 
-     * @throws IOException
      */
     private YbkDAO(final Context ctx) {
         open(ctx);
@@ -105,7 +109,8 @@ public class YbkDAO {
         mBookList = getStoredBookList();
         mHistoryList = getStoredHistoryList();
         mBookmarkList = getStoredBookmarkList();
-        mHistoryLists = (ArrayList<History>[]) new ArrayList[] {mHistoryList, mBookmarkList}; 
+        mHistoryLists = (ArrayList<History>[]) new ArrayList[] { mHistoryList, mBookmarkList };
+        mAnnotHiliteList = getStoredAnnotHiliteList();
     }
 
     /**
@@ -156,20 +161,68 @@ public class YbkDAO {
     };
 
     /**
+     * Insert a new Annotation Highlight record into the database.
+     * 
+     * @param note the text of the annotation.
+     * @param color the color to use to highlight the verse.
+     * @param verse the verse to highlight.
+     * @param bookFilename the filename of book that contains the verse to be highlighted/annotated.
+     * @param chapterFilename the filename of the chapter that contains the verse to be highlighted/annotated.
+     * @return the AnnotHilite object that was inserted.
+     */
+    public AnnotHilite insertAnnotHilite(final String note, final int color, final int verse,
+            final String bookFilename, final String chapterFilename) {
+        if (verse < 1 || null == bookFilename || null == chapterFilename) {
+            throw new IllegalArgumentException(
+                    "verse must be greater than 0, bookFilename and chapterFilename must not be null.\n"
+                            + "verse/bookFilename/chapterFilename: " + verse + "/"
+                            + (null == bookFilename ? "nil" : bookFilename) + "/"
+                            + (null == chapterFilename ? "nil" : chapterFilename));
+        }
+
+        AnnotHilite ah = new AnnotHilite();
+        ah.note = note;
+        ah.color = color;
+        ah.verse = verse;
+        ah.bookFilename = bookFilename;
+        ah.chapterFilename = chapterFilename;
+        synchronized (mAnnotHiliteList) {
+            Iterator<AnnotHilite> it = mAnnotHiliteList.iterator();
+            while (it.hasNext()) {
+                AnnotHilite h = it.next();
+                if ((h.verse == verse && null != h.bookFilename && h.bookFilename.equalsIgnoreCase(bookFilename))
+                        && null != h.chapterFilename && h.chapterFilename.equalsIgnoreCase(chapterFilename)) {
+                    it.remove();
+                }
+            }
+            mAnnotHiliteList.add(ah);
+            Log.d(TAG, "added AnnotHilite");
+            Collections.sort(mAnnotHiliteList, annotHiliteComparator);
+            storeAnnotHiliteList();
+        }
+        return ah;
+    }
+
+    private static final Comparator<AnnotHilite> annotHiliteComparator = new Comparator<AnnotHilite>() {
+
+        public int compare(AnnotHilite ah1, AnnotHilite ah2) {
+            if (ah1.verse < ah2.verse)
+                return -1;
+            if (ah1.verse == ah2.verse)
+                return 0;
+            return 1;
+        }
+    };
+
+    /**
      * Insert a book into the database.
      * 
-     * @param fileName
-     *            The name of the file that contains the book.
-     * @param bindingText
-     *            The text that describes the book.
-     * @param title
-     *            The title of the book.
-     * @param shortTitle
-     *            the abbreviated title.
-     * @param metaData
-     *            Descriptive information.
-     * @param chapters
-     *            the list of chapters
+     * @param fileName The name of the file that contains the book.
+     * @param bindingText The text that describes the book.
+     * @param title The title of the book.
+     * @param shortTitle the abbreviated title.
+     * @param metaData Descriptive information.
+     * @param chapters the list of chapters
      * @return the Book
      * @throws IOException
      */
@@ -205,14 +258,10 @@ public class YbkDAO {
     /**
      * Save a new history/bookMark item.
      * 
-     * @param bookFileName
-     *            The filename of the book that this is related to.
-     * @param historyTitle
-     *            The title to be shown in the history/bookmark list.
-     * @param chapterName
-     *            The chapter that was being read.
-     * @param scrollPos
-     *            The position in the chapter that was being read.
+     * @param bookFileName The filename of the book that this is related to.
+     * @param historyTitle The title to be shown in the history/bookmark list.
+     * @param chapterName The chapter that was being read.
+     * @param scrollPos The position in the chapter that was being read.
      * @return True if the insert succeeded, False otherwise.
      */
     public boolean insertHistory(final String bookFileName, final String title, final String chapterName,
@@ -257,16 +306,11 @@ public class YbkDAO {
     /**
      * Save a new /bookMark item.
      * 
-     * @param bookFileName
-     *            The filename of the book that this is related to.
-     * @param historyTitle
-     *            The title to be shown in the bookmark list.
-     * @param chapterName
-     *            The chapter that was being read.
-     * @param scrollPos
-     *            The position in the chapter that was being read.
-     * @param bookmarkNumber
-     *            The number of the bookmark to save.
+     * @param bookFileName The filename of the book that this is related to.
+     * @param historyTitle The title to be shown in the bookmark list.
+     * @param chapterName The chapter that was being read.
+     * @param scrollPos The position in the chapter that was being read.
+     * @param bookmarkNumber The number of the bookmark to save.
      * @return True if the insert succeeded, False otherwise.
      */
     public boolean insertBookmark(final String bookFileName, final String title, final String chapterName,
@@ -294,8 +338,7 @@ public class YbkDAO {
      * @param scrollYPos
      * @return
      */
-    public boolean updateBookmark(final int bmId, final String bookFileName, final String chapName,
-            final int scrollYPos) {
+    public boolean updateBookmark(final int bmId, final String bookFileName, final String chapName, final int scrollYPos) {
         boolean success = false;
         History hist = getBookmark(bmId);
 
@@ -312,7 +355,7 @@ public class YbkDAO {
 
     public boolean deleteBookmark(History hist) {
         synchronized (mBookmarkList) {
-            boolean success =  mBookmarkList.remove(hist);
+            boolean success = mBookmarkList.remove(hist);
             storeBookmarkList();
             return success;
         }
@@ -340,8 +383,7 @@ public class YbkDAO {
     /**
      * Delete book from db based on filename.
      * 
-     * @param fileName
-     *            The absolute file path of the book.
+     * @param fileName The absolute file path of the book.
      * @return True if the book was deleted.
      */
     public boolean deleteBook(final String fileName) {
@@ -365,8 +407,7 @@ public class YbkDAO {
     /**
      * Remove the book from the database.
      * 
-     * @param book
-     *            The book to be deleted.
+     * @param book The book to be deleted.
      * @return True if the book was deleted.
      */
     public boolean deleteBook(final Book book) {
@@ -378,8 +419,7 @@ public class YbkDAO {
     /**
      * Get a book object identified by the fileName.
      * 
-     * @param fileName
-     *            the filename we're looking for.
+     * @param fileName the filename we're looking for.
      * @return A Book object identified by the passed in filename.
      * @throws IOException
      */
@@ -395,10 +435,35 @@ public class YbkDAO {
     }
 
     /**
+     * Get a single {@link AnnotHilite} object identified by the parameters. If no AnnotHilite can be found, null is
+     * returned.
+     * 
+     * @param verse
+     * @param bookFilename
+     * @param chapterFilename
+     * @return
+     */
+    public AnnotHilite getAnnotHilite(int verse, String bookFilename, String chapterFilename) {
+        Log.d(TAG, "verse/bookFilename/chapterFilename: " + verse + "/" + bookFilename + "/" + chapterFilename);
+
+        synchronized (mAnnotHiliteList) {
+            for (AnnotHilite ah : mAnnotHiliteList) {
+                if (null == ah || null == ah.bookFilename || null == ah.chapterFilename) {
+                    throw new IllegalStateException("Annotation Highlight object contains null values in primary key.");
+                }
+                if (ah.verse == verse && ah.bookFilename.equalsIgnoreCase(bookFilename)
+                        && ah.chapterFilename.equalsIgnoreCase(chapterFilename)) {
+                    return ah;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get the history item identified by histId.
      * 
-     * @param histId
-     *            The key of the history to get.
+     * @param histId The key of the history to get.
      * @return The history object identified by histId.
      */
     public History getHistory(final long histId) {
@@ -424,8 +489,7 @@ public class YbkDAO {
     /**
      * Get a bookmark by bookmarkNumber.
      * 
-     * @param bmId
-     *            the bookmark id.
+     * @param bmId the bookmark id.
      * @return The History object that contains the bookmark.
      */
     public History getBookmark(final int bmId) {
@@ -445,8 +509,8 @@ public class YbkDAO {
     }
 
     /**
-     * Get a list if Histories sorted from newest to oldest for use with
-     * ArrayAdapter for showing histories in a ListActivity.
+     * Get a list if Histories sorted from newest to oldest for use with ArrayAdapter for showing histories in a
+     * ListActivity.
      * 
      * @return the List of History objects.
      * @throws IOException
@@ -527,7 +591,6 @@ public class YbkDAO {
         mBackStack.clear();
     }
 
-
     /**
      * Stores the history list.
      * 
@@ -603,8 +666,7 @@ public class YbkDAO {
     }
 
     /**
-     * Gets a the stored bookmark list (or creates a new one if it can't be
-     * read)
+     * Gets a the stored bookmark list (or creates a new one if it can't be read).
      * 
      * @return the bookmark list
      */
@@ -628,18 +690,38 @@ public class YbkDAO {
     }
 
     /**
+     * Gets a the stored annotation highlight list (or creates a new one if it can't be read).
+     * 
+     * @return The annotation highlight list.
+     */
+    @SuppressWarnings("unchecked")
+    private ArrayList<AnnotHilite> getStoredAnnotHiliteList() {
+        ArrayList<AnnotHilite> annotHiliteList = null;
+        try {
+            annotHiliteList = (ArrayList<AnnotHilite>) load(BOOKMARKS_FILE);
+            if (annotHiliteList.size() != 0) {
+                @SuppressWarnings("unused")
+                // perform a sanity check on the type
+                AnnotHilite ah = annotHiliteList.get(0);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to load existing annotation highlight list, creating a new one instead.");
+        }
+        if (annotHiliteList == null) {
+            annotHiliteList = new ArrayList<AnnotHilite>();
+        }
+        return annotHiliteList;
+    }
+
+    /**
      * Store chapter index
      * 
-     * @param fileName
-     *            filename of the book
-     * @param chapters
-     *            array of chapter information
-     * @param order
-     *            order map
+     * @param fileName filename of the book
+     * @param chapters array of chapter information
+     * @param order order map
      * @throws IOException
      */
-    private void storeChapterIndex(final String fileName, final ChapterIndex chapterIndex)
-            throws IOException {
+    private void storeChapterIndex(final String fileName, final ChapterIndex chapterIndex) throws IOException {
         String baseFileName = new File(fileName).getName().replaceFirst("(?s)\\..*", "");
         store(baseFileName + CHAPTER_EXT, chapterIndex);
     }
@@ -673,7 +755,6 @@ public class YbkDAO {
         return file.delete();
     }
 
-
     /**
      * Stores the bookmark list.
      * 
@@ -692,7 +773,6 @@ public class YbkDAO {
     /**
      * Stores the book list.
      * 
-     * @throws IOException
      */
     private void storeBookList() {
         synchronized (mBookList) {
@@ -702,6 +782,17 @@ public class YbkDAO {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void storeAnnotHiliteList() {
+        synchronized (mAnnotHiliteList) {
+            try {
+                store(ANNOT_HILITE_FILE, mAnnotHiliteList);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Log.d(TAG, "stored annotHiliteList.  list size: " + mAnnotHiliteList.size());
     }
 
     /**
@@ -730,10 +821,8 @@ public class YbkDAO {
     /**
      * Store a serializable object into a file
      * 
-     * @param filename
-     *            the filename
-     * @param serializeable
-     *            the object
+     * @param filename the filename
+     * @param serializeable the object
      * 
      * @throws IOException
      */
@@ -755,8 +844,7 @@ public class YbkDAO {
     /**
      * Load a serializable object from a file
      * 
-     * @param filename
-     *            the filename
+     * @param filename the filename
      * @return the object
      * 
      */
@@ -774,5 +862,18 @@ public class YbkDAO {
         } finally {
             is.close();
         }
+    }
+
+    public List<AnnotHilite> getChapterAnnotHilites(final String bookFilename, final String chapterFilename) {
+        List<AnnotHilite> chapAnnotHilites = new ArrayList<AnnotHilite>();
+        synchronized (mAnnotHiliteList) {
+            for (AnnotHilite ah : mAnnotHiliteList) {
+                if (ah.bookFilename.equalsIgnoreCase(bookFilename)
+                        && ah.chapterFilename.equalsIgnoreCase(chapterFilename)) {
+                    chapAnnotHilites.add(ah);
+                }
+            }
+        }
+        return chapAnnotHilites;
     }
 }
