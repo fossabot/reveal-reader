@@ -696,9 +696,9 @@ public class YbkDAO {
      */
     @SuppressWarnings("unchecked")
     private ArrayList<AnnotHilite> getStoredAnnotHiliteList() {
-        ArrayList<AnnotHilite> annotHiliteList = null;
+        ArrayList<AnnotHilite> annotHiliteList = null; 
         try {
-            annotHiliteList = (ArrayList<AnnotHilite>) load(BOOKMARKS_FILE);
+            annotHiliteList = (ArrayList<AnnotHilite>) load(ANNOT_HILITE_FILE);
             if (annotHiliteList.size() != 0) {
                 @SuppressWarnings("unused")
                 // perform a sanity check on the type
@@ -710,7 +710,7 @@ public class YbkDAO {
         if (annotHiliteList == null) {
             annotHiliteList = new ArrayList<AnnotHilite>();
         }
-        return annotHiliteList;
+        return annotHiliteList; 
     }
 
     /**
