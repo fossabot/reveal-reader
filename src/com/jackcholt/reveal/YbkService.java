@@ -101,7 +101,7 @@ public class YbkService extends Service {
 
                         @Override
                         public void protectedRun() {
-                            String bookName = intent.getExtras().getString(TARGET_KEY).replaceFirst("\\.[^\\.]$", "");
+                            String bookName = intent.getStringExtra(TARGET_KEY).replaceFirst("\\.[^\\.]$", "");
                             boolean succeeded;
                             String message;
                             YbkFileReader ybkRdr = null;
@@ -147,13 +147,15 @@ public class YbkService extends Service {
                                     ybkRdr = null;
                                 }
                             }
-                            if (succeeded)
+
+                            if (succeeded) {
                                 Log.i(TAG, message);
-                            else
+                            } else {
                                 Log.e(TAG, message);
-                            if ((long) Long.valueOf(intent.getExtras().getLong(CALLBACKS_KEY)) != 0) {
-                                for (Completion callback : callbackMap.remove(Long.valueOf((long) Long.valueOf(intent
-                                        .getExtras().getLong(CALLBACKS_KEY))))) {
+                            }
+
+                            if (intent.getLongExtra(CALLBACKS_KEY, 0) != 0) {
+                                for (Completion callback : callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0))) {
                                     callback.completed(succeeded, message);
                                 }
                             }
@@ -218,7 +220,7 @@ public class YbkService extends Service {
         if (null == intent) {
             throw new IllegalArgumentException("Intent for downloading a book is null.");
         }
-        
+
         if (null == intent.getExtras().getString(TARGET_KEY) || null == intent.getExtras().getString(SOURCE_KEY)) {
             Log.e(TAG, "Download book request missing target or filename.");
             return;
@@ -238,11 +240,11 @@ public class YbkService extends Service {
                             .fetchTitle(new File(intent.getExtras().getString(TARGET_KEY)), new URL(intent.getExtras()
                                     .getString(SOURCE_KEY)), getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                                     Settings.DEFAULT_EBOOK_DIRECTORY), context, callbacks);
-                    
+
                     if (downloads.isEmpty()) {
                         throw new FileNotFoundException();
                     }
-                    
+
                     for (String download : downloads) {
                         requestAddBook(context, download, null, callbacks);
                     }
@@ -286,12 +288,9 @@ public class YbkService extends Service {
     /**
      * Requests that a book be added to the library.
      * 
-     * @param context
-     *            the caller's context
-     * @param target
-     *            the absolute filename of the book to be added
-     * @param callbacks
-     *            (optional) completion callback
+     * @param context the caller's context
+     * @param target the absolute filename of the book to be added
+     * @param callbacks (optional) completion callback
      */
     public static void requestAddBook(Context context, String target, String charset, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_BOOK).putExtra(TARGET_KEY,
@@ -308,12 +307,9 @@ public class YbkService extends Service {
     /**
      * Requests that a book be removed the library.
      * 
-     * @param context
-     *            the caller's context
-     * @param target
-     *            the absolute filename of the book to be removed
-     * @param callbacks
-     *            (optional) completion callback
+     * @param context the caller's context
+     * @param target the absolute filename of the book to be removed
+     * @param callbacks (optional) completion callback
      */
     public static void requestRemoveBook(Context context, String target, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, REMOVE_BOOK).putExtra(TARGET_KEY,
@@ -329,14 +325,10 @@ public class YbkService extends Service {
     /**
      * Requests that a book be downloaded and added to the library.
      * 
-     * @param context
-     *            the caller's context
-     * @param source
-     *            URL of the book to be downloaded
-     * @param target
-     *            the suggested absolute filename of the book to be added
-     * @param callbacks
-     *            (optional) completion callback
+     * @param context the caller's context
+     * @param source URL of the book to be downloaded
+     * @param target the suggested absolute filename of the book to be added
+     * @param callbacks (optional) completion callback
      */
     public static void requestDownloadBook(Context context, String source, String target, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, DOWNLOAD_BOOK).putExtra(SOURCE_KEY,
@@ -363,10 +355,8 @@ public class YbkService extends Service {
         /**
          * Called when the request has been completed.
          * 
-         * @param succeeded
-         *            true if the request succeeded, false if it failed.
-         * @param message
-         *            message associated with completion (may be null)
+         * @param succeeded true if the request succeeded, false if it failed.
+         * @param message message associated with completion (may be null)
          */
         void completed(boolean succeeded, String message);
     }
