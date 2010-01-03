@@ -142,8 +142,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             checkAndSetFontSize(getSharedPrefs(), findWebView());
 
             if ((isPopup())) {
-                Log.d(TAG, "strUrl: " + strUrl);
-                Log.d(TAG, "content: " + content);
                 findWebView().loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
             } else {
                 findChapterButton().setOnClickListener(new OnClickListener() {
@@ -593,13 +591,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 + intent.getIntExtra(VerseContextDialog.MENU_ITEM_TAG, -1));
                     }
                     break;
-                    
+
                 case CALL_NOTE_EDITED:
-                    YbkDAO.getInstance(this)
-                            .insertAnnotHilite(intent.getStringExtra(YbkDAO.NOTE),
-                                    intent.getIntExtra(YbkDAO.COLOR, AnnotationDialog.NO_HILITE),
-                                    intent.getIntExtra(YbkDAO.VERSE, -1), intent.getStringExtra(YbkDAO.BOOK_FILENAME),
-                                    intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
+                    YbkDAO.getInstance(this).insertAnnotHilite(intent.getStringExtra(YbkDAO.NOTE),
+                            intent.getIntExtra(YbkDAO.COLOR, AnnotationDialog.NO_HILITE),
+                            intent.getIntExtra(YbkDAO.VERSE, -1), intent.getStringExtra(YbkDAO.BOOK_FILENAME),
+                            intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
                 }
             }
             super.onActivityResult(requestCode, resultCode, intent);
@@ -804,7 +801,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             content = Util.htmlize(content, getSharedPrefs());
 
             if ((isShowInPopup(chapter))) {
-                System.out.println(content);
+                Log.d(TAG, "Showing chapter in popup");
                 showChapterInPopup(content, book, strUrl);
             } else {
                 findWebView().loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
@@ -828,10 +825,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private void showChapterInPopup(String content, Book book, String strUrl) {
         setProgressBarIndeterminateVisibility(true);
-        Intent popupIntent = new Intent(this, YbkPopupActivity.class);
-        popupIntent.putExtra("content", content);
-        popupIntent.putExtra("strUrl", strUrl);
-        popupIntent.putExtra(YbkDAO.FILENAME, book.fileName);
+        Intent popupIntent = new Intent(this, YbkPopupActivity.class).putExtra("content", content).putExtra("strUrl",
+                strUrl).putExtra(YbkDAO.FILENAME, book.fileName);
         startActivity(popupIntent);
         setProgressBarIndeterminateVisibility(false);
     }
@@ -1290,8 +1285,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 } else if (mCurrChap.getScrollYPos() != 0) {
                     view.scrollTo(0, mCurrChap.getScrollYPos());
                 }
-
-                Log.d(TAG, "Height of ybkView content: " + view.getContentHeight());
 
                 setProgressBarIndeterminateVisibility(false);
                 if (mBookWalk) {
