@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/background"
+    android:gravity="top"
+    >
+
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:orientation="vertical"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:background="@drawable/background"
+	    android:gravity="center_vertical"
+	    >
+	    <ImageButton android:id="@+id/main_menu1" 
+	    	android:src="@drawable/main_menu1" 
+	    	android:clickable="true"
+	    	android:layout_width="fill_parent" 
+	    	android:layout_height="wrap_content" 
+	    	android:background="@null"
+	    	/>
+	    <ImageButton android:id="@+id/main_menu2" 
+	    	android:src="@drawable/main_menu2" 
+	    	android:clickable="true"
+	    	android:layout_width="fill_parent" 
+	    	android:layout_height="wrap_content" 
+	    	android:background="@null"
+	    	android:paddingTop="10px"
+	    	/>
+	    <ImageButton android:id="@+id/main_menu3" 
+	    	android:src="@drawable/main_menu3" 
+	    	android:clickable="true"
+	    	android:layout_width="fill_parent" 
+	    	android:layout_height="wrap_content"
+	    	android:background="@null" 
+	    	android:paddingTop="10px"
+	    	/>
+	    <ImageButton android:id="@+id/main_menu4" 
+	    	android:src="@drawable/main_menu4" 
+	    	android:clickable="true"
+	    	android:layout_width="fill_parent" 
+	    	android:layout_height="wrap_content"
+	    	android:background="@null" 
+	    	android:paddingTop="10px"
+	    	/>
+	    </LinearLayout>    	
+</LinearLayout>
