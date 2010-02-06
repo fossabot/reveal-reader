@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- Base application theme is the default theme. -->
+	<style name="Theme" parent="android:Theme">
+	</style>
+
+	<style name="Theme.DayMode" parent="android:Theme.Light">
+		<item name="android:windowBackground">@color/translucent_brown</item>
+	</style>
+
+	<style name="Theme.NightMode" parent="android:Theme.Black">
+		<item name="android:windowBackground">@color/translucent_brown</item>
+	</style>
+	
+	<style name="Theme.DayModePopup" parent="android:Theme.Dialog">
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:windowBackground">@color/translucent_brown</item>
+	</style>
+	<style name="Theme.NightModePopup" parent="android:Theme.Dialog">
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:windowBackground">@color/translucent_brown</item>
+	</style>
+</resources>

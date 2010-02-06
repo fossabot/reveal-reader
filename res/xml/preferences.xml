@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen
+        xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="@string/prefs_main_title">
+	    <CheckBoxPreference
+	        android:key="show_splash_screen"
+	        android:title="@string/label_splash_screen"
+	        android:summaryOn="@string/summary_on_show_splash_screen" 
+	        android:summaryOff="@string/summary_off_show_splash_screen" 
+	        android:checked="true"/>
+	            
+	    <CheckBoxPreference
+	        android:key="show_fullscreen"
+	        android:title="@string/label_fullscreen"
+	        android:summaryOn="@string/summary_on_fullscreen" 
+	        android:summaryOff="@string/summary_off_fullscreen" 
+	        android:checked="true"/>
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/prefs_color_mode">
+		<CheckBoxPreference
+	        android:key="enable_night_mode"
+	        android:title="@string/enable_night_mode"
+	        android:summaryOn="@string/summaryOn_enable_night_mode" 
+	        android:summaryOff="@string/summaryOff_enable_night_mode" 
+	        android:checked="false"/>
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/prefs_ebook_info">
+	    <EditTextPreference
+	   		android:key="default_ebook_dir"
+	   		android:title="@string/title_default_ebook_dir" 
+	   		android:summary="@string/summary_default_ebook_dir"/>
+	    		
+		<ListPreference  
+			android:key="default_font_size"  
+			android:title="@string/title_default_font_size"  
+			android:summary="@string/summary_default_font_size"  
+			android:entries="@array/fontsize"  
+			android:entryValues="@array/fontsize_number"/>
+	</PreferenceCategory>
+</PreferenceScreen>
