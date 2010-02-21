@@ -5,19 +5,23 @@
 	</style>
 
 	<style name="Theme.DayMode" parent="android:Theme.Light">
-		<item name="android:windowBackground">@color/translucent_brown</item>
+	    <!-- not sure what this was supposedd to do, but it just doesn't work on Android 2.x -->
+		<!--  <item name="android:windowBackground">@color/translucent_brown</item> -->
 	</style>
 
 	<style name="Theme.NightMode" parent="android:Theme.Black">
-		<item name="android:windowBackground">@color/translucent_brown</item>
+	    <!-- not sure what this was supposedd to do, but it just doesn't work on Android 2.x -->
+	<!-- 	<item name="android:windowBackground">@color/translucent_brown</item> -->
 	</style>
 	
 	<style name="Theme.DayModePopup" parent="android:Theme.Dialog">
 		<item name="android:windowNoTitle">true</item>
-		<item name="android:windowBackground">@color/translucent_brown</item>
+	    <!-- not sure what this was supposedd to do, but it just doesn't work on Android 2.x -->
+	<!--	<item name="android:windowBackground">@color/translucent_brown</item> -->
 	</style>
 	<style name="Theme.NightModePopup" parent="android:Theme.Dialog">
 		<item name="android:windowNoTitle">true</item>
-		<item name="android:windowBackground">@color/translucent_brown</item>
+	    <!-- not sure what this was supposedd to do, but it just doesn't work on Android 2.x -->
+	<!-- <item name="android:windowBackground">@color/translucent_brown</item> -->
 	</style>
 </resources>

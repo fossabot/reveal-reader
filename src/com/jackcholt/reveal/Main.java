@@ -93,6 +93,8 @@ public class Main extends ListActivity {
 
     private List<Book> mBookTitleList;
 
+    private int mThemeId;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -133,7 +135,6 @@ public class Main extends ListActivity {
                 requestWindowFeature(Window.FEATURE_NO_TITLE);
             }
 
-            Util.setTheme(getSharedPrefs(), this);
             setContentView(R.layout.main);
 
             // To capture LONG_PRESS gestures
@@ -213,6 +214,13 @@ public class Main extends ListActivity {
         }
     }
 
+    @Override
+    public void setTheme(int resid) {
+        // bug workaround alert: see http://code.google.com/p/android/issues/detail?id=4394
+        mThemeId = Util.getTheme(getSharedPrefs());
+        super.setTheme(mThemeId);
+    }
+
     private boolean isConfigChanged() {
         return getLastNonConfigurationInstance() != null;
     }
@@ -284,9 +292,11 @@ public class Main extends ListActivity {
     /**
      * Refresh the eBook directory.
      * 
-     * @param strLibDir the path to the library directory.
-     * @param addNewBooks If true, run the code that will add new books to the database as well as the code that removes
-     *            missing books from the database (which runs regardless).
+     * @param strLibDir
+     *            the path to the library directory.
+     * @param addNewBooks
+     *            If true, run the code that will add new books to the database as well as the code that removes missing
+     *            books from the database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -661,7 +671,13 @@ public class Main extends ListActivity {
     public void onResume() {
         try {
             super.onResume();
-            Util.setTheme(getSharedPrefs(), this);
+            if (mThemeId != Util.getTheme(getSharedPrefs())) {
+                // the only way to fully reset the theme is to restart the activity
+                startActivity(new Intent(this, ReloadMainActivity.class));
+                finish();
+                return;
+            }
+
             setContentView(R.layout.main);
             // To capture LONG_PRESS gestures
             registerForContextMenu(getListView());

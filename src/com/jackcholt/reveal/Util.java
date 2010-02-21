@@ -85,14 +85,13 @@ public class Util {
 		Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG)
 				.show();
 	}
+	
+	public static int getTheme(SharedPreferences prefs) {
+	    return prefs.getBoolean("enable_night_mode", false) ? style.Theme_NightMode : style.Theme_DayMode;
+	}
 
 	public static void setTheme(SharedPreferences prefs, Activity view) {
-		boolean BOOLmidnightMode = prefs.getBoolean("enable_night_mode", false);
-		if (BOOLmidnightMode) {
-			view.setTheme(style.Theme_NightMode);
-		} else {
-			view.setTheme(style.Theme_DayMode);
-		}
+		view.setTheme(getTheme(prefs));
 	}
 
 	/**

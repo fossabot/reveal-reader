@@ -38,6 +38,7 @@
 			android:theme="@android:style/Theme.Dialog" />
 		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog" />
 		<activity android:name=".AnnotationDialog" android:theme="@android:style/Theme.Dialog" />
+		<activity android:name=".ReloadMainActivity" />
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />
