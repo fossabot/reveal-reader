@@ -15,6 +15,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Picture;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,6 +35,7 @@ import android.view.GestureDetector.OnGestureListener;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebView.PictureListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -324,7 +326,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Encapsulate the logic of setting the WebViewClient.
      * 
-     * @param view The WebView for which we're setting the WebViewClient.
+     * @param view
+     *            The WebView for which we're setting the WebViewClient.
      */
     private void setWebViewClient() {
         findWebView().setWebViewClient(new YbkWebViewClient());
@@ -333,9 +336,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Set the book and chapter buttons.
      * 
-     * @param shortTitle The text to be used on the Book Button.
-     * @param filePath The path to the YBK file that contains the chapter to load.
-     * @param fileToOpen The internal path to the chapter to load.
+     * @param shortTitle
+     *            The text to be used on the Book Button.
+     * @param filePath
+     *            The path to the YBK file that contains the chapter to load.
+     * @param fileToOpen
+     *            The internal path to the chapter to load.
      */
     private void initBookChapButtons(final String shortTitle, final String filePath, final String fileToOpen) {
         initBookButton(shortTitle, filePath, fileToOpen);
@@ -611,9 +617,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      * Load a chapter as identified by the the order id.
      * 
      * @param
-     * @param orderId The order id of the chapter to load.
+     * @param orderId
+     *            The order id of the chapter to load.
      * @return Did the chapter load?
-     * @throws IOException If there was a problem reading the chapter.
+     * @throws IOException
+     *             If there was a problem reading the chapter.
      */
     private boolean loadChapterByOrderId(final String bookFileName, final int orderId) throws IOException {
 
@@ -640,9 +648,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
      * 
-     * @param filePath The path to the YBK file from which to read the chapter.
-     * @param chapter The "filename" of the chapter to load.
-     * @param saveToBackStack Should the current chapter be saved to the back stack?
+     * @param filePath
+     *            The path to the YBK file from which to read the chapter.
+     * @param chapter
+     *            The "filename" of the chapter to load.
+     * @param saveToBackStack
+     *            Should the current chapter be saved to the back stack?
      * @throws IOException
      */
     private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack) throws IOException {
@@ -961,10 +972,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Read a section of a special concatenated chapter;
      * 
-     * @param chap The chapter to read.
-     * @param ybkReader The YbkReader to use in order to access the chapter.
+     * @param chap
+     *            The chapter to read.
+     * @param ybkReader
+     *            The YbkReader to use in order to access the chapter.
      * @return The content of the section.
-     * @throws IOException If the Ybk file cannot be read.
+     * @throws IOException
+     *             If the Ybk file cannot be read.
      */
     private String readConcatFile(final String chap, final YbkFileReader ybkReader) throws IOException {
         // need to read a special footnote chapter
@@ -996,7 +1010,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Set the chapter button text from the content.
      * 
-     * @param content The content of the chapter.
+     * @param content
+     *            The content of the chapter.
      */
     private void setChapBtnText(final String content) {
         String fullName = content.replaceAll("(?is)^.*<fn>(.*)<nf>.*$", "$1");
@@ -1275,27 +1290,36 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         @Override
         public void onPageFinished(final WebView view, final String url) {
-            try {
-                // make it jump to the internal link
-                if (mCurrChap.getFragment() != null) {
-                    view.loadUrl("javascript:location.href=\"#" + mCurrChap.getFragment() + "\"");
-                    mCurrChap.setFragment(null);
-                } else if (url.indexOf('@') != -1) {
-                    view.scrollTo(0, 0);
-                } else if (mCurrChap.getScrollYPos() != 0) {
-                    view.scrollTo(0, mCurrChap.getScrollYPos());
-                }
+            // In Android 2.0 we can't scroll immediately because rendering hasn't happened yet.
+            // We can get an onNewPicture message when rendering is complete, but we also get
+            // those messages when there is a picture on the page (before this message), so we have to install and
+            // listener here, and have it uninstall itself when completed.
+            findWebView().setPictureListener(new PictureListener() {
+                public void onNewPicture(WebView view, Picture picture) {
+                    try {
+                        // make it jump to the internal link
+                        if (mCurrChap.getFragment() != null) {
+                            view.loadUrl("javascript:location.href=\"#" + mCurrChap.getFragment() + "\"");
+                            mCurrChap.setFragment(null);
+                        } else if (url.indexOf('@') != -1) {
+                            view.scrollTo(0, 0);
+                        } else if (mCurrChap.getScrollYPos() != 0) {
+                            view.scrollTo(0, mCurrChap.getScrollYPos());
+                        }
 
-                setProgressBarIndeterminateVisibility(false);
-                if (mBookWalk) {
-                    mHandler.postDelayed(new ChapterWalker(), 100);
+                        setProgressBarIndeterminateVisibility(false);
+                        if (mBookWalk) {
+                            mHandler.postDelayed(new ChapterWalker(), 100);
+                        }
+                    } catch (RuntimeException rte) {
+                        unexpectedError(rte);
+                    } catch (Error e) {
+                        unexpectedError(e);
+                    } finally {
+                        findWebView().setPictureListener(null);
+                    }
                 }
-            } catch (RuntimeException rte) {
-                unexpectedError(rte);
-            } catch (Error e) {
-                unexpectedError(e);
-            }
-
+            });
         }
     }
 
