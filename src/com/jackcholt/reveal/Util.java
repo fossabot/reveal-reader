@@ -433,9 +433,15 @@ public class Util {
         }
 
         String annot = (ah.note.length() > 0) ? " <img src='file:///android_asset/note.png'/> " : "";
-        String hiliteDivStart = (ah.color == Color.TRANSPARENT) ? "" : "<div style=\"background : #"
-                + Integer.toHexString(ah.color).substring(2) + ";\">";
-        String hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</div>";
+        String colorHex = Integer.toHexString(ah.color);
+        Log.d(TAG, "colorHex: " + colorHex);
+        String hiliteDivStart = "";
+        String hiliteDivEnd = "";
+        if (colorHex.length() > 2) {
+            hiliteDivStart = (ah.color == Color.TRANSPARENT) ? "" : "<div style=\"background : #"
+                    + colorHex.substring(2) + ";\">";
+            hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</div>";
+        }
         return content.substring(0, verseStartPos) + hiliteDivStart + annot
                 + content.substring(verseStartPos, verseEndPos) + hiliteDivEnd + content.substring(verseEndPos);
     }

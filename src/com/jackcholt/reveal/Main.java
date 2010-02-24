@@ -88,8 +88,8 @@ public class Main extends ListActivity {
     private boolean BOOLshowFullScreen;
     private final Handler mHandler = new Handler();
     @SuppressWarnings("unused")
-    private TextView selection;
-    private String strFontSize = "";
+    private TextView mSelection;
+    private String mStrFontSize = "";
 
     private List<Book> mBookTitleList;
 
@@ -384,7 +384,7 @@ public class Main extends ListActivity {
         mBookTitleList = YbkDAO.getInstance(this).getBookTitles();
         // Now create a simple adapter that finds icons and set it to display
         setListAdapter(new IconicAdapter(this));
-        selection = (TextView) findViewById(R.id.label);
+        mSelection = (TextView) findViewById(R.id.label);
     }
 
     @SuppressWarnings("unchecked")
@@ -405,8 +405,8 @@ public class Main extends ListActivity {
 
             TextView label = (TextView) row.findViewById(R.id.label);
 
-            strFontSize = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
-            label.setTextSize(Integer.parseInt(strFontSize));
+            mStrFontSize = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
+            label.setTextSize(Integer.parseInt(mStrFontSize));
             label.setText(mBookTitleList.get(location).title);
             String eBookName = mBookTitleList.get(location).shortTitle;
 

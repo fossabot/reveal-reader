@@ -19,8 +19,7 @@ public class Settings extends PreferenceActivity {
     public static final String BOOKMARK_ENTRY_AMOUNT_KEY = "bookmark_entry_amount";
     public static final int DEFAULT_BOOKMARK_ENTRY_AMOUNT = 20;
     public static final String EBOOK_FONT_SIZE_KEY = "default_font_size";
-    public static final String DEFAULT_EBOOK_FONT_SIZE = "14";
-    
+    public static final String DEFAULT_EBOOK_FONT_SIZE = "18";
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -37,49 +36,48 @@ public class Settings extends PreferenceActivity {
                     new SharedPreferences.OnSharedPreferenceChangeListener() {
                         public void onSharedPreferenceChanged(final SharedPreferences sharedPref, final String key) {
                             try {
-                                if (key.equals(EBOOK_DIRECTORY_KEY)) {
-                                    String ebookDir = sharedPref
-                                            .getString(EBOOK_DIRECTORY_KEY, DEFAULT_EBOOK_DIRECTORY);
-
-                                    if (!ebookDir.startsWith("/sdcard")) {
-                                        String ebookDirTemp = ebookDir;
-
-                                        if (!ebookDir.startsWith("/")) {
-                                            ebookDir = "/sdcard/" + ebookDirTemp;
-                                        } else {
-                                            ebookDir = "/sdcard" + ebookDirTemp;
-
-                                        }
-                                        Editor edit = sharedPref.edit();
-                                        edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
-                                        edit.commit();
-
-                                        // exit here to avoid recursiveness
-                                        return;
-                                    }
-
-                                    if (!ebookDir.endsWith("/")) {
-                                        ebookDir += "/";
-                                        Editor edit = sharedPref.edit();
-                                        edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
-                                        edit.commit();
-
-                                        // exit here to avoid recursiveness
-                                        return;
-                                    }
-
-                                    // if the ebook directory changed, recreate
-                                    Util.createDefaultDirs(getBaseContext());
-                                    Intent intent = new Intent(getBaseContext(), Main.class);
-                                    intent.putExtra(EBOOK_DIR_CHANGED, true);
-                                    setResult(RESULT_OK, intent);
+                                if (!key.equals(EBOOK_DIRECTORY_KEY)) {
+                                    return;
                                 }
+
+                                String ebookDir = sharedPref.getString(EBOOK_DIRECTORY_KEY, DEFAULT_EBOOK_DIRECTORY);
+
+                                if (!ebookDir.startsWith("/sdcard")) {
+                                    String ebookDirTemp = ebookDir;
+
+                                    if (!ebookDir.startsWith("/")) {
+                                        ebookDir = "/sdcard/" + ebookDirTemp;
+                                    } else {
+                                        ebookDir = "/sdcard" + ebookDirTemp;
+                                    }
+                                    Editor edit = sharedPref.edit();
+                                    edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
+                                    edit.commit();
+
+                                    // exit here to avoid recursiveness
+                                    return;
+                                }
+
+                                if (!ebookDir.endsWith("/")) {
+                                    ebookDir += "/";
+                                    Editor edit = sharedPref.edit();
+                                    edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
+                                    edit.commit();
+
+                                    // exit here to avoid recursiveness
+                                    return;
+                                }
+
+                                // if the ebook directory changed, recreate
+                                Util.createDefaultDirs(getBaseContext());
+                                setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(
+                                        EBOOK_DIR_CHANGED, true));
+
                             } catch (RuntimeException rte) {
                                 Util.unexpectedError(Settings.this, rte);
                             } catch (Error e) {
                                 Util.unexpectedError(Settings.this, e);
                             }
-
                         }
                     });
         } catch (RuntimeException rte) {
@@ -87,16 +85,7 @@ public class Settings extends PreferenceActivity {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
-        
     }
-
-    /*
-     * @Override public void onResume() { super.onResume();
-     * 
-     * 
-     * 
-     * }
-     */
 
     @Override
     protected void onStart() {
