@@ -326,8 +326,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Encapsulate the logic of setting the WebViewClient.
      * 
-     * @param view
-     *            The WebView for which we're setting the WebViewClient.
+     * @param view The WebView for which we're setting the WebViewClient.
      */
     private void setWebViewClient() {
         findWebView().setWebViewClient(new YbkWebViewClient());
@@ -336,12 +335,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Set the book and chapter buttons.
      * 
-     * @param shortTitle
-     *            The text to be used on the Book Button.
-     * @param filePath
-     *            The path to the YBK file that contains the chapter to load.
-     * @param fileToOpen
-     *            The internal path to the chapter to load.
+     * @param shortTitle The text to be used on the Book Button.
+     * @param filePath The path to the YBK file that contains the chapter to load.
+     * @param fileToOpen The internal path to the chapter to load.
      */
     private void initBookChapButtons(final String shortTitle, final String filePath, final String fileToOpen) {
         initBookButton(shortTitle, filePath, fileToOpen);
@@ -603,6 +599,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             intent.getIntExtra(YbkDAO.COLOR, AnnotationDialog.NO_HILITE),
                             intent.getIntExtra(YbkDAO.VERSE, -1), intent.getStringExtra(YbkDAO.BOOK_FILENAME),
                             intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
+
+                    try {
+                        setProgressBarIndeterminateVisibility(true);
+                        mCurrChap.setScrollYPos(findWebView().getScrollY());
+                        loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), false, true);
+                        findWebView().scrollTo(0, mCurrChap.getScrollYPos());
+                    } catch (IOException ioe) {
+                        throw new IllegalStateException("Couldn't reload chapter", ioe);
+                    } finally {
+                        setProgressBarIndeterminateVisibility(false);
+                    }
                 }
             }
             super.onActivityResult(requestCode, resultCode, intent);
@@ -617,11 +624,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      * Load a chapter as identified by the the order id.
      * 
      * @param
-     * @param orderId
-     *            The order id of the chapter to load.
+     * @param orderId The order id of the chapter to load.
      * @return Did the chapter load?
-     * @throws IOException
-     *             If there was a problem reading the chapter.
+     * @throws IOException If there was a problem reading the chapter.
      */
     private boolean loadChapterByOrderId(final String bookFileName, final int orderId) throws IOException {
 
@@ -648,15 +653,26 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
      * 
-     * @param filePath
-     *            The path to the YBK file from which to read the chapter.
-     * @param chapter
-     *            The "filename" of the chapter to load.
-     * @param saveToBackStack
-     *            Should the current chapter be saved to the back stack?
+     * @param filePath The path to the YBK file from which to read the chapter.
+     * @param chapter The "filename" of the chapter to load.
+     * @param saveToBackStack Should the current chapter be saved to the back stack?
      * @throws IOException
      */
     private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack) throws IOException {
+        return loadChapter(filePath, chapter, saveToBackStack, false);
+    }
+
+    /**
+     * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
+     * 
+     * @param filePath The path to the YBK file from which to read the chapter.
+     * @param chapter The "filename" of the chapter to load.
+     * @param saveToBackStack Should the current chapter be saved to the back stack?
+     * @param reloading Are we using loadChapter to re-load a chapter?
+     * @throws IOException
+     */
+    private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack, boolean reloading)
+            throws IOException {
         boolean bookLoaded = false;
         YbkFileReader ybkReader = mYbkReader;
 
@@ -810,8 +826,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             content = Util.convertIfvar(content);
             // Inside htmlize we now have support for night mode
             content = Util.htmlize(content, getSharedPrefs());
+            content = Util.annotHiliteContent(content, YbkDAO.getInstance(this).getChapterAnnotHilites(book.fileName,
+                    chap));
 
-            if ((isShowInPopup(chapter))) {
+            if (!reloading && isShowInPopup(chapter)) {
                 Log.d(TAG, "Showing chapter in popup");
                 showChapterInPopup(content, book, strUrl);
             } else {
@@ -972,13 +990,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Read a section of a special concatenated chapter;
      * 
-     * @param chap
-     *            The chapter to read.
-     * @param ybkReader
-     *            The YbkReader to use in order to access the chapter.
+     * @param chap The chapter to read.
+     * @param ybkReader The YbkReader to use in order to access the chapter.
      * @return The content of the section.
-     * @throws IOException
-     *             If the Ybk file cannot be read.
+     * @throws IOException If the Ybk file cannot be read.
      */
     private String readConcatFile(final String chap, final YbkFileReader ybkReader) throws IOException {
         // need to read a special footnote chapter
@@ -1010,8 +1025,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Set the chapter button text from the content.
      * 
-     * @param content
-     *            The content of the chapter.
+     * @param content The content of the chapter.
      */
     private void setChapBtnText(final String content) {
         String fullName = content.replaceAll("(?is)^.*<fn>(.*)<nf>.*$", "$1");
@@ -1158,7 +1172,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 if (url.length() > contentUriLength + 1) {
-                    setProgressBarIndeterminateVisibility(true);
 
                     Log.d(TAG, "WebView URL: " + url);
                     String book;
@@ -1292,7 +1305,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         public void onPageFinished(final WebView view, final String url) {
             // In Android 2.0 we can't scroll immediately because rendering hasn't happened yet.
             // We can get an onNewPicture message when rendering is complete, but we also get
-            // those messages when there is a picture on the page (before this message), so we have to install and
+            // those messages when there is a picture on the page (before this message), so we have to install a
             // listener here, and have it uninstall itself when completed.
             findWebView().setPictureListener(new PictureListener() {
                 public void onNewPicture(WebView view, Picture picture) {
@@ -1328,7 +1341,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         @Override
         public void protectedRun() {
             try {
-                // YbkDAO ybkDao = YbkDAO.getInstance(YbkViewActivity.this);
                 Chapter nextChapter = getNextBookWalkerChapter();
                 if (nextChapter == null) {
                     setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent().getExtras().getInt(
@@ -1336,10 +1348,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     finish();
                 } else {
                     setProgressBarIndeterminateVisibility(true);
-                    if (loadChapter(mCurrChap.getBookFileName(), nextChapter.fileName, true))
+                    if (loadChapter(mCurrChap.getBookFileName(), nextChapter.fileName, true)) {
                         initBookChapButtons(mYbkReader.getBook().shortTitle, mCurrChap.getBookFileName(),
                                 nextChapter.fileName);
-                    ;
+                    }
                 }
 
             } catch (IOException e) {

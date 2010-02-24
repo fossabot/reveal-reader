@@ -1,10 +1,10 @@
 package com.jackcholt.reveal;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -19,13 +19,14 @@ import com.jackcholt.reveal.data.YbkDAO;
 
 public class AnnotationDialog extends Activity {
     public static final String TAG = "ldssa.AnnotationDialog";
-    public static final int RED_HILITE = 1;
-    public static final int PINK_HILITE = 2;
-    public static final int BLUE_HILITE = 3;
-    public static final int GREEN_HILITE = 4;
-    public static final int YELLOW_HILITE = 5;
-    public static final int NO_HILITE = 6;
-    public static final Map<Integer, Integer> COLOR_MAP = new HashMap<Integer, Integer>();
+    
+    public static final int RED_HILITE = Color.parseColor("#ffaaaa");
+    public static final int PINK_HILITE = Color.parseColor("#ffcccc");
+    public static final int BLUE_HILITE = Color.parseColor("#ccccff");
+    public static final int GREEN_HILITE = Color.parseColor("#ccffcc");
+    public static final int YELLOW_HILITE = Color.parseColor("#ffffcc");
+    public static final int NO_HILITE = Color.TRANSPARENT;
+    public static final HashMap<Integer, Integer> COLOR_MAP = new HashMap<Integer, Integer>();
     static {
         COLOR_MAP.put(R.id.radioButtonRed, RED_HILITE);
         COLOR_MAP.put(R.id.radioButtonPink, PINK_HILITE);

@@ -55,7 +55,7 @@ import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity {
 
-    private static final int HISTORY_ID = Menu.FIRST;
+    private static final int HISTORY_ID = Menu.FIRST; 
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;

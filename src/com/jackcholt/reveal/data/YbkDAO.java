@@ -116,7 +116,7 @@ public class YbkDAO {
     /**
      * Get a list of book titles.
      * 
-     * @return The (possibly empty) list of book titles as a field index.
+     * @return The (possibly empty) list of book titles as a list of Books.
      */
     public List<Book> getBookTitles() {
         synchronized (mBookList) {
@@ -864,8 +864,8 @@ public class YbkDAO {
         }
     }
 
-    public List<AnnotHilite> getChapterAnnotHilites(final String bookFilename, final String chapterFilename) {
-        List<AnnotHilite> chapAnnotHilites = new ArrayList<AnnotHilite>();
+    public ArrayList<AnnotHilite> getChapterAnnotHilites(final String bookFilename, final String chapterFilename) {
+        ArrayList<AnnotHilite> chapAnnotHilites = new ArrayList<AnnotHilite>();
         synchronized (mAnnotHiliteList) {
             for (AnnotHilite ah : mAnnotHiliteList) {
                 if (ah.bookFilename.equalsIgnoreCase(bookFilename)
