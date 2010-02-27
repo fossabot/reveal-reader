@@ -54,7 +54,10 @@ public class AnnotationDialog extends Activity {
             findNoteField().setText(ah.note);
             int colorKey = getColorKeyByValue(ah.color);
             Log.d(TAG, "color key: " + colorKey);
-            ((RadioButton) findViewById(colorKey)).setChecked(true);
+            RadioButton colorButton = (RadioButton) findViewById(colorKey);
+            if (colorButton != null) {
+                colorButton.setChecked(true);
+            }
         }
 
         findOkButton().setOnClickListener(new OnClickListener() {
