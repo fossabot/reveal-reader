@@ -3,6 +3,7 @@ package com.jackcholt.reveal;
 import android.app.Dialog;
 import android.content.Context;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import com.flurry.android.FlurryAgent;
 
@@ -24,7 +25,8 @@ public class OnlineHelpDialog extends Dialog {
         setTitle(title);
         
         WebView wv = (WebView) findViewById(R.id.helpView);
-        wv.clearCache(true);
+        wv.setWebViewClient(new LinkWebViewClient()); 
+        wv.clearCache(false);
         wv.getSettings().setJavaScriptEnabled(true);
         if (Util.areNetworksUp(_this)) {
             wv.loadUrl("http://sites.google.com/site/revealonlinehelp/");
@@ -36,6 +38,14 @@ public class OnlineHelpDialog extends Dialog {
 
     }
 
+    private class LinkWebViewClient extends WebViewClient {
+    	@Override
+    	public boolean shouldOverrideUrlLoading(WebView view, String url) {
+    		view.loadUrl(url);
+    		return true;
+    	}
+    } 
+    
     public static OnlineHelpDialog create(Context _this) {
         OnlineHelpDialog dlg = new OnlineHelpDialog(_this);
         return dlg;
