@@ -2,7 +2,7 @@ package com.jackcholt.reveal;
 
 public class Global {
     public static final String TAG = "reveal";
-	public static int SVN_VERSION = 612;
+	public static int SVN_VERSION = 615;
 	public static int NEW_VERSION;
 	public static int DEBUG = 0;
      
