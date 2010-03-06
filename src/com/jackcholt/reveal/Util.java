@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -387,16 +388,34 @@ public class Util {
      * @return The modified content.
      */
     public static final String annotHiliteContent(final String content, final ArrayList<AnnotHilite> ahList) {
-        String newContent = content;
-        if (null == ahList)
+        if (null == ahList) {
             return null;
-
-        for (int index = 0, listSize = ahList.size(); index < listSize; index++) {
-            AnnotHilite ah = ahList.get(index);
-            newContent = annotHiliteVerse(newContent, ah);
         }
 
-        return newContent;
+        StringBuffer newContent = new StringBuffer();
+
+        int verseStartPos = 0;
+        int verseEndPos = 0;
+        Matcher endMatcher = Pattern.compile("(?is)<br.*").matcher(content);
+
+        for (int index = 0, listSize = ahList.size(); index < listSize; index++) {
+            int startPos = verseEndPos;
+            AnnotHilite ah = ahList.get(index);
+            Matcher startMatcher = Pattern.compile(getVerseAnchorTagRegExp(ah.verse)).matcher(content);
+            if (startMatcher.find(startPos)) {
+                verseStartPos = startMatcher.start();
+
+                if (endMatcher.find(verseStartPos)) {
+                    verseEndPos = endMatcher.start();
+                }
+            }
+
+            // append the new text.
+            newContent.append(content.substring(startPos, verseStartPos)).append(
+                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ah));
+        }
+
+        return newContent.append(content.substring(verseEndPos)).toString();
     }
 
     /**
@@ -406,30 +425,9 @@ public class Util {
      * @param ah The AnnotHilite object that contains the annotation and highlight data.
      * @return The chapter with the verse highlighted.
      */
-    public static String annotHiliteVerse(String content, final AnnotHilite ah) {
+    public static StringBuffer annotHiliteVerse(String content, final AnnotHilite ah) {
         if (ah.color == Color.TRANSPARENT && ah.note.length() == 0) {
-            return content;
-        }
-
-        int verseStartPos = 0;
-        for (int index = 0; index < content.length(); index++) {
-            if (content.substring(index).matches(getVerseAnchorTagRegExp(ah.verse))) {
-                verseStartPos = index;
-                break;
-            }
-        }
-
-        int verseEndPos = content.length();
-        for (int index = verseStartPos; index < content.length(); index++) {
-            if (content.substring(index).matches("(?is)<br.*")) {
-                verseEndPos = index;
-                break;
-            }
-        }
-
-        if (verseStartPos == 0 && verseEndPos == content.length()) {
-            Log.i(TAG, "No verse to highlight was found");
-            return content;
+            return new StringBuffer(content);
         }
 
         String annot = (ah.note.length() > 0) ? " <img src='file:///android_asset/note.png'/> " : "";
@@ -442,12 +440,11 @@ public class Util {
                     + colorHex.substring(2) + ";\">";
             hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</div>";
         }
-        return content.substring(0, verseStartPos) + hiliteDivStart + annot
-                + content.substring(verseStartPos, verseEndPos) + hiliteDivEnd + content.substring(verseEndPos);
+        return new StringBuffer().append(hiliteDivStart).append(annot).append(content).append(hiliteDivEnd);
     }
 
     private static String getVerseAnchorTagRegExp(int verse) {
-        return "(?is)^<a href=\"@" + Integer.toString(verse) + ",\\d+,\\d+\">.*";
+        return "(?is)<a\\s+href=\"@" + Integer.toString(verse) + ",\\d+,\\d+\">.*";
     }
 
     public static final String htmlize(final String text, final SharedPreferences sharedPref) {
