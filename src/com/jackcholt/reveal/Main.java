@@ -86,6 +86,8 @@ public class Main extends ListActivity {
     private static boolean BOOLsplashed = false;
     private static boolean BOOLcheckedOnline = false;
     private boolean BOOLshowFullScreen;
+    private boolean BOOLshowZoom;
+    
     private final Handler mHandler = new Handler();
     @SuppressWarnings("unused")
     private TextView mSelection;
@@ -121,6 +123,7 @@ public class Main extends ListActivity {
                 editor.putBoolean("first_run", false);
                 editor.putBoolean("show_splash_screen", true);
                 editor.putBoolean("show_fullscreen", false);
+                editor.putBoolean("show_zoom", false);
                 editor.commit();
             }
 
@@ -134,6 +137,8 @@ public class Main extends ListActivity {
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 requestWindowFeature(Window.FEATURE_NO_TITLE);
             }
+            
+            
 
             setContentView(R.layout.main);
 

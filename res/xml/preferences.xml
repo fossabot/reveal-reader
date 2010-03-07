@@ -2,7 +2,7 @@
 
 <PreferenceScreen
         xmlns:android="http://schemas.android.com/apk/res/android">
-	<PreferenceCategory android:title="@string/prefs_main_title">
+
 	    <CheckBoxPreference
 	        android:key="show_splash_screen"
 	        android:title="@string/label_splash_screen"
@@ -16,7 +16,14 @@
 	        android:summaryOn="@string/summary_on_fullscreen" 
 	        android:summaryOff="@string/summary_off_fullscreen" 
 	        android:checked="true"/>
-	</PreferenceCategory>
+	        
+	    <CheckBoxPreference
+	        android:key="show_zoom"
+	        android:title="@string/label_zoom"
+	        android:summaryOn="@string/summary_on_zoom" 
+	        android:summaryOff="@string/summary_off_zoom" 
+	        android:checked="true"/>
+
 
 	<PreferenceCategory android:title="@string/prefs_color_mode">
 		<CheckBoxPreference

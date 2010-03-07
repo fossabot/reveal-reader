@@ -162,4 +162,7 @@
 <string name="note_label">Note</string>
 <string name="menu_annotate">Note/Highlight</string>
 <string name="menu_goto_top">Go to top</string>
+<string name="label_zoom">Reading Zoom</string>
+<string name="summary_on_zoom">Zoom Button will display</string>
+<string name="summary_off_zoom">Zoom Button will not display</string>
 </resources>

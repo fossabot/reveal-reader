@@ -211,7 +211,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private void configWebView() {
         findWebView().getSettings().setJavaScriptEnabled(true);
-        findWebView().getSettings().setBuiltInZoomControls(true);
+        
+        boolean BOOLshowZoom = getSharedPrefs().getBoolean("show_zoom", false);
+
+        if (BOOLshowZoom) {
+            findWebView().getSettings().setBuiltInZoomControls(true);
+        } else {
+            findWebView().getSettings().setBuiltInZoomControls(false);
+        }
+
         findWebView().addJavascriptInterface(this, "App");
     }
 
