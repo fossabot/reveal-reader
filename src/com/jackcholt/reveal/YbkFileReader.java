@@ -395,6 +395,16 @@ public class YbkFileReader {
      * @return the chapter object, or null if it doesn't exist.
      */
     public Chapter getChapter(String chapName) throws IOException {
+        if (null == chapName) {
+            throw new IllegalArgumentException("The name of the chapter is null while trying to get the chapter object.");
+        }
+        if (null == mChapterIndex) {
+            throw new IllegalArgumentException("The chapter index structures are null while trying to get the chapter object.");
+        }
+        if (null == mChannel) {
+            throw new IllegalArgumentException("The file channel is null while trying to get the chapter object.");
+        }
+        
         Chapter chap = mChapterIndex.getChapter(mChannel, chapName);
         if (chap == null) {
             chap = mChapterIndex.getChapter(mChannel, chapName + ".gz");
