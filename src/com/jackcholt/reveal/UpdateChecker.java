@@ -48,13 +48,6 @@ public class UpdateChecker {
 			cnVersion.setDefaultUseCaches(false);
 			cnVersion.connect();
 			InputStream streamVersion = cnVersion.getInputStream();
-			// Get the Update location URL
-			// I have to use webview here to allow javascript URL doesnt do
-			// javascript
-			WebView mWebView = new WebView(Main.getMainApplication());
-			mWebView.clearCache(true);
-			mWebView.getSettings().setJavaScriptEnabled(true);
-			mWebView.loadUrl("http://revealreader.thepackhams.com/revealUpdate.html");
 
 			// Proceed parsing the info
 			DocumentBuilder docBuild = DocumentBuilderFactory.newInstance().newDocumentBuilder();
