@@ -77,16 +77,14 @@ public class Main extends ListActivity {
     private static final int LIBRARY_NOT_CREATED = 0;
     private static final int WALK_BOOK = 20;
 
-    // private static final boolean DONT_ADD_BOOKS = false;
     private static final boolean ADD_BOOKS = true;
     public static final String BOOK_WALK_INDEX = "bw_index";
 
     private NotificationManager mNotifMgr;
-    private boolean BOOLshowSplashScreen;
-    private static boolean BOOLsplashed = false;
-    private static boolean BOOLcheckedOnline = false;
-    private boolean BOOLshowFullScreen;
-    private boolean BOOLshowZoom;
+    private boolean mBOOLshowSplashScreen;
+    private static boolean mBOOLsplashed = false;
+    private static boolean mBOOLcheckedOnline = false;
+    private boolean mBOOLshowFullScreen;
     
     private final Handler mHandler = new Handler();
     @SuppressWarnings("unused")
@@ -116,8 +114,7 @@ public class Main extends ListActivity {
             Util.startFlurrySession(this);
             FlurryAgent.onEvent("Main");
 
-            // If this is the first time we've run (the default) then we need to
-            // init some values
+            // If this is the first time we've run (the default) then we need to init some values
             if (getSharedPrefs().getBoolean("first_run", true)) {
                 SharedPreferences.Editor editor = getSharedPrefs().edit();
                 editor.putBoolean("first_run", false);
@@ -130,9 +127,9 @@ public class Main extends ListActivity {
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
-            BOOLshowFullScreen = getSharedPrefs().getBoolean("show_fullscreen", false);
+            mBOOLshowFullScreen = getSharedPrefs().getBoolean("show_fullscreen", false);
 
-            if (BOOLshowFullScreen) {
+            if (mBOOLshowFullScreen) {
                 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -146,19 +143,19 @@ public class Main extends ListActivity {
             registerForContextMenu(getListView());
 
             if (!(isConfigChanged())) {
-                BOOLshowSplashScreen = getSharedPrefs().getBoolean("show_splash_screen", true);
+                mBOOLshowSplashScreen = getSharedPrefs().getBoolean("show_splash_screen", true);
 
-                if (BOOLshowSplashScreen && !BOOLsplashed) {
+                if (mBOOLshowSplashScreen && !mBOOLsplashed) {
                     Util.showSplashScreen(this);
                     // only show splash screen once per process instantiation
-                    BOOLsplashed = true;
+                    mBOOLsplashed = true;
                 }
             }
 
             // Is Network up or not?
-            if (!BOOLcheckedOnline && Util.areNetworksUp(this)) {
+            if (!mBOOLcheckedOnline && Util.areNetworksUp(this)) {
                 // only check once per process instantiation
-                BOOLcheckedOnline = true;
+                mBOOLcheckedOnline = true;
 
                 // and wait a little bit to kick it off so it won't slow down
                 // the initial display of the list

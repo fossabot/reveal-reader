@@ -440,13 +440,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             switch (item.getItemId()) {
             case PREVIOUS_ID:
                 if (mCurrChap.getChapOrderNbr() > 0) {
-                    setProgressBarIndeterminateVisibility(true);
-                    try {
-                        loadChapterByOrderId(mCurrChap.getBookFileName(), mCurrChap.getChapOrderNbr() - 1);
-                    } catch (IOException ioe) {
-                        Log.e(TAG, "Could not move to the previous chapter. " + ioe.getMessage());
-                    }
-                    setProgressBarIndeterminateVisibility(false);
+                    loadAdjacentChapter(-1);
                 }
                 return true;
             case NEXT_ID:
@@ -1406,6 +1400,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         setProgressBarIndeterminateVisibility(true);
 
         try {
+            mCurrChap.setScrollYPos(0);
             loadChapterByOrderId(mCurrChap.getBookFileName(), mCurrChap.getChapOrderNbr() + chapterOffset);
         } catch (IOException ioe) {
             Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());

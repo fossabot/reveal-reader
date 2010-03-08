@@ -635,23 +635,23 @@ public class Util {
      * @throws InvalidFileFormatException If content is in the wrong format.
      */
     public static String convertIfvar(final String content) throws InvalidFileFormatException {
-        /*
-         * String findString = "<ifvar=([a-zA-Z0-9]+)>(.+)" + "<[aA]\\s+href=['\"]\\+\\1=0['\"]>(.+)</[aA]>(.+)" +
-         * "<elsevar=\\1>(.+)<[aA]\\s+href=['\"]\\+\\1=1['\"]>" + "(.+)</[aA]>(.+)<endvar=\\1>";
-         * 
-         * Log.d(TAG, "findString: " + findString);
-         * 
-         * String replaceString = "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">" +
-         * "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>" ;
-         * 
-         * Log.d(TAG, "replaceString: " + replaceString);
-         * 
-         * String fixedContent = content.replaceAll(findString, replaceString);
-         * 
-         * Log.d(TAG, "fixedContent: " + fixedContent);
-         * 
-         * return fixedContent;
-         */
+        
+         /*String findString = "(?is)<ifvar=([a-zA-Z0-9]+)>(.+)" + "<a\\s+href=['\"]\\+\\1=0['\"]>(.+)</a>(.+)" +
+          "<elsevar=\\1>(.+)<a\\s+href=['\"]\\+\\1=1['\"]>" + "(.+)</a>(.+)<endvar=\\1>";
+          
+          Log.d(TAG, "findString: " + findString);
+          
+          String replaceString = "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">" +
+          "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>" ;
+          
+          Log.d(TAG, "replaceString: " + replaceString);
+          
+          String fixedContent = content.replaceAll(findString, replaceString);
+          
+          Log.d(TAG, "fixedContent: " + fixedContent);
+          
+          return fixedContent;*/
+         
 
         StringBuilder newContent = new StringBuilder();
 
@@ -772,8 +772,7 @@ public class Util {
                         newContent.append(newHideText);
                         newContent.append("</span>");
 
-                        // remove just-parsed <ifvar> tag structure so we can
-                        // find the next
+                        // remove just-parsed <ifvar> tag structure so we can find the next
                         oldContent.delete(0, endPos + variable.length() + 9);
                         oldLowerContent.delete(0, endPos + variable.length() + 9);
                     }
