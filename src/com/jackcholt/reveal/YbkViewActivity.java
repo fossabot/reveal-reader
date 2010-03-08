@@ -363,6 +363,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             public void onClick(final View v) {
                 setProgressBarIndeterminateVisibility(true);
                 try {
+                    mCurrChap.setScrollYPos(0);
                     if (loadChapter(filePath, "index", false)) {
                         initBookChapButtons(shortTitle, filePath, fileToOpen);
                     }
