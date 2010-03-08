@@ -211,7 +211,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private void configWebView() {
         findWebView().getSettings().setJavaScriptEnabled(true);
-        
+
         boolean BOOLshowZoom = getSharedPrefs().getBoolean("show_zoom", false);
 
         if (BOOLshowZoom) {
@@ -640,7 +640,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (chap != null) {
             Book book = mYbkReader.getBook();
             mCurrChap.setNavFile("1");
-            if (bookLoaded = loadChapter(book.fileName, chap.fileName, true)) {
+            if (bookLoaded = loadChapter(book.fileName, removeGZipExt(chap.fileName), true)) {
                 initBookChapButtons(book.shortTitle, book.fileName, chap.fileName);
             }
 
@@ -651,6 +651,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         return bookLoaded;
 
+    }
+
+    private String removeGZipExt(String chapFileName) {
+        return (chapFileName.toLowerCase().endsWith(".gz")) ? chapFileName.substring(0, chapFileName.length() - 3)
+                : chapFileName;
     }
 
     /**
