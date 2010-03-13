@@ -17,7 +17,6 @@ import org.xml.sax.SAXException;
 import android.app.Activity;
 import android.os.Looper;
 import android.os.Process;
-import android.webkit.WebView;
 import android.widget.Toast;
 
 import com.flurry.android.FlurryAgent;
