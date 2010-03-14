@@ -753,25 +753,33 @@ public class Util {
             try {
                 ZipEntry entry;
                 while ((entry = zip.getNextEntry()) != null) {
-                    // unpack all the files
-                    File file = new File(libDirFile, entry.getName());
+                    String entryName = entry.getName();
 
-                    // check to see if they already have this title
-                    if (file.exists()) {
-                        file.delete();
-                        YbkDAO.getInstance(context).deleteBook(entry.getName());
-                    }
-
-                    file = new File(libDirFile, entry.getName() + TMP_EXTENSION);
-                    out = new FileOutputStream(file);
-                    files.add(file);
-                    try {
-                        int bytesRead = 0;
-                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                            out.write(buffer, 0, bytesRead);
+                    // unpack ybk files only
+                    if (entryName.endsWith(".ybk")) {
+                        if(entryName.contains("/")) {
+                            entryName = entryName.substring(entryName.lastIndexOf('/'));
                         }
-                    } finally {
-                        out.close();
+                        
+                        File file = new File(libDirFile, entryName);
+
+                        // check to see if they already have this title
+                        if (file.exists()) {
+                            file.delete();
+                            YbkDAO.getInstance(context).deleteBook(entryName);
+                        }
+
+                        file = new File(libDirFile, entryName + TMP_EXTENSION);
+                        out = new FileOutputStream(file);
+                        files.add(file);
+                        try {
+                            int bytesRead = 0;
+                            while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                                out.write(buffer, 0, bytesRead);
+                            }
+                        } finally {
+                            out.close();
+                        }
                     }
                 }
             } catch (IOException ioe) {
