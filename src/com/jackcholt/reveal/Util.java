@@ -50,8 +50,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Environment;
 import android.os.Looper;
 import android.os.Process;
+import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -703,6 +705,10 @@ public class Util {
             connection.setConnectTimeout(300000);
             connection.setReadTimeout(300000);
             int totalBytes = connection.getContentLength();
+            StatFs statFs = new StatFs(Environment.getExternalStorageDirectory().getName());
+            if(totalBytes * 2 > statFs.getAvailableBlocks() * statFs.getBlockSize()) {
+                throw new IOException(context.getResources().getString(R.string.sdcard_full));
+            }
             in = connection.getInputStream();
             if (in == null) {
                 // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception later on
