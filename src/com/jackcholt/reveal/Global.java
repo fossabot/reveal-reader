@@ -2,8 +2,8 @@ package com.jackcholt.reveal;
 
 public class Global {
     public static final String TAG = "reveal";
-	public static int SVN_VERSION = 627;
+	public static int SVN_VERSION = 633;
 	public static int NEW_VERSION;
-	public static int DEBUG = 1;
+	public static int DEBUG = 0;
      
 }
