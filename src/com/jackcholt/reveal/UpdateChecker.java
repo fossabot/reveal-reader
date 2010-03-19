@@ -34,8 +34,7 @@ public class UpdateChecker {
 		int version = 0;
 
 		try {
-			// Get the XML update Version to prompt user to get a new Update
-			// From the market
+			// Get the XML update Version to prompt user to get a new Update from the market
 			FlurryAgent.onEvent("UpdateCheck");
 			URLConnection cnVersion;
 			URL urlVersion = new URL(

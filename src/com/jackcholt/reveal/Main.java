@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -55,7 +54,7 @@ import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity {
 
-    private static final int HISTORY_ID = Menu.FIRST; 
+    private static final int HISTORY_ID = Menu.FIRST;
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
     private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
@@ -85,11 +84,10 @@ public class Main extends ListActivity {
     private static boolean mBOOLsplashed = false;
     private static boolean mBOOLcheckedOnline = false;
     private boolean mBOOLshowFullScreen;
-    
+
     private final Handler mHandler = new Handler();
     @SuppressWarnings("unused")
     private TextView mSelection;
-    private String mStrFontSize = "";
 
     private List<Book> mBookTitleList;
 
@@ -134,8 +132,6 @@ public class Main extends ListActivity {
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 requestWindowFeature(Window.FEATURE_NO_TITLE);
             }
-            
-            
 
             setContentView(R.layout.main);
 
@@ -294,11 +290,9 @@ public class Main extends ListActivity {
     /**
      * Refresh the eBook directory.
      * 
-     * @param strLibDir
-     *            the path to the library directory.
-     * @param addNewBooks
-     *            If true, run the code that will add new books to the database as well as the code that removes missing
-     *            books from the database (which runs regardless).
+     * @param strLibDir the path to the library directory.
+     * @param addNewBooks If true, run the code that will add new books to the database as well as the code that removes
+     *        missing books from the database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -386,18 +380,32 @@ public class Main extends ListActivity {
         mBookTitleList = YbkDAO.getInstance(this).getBookTitles();
         // Now create a simple adapter that finds icons and set it to display
         setListAdapter(new IconicAdapter(this));
-        mSelection = (TextView) findViewById(R.id.label);
+        // mSelection = (TextView) findViewById(R.id.label);
     }
 
     @SuppressWarnings("unchecked")
     class IconicAdapter extends ArrayAdapter {
-        Activity context;
+        private static final float NEW_WIDTH = 20;
+        private static final float NEW_HEIGHT = 25;
+        private SharedPreferences sharedPref = getSharedPrefs();
+        private String strFontSize = sharedPref.getString(Settings.EBOOK_FONT_SIZE_KEY,
+                Settings.DEFAULT_EBOOK_FONT_SIZE);
+        private String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
+                Settings.DEFAULT_EBOOK_DIRECTORY);
 
-        IconicAdapter(Activity context) {
+        // private TimingTool timer = new TimingTool();
+        // Needed to avoid a deprecated method in SDK 1.6+
+        // private Resources res;
+
+        IconicAdapter(Main context) {
             super(context, R.layout.book_list_row, mBookTitleList);
+            // See the comment above the declaration of this variable
+            // res = context.getResources();
         }
 
         public View getView(int location, View convertView, ViewGroup parent) {
+            // TODO Remove call to TimingTool after performance enhancement is complete
+            // timer.init();
             View row = convertView;
 
             if (row == null) {
@@ -406,45 +414,42 @@ public class Main extends ListActivity {
             }
 
             TextView label = (TextView) row.findViewById(R.id.label);
-
-            mStrFontSize = getSharedPrefs().getString(Settings.EBOOK_FONT_SIZE_KEY, Settings.DEFAULT_EBOOK_FONT_SIZE);
-            label.setTextSize(Integer.parseInt(mStrFontSize));
+            label.setTextSize(Integer.parseInt(strFontSize));
             label.setText(mBookTitleList.get(location).title);
-            String eBookName = mBookTitleList.get(location).shortTitle;
-
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
 
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Main.getMainApplication());
-            String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
-
-            File eBookIcon = new File(strRevealDir, "/thumbnails/" + eBookName + ".jpg");
-
-            FileInputStream is = null;
+            // timer.addEvent("before getting book icon");
+            FileInputStream iconInputStream = null;
             try {
-                is = new FileInputStream(eBookIcon);
+                iconInputStream = new FileInputStream(new File(strRevealDir, "/thumbnails/"
+                        + mBookTitleList.get(location).shortTitle + ".jpg"));
+                // timer.addEvent("after actually getting book icon");
             } catch (FileNotFoundException e) {
-                Log.d("ICON: ", "file Not Found Look online for update");
+                Log.d("IconicAdapter: ", "file Not Found Look online for update");
+                // timer.addEvent("didn't get book icon");
             }
 
-            if (null == is) {
+            if (null == iconInputStream) {
                 icon.setImageResource(R.drawable.ebooksmall);
                 return row;
             }
 
-            Bitmap bm = BitmapFactory.decodeStream(is, null, null);
+            Bitmap bitmap = BitmapFactory.decodeStream(iconInputStream, null, null);
 
-            if (null == bm) {
+            if (null == bitmap) {
                 icon.setImageResource(R.drawable.ebooksmall);
                 return row;
             }
-
-            final float newWidth = 20;
-            final float newHeight = 25;
 
             Matrix matrix = new Matrix();
-            matrix.postScale(newWidth / bm.getWidth(), newHeight / bm.getHeight());
-            icon.setImageDrawable(new BitmapDrawable(Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(),
-                    matrix, true)));
+            matrix.postScale(NEW_WIDTH / bitmap.getWidth(), NEW_HEIGHT / bitmap.getHeight());
+            icon.setImageDrawable(new BitmapDrawable(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap
+                    .getHeight(), matrix, true)));
+            /*
+             * TODO change the above (which is deprecated in 1.6+) to the following when we move to 1.6+ of the SDK
+             * icon.setImageDrawable(new BitmapDrawable(res, Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap
+             * .getHeight(), matrix, true)));
+             */
 
             return (row);
         }
@@ -465,7 +470,6 @@ public class Main extends ListActivity {
             switch (item.getItemId()) {
             case OPEN_ID:
                 return onOpenBookMenuItem(item);
-
             case DELETE_ID:
                 return onDeleteBookMenuItem(item);
             case PROPERTIES_ID:
@@ -674,6 +678,8 @@ public class Main extends ListActivity {
         try {
             super.onResume();
             if (mThemeId != Util.getTheme(getSharedPrefs())) {
+                // FIXME - There should be a better way to reset the theme. The trouble with this method is that this
+                // FIXME - would run any time Main is resumed.
                 // the only way to fully reset the theme is to restart the activity
                 startActivity(new Intent(this, ReloadMainActivity.class));
                 finish();
