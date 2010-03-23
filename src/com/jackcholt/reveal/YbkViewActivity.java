@@ -1191,10 +1191,16 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url)));
                         } else {
                             // pop up a context menu
-                            startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class).putExtra(
-                                    YbkDAO.VERSE, obtainVerse(url)).putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
-                                    .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
-                                    CALL_VERSE_CONTEXT_MENU);
+                            try {
+                                startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class)
+                                        .putExtra(YbkDAO.VERSE, obtainVerse(url)).putExtra(YbkDAO.BOOK_FILENAME,
+                                                getBookFileName()).putExtra(YbkDAO.CHAPTER_FILENAME,
+                                                mCurrChap.getChapFileName()), CALL_VERSE_CONTEXT_MENU);
+
+                            } catch (NumberFormatException nfe) {
+                                Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG)
+                                        .show();
+                            }
                         }
                         return HANDLED_BY_HOST_APP;
                     }
