@@ -421,7 +421,7 @@ public class Main extends ListActivity {
             // timer.addEvent("before getting book icon");
             FileInputStream iconInputStream = null;
             try {
-                iconInputStream = new FileInputStream(new File(strRevealDir, "/thumbnails/"
+                iconInputStream = new FileInputStream(new File(strRevealDir, "/.thumbnails/"
                         + mBookTitleList.get(location).shortTitle + ".jpg"));
                 // timer.addEvent("after actually getting book icon");
             } catch (FileNotFoundException e) {
@@ -634,7 +634,7 @@ public class Main extends ListActivity {
                         }
                     }
                     // delete associated temporary image files
-                    Util.deleteFiles(new File(file.getParentFile(), "/images"), file.getName().replaceFirst(
+                    Util.deleteFiles(new File(file.getParentFile(), "/.images"), file.getName().replaceFirst(
                             "(.*)\\.[^\\.]+$", "$1")
                             + "_.+");
                     // remove the book from the database
@@ -921,15 +921,15 @@ public class Main extends ListActivity {
                 // cleanup current library directory
                 File libDir = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                         Settings.DEFAULT_EBOOK_DIRECTORY));
-                Util.deleteFiles(new File(libDir, "images"), ".*");
-                Util.deleteFiles(new File(libDir, "thumbnails"), ".*");
+                Util.deleteFiles(new File(libDir, ".images"), ".*");
+                Util.deleteFiles(new File(libDir, ".thumbnails"), ".*");
                 Util.deleteFiles(libDir, ".*\\.(tmp|lg|db)");
                 Util.deleteFiles(new File(libDir, "data"), "books\\.dat|.*\\.chp");
                 if (!libDir.getAbsoluteFile().toString().equalsIgnoreCase(Settings.DEFAULT_EBOOK_DIRECTORY)) {
                     // cleanup default library directory if it wasn't the one we
                     // were using
-                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "images"), ".*");
-                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "thumbnails"), ".*");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, ".images"), ".*");
+                    Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, ".thumbnails"), ".*");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY), ".*\\.(tmp|lg|db)");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "data"), "books\\.dat|.*\\.chp");
                 }

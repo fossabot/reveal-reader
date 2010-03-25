@@ -135,7 +135,7 @@ public class YbkProvider extends ContentProvider {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         // clean up leftover image files
         String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
-        Util.deleteFiles(new File(libDir, "images"), ".*");
+        Util.deleteFiles(new File(libDir, ".images"), ".*");
         return true;
     }
 
@@ -204,8 +204,8 @@ public class YbkProvider extends ContentProvider {
                     String libDir = mSharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
                             Settings.DEFAULT_EBOOK_DIRECTORY);
 
-                    outFile = new File(libDir + "images/", tempFileName);
-                    outThumbnail = new File(libDir + "thumbnails/", tempThumbFileName);
+                    outFile = new File(libDir + ".images/", tempFileName);
+                    outThumbnail = new File(libDir + ".thumbnails/", tempThumbFileName);
 
                     if (!outFile.exists()) {
                         HashMap<String, String> chapterMap = Util.getFileNameChapterFromUri(strUri, false);

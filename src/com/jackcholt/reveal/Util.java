@@ -917,8 +917,8 @@ public class Util {
             // Log.i(Global.TAG, "Create reveal dir on sdcard ok");
         }
 
-        File imagesDir = new File(strRevealDir + "images/");
-        File thumbsDir = new File(strRevealDir + "thumbnails/");
+        File imagesDir = new File(strRevealDir + ".images/");
+        File thumbsDir = new File(strRevealDir + ".thumbnails/");
         if (!imagesDir.exists() || !thumbsDir.exists()) {
             imagesDir.mkdirs();
             thumbsDir.mkdirs();
