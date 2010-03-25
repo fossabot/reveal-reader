@@ -167,4 +167,5 @@
 <string name="summary_on_zoom">Zoom Button will display</string>
 <string name="summary_off_zoom">Zoom Button will not display</string>
 <string name="cannot_find_url">We cannot find that reference.</string>
+<string name="cannot_hilite">Cannot highlight or annotate this chapter.</string>
 </resources>

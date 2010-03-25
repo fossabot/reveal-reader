@@ -384,9 +384,10 @@ public class Util {
      * 
      * @param content the chapter that will have highlighting inserted.
      * @param ahList All the highlighting and annotation for the chapter contained in <code>content</code>.
+     * @param _this TODO
      * @return The modified content.
      */
-    public static final String annotHiliteContent(final String content, final ArrayList<AnnotHilite> ahList) {
+    public static final String annotHiliteContent(final String content, final ArrayList<AnnotHilite> ahList, Context _this) {
         if (null == ahList) {
             return null;
         }
@@ -410,11 +411,22 @@ public class Util {
             }
 
             // append the new text.
+            Log.d(TAG, "verseStartPos/verseEndPos: " + verseStartPos + "/" + verseEndPos);
+            if (!isVersePosValid(verseStartPos, verseEndPos, startPos, content.length())) {
+                if (null != _this) {
+                    Toast.makeText(_this, R.string.cannot_hilite, Toast.LENGTH_LONG).show();
+                }
+                return content;
+            }
             newContent.append(content.substring(startPos, verseStartPos)).append(
                     annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ah));
         }
 
         return newContent.append(content.substring(verseEndPos)).toString();
+    }
+
+    private static boolean isVersePosValid(int verseStartPos, int verseEndPos, int startPos, int contentLen) {
+        return startPos >= 0 && startPos <= verseStartPos && verseStartPos <= verseEndPos && verseEndPos <= contentLen;
     }
 
     /**

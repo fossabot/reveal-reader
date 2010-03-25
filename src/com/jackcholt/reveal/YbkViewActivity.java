@@ -835,7 +835,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             // Inside htmlize we now have support for night mode
             content = Util.htmlize(content, getSharedPrefs());
             content = Util.annotHiliteContent(content, YbkDAO.getInstance(this).getChapterAnnotHilites(book.fileName,
-                    chap));
+                    chap), this);
 
             if (!reloading && isShowInPopup(chapter)) {
                 Log.d(TAG, "Showing chapter in popup");
