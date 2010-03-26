@@ -384,7 +384,7 @@ public class Util {
      * 
      * @param content the chapter that will have highlighting inserted.
      * @param ahList All the highlighting and annotation for the chapter contained in <code>content</code>.
-     * @param _this TODO
+     * @param _this The context in which to display a Toast if necessary.
      * @return The modified content.
      */
     public static final String annotHiliteContent(final String content, final ArrayList<AnnotHilite> ahList, Context _this) {
@@ -396,7 +396,7 @@ public class Util {
 
         int verseStartPos = 0;
         int verseEndPos = 0;
-        Matcher endMatcher = Pattern.compile("(?is)<br.*").matcher(content);
+        Matcher endMatcher = Pattern.compile("(?is)<br.*|</p.*").matcher(content);
 
         for (int index = 0, listSize = ahList.size(); index < listSize; index++) {
             int startPos = verseEndPos;
