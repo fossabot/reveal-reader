@@ -387,7 +387,8 @@ public class Util {
      * @param _this The context in which to display a Toast if necessary.
      * @return The modified content.
      */
-    public static final String annotHiliteContent(final String content, final ArrayList<AnnotHilite> ahList, Context _this) {
+    public static final String annotHiliteContent(final String content, final ArrayList<AnnotHilite> ahList,
+            Context _this) {
         if (null == ahList) {
             return null;
         }
@@ -476,10 +477,12 @@ public class Util {
 
         String style = "<style>" // 
                 + "._showpicture {" + (showPicture ? "display:inline;" : "display:none") + "} "
-                + "._hidepicture {" + (showPicture ? "display:none;" : "display:inline") + "} "
-                + " ._showcontents {display:inline}" + " ._hidecontents {display:none} " + " .ah {"
-                + (showAH ? "display:inline;" : "display:none") + "}" + (nightMode ? NIGHT_MODE_STYLE : "")
-                + "</style>";
+                + "._hidepicture {"
+                + (showPicture ? "display:none;" : "display:inline") + "} "
+                + " ._showcontents {display:inline}"
+                + " ._hidecontents {display:none} " + " .ah {" + (showAH ? "display:inline;" : "display:none")
+                + "}"
+                + (nightMode ? NIGHT_MODE_STYLE : "") + "</style>";
 
         String scripts = "<script type='text/javascript'>";
         if (content.indexOf("class=\"_show") != -1) {
@@ -662,13 +665,16 @@ public class Util {
                 lazyZeroOrMoreAnyCharacterCapturingGroup + //
                 "<endvar=" + spanName + ">";
 
-        //Log.d(TAG, "findString: " + findString);
+        // Log.d(TAG, "findString: " + findString);
 
-        String fixedString = content.replaceAll(findString, "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">"
-                + "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>");
-        
-        //Log.d(TAG, "fixedString: " + fixedString);
-        
+        String fixedString = content
+                .replaceAll(
+                        findString,
+                        "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">"
+                                + "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>");
+
+        // Log.d(TAG, "fixedString: " + fixedString);
+
         return fixedString;
 
     }
@@ -688,7 +694,7 @@ public class Util {
             final Context context, Completion... callbacks) throws IOException {
 
         boolean success = false;
-        boolean isZip = true;
+        boolean isZip = false;
 
         ArrayList<File> files = new ArrayList<File>();
         ArrayList<String> downloaded = new ArrayList<String>();
@@ -707,21 +713,20 @@ public class Util {
         // Get the file that was referred to us
         final byte[] buffer = new byte[512];
         try {
-            URL mirrorURL = new URL(DOWNLOAD_MIRROR);
-            URL ourUrl = new URL(mirrorURL, urlFileName);
+            URL ourUrl = new URL(new URL(DOWNLOAD_MIRROR), urlFileName);
             URLConnection connection = ourUrl.openConnection();
             // set timeouts for 5 minutes. This will give generous time to deal with network and server glitches
             // but won't cause us to block forever
             connection.setConnectTimeout(300000);
             connection.setReadTimeout(300000);
             int totalBytes = connection.getContentLength();
-            //StatFs statFs = new StatFs(Environment.getExternalStorageDirectory().getName());
-            //if(totalBytes * 2 > statFs.getAvailableBlocks() * statFs.getBlockSize()) {
-            //    throw new IOException(context.getResources().getString(R.string.sdcard_full));
-            //}
+            // StatFs statFs = new StatFs(Environment.getExternalStorageDirectory().getName());
+            // if(totalBytes * 2 > statFs.getAvailableBlocks() * statFs.getBlockSize()) {
+            // throw new IOException(context.getResources().getString(R.string.sdcard_full));
+            // }
             in = connection.getInputStream();
             if (in == null) {
-                // getInputStream isn't suppose to return null, but we sometimes getting null pointer exception later on
+                // getInputStream isn't suppose to return null, but we sometimes get a null pointer exception later on
                 // that could only happen if it does. Best guess is that it happens with HTTP responses that don't
                 // actually have content, but by throwing an exception with the response message we might be able to
                 // diagnose what is going on.
@@ -772,30 +777,31 @@ public class Util {
                     String entryName = entry.getName();
 
                     // unpack ybk files only
-                    if (entryName.endsWith(".ybk")) {
-                        if(entryName.contains("/")) {
-                            entryName = entryName.substring(entryName.lastIndexOf('/'));
-                        }
-                        
-                        File file = new File(libDirFile, entryName);
+                    if (!entryName.endsWith(".ybk")) {
+                        continue;
+                    }
+                    if (entryName.contains("/")) {
+                        entryName = entryName.substring(entryName.lastIndexOf('/'));
+                    }
 
-                        // check to see if they already have this title
-                        if (file.exists()) {
-                            file.delete();
-                            YbkDAO.getInstance(context).deleteBook(entryName);
-                        }
+                    File file = new File(libDirFile, entryName);
 
-                        file = new File(libDirFile, entryName + TMP_EXTENSION);
-                        out = new FileOutputStream(file);
-                        files.add(file);
-                        try {
-                            int bytesRead = 0;
-                            while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
-                                out.write(buffer, 0, bytesRead);
-                            }
-                        } finally {
-                            out.close();
+                    // check to see if they already have this title
+                    if (file.exists()) {
+                        file.delete();
+                        YbkDAO.getInstance(context).deleteBook(entryName);
+                    }
+
+                    file = new File(libDirFile, entryName + TMP_EXTENSION);
+                    out = new FileOutputStream(file);
+                    files.add(file);
+                    try {
+                        int bytesRead = 0;
+                        while (-1 != (bytesRead = zip.read(buffer, 0, 255))) {
+                            out.write(buffer, 0, bytesRead);
                         }
+                    } finally {
+                        out.close();
                     }
                 }
             } catch (IOException ioe) {

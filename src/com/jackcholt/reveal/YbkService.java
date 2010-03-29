@@ -249,14 +249,10 @@ public class YbkService extends Service {
                         requestAddBook(context, download, null, callbacks);
                     }
                 } catch (IOException ioe) {
-                    Log.e(TAG, "Unable to download '" + intent.getExtras().getString(SOURCE_KEY) + "': "
-                            + ioe.toString());
-                    for (Completion callback : callbackMap.remove(Long.valueOf((long) Long.valueOf(intent.getExtras()
-                            .getLong(CALLBACKS_KEY))))) {
-                        callback
-                                .completed(false, "Could not download '"
-                                        + new File(intent.getExtras().getString(TARGET_KEY)).getName() + "'. "
-                                        + ioe.toString());
+                    Log.e(TAG, "Unable to download '" + intent.getStringExtra(SOURCE_KEY) + "': " + ioe.toString());
+                    for (Completion callback : callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0))) {
+                        callback.completed(false, "Could not download '"
+                                + new File(intent.getStringExtra(TARGET_KEY)).getName() + "'. " + ioe.toString());
                     }
                 }
             }

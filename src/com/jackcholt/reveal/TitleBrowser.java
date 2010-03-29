@@ -245,24 +245,24 @@ public class TitleBrowser extends ListActivity {
         final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++,
                 R.drawable.ebooksmall, MessageFormat.format(getResources().getString(R.string.downloading), title.name));
         final Completion callback = new Completion() {
-            // @Override
             public void completed(boolean succeeded, String message) {
                 Main main = Main.getMainApplication();
-                if (main != null) {
-                    if (succeeded) {
-                        if (message.endsWith("%")) {
-                            int percent = Integer.parseInt(message.substring(0, message.length() - 1));
-                            progressNotification.update(100, percent);
-                        } else {
-                            progressNotification.hide();
-                            main.refreshNotify(message);
-                            main.scheduleRefreshBookList();
-                        }
+                if (null == main) {
+                    return;
+                }
+                if (succeeded) {
+                    if (message.endsWith("%")) {
+                        int percent = Integer.parseInt(message.substring(0, message.length() - 1));
+                        progressNotification.update(100, percent);
                     } else {
                         progressNotification.hide();
-                        Util.sendNotification(TitleBrowser.this, message, android.R.drawable.stat_sys_warning,
-                                getResources().getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
+                        main.refreshNotify(message);
+                        main.scheduleRefreshBookList();
                     }
+                } else {
+                    progressNotification.hide();
+                    Util.sendNotification(TitleBrowser.this, message, android.R.drawable.stat_sys_warning,
+                            getResources().getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
                 }
             }
         };
@@ -322,9 +322,8 @@ public class TitleBrowser extends ListActivity {
     }
 
     /**
-     * XML parsing handler. This controls the sax parsing and insertion of
-     * information into the title list. All data is coming from our own
-     * organization on the server side.
+     * XML parsing handler. This controls the sax parsing and insertion of information into the title list. All data is
+     * coming from our own organization on the server side.
      * 
      * @author jwiggins
      * 
@@ -370,7 +369,7 @@ public class TitleBrowser extends ListActivity {
             } else if (lowerTag.equals(mCategoryTag)) {
                 mListCategories.add(mCurrentCategory);
             }
-            
+
             String xmlValue = mCurrentText.toString().trim();
 
             xmlValue.replace("&amp;", "&");

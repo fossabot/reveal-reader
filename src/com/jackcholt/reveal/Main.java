@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -59,7 +60,7 @@ import com.jackcholt.reveal.data.YbkDAO;
 import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity {
-
+    private static final String TAG = "reveal.Main";
     private static final int HISTORY_ID = Menu.FIRST;
     private static final int BOOKMARK_ID = Menu.FIRST + 1;
     private static final int SETTINGS_ID = Menu.FIRST + 2;
@@ -430,20 +431,18 @@ public class Main extends ListActivity {
 
         // Now create a simple adapter that finds icons and set it to display
         setListAdapter(new IconicAdapter(this));
-        // mSelection = (TextView) findViewById(R.id.label);
     }
 
     @SuppressWarnings("unchecked")
     class IconicAdapter extends ArrayAdapter {
-        private static final float NEW_WIDTH = 20;
-        private static final float NEW_HEIGHT = 25;
+        private static final float NEW_WIDTH = 30;
+        private static final float NEW_HEIGHT = 37;
         private SharedPreferences sharedPref = getSharedPrefs();
         private String strFontSize = sharedPref.getString(Settings.EBOOK_FONT_SIZE_KEY,
                 Settings.DEFAULT_EBOOK_FONT_SIZE);
         private String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
                 Settings.DEFAULT_EBOOK_DIRECTORY);
 
-        // private TimingTool timer = new TimingTool();
         // Needed to avoid a deprecated method in SDK 1.6+
         // private Resources res;
 
@@ -454,8 +453,6 @@ public class Main extends ListActivity {
         }
 
         public View getView(int location, View convertView, ViewGroup parent) {
-            // TODO Remove call to TimingTool after performance enhancement is complete
-            // timer.init();
             View row = convertView;
 
             if (row == null) {
@@ -464,9 +461,10 @@ public class Main extends ListActivity {
             }
 
             TextView label = (TextView) row.findViewById(R.id.label);
-            label.setTextSize(Integer.parseInt(strFontSize));
+            label.setTextSize(Math.round(Integer.parseInt(strFontSize) * 1.5));
 
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
+
 
             Object item = mCurrentList.get(location);
             if (item instanceof Book) {
@@ -782,8 +780,14 @@ public class Main extends ListActivity {
                 // FIXME - There should be a better way to reset the theme. The trouble with this method is that this
                 // FIXME - would run any time Main is resumed.
                 // the only way to fully reset the theme is to restart the activity
-                startActivity(new Intent(this, ReloadMainActivity.class));
+                final Intent intent = new Intent(this, ReloadMainActivity.class);
+                if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
+                    Log.w(TAG, "The ReloadMainActivity is not found.  We cannot change the theme.");
+                }
+                
+                startActivity(intent);
                 finish();
+
                 return;
             }
 
