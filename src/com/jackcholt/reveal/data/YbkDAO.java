@@ -15,7 +15,12 @@ import java.util.Comparator;
 import java.util.EmptyStackException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.Stack;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -43,6 +48,8 @@ public class YbkDAO {
     public static final String BOOKMARKS_FILE = "bookmarks.dat";
     public static final String BACKSTACK_FILE = "backstack.dat";
     public static final String ANNOT_HILITE_FILE = "annotHilite.dat";
+    public static final String FOLDER_FILE = "folders.dat";
+
     public static final String CHAPTER_EXT = ".chp";
 
     public static final String FILENAME = "FILENAME";
@@ -65,6 +72,7 @@ public class YbkDAO {
     private ArrayList<History>[] mHistoryLists;
     private ArrayList<Book> mBookList;
     private ArrayList<AnnotHilite> mAnnotHiliteList;
+    private TreeMap<String, SortedSet<String>> mFolderMap;
 
     private File mDataDirFile;
 
@@ -111,6 +119,7 @@ public class YbkDAO {
         mBookmarkList = getStoredBookmarkList();
         mHistoryLists = (ArrayList<History>[]) new ArrayList[] { mHistoryList, mBookmarkList };
         mAnnotHiliteList = getStoredAnnotHiliteList();
+        mFolderMap = getStoredFolderMap();
     }
 
     /**
@@ -163,11 +172,16 @@ public class YbkDAO {
     /**
      * Insert a new Annotation Highlight record into the database.
      * 
-     * @param note the text of the annotation.
-     * @param color the color to use to highlight the verse.
-     * @param verse the verse to highlight.
-     * @param bookFilename the filename of book that contains the verse to be highlighted/annotated.
-     * @param chapterFilename the filename of the chapter that contains the verse to be highlighted/annotated.
+     * @param note
+     *            the text of the annotation.
+     * @param color
+     *            the color to use to highlight the verse.
+     * @param verse
+     *            the verse to highlight.
+     * @param bookFilename
+     *            the filename of book that contains the verse to be highlighted/annotated.
+     * @param chapterFilename
+     *            the filename of the chapter that contains the verse to be highlighted/annotated.
      * @return the AnnotHilite object that was inserted.
      */
     public AnnotHilite insertAnnotHilite(final String note, final int color, final int verse,
@@ -217,12 +231,18 @@ public class YbkDAO {
     /**
      * Insert a book into the database.
      * 
-     * @param fileName The name of the file that contains the book.
-     * @param bindingText The text that describes the book.
-     * @param title The title of the book.
-     * @param shortTitle the abbreviated title.
-     * @param metaData Descriptive information.
-     * @param chapters the list of chapters
+     * @param fileName
+     *            The name of the file that contains the book.
+     * @param bindingText
+     *            The text that describes the book.
+     * @param title
+     *            The title of the book.
+     * @param shortTitle
+     *            the abbreviated title.
+     * @param metaData
+     *            Descriptive information.
+     * @param chapters
+     *            the list of chapters
      * @return the Book
      * @throws IOException
      */
@@ -258,10 +278,14 @@ public class YbkDAO {
     /**
      * Save a new history/bookMark item.
      * 
-     * @param bookFileName The filename of the book that this is related to.
-     * @param historyTitle The title to be shown in the history/bookmark list.
-     * @param chapterName The chapter that was being read.
-     * @param scrollPos The position in the chapter that was being read.
+     * @param bookFileName
+     *            The filename of the book that this is related to.
+     * @param historyTitle
+     *            The title to be shown in the history/bookmark list.
+     * @param chapterName
+     *            The chapter that was being read.
+     * @param scrollPos
+     *            The position in the chapter that was being read.
      * @return True if the insert succeeded, False otherwise.
      */
     public boolean insertHistory(final String bookFileName, final String title, final String chapterName,
@@ -306,11 +330,16 @@ public class YbkDAO {
     /**
      * Save a new /bookMark item.
      * 
-     * @param bookFileName The filename of the book that this is related to.
-     * @param historyTitle The title to be shown in the bookmark list.
-     * @param chapterName The chapter that was being read.
-     * @param scrollPos The position in the chapter that was being read.
-     * @param bookmarkNumber The number of the bookmark to save.
+     * @param bookFileName
+     *            The filename of the book that this is related to.
+     * @param historyTitle
+     *            The title to be shown in the bookmark list.
+     * @param chapterName
+     *            The chapter that was being read.
+     * @param scrollPos
+     *            The position in the chapter that was being read.
+     * @param bookmarkNumber
+     *            The number of the bookmark to save.
      * @return True if the insert succeeded, False otherwise.
      */
     public boolean insertBookmark(final String bookFileName, final String title, final String chapterName,
@@ -383,7 +412,8 @@ public class YbkDAO {
     /**
      * Delete book from db based on filename.
      * 
-     * @param fileName The absolute file path of the book.
+     * @param fileName
+     *            The absolute file path of the book.
      * @return True if the book was deleted.
      */
     public boolean deleteBook(final String fileName) {
@@ -407,7 +437,8 @@ public class YbkDAO {
     /**
      * Remove the book from the database.
      * 
-     * @param book The book to be deleted.
+     * @param book
+     *            The book to be deleted.
      * @return True if the book was deleted.
      */
     public boolean deleteBook(final Book book) {
@@ -419,7 +450,8 @@ public class YbkDAO {
     /**
      * Get a book object identified by the fileName.
      * 
-     * @param fileName the filename we're looking for.
+     * @param fileName
+     *            the filename we're looking for.
      * @return A Book object identified by the passed in filename.
      * @throws IOException
      */
@@ -463,7 +495,8 @@ public class YbkDAO {
     /**
      * Get the history item identified by histId.
      * 
-     * @param histId The key of the history to get.
+     * @param histId
+     *            The key of the history to get.
      * @return The history object identified by histId.
      */
     public History getHistory(final long histId) {
@@ -489,7 +522,8 @@ public class YbkDAO {
     /**
      * Get a bookmark by bookmarkNumber.
      * 
-     * @param bmId the bookmark id.
+     * @param bmId
+     *            the bookmark id.
      * @return The History object that contains the bookmark.
      */
     public History getBookmark(final int bmId) {
@@ -696,7 +730,7 @@ public class YbkDAO {
      */
     @SuppressWarnings("unchecked")
     private ArrayList<AnnotHilite> getStoredAnnotHiliteList() {
-        ArrayList<AnnotHilite> annotHiliteList = null; 
+        ArrayList<AnnotHilite> annotHiliteList = null;
         try {
             annotHiliteList = (ArrayList<AnnotHilite>) load(ANNOT_HILITE_FILE);
             if (annotHiliteList.size() != 0) {
@@ -710,15 +744,46 @@ public class YbkDAO {
         if (annotHiliteList == null) {
             annotHiliteList = new ArrayList<AnnotHilite>();
         }
-        return annotHiliteList; 
+        return annotHiliteList;
+    }
+
+    /**
+     * Gets a the stored forld map (or creates a new one if it can't be read).
+     * 
+     * @return The folder map.
+     */
+    @SuppressWarnings("unchecked")
+    private TreeMap<String, SortedSet<String>> getStoredFolderMap() {
+        TreeMap<String, SortedSet<String>> folderMap = null;
+        try {
+            folderMap = (TreeMap<String, SortedSet<String>>) load(FOLDER_FILE);
+            if (folderMap.size() != 0) {
+                // perform a sanity check on the type
+                try {
+                    @SuppressWarnings("unused")
+                    SortedSet<String> fm = folderMap.values().iterator().next();
+                } catch (NoSuchElementException nse) {
+                    // ignore - to be expected if no folders
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to load existing annotation highlight list, creating a new one instead.");
+        }
+        if (folderMap == null) {
+            folderMap = new TreeMap<String, SortedSet<String>>(String.CASE_INSENSITIVE_ORDER);
+        }
+        return folderMap;
     }
 
     /**
      * Store chapter index
      * 
-     * @param fileName filename of the book
-     * @param chapters array of chapter information
-     * @param order order map
+     * @param fileName
+     *            filename of the book
+     * @param chapters
+     *            array of chapter information
+     * @param order
+     *            order map
      * @throws IOException
      */
     private void storeChapterIndex(final String fileName, final ChapterIndex chapterIndex) throws IOException {
@@ -795,6 +860,17 @@ public class YbkDAO {
         Log.d(TAG, "stored annotHiliteList.  list size: " + mAnnotHiliteList.size());
     }
 
+    private void storeFolderMap() {
+        synchronized (mFolderMap) {
+            try {
+                store(FOLDER_FILE, mFolderMap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Log.d(TAG, "stored folderMap.  map size: " + mFolderMap.size());
+    }
+
     /**
      * Gets a the stored book list (or creates a new one if it can't be read)
      * 
@@ -821,8 +897,10 @@ public class YbkDAO {
     /**
      * Store a serializable object into a file
      * 
-     * @param filename the filename
-     * @param serializeable the object
+     * @param filename
+     *            the filename
+     * @param serializeable
+     *            the object
      * 
      * @throws IOException
      */
@@ -844,7 +922,8 @@ public class YbkDAO {
     /**
      * Load a serializable object from a file
      * 
-     * @param filename the filename
+     * @param filename
+     *            the filename
      * @return the object
      * 
      */
@@ -876,4 +955,72 @@ public class YbkDAO {
         }
         return chapAnnotHilites;
     }
+
+    /**
+     * Gets a read-only copy of the folder map.
+     * 
+     * @return the folder map
+     */
+    public SortedMap<String, SortedSet<String>> getFolderMap() {
+        return Collections.unmodifiableSortedMap(mFolderMap);
+    }
+
+    /**
+     * Move a book to a folder
+     * 
+     * @param folder
+     *            the folder name
+     * @param book
+     */
+    public void moveBookToFolder(String folder, String book) {
+        synchronized (mFolderMap) {
+            // remove from any other folder it might be in
+            for (SortedSet<String> set : mFolderMap.values()) {
+                set.remove(book);
+            }
+            // add to folder map if folder is non-null
+            if (folder != null) {
+                SortedSet<String> set = mFolderMap.get(folder);
+                if (set == null) {
+                    set = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+                    mFolderMap.put(folder, set);
+                }
+                set.add(book);
+            }
+            storeFolderMap();
+        }
+    }
+
+    /**
+     * Add a folder.
+     * 
+     * @param folder
+     *            the folder name
+     * @param book
+     */
+    public void addFolder(String folder) {
+        synchronized (mFolderMap) {
+            if (!mFolderMap.containsKey(folder)) {
+                SortedSet<String>set = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+                mFolderMap.put(folder, set);
+                storeFolderMap();
+            }
+        }
+    }
+
+    /**
+     * Remove a folder.
+     * 
+     * @param folder
+     *            the folder name
+     * @param book
+     */
+    public void removeFolder(String folder) {
+        synchronized (mFolderMap) {
+            if (mFolderMap.remove(folder) != null) {
+                storeFolderMap();
+            }
+        }
+    }
+
 }

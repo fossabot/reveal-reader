@@ -26,7 +26,9 @@
 		<activity android:multiprocess="true" android:name=".BookmarkDialog"
 			android:label="@string/menu_bookmark" android:screenOrientation="sensor"
 			android:theme="@android:style/Theme.Dialog" />
-
+		<activity android:multiprocess="true" android:name=".MoveDialog"
+			android:label="@string/menu_move_to_folder" android:screenOrientation="sensor"
+			android:theme="@android:style/Theme.Dialog" />
 		<activity android:name=".ErrorDialog" android:label="@string/error_title"
 			android:screenOrientation="sensor" android:multiprocess="false"
 			android:theme="@android:style/Theme.Dialog" />
@@ -36,7 +38,9 @@
 			android:theme="@android:style/Theme.Dialog" />
 		<activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog" />
 		<activity android:name=".AnnotationDialog" android:theme="@android:style/Theme.Dialog" />
-		<activity android:name=".ReloadMainActivity" />
+		<activity android:name=".ReloadMainActivity"  android:screenOrientation="sensor"
+			android:multiprocess="true" android:label="@string/app_name"
+			android:clearTaskOnLaunch="true"/>
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />

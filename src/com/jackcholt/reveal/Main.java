@@ -6,12 +6,16 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -30,6 +34,7 @@ import android.os.Debug;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,6 +44,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -69,6 +75,7 @@ public class Main extends ListActivity {
     private static final int RESET_ID = Menu.FIRST + 12;
     private static final int BOOK_WALKER_ID = Menu.FIRST + 13;
     private static final int PROPERTIES_ID = Menu.FIRST + 14;
+    private static final int MOVE_TO_FOLDER_ID = Menu.FIRST + 15;
 
     public static int mNotifId = 1;
     public static Main mApplication;
@@ -90,6 +97,9 @@ public class Main extends ListActivity {
     private TextView mSelection;
 
     private List<Book> mBookTitleList;
+    private List<Object> mCurrentList;
+
+    private String mCurrentFolder = "";
 
     private int mThemeId;
 
@@ -98,6 +108,10 @@ public class Main extends ListActivity {
     public void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
+
+            if (savedInstanceState != null) {
+                mCurrentFolder = savedInstanceState.getString("mCurrentFolder");
+            }
 
             if (Global.DEBUG == 2) {
                 Debug.startMethodTracing("reveal");
@@ -290,9 +304,11 @@ public class Main extends ListActivity {
     /**
      * Refresh the eBook directory.
      * 
-     * @param strLibDir the path to the library directory.
-     * @param addNewBooks If true, run the code that will add new books to the database as well as the code that removes
-     *        missing books from the database (which runs regardless).
+     * @param strLibDir
+     *            the path to the library directory.
+     * @param addNewBooks
+     *            If true, run the code that will add new books to the database as well as the code that removes missing
+     *            books from the database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -378,6 +394,40 @@ public class Main extends ListActivity {
      */
     private void refreshBookList() {
         mBookTitleList = YbkDAO.getInstance(this).getBookTitles();
+        SortedMap<String, SortedSet<String>> folderMap = YbkDAO.getInstance(this).getFolderMap();
+        mCurrentList = new ArrayList<Object>();
+
+        if (mCurrentFolder.length() == 0) {
+            // top level folder
+            // add the list of folders to the current list
+            Set<String> excludeSet = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+            for (Map.Entry<String, SortedSet<String>> folderEntry : folderMap.entrySet()) {
+                mCurrentList.add(folderEntry.getKey());
+                // remember the books in the folders so we can use it to exclude books from the top level
+                excludeSet.addAll(folderEntry.getValue());
+            }
+
+            // and also add the books that are not in folders
+            for (Book book : mBookTitleList) {
+                if (!excludeSet.contains(book.fileName)) {
+                    mCurrentList.add(book);
+                }
+            }
+        } else {
+            // not top level folder
+            // add link back to the top level folder
+            mCurrentList.add(getResources().getString(R.string.top_level_folder));
+            // add the intersection of books in the folder and the books we have
+            SortedSet<String> folderSet = folderMap.get(mCurrentFolder);
+            if (folderSet != null) {
+                for (Book book : mBookTitleList) {
+                    if (folderSet.contains(book.fileName)) {
+                        mCurrentList.add(book);
+                    }
+                }
+            }
+        }
+
         // Now create a simple adapter that finds icons and set it to display
         setListAdapter(new IconicAdapter(this));
         // mSelection = (TextView) findViewById(R.id.label);
@@ -398,7 +448,7 @@ public class Main extends ListActivity {
         // private Resources res;
 
         IconicAdapter(Main context) {
-            super(context, R.layout.book_list_row, mBookTitleList);
+            super(context, R.layout.book_list_row, mCurrentList);
             // See the comment above the declaration of this variable
             // res = context.getResources();
         }
@@ -415,42 +465,52 @@ public class Main extends ListActivity {
 
             TextView label = (TextView) row.findViewById(R.id.label);
             label.setTextSize(Integer.parseInt(strFontSize));
-            label.setText(mBookTitleList.get(location).title);
+
             ImageView icon = (ImageView) row.findViewById(R.id.icon);
 
-            // timer.addEvent("before getting book icon");
-            FileInputStream iconInputStream = null;
-            try {
-                iconInputStream = new FileInputStream(new File(strRevealDir, "/.thumbnails/"
-                        + mBookTitleList.get(location).shortTitle + ".jpg"));
-                // timer.addEvent("after actually getting book icon");
-            } catch (FileNotFoundException e) {
-                Log.d("IconicAdapter: ", "file Not Found Look online for update");
-                // timer.addEvent("didn't get book icon");
+            Object item = mCurrentList.get(location);
+            if (item instanceof Book) {
+                // book
+                Book book = (Book) item;
+                label.setText(book.title);
+                String eBookName = book.shortTitle;
+
+                // timer.addEvent("before getting book icon");
+                FileInputStream iconInputStream = null;
+                try {
+                    iconInputStream = new FileInputStream(new File(strRevealDir, "/.thumbnails/" + eBookName + ".jpg"));
+                    // timer.addEvent("after actually getting book icon");
+                } catch (FileNotFoundException e) {
+                    Log.d("IconicAdapter: ", "file Not Found Look online for update");
+                    // timer.addEvent("didn't get book icon");
+                }
+
+                if (null == iconInputStream) {
+                    icon.setImageResource(R.drawable.ebooksmall);
+                    return row;
+                }
+
+                Bitmap bitmap = BitmapFactory.decodeStream(iconInputStream, null, null);
+
+                if (null == bitmap) {
+                    icon.setImageResource(R.drawable.ebooksmall);
+                    return row;
+                }
+
+                Matrix matrix = new Matrix();
+                matrix.postScale(NEW_WIDTH / bitmap.getWidth(), NEW_HEIGHT / bitmap.getHeight());
+                icon.setImageDrawable(new BitmapDrawable(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap
+                        .getHeight(), matrix, true)));
+                /*
+                 * TODO change the above (which is deprecated in 1.6+) to the following when we move to 1.6+ of the SDK
+                 * icon.setImageDrawable(new BitmapDrawable(res, Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+                 * bitmap .getHeight(), matrix, true)));
+                 */
+
+            } else {
+                label.setText(item.toString());
+                icon.setImageResource(R.drawable.foldersmall);
             }
-
-            if (null == iconInputStream) {
-                icon.setImageResource(R.drawable.ebooksmall);
-                return row;
-            }
-
-            Bitmap bitmap = BitmapFactory.decodeStream(iconInputStream, null, null);
-
-            if (null == bitmap) {
-                icon.setImageResource(R.drawable.ebooksmall);
-                return row;
-            }
-
-            Matrix matrix = new Matrix();
-            matrix.postScale(NEW_WIDTH / bitmap.getWidth(), NEW_HEIGHT / bitmap.getHeight());
-            icon.setImageDrawable(new BitmapDrawable(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap
-                    .getHeight(), matrix, true)));
-            /*
-             * TODO change the above (which is deprecated in 1.6+) to the following when we move to 1.6+ of the SDK
-             * icon.setImageDrawable(new BitmapDrawable(res, Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap
-             * .getHeight(), matrix, true)));
-             */
-
             return (row);
         }
     }
@@ -469,9 +529,15 @@ public class Main extends ListActivity {
         try {
             switch (item.getItemId()) {
             case OPEN_ID:
-                return onOpenBookMenuItem(item);
+                return onOpenMenuItem(item);
+
+            case MOVE_TO_FOLDER_ID:
+                startActivityForResult(new Intent(this, MoveDialog.class).putExtra("currentFolder", mCurrentFolder)
+                        .putExtra("fileName", getContextMenuBook(item).fileName), MOVE_TO_FOLDER_ID);
+                return true;
             case DELETE_ID:
-                return onDeleteBookMenuItem(item);
+                return onDeleteMenuItem(item);
+
             case PROPERTIES_ID:
                 return onEBookProperties(item);
             default:
@@ -485,14 +551,23 @@ public class Main extends ListActivity {
         return true;
     }
 
-    protected boolean onOpenBookMenuItem(MenuItem item) {
-        Book book = getContextMenuBook(item);
-        setProgressBarIndeterminateVisibility(true);
-        Intent intent = new Intent(this, YbkViewActivity.class);
-        intent.putExtra(YbkDAO.FILENAME, book.fileName);
-        startActivity(intent);
+    protected boolean onOpenMenuItem(MenuItem item) {
+        openItem(getContextMenuItem(item));
         return true;
+    }
 
+    protected void openItem(Object item) {
+        if (item instanceof Book) {
+            setProgressBarIndeterminateVisibility(true);
+            startActivity(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME, ((Book) item).fileName));
+        } else {
+            // open folder
+            mCurrentFolder = item.toString();
+            if (mCurrentFolder.equals(getResources().getString(R.string.top_level_folder))) {
+                mCurrentFolder = "";
+            }
+            refreshBookList();
+        }
     }
 
     protected boolean onEBookProperties(MenuItem item) {
@@ -619,9 +694,11 @@ public class Main extends ListActivity {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean onDeleteBookMenuItem(MenuItem item) {
-        final Book book = getContextMenuBook(item);
-        if (book != null) {
+    private boolean onDeleteMenuItem(MenuItem item) {
+        Object selectedItem = getContextMenuItem(item);
+
+        if (selectedItem instanceof Book) {
+            final Book book = (Book) selectedItem;
             SafeRunnable action = new SafeRunnable() {
                 @Override
                 public void protectedRun() {
@@ -649,22 +726,46 @@ public class Main extends ListActivity {
             String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.title,
                     book.fileName);
             ConfirmActionDialog.confirmedAction(this, R.string.really_delete_title, message, R.string.delete, action);
+        } else {
+            final String folder = selectedItem.toString();
+            SafeRunnable action = new SafeRunnable() {
+                @Override
+                public void protectedRun() {
+                    // delete the folder
+                    YbkDAO.getInstance(Main.this).removeFolder(folder);
+                    refreshBookList();
+                }
+            };
+            String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_folder), folder);
+            ConfirmActionDialog.confirmedAction(this, R.string.really_delete_folder, message, R.string.delete, action);
         }
         return true;
     }
 
-    private Book getContextMenuBook(MenuItem item) {
-        AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-        return (Book) getListView().getItemAtPosition(menuInfo.position);
+    private Book getContextMenuBook(MenuItem menuitem) {
+        Object item = getContextMenuItem(menuitem);
+        return item instanceof Book ? (Book) item : null;
+    }
+
+    private Object getContextMenuItem(MenuItem menuitem) {
+        AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) menuitem.getMenuInfo();
+        return getListView().getItemAtPosition(menuInfo.position);
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         try {
             super.onCreateContextMenu(menu, v, menuInfo);
-            menu.add(0, OPEN_ID, 0, R.string.menu_open_ebook);
-            menu.add(0, DELETE_ID, 0, R.string.menu_delete_ebook);
-            menu.add(0, PROPERTIES_ID, 0, R.string.menu_ebook_properties);
+            Object contextItem = getListAdapter().getItem(((AdapterContextMenuInfo) menuInfo).position);
+            if (contextItem instanceof Book) {
+                menu.add(0, OPEN_ID, 0, R.string.menu_open_ebook);
+                menu.add(0, MOVE_TO_FOLDER_ID, 0, R.string.menu_move_to_folder);
+                menu.add(0, DELETE_ID, 0, R.string.menu_delete_ebook);
+                menu.add(0, PROPERTIES_ID, 0, R.string.menu_ebook_properties);
+            } else if (contextItem instanceof String) {
+                menu.add(0, OPEN_ID, 0, R.string.menu_open_folder);
+                menu.add(0, DELETE_ID, 0, R.string.menu_delete_folder);
+            }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -796,10 +897,15 @@ public class Main extends ListActivity {
                 return true;
 
             case OPEN_ID:
-                return onOpenBookMenuItem(item);
+                return onOpenMenuItem(item);
+
+            case MOVE_TO_FOLDER_ID:
+                startActivityForResult(new Intent(this, MoveDialog.class).putExtra("currentFolder", mCurrentFolder)
+                        .putExtra("fileName", getContextMenuBook(item).fileName), MOVE_TO_FOLDER_ID);
+                return true;
 
             case DELETE_ID:
-                return onDeleteBookMenuItem(item);
+                return onDeleteMenuItem(item);
 
             case PROPERTIES_ID:
                 return onEBookProperties(item);
@@ -820,10 +926,7 @@ public class Main extends ListActivity {
     @Override
     protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
         try {
-            setProgressBarIndeterminateVisibility(true);
-
-            startActivity(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME, ((Book) listView
-                    .getItemAtPosition(selectionRowId)).fileName));
+            openItem(listView.getItemAtPosition(selectionRowId));
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -887,6 +990,38 @@ public class Main extends ListActivity {
                     refreshLibrary(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                             Settings.DEFAULT_EBOOK_DIRECTORY), ADD_BOOKS);
                     refreshBookList();
+                }
+                break;
+
+            case MOVE_TO_FOLDER_ID:
+                final String fileName = extras.getString("fileName");
+
+                if (extras.getBoolean(MoveDialog.ADD_FOLDER)) {
+                    LayoutInflater factory = LayoutInflater.from(this);
+                    final View textEntryView = factory.inflate(R.layout.view_ask_bm, null);
+                    final EditText et = (EditText) textEntryView.findViewById(R.id.ask_bm_name);
+
+                    new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_info).setTitle(
+                            "Enter Folder Name").setView(textEntryView).setPositiveButton(R.string.alert_dialog_ok,
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int whichButton) {
+
+                                    String folder = et.getText().toString();
+                                    if (folder.length() != 0) {
+                                        YbkDAO.getInstance(Main.this).moveBookToFolder(folder, fileName);
+                                        refreshBookList();
+                                    }
+                                }
+                            }).create().show();
+                } else {
+                    String folder = extras.getString(MoveDialog.MOVE_TO_FOLDER);
+                    if (folder != null && fileName != null) {
+                        if (folder.length() == 0) {
+                            folder = null;
+                        }
+                        YbkDAO.getInstance(this).moveBookToFolder(folder, fileName);
+                        refreshBookList();
+                    }
                 }
                 break;
 
@@ -957,6 +1092,24 @@ public class Main extends ListActivity {
     // Display Toast-Message
     public static void displayToastMessage(String message) {
         Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("mCurrentFolder", mCurrentFolder);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent msg) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (mCurrentFolder.length() > 0) {
+                mCurrentFolder = "";
+                refreshBookList();
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, msg);
     }
 
 }
