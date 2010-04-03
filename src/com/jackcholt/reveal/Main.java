@@ -104,7 +104,7 @@ public class Main extends ListActivity {
     private static final int ALL_FOLDER_THRESHOLD = 5;
     private String mCurrentFolder = "";
 
-    private int mThemeId;
+    private int mThemeId = -1;
 
     /** Called when the activity is first created. */
     @Override
@@ -517,8 +517,13 @@ public class Main extends ListActivity {
                  */
 
             } else {
-                label.setText(item.toString());
-                icon.setImageResource(R.drawable.folder24y);
+                String labelText = item.toString();
+                label.setText(labelText);
+                if (labelText.equals(getResources().getString(R.string.top_level_folder))) {
+                    icon.setImageResource(R.drawable.home24);
+                } else {
+                    icon.setImageResource(R.drawable.folder24y);
+                }
             }
             return (row);
         }
@@ -788,34 +793,6 @@ public class Main extends ListActivity {
     public void onResume() {
         try {
             super.onResume();
-            if (mThemeId != Util.getTheme(getSharedPrefs())) {
-
-                // (Notes: The following is based on both empirical evidence and what I've been able to find in the
-                // developer forums. In Android 1.0, using Acitivy.setTheme() would reset all the theme elements. In
-                // each subsequent version if, fewer and fewer theme elements changes actually take effect unless the
-                // them is set before the initial call to onCreate(). In Android 2.0 and beyond, some of color changes
-                // that we make when switching to/from the night mode theme don't happen properly. The result is that
-                // after switching themes dynamically, we are left with an unreadable display. The only way to fully
-                // reset the theme is to restart the activity.
-
-                final Intent intent = new Intent(this, ReloadMainActivity.class);
-                if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
-                    // for reasons unknown, possibly related to the version of Android, the ReloadMainActivity doesn't
-                    // seem to be found by some of our users. So if the activity can't be found, try to do it the old
-                    // way and hope that those who are having this problem are those with an older version of Android
-                    // where dynamic setting of the theme actually works.
-                    mThemeId = Util.getTheme(getSharedPrefs());
-                    setTheme(mThemeId);
-                    Log
-                            .w(TAG,
-                                    "The ReloadMainActivity is not found.  We cannot change the theme that way. Trying the old way");
-                } else {
-                    startActivity(intent);
-                    finish();
-                    return;
-                }
-            }
-
             setContentView(R.layout.main);
             // To capture LONG_PRESS gestures
             registerForContextMenu(getListView());
@@ -1021,6 +998,34 @@ public class Main extends ListActivity {
                 }
 
             case ACTIVITY_SETTINGS:
+                if (mThemeId != Util.getTheme(getSharedPrefs())) {
+
+                    // (Notes: The following is based on both empirical evidence and what I've been able to find in the
+                    // developer forums. In Android 1.0, using Acitivy.setTheme() would reset all the theme elements. In
+                    // each subsequent version if, fewer and fewer theme elements changes actually take effect unless the
+                    // them is set before the initial call to onCreate(). In Android 2.0 and beyond, some of color changes
+                    // that we make when switching to/from the night mode theme don't happen properly. The result is that
+                    // after switching themes dynamically, we are left with an unreadable display. The only way to fully
+                    // reset the theme is to restart the activity.
+
+                    final Intent intent = new Intent(this, ReloadMainActivity.class);
+                    if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
+                        // for reasons unknown, possibly related to the version of Android, the ReloadMainActivity doesn't
+                        // seem to be found by some of our users. So if the activity can't be found, try to do it the old
+                        // way and hope that those who are having this problem are those with an older version of Android
+                        // where dynamic setting of the theme actually works.
+                        mThemeId = Util.getTheme(getSharedPrefs());
+                        setTheme(mThemeId);
+                        Log
+                                .w(TAG,
+                                        "The ReloadMainActivity is not found.  We cannot change the theme that way. Trying the old way");
+                    } else {
+                        startActivity(intent);
+                        finish();
+                        return;
+                    }
+                }
+
                 if (extras != null && extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
 
                     YbkDAO.getInstance(this).open(this);

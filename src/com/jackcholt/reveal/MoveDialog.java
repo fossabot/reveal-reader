@@ -4,13 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.YbkDAO;
@@ -37,7 +42,7 @@ public class MoveDialog extends ListActivity {
                 folderList.add(0, getResources().getString(R.string.top_level_folder));
             }
 
-            setListAdapter(new ArrayAdapter<String>(this, R.layout.history_list_row, folderList));
+            setListAdapter(new IconicAdapter(this, folderList));
 
             findAddButton().setOnClickListener(new OnClickListener() {
                 public void onClick(final View view) {
@@ -54,6 +59,35 @@ public class MoveDialog extends ListActivity {
             Util.unexpectedError(this, e);
         }
 
+    }
+
+    private class IconicAdapter extends ArrayAdapter<String> {
+        IconicAdapter(Context context, List<String> list) {
+            super(context, R.layout.folder_list_row, list);
+        }
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View row = convertView;
+
+            if (row == null) {
+                LayoutInflater inflater = getLayoutInflater();
+                row = inflater.inflate(R.layout.folder_list_row, null);
+            }
+
+            TextView label = (TextView) row.findViewById(R.id.label);
+            ImageView icon = (ImageView) row.findViewById(R.id.icon);
+
+            String item = getItem(position);
+
+            String labelText = item.toString();
+            label.setText(labelText);
+
+            if (labelText.equals(getResources().getString(R.string.top_level_folder))) {
+                icon.setImageResource(R.drawable.home24);
+            } else {
+                icon.setImageResource(R.drawable.folder24y);
+            }
+            return row;
+        }
     }
 
     private Button findAddButton() {

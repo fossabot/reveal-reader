@@ -172,7 +172,7 @@
 	<string name="menu_open_folder">Open Folder</string>
 	<string name="menu_delete_folder">Delete Folder</string>
 	<string name="add_folder">Add Folder...</string>
-	<string name="top_level_folder">&#xa0;..&#xa0;</string>
+	<string name="top_level_folder"></string>
 	<string name="all_books_folder">&#xa0;*&#xa0;</string>
 	<string name="no_folder">No Folders</string>
 	<string name="really_delete_folder">Really Delete Folder?</string>
