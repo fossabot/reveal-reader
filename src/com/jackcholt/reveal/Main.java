@@ -789,8 +789,6 @@ public class Main extends ListActivity {
         try {
             super.onResume();
             if (mThemeId != Util.getTheme(getSharedPrefs())) {
-                // FIXME - There should be a better way to reset the theme. The trouble with this method is that this
-                // FIXME - would run any time Main is resumed.
                 // the only way to fully reset the theme is to restart the activity
                 final Intent intent = new Intent(this, ReloadMainActivity.class);
                 if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
