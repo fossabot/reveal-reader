@@ -12,6 +12,11 @@
               android:layout_height="wrap_content"
               android:src="@drawable/home32"
               android:textSize="@dimen/button_font_size"/>
+        <ImageButton android:id="@+id/folderButton"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:src="@drawable/folder32"
+              android:textSize="@dimen/button_font_size"/>
         <Button android:id="@+id/bookButton"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"

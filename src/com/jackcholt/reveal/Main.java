@@ -86,6 +86,7 @@ public class Main extends ListActivity {
 
     private static final boolean ADD_BOOKS = true;
     public static final String BOOK_WALK_INDEX = "bw_index";
+    public static final String FOLDER = "folder";
 
     private NotificationManager mNotifMgr;
     private boolean mBOOLshowSplashScreen;
@@ -100,6 +101,7 @@ public class Main extends ListActivity {
     private List<Book> mBookTitleList;
     private List<Object> mCurrentList;
 
+    private static final int ALL_FOLDER_THRESHOLD = 5;
     private String mCurrentFolder = "";
 
     private int mThemeId;
@@ -397,9 +399,14 @@ public class Main extends ListActivity {
         mBookTitleList = YbkDAO.getInstance(this).getBookTitles();
         SortedMap<String, SortedSet<String>> folderMap = YbkDAO.getInstance(this).getFolderMap();
         mCurrentList = new ArrayList<Object>();
+        String allBooksFolderName = getResources().getString(R.string.all_books_folder);
 
         if (mCurrentFolder.length() == 0) {
             // top level folder
+            if (folderMap.size() >= ALL_FOLDER_THRESHOLD) {
+                // if more than a certain number of folders, add an all books folder
+                mCurrentList.add(allBooksFolderName);
+            }
             // add the list of folders to the current list
             Set<String> excludeSet = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
             for (Map.Entry<String, SortedSet<String>> folderEntry : folderMap.entrySet()) {
@@ -418,12 +425,17 @@ public class Main extends ListActivity {
             // not top level folder
             // add link back to the top level folder
             mCurrentList.add(getResources().getString(R.string.top_level_folder));
-            // add the intersection of books in the folder and the books we have
-            SortedSet<String> folderSet = folderMap.get(mCurrentFolder);
-            if (folderSet != null) {
-                for (Book book : mBookTitleList) {
-                    if (folderSet.contains(book.fileName)) {
-                        mCurrentList.add(book);
+            if (mCurrentFolder.equals(allBooksFolderName)) {
+                // if all books folder, add them all in
+                mCurrentList.addAll(mBookTitleList);
+            } else {
+                // add the intersection of books in the folder and the books we have
+                SortedSet<String> folderSet = folderMap.get(mCurrentFolder);
+                if (folderSet != null) {
+                    for (Book book : mBookTitleList) {
+                        if (folderSet.contains(book.fileName)) {
+                            mCurrentList.add(book);
+                        }
                     }
                 }
             }
@@ -507,7 +519,7 @@ public class Main extends ListActivity {
 
             } else {
                 label.setText(item.toString());
-                icon.setImageResource(R.drawable.foldersmall);
+                icon.setImageResource(R.drawable.folder24y);
             }
             return (row);
         }
@@ -557,7 +569,7 @@ public class Main extends ListActivity {
     protected void openItem(Object item) {
         if (item instanceof Book) {
             setProgressBarIndeterminateVisibility(true);
-            startActivity(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME, ((Book) item).fileName));
+            startActivityForResult(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME, ((Book) item).fileName), YbkViewActivity.SHOW_BOOK);
         } else {
             // open folder
             mCurrentFolder = item.toString();
@@ -986,15 +998,23 @@ public class Main extends ListActivity {
                 }
 
                 break;
+            case YbkViewActivity.SHOW_BOOK:
+                if (extras != null) {
+                    String folder = extras.getString(FOLDER);
+                    if (!mCurrentFolder.equals(folder)) {
+                        mCurrentFolder = folder;
+                        refreshBookList();
+                    }
+                }
 
             case ACTIVITY_SETTINGS:
-                if (extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
+                if (extras != null && extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
 
                     YbkDAO.getInstance(this).open(this);
                     refreshLibrary(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                             Settings.DEFAULT_EBOOK_DIRECTORY), ADD_BOOKS);
-                    refreshBookList();
                 }
+                refreshBookList();
                 break;
 
             case MOVE_TO_FOLDER_ID:

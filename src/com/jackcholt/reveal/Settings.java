@@ -28,6 +28,9 @@ public class Settings extends PreferenceActivity {
 
             // Load the XML preferences file
             addPreferencesFromResource(R.xml.preferences);
+            
+            // always return an OK result
+            setResult(RESULT_OK, new Intent(getBaseContext(), Main.class));
 
             Util.startFlurrySession(this);
             FlurryAgent.onEvent("SettingScreen");

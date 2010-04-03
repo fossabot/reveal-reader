@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.EmptyStackException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -996,7 +997,6 @@ public class YbkDAO {
      * 
      * @param folder
      *            the folder name
-     * @param book
      */
     public void addFolder(String folder) {
         synchronized (mFolderMap) {
@@ -1013,7 +1013,6 @@ public class YbkDAO {
      * 
      * @param folder
      *            the folder name
-     * @param book
      */
     public void removeFolder(String folder) {
         synchronized (mFolderMap) {
@@ -1021,6 +1020,24 @@ public class YbkDAO {
                 storeFolderMap();
             }
         }
+    }
+
+    /**
+     * Get the folder that a book is in.
+     * 
+     * @param book
+     *            the book name
+     * @return the folder the book is in, or empty string if not in a folder
+     */
+    public String getBookFolder(String book) {
+        synchronized (mFolderMap) {
+            for (Map.Entry<String, SortedSet<String>> entry : mFolderMap.entrySet()) {
+                if (entry.getValue().contains(book)) {
+                    return entry.getKey();
+                }
+            }
+        }
+        return "";
     }
 
 }

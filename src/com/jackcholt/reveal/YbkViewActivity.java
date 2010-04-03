@@ -74,6 +74,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public static final int CALL_BOOKMARK = 2;
     public static final int CALL_VERSE_CONTEXT_MENU = 3;
     public static final int CALL_NOTE_EDITED = 4;
+    public static final int SHOW_BOOK = 5;
 
     private GestureDetector mGestureScanner = new GestureDetector(this);
 
@@ -156,6 +157,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     public void onClick(final View view) {
                         YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
                                 mCurrChap.getChapFileName(), findWebView().getScrollY());
+                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(
+                                Main.FOLDER, ""));
+                        finish();
+                    }
+                });
+                findFolderButton().setOnClickListener(new OnClickListener() {
+                    public void onClick(final View view) {
+                        YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
+                                mCurrChap.getChapFileName(), findWebView().getScrollY());
+                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(
+                                Main.FOLDER, YbkDAO.getInstance(getBaseContext()).getBookFolder(mCurrChap.getBookFileName())));
                         finish();
                     }
                 });
@@ -186,7 +198,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 if (!(isPopup()) && loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
-                    initBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap.getChapFileName());
+                    initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap.getChapFileName());
                 }
 
             } catch (IOException ioe) {
@@ -229,6 +241,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private ImageButton findMainButton() {
         return (ImageButton) findViewById(R.id.mainMenu);
+    }
+
+    private ImageButton findFolderButton() {
+        return (ImageButton) findViewById(R.id.folderButton);
     }
 
     private Button findChapterButton() {
@@ -341,15 +357,23 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     /**
-     * Set the book and chapter buttons.
+     * Set the folder, book, and chapter buttons.
      * 
      * @param shortTitle The text to be used on the Book Button.
      * @param filePath The path to the YBK file that contains the chapter to load.
      * @param fileToOpen The internal path to the chapter to load.
      */
-    private void initBookChapButtons(final String shortTitle, final String filePath, final String fileToOpen) {
+    private void initFolderBookChapButtons(final String shortTitle, final String filePath, final String fileToOpen) {
         initBookButton(shortTitle, filePath, fileToOpen);
         initChapterButton();
+        initFolderButton();
+    }
+
+    private void initFolderButton() {
+        if (null == findFolderButton()) {
+            return;
+        }
+        findFolderButton().setVisibility(YbkDAO.getInstance(this).getBookFolder(mCurrChap.getBookFileName()) != null ? View.VISIBLE : View.GONE);
     }
 
     private void initBookButton(final String shortTitle, final String filePath, final String fileToOpen) {
@@ -365,7 +389,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 try {
                     mCurrChap.setScrollYPos(0);
                     if (loadChapter(filePath, "index", false)) {
-                        initBookChapButtons(shortTitle, filePath, fileToOpen);
+                        initFolderBookChapButtons(shortTitle, filePath, fileToOpen);
                     }
                 } catch (IOException ioe) {
                     Log.w(TAG, "Could not load index page of " + filePath);
@@ -505,7 +529,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                         try {
                             if (loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
-                                initBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap
+                                initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap
                                         .getChapFileName());
 
                             }
@@ -559,7 +583,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             try {
                                 if (loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
 
-                                    initBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap
+                                    initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap
                                             .getChapFileName());
 
                                     findWebView().scrollTo(0, mCurrChap.getScrollYPos());
@@ -641,7 +665,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             Book book = mYbkReader.getBook();
             mCurrChap.setNavFile("1");
             if (bookLoaded = loadChapter(book.fileName, removeGZipExt(chap.fileName), true)) {
-                initBookChapButtons(book.shortTitle, book.fileName, chap.fileName);
+                initFolderBookChapButtons(book.shortTitle, book.fileName, chap.fileName);
             }
 
         } else {
@@ -1087,7 +1111,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 mBackButtonPressed = true;
                 try {
                     if (loadChapter(hist.bookFileName, hist.chapterName, false)) {
-                        initBookChapButtons(book.shortTitle, hist.bookFileName, hist.chapterName);
+                        initFolderBookChapButtons(book.shortTitle, hist.bookFileName, hist.chapterName);
                     }
                 } catch (IOException ioe) {
                     Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
@@ -1255,7 +1279,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             }
 
                             if (bookLoaded) {
-                                initBookChapButtons(shortTitle, book, chapter);
+                                initFolderBookChapButtons(shortTitle, book, chapter);
                                 mCurrChap.setScrollYPos(0);
                             } else {
                                 mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
@@ -1363,7 +1387,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 } else {
                     setProgressBarIndeterminateVisibility(true);
                     if (loadChapter(mCurrChap.getBookFileName(), nextChapter.fileName, true)) {
-                        initBookChapButtons(mYbkReader.getBook().shortTitle, mCurrChap.getBookFileName(),
+                        initFolderBookChapButtons(mYbkReader.getBook().shortTitle, mCurrChap.getBookFileName(),
                                 nextChapter.fileName);
                     }
                 }
