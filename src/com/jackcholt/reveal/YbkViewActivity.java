@@ -373,7 +373,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (null == findFolderButton()) {
             return;
         }
-        findFolderButton().setVisibility(YbkDAO.getInstance(this).getBookFolder(mCurrChap.getBookFileName()) != null ? View.VISIBLE : View.GONE);
+        findFolderButton().setVisibility(YbkDAO.getInstance(this).getBookFolder(mCurrChap.getBookFileName()).length() != 0 ? View.VISIBLE : View.GONE);
     }
 
     private void initBookButton(final String shortTitle, final String filePath, final String fileToOpen) {
