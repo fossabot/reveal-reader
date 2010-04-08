@@ -6,7 +6,8 @@
 		android:layout_height="wrap_content" android:layout_width="wrap_content"
 		android:id="@+id/editNoteLabel" android:paddingLeft="4dp"/>
 	<EditText android:layout_width="fill_parent"
-		android:id="@+id/editNote" android:isScrollContainer="true" android:layout_height="120dp"/>
+		android:id="@+id/editNote" android:layout_height="120dp" 
+        android:inputType="textCapSentences|textAutoCorrect|textMultiLine"/>
 	<TextView android:id="@+id/hiLiteLabel" android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:text="@string/hilite_label"
 		android:layout_gravity="center_horizontal"/>
