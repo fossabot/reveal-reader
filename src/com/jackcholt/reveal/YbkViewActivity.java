@@ -897,7 +897,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     private String fixSmartQuotes(String content) {
-        return content.replace('\u0093', '"').replace('\u0094', '"');
+        if (null == content) {
+        		return "";
+        }
+    		return content.replace('\u0093', '"').replace('\u0094', '"');
     }
 
     private boolean needToSaveBookChapterToHistory(final String chapter) {
