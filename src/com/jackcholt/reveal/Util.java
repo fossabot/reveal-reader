@@ -1194,7 +1194,7 @@ public class Util {
                             bmImg.compress(Bitmap.CompressFormat.PNG, 75, bytes);
                             b = bytes.toByteArray();
 
-                            File myFile = new File("/sdcard/reveal/ebooks/thumbnails/" + eBookName + ".jpg");
+                            File myFile = new File("/sdcard/reveal/ebooks/.thumbnails/" + eBookName + ".jpg");
                             myFile.createNewFile();
                             OutputStream filoutputStream = new FileOutputStream(myFile);
                             filoutputStream.write(b);
