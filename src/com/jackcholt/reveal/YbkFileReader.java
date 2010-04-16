@@ -120,10 +120,8 @@ public class YbkFileReader {
      * <code>filename</code>. If the <code>filename</code> specified cannot be found, throw a FileNotFoundException.
      * 
      * @param context
-     * @param fileName
-     *            the filename (relative to the library directory)
-     * @throws FileNotFoundException
-     *             if the filename cannot be opened for reading.
+     * @param fileName the filename (relative to the library directory)
+     * @throws FileNotFoundException if the filename cannot be opened for reading.
      */
     public static synchronized YbkFileReader getReader(final Context ctx, final String fileName)
             throws FileNotFoundException, IOException {
@@ -149,13 +147,10 @@ public class YbkFileReader {
      * Add a book.
      * 
      * @param context
-     * @param fileName
-     *            the filename (relative to the library directory)
-     * @param charset
-     *            the character set to use
+     * @param fileName the filename (relative to the library directory)
+     * @param charset the character set to use
      * @return the reader used to add the book (must be unused by the caller
-     * @throws FileNotFoundException
-     *             if the filename cannot be opened for reading.
+     * @throws FileNotFoundException if the filename cannot be opened for reading.
      */
     public static synchronized YbkFileReader addBook(final Context ctx, final String fileName, String charset)
             throws FileNotFoundException, IOException {
@@ -196,12 +191,9 @@ public class YbkFileReader {
      * <code>filename</code>. If the <code>filename</code> specified cannot be found, throw a FileNotFoundException.
      * 
      * @param context
-     * @param fileName
-     *            the filename (relative to the library directory)
-     * @param charset
-     *            the character set to use
-     * @throws FileNotFoundException
-     *             if the filename cannot be opened for reading.
+     * @param fileName the filename (relative to the library directory)
+     * @param charset the character set to use
+     * @throws FileNotFoundException if the filename cannot be opened for reading.
      */
     private YbkFileReader(final Context ctx, final String fileName) throws FileNotFoundException, IOException {
         final String libDir = PreferenceManager.getDefaultSharedPreferences(ctx).getString(
@@ -282,8 +274,7 @@ public class YbkFileReader {
     /**
      * Analyze the YBK file and save file contents data for later reference.
      * 
-     * @throws IOException
-     *             If the YBK file is not readable.
+     * @throws IOException If the YBK file is not readable.
      */
     private void populateFileData() throws IOException {
         long fileLength = mChannel.size();
@@ -375,8 +366,7 @@ public class YbkFileReader {
     /**
      * Get and save the book information into the database.
      * 
-     * @param fileName
-     *            The file name of the book.
+     * @param fileName The file name of the book.
      * @return the added book objects
      * @throws IOException
      */
@@ -390,21 +380,23 @@ public class YbkFileReader {
     /**
      * Gets a chapter object.
      * 
-     * @param chapName
-     *            the name of the chapter
+     * @param chapName the name of the chapter
      * @return the chapter object, or null if it doesn't exist.
      */
     public Chapter getChapter(String chapName) throws IOException {
         if (null == chapName) {
-            throw new IllegalArgumentException("The name of the chapter is null while trying to get the chapter object.");
+            throw new IllegalArgumentException(
+                    "The name of the chapter is null while trying to get the chapter object.");
         }
         if (null == mChapterIndex) {
-            throw new IllegalArgumentException("The chapter index structures are null while trying to get the chapter object.");
+            Log.e(TAG, "The chapter index structures are null while trying to get the chapter object for chapter: "
+                    + chapName + ".");
+            return null;
         }
         if (null == mChannel) {
             throw new IllegalArgumentException("The file channel is null while trying to get the chapter object.");
         }
-        
+
         Chapter chap = mChapterIndex.getChapter(mChannel, chapName);
         if (chap == null) {
             chap = mChapterIndex.getChapter(mChannel, chapName + ".gz");
@@ -415,8 +407,7 @@ public class YbkFileReader {
     /**
      * Tests for the existence of a chapter.
      * 
-     * @param chapName
-     *            the name of the chapter
+     * @param chapName the name of the chapter
      * @return true if the chapter exists.
      */
     public boolean chapterExists(String chapName) throws IOException {
@@ -426,8 +417,7 @@ public class YbkFileReader {
     /**
      * Gets a chapter object by orderId.
      * 
-     * @param orderId
-     *            the chapter order id
+     * @param orderId the chapter order id
      * @return the chapter object, or null if it doesn't exist.
      */
     public Chapter getChapterByOrder(int orderId) {
@@ -443,8 +433,7 @@ public class YbkFileReader {
     /**
      * Gets a chapter object by index.
      * 
-     * @param index
-     *            the chapter index
+     * @param index the chapter index
      * @return the chapter object, or null if it doesn't exist.
      */
     public Chapter getChapterByIndex(int index) {
@@ -460,15 +449,11 @@ public class YbkFileReader {
     /**
      * The brains behind reading YBK file chapters (or internal files).
      * 
-     * @param dataInput
-     *            The input stream that is the YanceyBook.
-     * @param bookId
-     *            The id of the book record in the database.
-     * @param chapterId
-     *            The id of the chapter record in the database.
+     * @param dataInput The input stream that is the YanceyBook.
+     * @param bookId The id of the book record in the database.
+     * @param chapterId The id of the chapter record in the database.
      * @return The text of the chapter.
-     * @throws IOException
-     *             If the chapter cannot be read.
+     * @throws IOException If the chapter cannot be read.
      */
     public String readInternalFile(final String chapName) throws IOException {
         Chapter chap = getChapter(chapName);
@@ -478,13 +463,10 @@ public class YbkFileReader {
     /**
      * The brains behind reading YBK file chapters (or internal files).
      * 
-     * @param offset
-     *            the bytes offset into the ybk where the chapter starts
-     * @param length
-     *            the byte length of the chapter
+     * @param offset the bytes offset into the ybk where the chapter starts
+     * @param length the byte length of the chapter
      * @return The text of the chapter.
-     * @throws IOException
-     *             If the chapter cannot be read.
+     * @throws IOException If the chapter cannot be read.
      */
     public String readInternalFile(int offset, int length) throws IOException {
         byte[] buf = readChunk(offset, length);
@@ -500,8 +482,7 @@ public class YbkFileReader {
      * contain one.
      * 
      * @return The uncompressed contents of the Book Metadata file.
-     * @throws IOException
-     *             if there is a problem reading the Book Metadata file.
+     * @throws IOException if there is a problem reading the Book Metadata file.
      */
     public String readMetaData() throws IOException {
         return readInternalFile(BOOKMETADATA_FILENAME);
@@ -534,13 +515,10 @@ public class YbkFileReader {
     /**
      * The brains behind reading YBK file chapters (or internal files).
      * 
-     * @param offset
-     *            the bytes offset into the ybk where the chunk starts
-     * @param length
-     *            the byte length of the chunk
+     * @param offset the bytes offset into the ybk where the chunk starts
+     * @param length the byte length of the chunk
      * @return the chunk
-     * @throws IOException
-     *             If the chapter cannot be read.
+     * @throws IOException If the chapter cannot be read.
      */
     private byte[] readChunk(int offset, int length) throws IOException {
         byte[] arrayBuf = new byte[length];

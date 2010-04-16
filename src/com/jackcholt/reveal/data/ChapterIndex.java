@@ -12,16 +12,15 @@ import java.util.StringTokenizer;
 import com.jackcholt.reveal.YbkFileReader;
 
 /**
- * Chapter index structures for Ybk file
+ * Chapter index structures for Ybk file.
  * 
  * @author Shon Vella
- * 
  */
 public class ChapterIndex implements Serializable {
     private static final long serialVersionUID = -1L;
 
-    public long hashIndex[];
-    public short orderIndex[];
+    public long[] hashIndex;
+    public short[] orderIndex;
     public transient SoftReference<Chapter[]> chaptersRef;
     public String charset = YbkFileReader.DEFAULT_YBK_CHARSET;
 
@@ -34,17 +33,12 @@ public class ChapterIndex implements Serializable {
     /**
      * Create chapter index from the chapter list and the orderString.
      * 
-     * @param chapters
-     *            list of chapters in the order in which they appear in the YBK
-     *            index
-     * @param bookChannel
-     *            open file channel into the YBK file
-     * @param orderString
-     *            the text from the YBK order.cfg file
-     * @param charset
-     *            the character set to use to turn bytes into characters
+     * @param chapters list of chapters in the order in which they appear in the YBK index
+     * @param bookChannel open file channel into the YBK file
+     * @param orderString the text from the YBK order.cfg file
+     * @param charset the character set to use to turn bytes into characters
      */
-    public ChapterIndex(Chapter chapters[], String orderString, String charset) {
+    public ChapterIndex(Chapter[] chapters, String orderString, String charset) {
         this.charset = charset;
         this.orderIndex = buildOrderIndex(orderString, chapters);
         this.hashIndex = buildHashIndex(chapters);
@@ -58,7 +52,7 @@ public class ChapterIndex implements Serializable {
      * @return
      */
     private short[] buildOrderIndex(final String orderString, final Chapter[] chapters) {
-        short orderList[];
+        short[] orderList;
         if (null != orderString) {
             int order = 0;
             orderList = new short[chapters.length];
@@ -107,8 +101,7 @@ public class ChapterIndex implements Serializable {
             int orderNumber = chapter.orderNumber;
             if (orderNumber < 0)
                 orderNumber = 0;
-            // hashkey has the hash in the high order 32 bits,
-            // the order number in the next 16 bits.
+            // hashkey has the hash in the high order 32 bits, the order number in the next 16 bits.
             // and the index into the chapters in the low order 16 bits.
             // NOTE THAT THIS MEANS WE CANNOT SUPPORT MORE THAN 64K
             long key = (((long) hash) << 32) | (orderNumber << 16) | i;
@@ -122,8 +115,7 @@ public class ChapterIndex implements Serializable {
     /**
      * Get the chapter for fileName.
      * 
-     * @param fileName
-     *            the filename
+     * @param fileName the filename
      * @return the chapter or null if not found
      * @throws IOException
      */
@@ -137,9 +129,8 @@ public class ChapterIndex implements Serializable {
         long key = (((long) hash) << 32);
         int index = Arrays.binarySearch(hashIndex, key);
 
-        // we should almost never get a direct hit because the low order bits
-        // won't match, but fortunately binarySearch will point us to where we
-        // need to start scanning
+        // we should almost never get a direct hit because the low order bits won't match, but fortunately binarySearch
+        // will point us to where we need to start scanning
         if (index < 0) {
             index = -index - 1;
         }
@@ -169,8 +160,7 @@ public class ChapterIndex implements Serializable {
     /**
      * Gets a chapter by orderId.
      * 
-     * @param orderId
-     *            the chapter order id
+     * @param orderId the chapter order id
      * @return the chapter or null if not found
      * @throws IOException
      */
@@ -191,15 +181,14 @@ public class ChapterIndex implements Serializable {
     /**
      * Gets a chapter by index.
      * 
-     * @param index
-     *            the chapter index
+     * @param index the chapter index
      * @return the chapter or null if not found
      * @throws IOException
      */
     public Chapter getChapterByIndex(FileChannel bookChannel, int index) throws IOException {
         Chapter chapter = null;
         Chapter chapters[] = null;
-        
+
         if (chaptersRef == null || (chapters = chaptersRef.get()) == null) {
             chapters = new Chapter[hashIndex.length];
             chaptersRef = new SoftReference<Chapter[]>(chapters);
@@ -216,8 +205,7 @@ public class ChapterIndex implements Serializable {
     /**
      * Read a chapter entry in from the ybk index
      * 
-     * @param checkIndex
-     *            the index into the index
+     * @param checkIndex the index into the index
      * @return the chapter entry
      * @throws IOException
      */
@@ -229,5 +217,4 @@ public class ChapterIndex implements Serializable {
         }
         return Chapter.fromYbkIndex(chapterBuf.array(), 0, charset);
     }
-
 }

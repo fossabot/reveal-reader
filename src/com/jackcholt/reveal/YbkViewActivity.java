@@ -157,8 +157,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     public void onClick(final View view) {
                         YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
                                 mCurrChap.getChapFileName(), findWebView().getScrollY());
-                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(
-                                Main.FOLDER, ""));
+                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER, ""));
                         finish();
                     }
                 });
@@ -166,8 +165,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     public void onClick(final View view) {
                         YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
                                 mCurrChap.getChapFileName(), findWebView().getScrollY());
-                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(
-                                Main.FOLDER, YbkDAO.getInstance(getBaseContext()).getBookFolder(mCurrChap.getBookFileName())));
+                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER, YbkDAO
+                                .getInstance(getBaseContext()).getBookFolder(mCurrChap.getBookFileName())));
                         finish();
                     }
                 });
@@ -206,8 +205,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         + mCurrChap.getChapFileName() + ". " + ioe.getMessage());
 
                 Toast.makeText(
-                        this,
-                        "Could not load : " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
+                        this, 
+                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
                                 + ". Please report this at " + getResources().getText(R.string.website),
                         Toast.LENGTH_LONG).show();
             }
@@ -373,7 +372,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (null == findFolderButton()) {
             return;
         }
-        findFolderButton().setVisibility(YbkDAO.getInstance(this).getBookFolder(mCurrChap.getBookFileName()).length() != 0 ? View.VISIBLE : View.GONE);
+        findFolderButton().setVisibility(
+                YbkDAO.getInstance(this).getBookFolder(mCurrChap.getBookFileName()).length() != 0 ? View.VISIBLE
+                        : View.GONE);
     }
 
     private void initBookButton(final String shortTitle, final String filePath, final String fileToOpen) {
@@ -817,7 +818,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             "utf-8");
                     return false;
                 } // label_get_content:
-
             }
 
             Chapter chapObj = ybkReader.getChapter(chap);
@@ -898,9 +898,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private String fixSmartQuotes(String content) {
         if (null == content) {
-        		return "";
+            return "";
         }
-    		return content.replace('\u0093', '"').replace('\u0094', '"');
+        return content.replace('\u0093', '"').replace('\u0094', '"');
     }
 
     private boolean needToSaveBookChapterToHistory(final String chapter) {

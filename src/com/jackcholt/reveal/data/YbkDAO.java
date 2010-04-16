@@ -803,8 +803,8 @@ public class YbkDAO {
         ChapterIndex chapterIndex = null;
         try {
             chapterIndex = (ChapterIndex) load(baseFileName + CHAPTER_EXT);
-        } catch (Exception e) {
-            Log.e(TAG, "Unable to load chapter details for book " + fileName);
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to load chapter details for book " + fileName, e);
         }
         return chapterIndex;
     }
