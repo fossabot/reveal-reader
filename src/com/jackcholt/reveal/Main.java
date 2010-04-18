@@ -809,9 +809,13 @@ public class Main extends ListActivity {
                 menu.add(0, DELETE_ID, 0, R.string.menu_delete_ebook);
                 menu.add(0, PROPERTIES_ID, 0, R.string.menu_ebook_properties);
             } else if (contextItem instanceof String) {
+                String folder = (String) contextItem;
                 menu.add(0, OPEN_ID, 0, R.string.menu_open_folder);
-                menu.add(0, DELETE_ID, 0, R.string.menu_delete_folder);
-                menu.add(0, RENAME_ID, 0, R.string.menu_rename_folder);
+                if (!folder.equals(getResources().getString(R.string.all_books_folder))
+                        && !folder.equals(getResources().getString(R.string.top_level_folder))) {
+                    menu.add(0, DELETE_ID, 0, R.string.menu_delete_folder);
+                    menu.add(0, RENAME_ID, 0, R.string.menu_rename_folder);
+                }
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
