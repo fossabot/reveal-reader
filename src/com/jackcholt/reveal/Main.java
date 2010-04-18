@@ -77,6 +77,7 @@ public class Main extends ListActivity {
     private static final int BOOK_WALKER_ID = Menu.FIRST + 13;
     private static final int PROPERTIES_ID = Menu.FIRST + 14;
     private static final int MOVE_TO_FOLDER_ID = Menu.FIRST + 15;
+    private static final int RENAME_ID = Menu.FIRST + 16;
 
     public static int mNotifId = 1;
     public static Main mApplication;
@@ -552,6 +553,9 @@ public class Main extends ListActivity {
             case DELETE_ID:
                 return onDeleteMenuItem(item);
 
+            case RENAME_ID:
+                return onRenameMenuItem(item);
+
             case PROPERTIES_ID:
                 return onEBookProperties(item);
             default:
@@ -757,6 +761,33 @@ public class Main extends ListActivity {
         return true;
     }
 
+    private boolean onRenameMenuItem(MenuItem item) {
+        Object selectedItem = getContextMenuItem(item);
+
+        if (selectedItem instanceof Book) {
+            // if we ever decide to somehow allow renaming of books, this is where the code would go
+        } else {
+            final String folder = selectedItem.toString();
+            final View textEntryView = LayoutInflater.from(this).inflate(R.layout.view_ask_name, null);
+            final EditText et = (EditText) textEntryView.findViewById(R.id.ask_name);
+            et.setText(folder);
+
+            new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_info).setTitle(
+                    R.string.folder_name_title).setView(textEntryView).setPositiveButton(R.string.alert_dialog_ok,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+
+                            String newFolder = et.getText().toString();
+                            if (folder.length() != 0) {
+                                YbkDAO.getInstance(Main.this).renameFolder(folder, newFolder);
+                                refreshBookList();
+                            }
+                        }
+                    }).create().show();
+        }
+        return true;
+    }
+
     private Book getContextMenuBook(MenuItem menuitem) {
         Object item = getContextMenuItem(menuitem);
         return item instanceof Book ? (Book) item : null;
@@ -780,6 +811,7 @@ public class Main extends ListActivity {
             } else if (contextItem instanceof String) {
                 menu.add(0, OPEN_ID, 0, R.string.menu_open_folder);
                 menu.add(0, DELETE_ID, 0, R.string.menu_delete_folder);
+                menu.add(0, RENAME_ID, 0, R.string.menu_rename_folder);
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -919,6 +951,8 @@ public class Main extends ListActivity {
             case BOOK_WALKER_ID:
                 walkBook(0);
                 return true;
+            case RENAME_ID:
+                return onRenameMenuItem(item);
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -1002,17 +1036,23 @@ public class Main extends ListActivity {
 
                     // (Notes: The following is based on both empirical evidence and what I've been able to find in the
                     // developer forums. In Android 1.0, using Acitivy.setTheme() would reset all the theme elements. In
-                    // each subsequent version if, fewer and fewer theme elements changes actually take effect unless the
-                    // them is set before the initial call to onCreate(). In Android 2.0 and beyond, some of color changes
-                    // that we make when switching to/from the night mode theme don't happen properly. The result is that
+                    // each subsequent version if, fewer and fewer theme elements changes actually take effect unless
+                    // the
+                    // them is set before the initial call to onCreate(). In Android 2.0 and beyond, some of color
+                    // changes
+                    // that we make when switching to/from the night mode theme don't happen properly. The result is
+                    // that
                     // after switching themes dynamically, we are left with an unreadable display. The only way to fully
                     // reset the theme is to restart the activity.
 
                     final Intent intent = new Intent(this, ReloadMainActivity.class);
                     if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
-                        // for reasons unknown, possibly related to the version of Android, the ReloadMainActivity doesn't
-                        // seem to be found by some of our users. So if the activity can't be found, try to do it the old
-                        // way and hope that those who are having this problem are those with an older version of Android
+                        // for reasons unknown, possibly related to the version of Android, the ReloadMainActivity
+                        // doesn't
+                        // seem to be found by some of our users. So if the activity can't be found, try to do it the
+                        // old
+                        // way and hope that those who are having this problem are those with an older version of
+                        // Android
                         // where dynamic setting of the theme actually works.
                         mThemeId = Util.getTheme(getSharedPrefs());
                         setTheme(mThemeId);
@@ -1040,12 +1080,12 @@ public class Main extends ListActivity {
 
                 if (extras.getBoolean(MoveDialog.ADD_FOLDER)) {
                     LayoutInflater factory = LayoutInflater.from(this);
-                    final View textEntryView = factory.inflate(R.layout.view_ask_bm, null);
-                    final EditText et = (EditText) textEntryView.findViewById(R.id.ask_bm_name);
+                    final View textEntryView = factory.inflate(R.layout.view_ask_name, null);
+                    final EditText et = (EditText) textEntryView.findViewById(R.id.ask_name);
 
                     new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_info).setTitle(
-                            "Enter Folder Name").setView(textEntryView).setPositiveButton(R.string.alert_dialog_ok,
-                            new DialogInterface.OnClickListener() {
+                            R.string.folder_name_title).setView(textEntryView).setPositiveButton(
+                            R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int whichButton) {
 
                                     String folder = et.getText().toString();

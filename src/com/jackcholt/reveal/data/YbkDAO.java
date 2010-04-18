@@ -1001,7 +1001,7 @@ public class YbkDAO {
     public void addFolder(String folder) {
         synchronized (mFolderMap) {
             if (!mFolderMap.containsKey(folder)) {
-                SortedSet<String>set = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+                SortedSet<String> set = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
                 mFolderMap.put(folder, set);
                 storeFolderMap();
             }
@@ -1017,6 +1017,29 @@ public class YbkDAO {
     public void removeFolder(String folder) {
         synchronized (mFolderMap) {
             if (mFolderMap.remove(folder) != null) {
+                storeFolderMap();
+            }
+        }
+    }
+
+    /**
+     * Remove a folder.
+     * 
+     * @param folder
+     *            the folder name
+     * @param newFolder
+     *            the new folder name
+     */
+    public void renameFolder(String folder, String newFolder) {
+        synchronized (mFolderMap) {
+            if (!folder.equals(newFolder)) {
+                SortedSet<String> folderBooks = mFolderMap.remove(folder);
+                addFolder(newFolder);
+                if (folderBooks != null) {
+                    for (String book : folderBooks) {
+                        moveBookToFolder(newFolder, book);
+                    }
+                }
                 storeFolderMap();
             }
         }
