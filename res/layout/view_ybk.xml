@@ -32,5 +32,6 @@
           android:layout_width="fill_parent"
           android:layout_height="fill_parent"
           android:longClickable="true"
-          android:textSize="@dimen/font_size"/>                    
+          android:textSize="@dimen/font_size"
+          android:fadingEdge="vertical"/>                    
 </LinearLayout>
