@@ -154,7 +154,7 @@ public class YbkService extends Service {
                                 Log.e(TAG, message);
                             }
 
-                            if (intent.getLongExtra(CALLBACKS_KEY, 0) != 0) {
+                            if (intent.getLongExtra(CALLBACKS_KEY, 0) != 0 && null != callbackMap) {
                                 for (Completion callback : callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0))) {
                                     callback.completed(succeeded, message);
                                 }
