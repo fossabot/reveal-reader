@@ -308,11 +308,9 @@ public class Main extends ListActivity {
     /**
      * Refresh the eBook directory.
      * 
-     * @param strLibDir
-     *            the path to the library directory.
-     * @param addNewBooks
-     *            If true, run the code that will add new books to the database as well as the code that removes missing
-     *            books from the database (which runs regardless).
+     * @param strLibDir the path to the library directory.
+     * @param addNewBooks If true, run the code that will add new books to the database as well as the code that removes
+     *        missing books from the database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -1041,28 +1039,21 @@ public class Main extends ListActivity {
                     // (Notes: The following is based on both empirical evidence and what I've been able to find in the
                     // developer forums. In Android 1.0, using Acitivy.setTheme() would reset all the theme elements. In
                     // each subsequent version if, fewer and fewer theme elements changes actually take effect unless
-                    // the
-                    // them is set before the initial call to onCreate(). In Android 2.0 and beyond, some of color
-                    // changes
-                    // that we make when switching to/from the night mode theme don't happen properly. The result is
-                    // that
-                    // after switching themes dynamically, we are left with an unreadable display. The only way to fully
-                    // reset the theme is to restart the activity.
+                    // the theme is set before the initial call to onCreate(). In Android 2.0 and beyond, some of color
+                    // changes that we make when switching to/from the night mode theme don't happen properly. The
+                    // result is that after switching themes dynamically, we are left with an unreadable display. The
+                    // only way to fully reset the theme is to restart the activity.
 
                     final Intent intent = new Intent(this, ReloadMainActivity.class);
                     if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
                         // for reasons unknown, possibly related to the version of Android, the ReloadMainActivity
-                        // doesn't
-                        // seem to be found by some of our users. So if the activity can't be found, try to do it the
-                        // old
-                        // way and hope that those who are having this problem are those with an older version of
-                        // Android
-                        // where dynamic setting of the theme actually works.
+                        // doesn't seem to be found by some of our users. So if the activity can't be found, try to do
+                        // it the old way and hope that those who are having this problem are those with an older
+                        // version of Android where dynamic setting of the theme actually works.
                         mThemeId = Util.getTheme(getSharedPrefs());
                         setTheme(mThemeId);
-                        Log
-                                .w(TAG,
-                                        "The ReloadMainActivity is not found.  We cannot change the theme that way. Trying the old way");
+                        Log.w(TAG, "The ReloadMainActivity is not found.  We cannot change the theme that way. "
+                                + "Trying the old way");
                     } else {
                         startActivity(intent);
                         finish();
@@ -1073,8 +1064,10 @@ public class Main extends ListActivity {
                 if (extras != null && extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
 
                     YbkDAO.getInstance(this).open(this);
-                    refreshLibrary(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
-                            Settings.DEFAULT_EBOOK_DIRECTORY), ADD_BOOKS);
+                    String eBookDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                            Settings.DEFAULT_EBOOK_DIRECTORY);
+                    
+                    refreshLibrary(eBookDir, ADD_BOOKS);
                 }
                 refreshBookList();
                 break;

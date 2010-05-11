@@ -50,6 +50,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Environment;
 import android.os.Looper;
 import android.os.Process;
 import android.preference.PreferenceManager;
@@ -906,13 +907,13 @@ public class Util {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ctx);
         String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
-        if (!strRevealDir.startsWith("/sdcard/")) {
+        if (!strRevealDir.startsWith(Environment.getExternalStorageDirectory().toString())) {
             String strRevealDirTemp = strRevealDir;
 
             if (!strRevealDir.startsWith("/")) {
-                strRevealDir = "/sdcard/" + strRevealDirTemp;
+                strRevealDir = Environment.getExternalStorageDirectory().toString() + "/" + strRevealDirTemp;
             } else {
-                strRevealDir = "/sdcard" + strRevealDirTemp;
+                strRevealDir = Environment.getExternalStorageDirectory().toString() + strRevealDirTemp;
             }
         }
 
@@ -1194,7 +1195,8 @@ public class Util {
                             bmImg.compress(Bitmap.CompressFormat.PNG, 75, bytes);
                             b = bytes.toByteArray();
 
-                            File myFile = new File("/sdcard/reveal/ebooks/.thumbnails/" + eBookName + ".jpg");
+                            File myFile = new File(Environment.getExternalStorageDirectory().toString()
+                                    + "/reveal/ebooks/.thumbnails/" + eBookName + ".jpg");
                             myFile.createNewFile();
                             OutputStream filoutputStream = new FileOutputStream(myFile);
                             filoutputStream.write(b);

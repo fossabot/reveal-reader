@@ -179,4 +179,5 @@
 	<string name="really_delete_folder">Really Delete Folder?</string>
 	<string name="confirm_delete_folder">Do you really want to delete the selected Folder?\n\nTitle: {0}\n</string>
 	<string name="folder_name_title">Enter Folder Name</string>
+<string name="ebook_dir_invalid">Your eBook directory was not changed.  Please choose a directory path starting with \&quot;%s/\&quot;.</string>
 </resources>
