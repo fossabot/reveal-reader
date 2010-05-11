@@ -137,6 +137,7 @@ public class Main extends ListActivity {
                 editor.putBoolean("show_splash_screen", true);
                 editor.putBoolean("show_fullscreen", false);
                 editor.putBoolean("show_zoom", false);
+                editor.putString("default_ebook_dir", Settings.DEFAULT_EBOOK_DIRECTORY);
                 editor.commit();
             }
 
