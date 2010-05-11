@@ -28,7 +28,7 @@
               android:visibility="invisible"
               android:textSize="@dimen/button_font_size" android:height="51sp"/>
     </LinearLayout>
-    <WebView android:id="@+id/ybkView"
+    <com.jackcholt.reveal.widgets.FastScrollWebView android:id="@+id/ybkView"
           android:layout_width="fill_parent"
           android:layout_height="fill_parent"
           android:longClickable="true"
