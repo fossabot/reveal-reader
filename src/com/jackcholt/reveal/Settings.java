@@ -16,7 +16,8 @@ import com.flurry.android.FlurryAgent;
 
 public class Settings extends PreferenceActivity {
 
-    public static final String DEFAULT_EBOOK_DIRECTORY = Environment.getExternalStorageDirectory() + "/reveal/ebooks/";
+    public static final String DEFAULT_EBOOK_DIRECTORY = Environment.getExternalStorageDirectory().toString()
+            + "/reveal/ebooks/";
     public static final String EBOOK_DIRECTORY_KEY = "default_ebook_dir";
     public static final String EBOOK_DIR_CHANGED = "ebook_dir_changed";
     public static final String PREFS_NAME = "com.jackcholt.reveal_preferences";
@@ -28,7 +29,7 @@ public class Settings extends PreferenceActivity {
     public static final String DEFAULT_EBOOK_FONT_SIZE = "18";
     protected static final String TAG = "Settings";
     final Context prefContext = this;
-    private Intent returnIntent; 
+    private Intent returnIntent;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -77,7 +78,8 @@ public class Settings extends PreferenceActivity {
                                     String ebookDirTemp = ebookDir;
 
                                     if (!ebookDir.startsWith("/")) {
-                                        ebookDir = Environment.getExternalStorageDirectory().toString() + "/" + ebookDirTemp;
+                                        ebookDir = Environment.getExternalStorageDirectory().toString() + "/"
+                                                + ebookDirTemp;
                                     } else {
                                         ebookDir = Environment.getExternalStorageDirectory().toString() + ebookDirTemp;
                                     }
