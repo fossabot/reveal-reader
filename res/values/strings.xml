@@ -11,8 +11,8 @@
 	<string name="label_splash_screen">Enable Splash Screen</string>
 	<string name="menu_browser">Online eBook Download</string>
 	<string name="settings_name">Reveal Settings</string>
-	<string name="summary_on_show_splash_screen">Splash Screen Enabled</string>
-	<string name="summary_off_show_splash_screen">Splash Screen Disabled</string>
+	<string name="summary_on_show_splash_screen">Splash screen is enabled</string>
+	<string name="summary_off_show_splash_screen">Splash screen is disabled</string>
 	<string name="up_one_level">..</string>
 	<string name="reveal_ybk_view">Reveal</string>
 	<string name="reference_not_found">Referenced eBook ({0}) not found.</string>
@@ -25,7 +25,7 @@
 	<string name="summary_default_ebook_dir">Default is /sdcard/reveal/ebooks/</string>
 	<string name="default_temp_dir">/sdcard/reveal/</string>
 	<string name="default_fontsize">12</string>
-	<string name="title_default_ebook_dir">Default eBook Location</string>
+	<string name="title_default_ebook_dir">Library Location</string>
 	<string name="summary_default_temp_dir">Default Directory for Application TEMP</string>
 	<string name="title_list_preference">List preference</string>
 	<string name="summary_list_preference">An example that uses a list dialog</string>
@@ -75,11 +75,11 @@
 	<string name="helpdialog_no_ebooks">You have no eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\'  to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card</string>
 	<string name="helpdialog_if_you_need_help">If you need more help with Reveal Reader please visit the website and forums listed below.</string>
 	<string name="label_fullscreen">Enable Fullscreen View</string>
-	<string name="summary_on_fullscreen">Fullscreen will display</string>
-	<string name="summary_off_fullscreen">Fullscreen will not Display</string>
+	<string name="summary_on_fullscreen">Display is fullscreen</string>
+	<string name="summary_off_fullscreen">Display is full screen</string>
 	<string name="enable_night_mode">Enable Night Mode</string>
-	<string name="summaryOn_enable_night_mode">Night Mode is on</string>
-	<string name="summaryOff_enable_night_mode">Night Mode is off</string>
+	<string name="summaryOn_enable_night_mode">Night mode is on</string>
+	<string name="summaryOff_enable_night_mode">Night mode is off</string>
 	<string name="support_btn">Support</string>
 	<string name="book_not_loaded">Could not open the eBook.</string>
 	<string name="no_more_history">You\'ve run out of history!</string>
@@ -131,9 +131,9 @@
 	<string name="ebook_info_message">&lt;b&gt;Book Name:&lt;/b&gt; {0}&lt;br/&gt;&lt;b&gt;File Name:&lt;/b&gt; {1}&lt;br/&gt;</string>
 	<string name="cancel_popup_btn">Cancel</string>
 	<string name="dismiss_popup_btn">Don\'t Show Again</string>
-	<string name="title_default_font_size">Default eBook Fontsize</string>
-	<string name="summary_default_font_size">change default reading fontsize</string>
-	<string name="menu_fontsize">FontSize</string>
+	<string name="title_default_font_size">Font Size</string>
+	<string name="summary_default_font_size">Change default reading font size</string>
+	<string name="menu_fontsize">Font Size</string>
 	<string name="choose_charset">Choose Character Set</string>
 	<string-array name="charsets">
 		<item>Latin 1</item>
@@ -145,7 +145,7 @@
 	<string name="motd_title">Message of the Day</string>
 	<string name="version_notes_title">Version Notes</string>
 	<string name="summary_on_disable_analytics">Analytics Location Off</string>
-	<string name="summary_off_disable_analytics">Analytics Location On</string>
+	<string name="summary_off_disable_analytics">Analytics location is on</string>
 	<string name="disable_analytics">Disable Analytics</string>
 	<string name="paypalURL">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4146444</string>
 	<string name="title_download_url_ourDB">http://revealreader.thepackhams.com/ebooks</string>
@@ -164,8 +164,8 @@
 	<string name="menu_annotate">Note/Highlight</string>
 	<string name="menu_goto_top">Go to top</string>
 	<string name="label_zoom">Reading Zoom</string>
-	<string name="summary_on_zoom">Zoom Button will display</string>
-	<string name="summary_off_zoom">Zoom Button will not display</string>
+	<string name="summary_on_zoom">Zoom button does display</string>
+	<string name="summary_off_zoom">Zoom button does not display</string>
 	<string name="cannot_find_url">We cannot find that reference.</string>
 	<string name="cannot_hilite">Cannot highlight or annotate this chapter.</string>
 	<string name="menu_move_to_folder">Move eBook to Folder...</string>
@@ -180,4 +180,8 @@
 	<string name="confirm_delete_folder">Do you really want to delete the selected Folder?\n\nTitle: {0}\n</string>
 	<string name="folder_name_title">Enter Folder Name</string>
 <string name="ebook_dir_invalid">Your eBook directory was not changed.  Please choose a directory path starting with \&quot;%s/\&quot;.</string>
+<string name="prefs_display">Display</string>
+<string name="label_touchable">Make Touchable</string>
+<string name="summary_on_touchable">Links are finger-friendly</string>
+<string name="summary_off_touchable">Links are not finger-friendly</string>
 </resources>

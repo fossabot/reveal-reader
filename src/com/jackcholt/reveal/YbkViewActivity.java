@@ -349,8 +349,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Encapsulate the logic of setting the WebViewClient.
      * 
-     * @param view
-     *            The WebView for which we're setting the WebViewClient.
+     * @param view The WebView for which we're setting the WebViewClient.
      */
     private void setWebViewClient() {
         findWebView().setWebViewClient(new YbkWebViewClient());
@@ -359,12 +358,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Set the folder, book, and chapter buttons.
      * 
-     * @param shortTitle
-     *            The text to be used on the Book Button.
-     * @param filePath
-     *            The path to the YBK file that contains the chapter to load.
-     * @param fileToOpen
-     *            The internal path to the chapter to load.
+     * @param shortTitle The text to be used on the Book Button.
+     * @param filePath The path to the YBK file that contains the chapter to load.
+     * @param fileToOpen The internal path to the chapter to load.
      */
     private void initFolderBookChapButtons(final String shortTitle, final String filePath, final String fileToOpen) {
         initBookButton(shortTitle, filePath, fileToOpen);
@@ -656,11 +652,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      * Load a chapter as identified by the the order id.
      * 
      * @param
-     * @param orderId
-     *            The order id of the chapter to load.
+     * @param orderId The order id of the chapter to load.
      * @return Did the chapter load?
-     * @throws IOException
-     *             If there was a problem reading the chapter.
+     * @throws IOException If there was a problem reading the chapter.
      */
     private boolean loadChapterByOrderId(final String bookFileName, final int orderId) throws IOException {
 
@@ -692,12 +686,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
      * 
-     * @param filePath
-     *            The path to the YBK file from which to read the chapter.
-     * @param chapter
-     *            The "filename" of the chapter to load.
-     * @param saveToBackStack
-     *            Should the current chapter be saved to the back stack?
+     * @param filePath The path to the YBK file from which to read the chapter.
+     * @param chapter The "filename" of the chapter to load.
+     * @param saveToBackStack Should the current chapter be saved to the back stack?
      * @throws IOException
      */
     private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack) throws IOException {
@@ -707,14 +698,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Uses a YbkFileReader to get the content of a chapter and loads into the WebView.
      * 
-     * @param filePath
-     *            The path to the YBK file from which to read the chapter.
-     * @param chapter
-     *            The "filename" of the chapter to load.
-     * @param saveToBackStack
-     *            Should the current chapter be saved to the back stack?
-     * @param reloading
-     *            Are we using loadChapter to re-load a chapter?
+     * @param filePath The path to the YBK file from which to read the chapter.
+     * @param chapter The "filename" of the chapter to load.
+     * @param saveToBackStack Should the current chapter be saved to the back stack?
+     * @param reloading Are we using loadChapter to re-load a chapter?
      * @throws IOException
      */
     private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack, boolean reloading)
@@ -854,10 +841,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                 int nfLoc = headerLower.indexOf("<nf>");
                 int nfEndLoc = headerLower.length();
-                if (nfLoc != -1) {
-                    if (-1 != (nfEndLoc = headerLower.indexOf('<', nfLoc + 4))) {
-                        nf = Util.independentSubstring(header, nfLoc + 4, nfEndLoc);
-                    }
+                if (nfLoc != -1 && -1 != (nfEndLoc = headerLower.indexOf('<', nfLoc + 4))) {
+                    nf = Util.independentSubstring(header, nfLoc + 4, nfEndLoc);
                 }
             }
 
@@ -870,7 +855,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             content = convertAhtags(content);
             content = Util.convertIfvar(content);
             // Inside htmlize we now have support for night mode
-            content = Util.htmlize(content, getSharedPrefs());
+            content = Util.htmlize(content, getSharedPrefs(), nf);
             content = Util.annotHiliteContent(content, YbkDAO.getInstance(this).getChapterAnnotHilites(book.fileName,
                     chap), this);
 
@@ -1038,13 +1023,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Read a section of a special concatenated chapter;
      * 
-     * @param chap
-     *            The chapter to read.
-     * @param ybkReader
-     *            The YbkReader to use in order to access the chapter.
+     * @param chap The chapter to read.
+     * @param ybkReader The YbkReader to use in order to access the chapter.
      * @return The content of the section.
-     * @throws IOException
-     *             If the Ybk file cannot be read.
+     * @throws IOException If the Ybk file cannot be read.
      */
     private String readConcatFile(final String chap, final YbkFileReader ybkReader) throws IOException {
         // need to read a special footnote chapter
@@ -1076,8 +1058,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     /**
      * Set the chapter button text from the content.
      * 
-     * @param content
-     *            The content of the chapter.
+     * @param content The content of the chapter.
      */
     private void setChapBtnText(final String content) {
         String fullName = content.replaceAll("(?is)^.*<fn>(.*)<nf>.*$", "$1");

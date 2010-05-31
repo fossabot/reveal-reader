@@ -460,7 +460,14 @@ public class Util {
         return "(?is)<a\\s+href=\"@" + Integer.toString(verse) + ",\\d+,\\d+\">.*";
     }
 
+    /**
+     * @deprecated Use {@link #htmlize(String,SharedPreferences,String)} instead
+     */
     public static final String htmlize(final String text, final SharedPreferences sharedPref) {
+        return htmlize(text, sharedPref, "0");
+    }
+
+    public static final String htmlize(final String text, final SharedPreferences sharedPref, String navFile) {
         if (text == null) {
             throw new IllegalArgumentException("No text was passed.");
         }
@@ -468,6 +475,7 @@ public class Util {
         boolean showPicture = sharedPref.getBoolean("show_pictures", true);
         boolean showAH = sharedPref.getBoolean("show_ah", false);
         boolean nightMode = sharedPref.getBoolean("enable_night_mode", false);
+        boolean touchable = sharedPref.getBoolean("make_touchable", false);
 
         String content = text;
         int pos = content.indexOf("<end>");
@@ -481,9 +489,18 @@ public class Util {
                 + "._hidepicture {"
                 + (showPicture ? "display:none;" : "display:inline") + "} "
                 + " ._showcontents {display:inline}"
-                + " ._hidecontents {display:none} " + " .ah {" + (showAH ? "display:inline;" : "display:none")
+                + " ._hidecontents {display:none} .ah {" + (showAH ? "display:inline;" : "display:none")
                 + "}"
-                + (nightMode ? NIGHT_MODE_STYLE : "") + "</style>";
+                + (nightMode ? NIGHT_MODE_STYLE : ""); 
+                
+        /* if navFile is not "0" convert all link anchor tags to block level entities with a larger font that resembles 
+         * list view entries.
+         */
+        if (touchable && !navFile.equals("0")) {
+            style += "a[href] {display:block;width:100%;text-decoration:none;font-size:150%;background:#eee;" +
+            		"margin-bottom:.2em;padding:.2em;}";
+        }
+        style += "</style>";
 
         String scripts = "<script type='text/javascript'>";
         if (content.indexOf("class=\"_show") != -1) {

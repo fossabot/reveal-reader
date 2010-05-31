@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen
-        xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 	    <CheckBoxPreference
 	        android:key="show_splash_screen"
@@ -10,21 +9,31 @@
 	        android:summaryOff="@string/summary_off_show_splash_screen" 
 	        android:defaultValue="true"/>
 	            
-	    <CheckBoxPreference
-	        android:key="show_fullscreen"
-	        android:title="@string/label_fullscreen"
-	        android:summaryOn="@string/summary_on_fullscreen" 
-	        android:summaryOff="@string/summary_off_fullscreen" 
-	        android:defaultValue="false"/>
-	        
+    
+    <PreferenceCategory android:title="@string/prefs_display">
+        <CheckBoxPreference
+            android:key="show_fullscreen"
+            android:title="@string/label_fullscreen"
+            android:summaryOn="@string/summary_on_fullscreen" 
+            android:summaryOff="@string/summary_off_fullscreen" 
+            android:defaultValue="false"/>
+
 	    <CheckBoxPreference
 	        android:key="show_zoom"
 	        android:title="@string/label_zoom"
 	        android:summaryOn="@string/summary_on_zoom" 
-	        android:summaryOff="@string/summary_off_zoom" android:defaultValue="false"/>
+	        android:summaryOff="@string/summary_off_zoom" 
+            android:defaultValue="false"/>
 
-
-	<PreferenceCategory android:title="@string/prefs_color_mode">
+        <CheckBoxPreference
+            android:key="make_touchable"
+            android:title="@string/label_touchable"
+            android:summaryOn="@string/summary_on_touchable" 
+            android:summaryOff="@string/summary_off_touchable" 
+            android:defaultValue="false"/>
+    </PreferenceCategory>
+	
+    <PreferenceCategory android:title="@string/prefs_color_mode">
 		<CheckBoxPreference
 	        android:key="enable_night_mode"
 	        android:title="@string/enable_night_mode"
