@@ -31,6 +31,14 @@
             android:summaryOn="@string/summary_on_touchable" 
             android:summaryOff="@string/summary_off_touchable" 
             android:defaultValue="false"/>
+            
+        <CheckBoxPreference
+            android:key="show_scroll_tab"
+            android:title="@string/label_scroll_tab"
+            android:summaryOn="@string/summary_on_scroll_tab" 
+            android:summaryOff="@string/summary_off_scroll_tab" 
+            android:defaultValue="true"/>
+            
     </PreferenceCategory>
 	
     <PreferenceCategory android:title="@string/prefs_color_mode">

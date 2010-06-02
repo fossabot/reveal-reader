@@ -82,7 +82,7 @@ public class Util {
     public static final String DOWNLOAD_MIRROR = "http://revealreader.thepackhams.com/ebooks/";
     public static final String EMPTY_STRING = new String();
     public static final String NIGHT_MODE_STYLE = "body {background-color:black;color:#b3b3b3;} "
-            + "hr{border:1px solid #564129} " + "a:link{color:#6699cc} " + "a:visited{color:#336699}"
+            + "hr{border:1px solid #564129} a:link{color:#6699cc} a:visited{color:#336699}"
             + "a:active{color:#3399ff}";
 
     public static void displayToastMessage(String message) {
@@ -497,7 +497,7 @@ public class Util {
          * list view entries.
          */
         if (touchable && !navFile.equals("0")) {
-            style += "a[href] {display:block;width:100%;text-decoration:none;font-size:150%;background:#eee;" +
+            style += "a[href]{display:block;width:100%;text-decoration:none;font-size:150%;background:#eee;" +
             		"margin-bottom:.2em;padding:.2em;}";
         }
         style += "</style>";

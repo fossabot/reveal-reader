@@ -18,6 +18,7 @@
 
 package com.jackcholt.reveal.widgets;
 
+
 import com.jackcholt.reveal.R;
 
 import android.content.Context;
@@ -30,6 +31,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
@@ -82,12 +84,31 @@ class WebViewFastScroller {
     // private SectionIndexer mSectionIndexer;
 
     private boolean mChangedBounds;
+    private int mMinPagesThreshold;
 
     public WebViewFastScroller(Context context, WebView view) {
         mView = view;
+        setFastscrollState(PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+                "show_scroll_tab", true), MIN_PAGES);
         init(context);
     }
 
+    /**
+     * Enable or disable the fast-scroll state.
+     * 
+     * @param enabled
+     *            The new fast-scroll state.
+     */
+    public void setFastscrollState(boolean enabled, int threshold) {
+        if (enabled) {
+            mMinPagesThreshold = threshold;
+        } else {
+            // The user has disabled fast scroll, so make the threshold effectively infinite.
+            mMinPagesThreshold = Integer.MAX_VALUE;
+        }
+        mItemCount = -1;
+    }
+    
     public void setState(int state) {
         switch (state) {
         case STATE_NONE:
@@ -165,7 +186,7 @@ class WebViewFastScroller {
 
     public void draw(Canvas canvas) {
 
-        if (mState == STATE_NONE) {
+        if (mState == STATE_NONE || mMinPagesThreshold >= Integer.MAX_VALUE) {
             // No need to draw anything
             return;
         }
@@ -230,7 +251,7 @@ class WebViewFastScroller {
         // Are there enough pages to require fast scroll? Recompute only if total count changes
         if (mItemCount != totalItemCount && visibleItemCount > 0) {
             mItemCount = totalItemCount;
-            mLongList = mItemCount / visibleItemCount >= MIN_PAGES;
+            mLongList = mItemCount / visibleItemCount >= mMinPagesThreshold;
         }
         if (!mLongList) {
             if (mState != STATE_NONE) {

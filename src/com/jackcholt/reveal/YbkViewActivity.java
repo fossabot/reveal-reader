@@ -196,7 +196,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         mCurrChap.setChapFileName("\\" + book.shortTitle + ".html");
                 }
 
-                if (!(isPopup()) && loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
+                if (!isPopup() && loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
                     initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap.getChapFileName());
                 }
 
@@ -204,11 +204,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 Log.e(TAG, "Could not load: " + mCurrChap.getBookFileName() + " chapter: "
                         + mCurrChap.getChapFileName() + ". " + ioe.getMessage());
 
-                Toast.makeText(
-                        this,
-                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
-                                + ". Please report this at " + getResources().getText(R.string.website),
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " 
+                        + mCurrChap.getChapFileName()
+                        + ". Please report this at " + getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
             }
             setWebViewClient();
 
@@ -223,9 +221,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private void configWebView() {
         findWebView().getSettings().setJavaScriptEnabled(true);
 
-        boolean BOOLshowZoom = getSharedPrefs().getBoolean("show_zoom", false);
-
-        if (BOOLshowZoom) {
+        if (getSharedPrefs().getBoolean("show_zoom", false)) {
             findWebView().getSettings().setBuiltInZoomControls(true);
         } else {
             findWebView().getSettings().setBuiltInZoomControls(false);

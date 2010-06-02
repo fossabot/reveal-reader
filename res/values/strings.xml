@@ -184,4 +184,7 @@
 <string name="label_touchable">Make Touchable</string>
 <string name="summary_on_touchable">Links are finger-friendly</string>
 <string name="summary_off_touchable">Links are not finger-friendly</string>
+<string name="label_scroll_tab">Show Scroll Tab</string>
+<string name="summary_on_scroll_tab">Scroll tab is enabled</string>
+<string name="summary_off_scroll_tab">Scroll tab is disabled</string>
 </resources>
