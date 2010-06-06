@@ -31,7 +31,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
@@ -117,9 +116,6 @@ public class Main extends ListActivity {
                 mCurrentFolder = savedInstanceState.getString("mCurrentFolder");
             }
 
-            if (Global.DEBUG == 2) {
-                Debug.startMethodTracing("reveal");
-            }
             // Disable the Flurry Uncaught Exception Handler
             FlurryAgent.setCaptureUncaughtExceptions(false);
             // and enable the one that emails us :)
@@ -254,10 +250,6 @@ public class Main extends ListActivity {
         try {
             super.onStop();
             FlurryAgent.onEndSession(this);
-
-            if (Global.DEBUG == 2) {
-                Debug.stopMethodTracing();
-            }
 
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
