@@ -828,19 +828,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             int posEnd = content.toLowerCase().indexOf("<end>");
 
-            String nf = "1";
-            if (saveToBackStack && posEnd != -1) {
-                String header = content.substring(0, posEnd);
-                String headerLower = header.toLowerCase();
-
-                Log.d(TAG, "Chapter header: " + header);
-
-                int nfLoc = headerLower.indexOf("<nf>");
-                int nfEndLoc = headerLower.length();
-                if (nfLoc != -1 && -1 != (nfEndLoc = headerLower.indexOf('<', nfLoc + 4))) {
-                    nf = Util.independentSubstring(header, nfLoc + 4, nfEndLoc);
-                }
-            }
+            String nf = (posEnd != -1) ? parseNavFile(content, posEnd) : "1";
 
             if (!(isShowInPopup(chapter))) {
                 mHistTitle = mChapBtnText;
@@ -876,6 +864,18 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         return bookLoaded;
+    }
+
+    private String parseNavFile(String content, int posEnd) {
+        String header = content.substring(0, posEnd);
+        Log.d(TAG, "Chapter header: " + header);
+
+        int nfLoc = header.toLowerCase().indexOf("<nf>");
+        int nfEndLoc = header.length();
+        if (nfLoc != -1 && -1 != (nfEndLoc = header.indexOf('<', nfLoc + 4))) {
+            return Util.independentSubstring(header, nfLoc + 4, nfEndLoc);
+        }
+        return "1";
     }
 
     private void showChapterInPopup(String content, Book book, String strUrl) {
