@@ -1196,7 +1196,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 if (isProtocolRemote(url)) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toLowerCase())));
                     return HANDLED_BY_HOST_APP;
                 }
 
