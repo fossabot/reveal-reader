@@ -154,10 +154,17 @@ public class YbkService extends Service {
                                 Log.e(TAG, message);
                             }
 
-                            if (intent.getLongExtra(CALLBACKS_KEY, 0) != 0 && null != callbackMap) {
-                                for (Completion callback : callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0))) {
-                                    callback.completed(succeeded, message);
-                                }
+                            if (intent.getLongExtra(CALLBACKS_KEY, 0) == 0 || null == callbackMap) {
+                                return;
+                            }
+
+                            Completion[] comps = callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0));
+                            if (null == comps) {
+                                return;
+                            }
+
+                            for (int index = 0, compLen = comps.length; index < compLen; index++) {
+                                comps[index].completed(succeeded, message);
                             }
                         }
                     };
