@@ -1133,8 +1133,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             stateMap.put("bookFileName", mCurrChap.getBookFileName());
             stateMap.put("chapFileName", mCurrChap.getChapFileName());
             stateMap.put("histTitle", mHistTitle);
-            stateMap.put("scrollYPos", findWebView().getScrollY());
-            Log.d(TAG, "Scroll Y Pos: " + findWebView().getScrollY());
+            WebView wv = findWebView();
+            if (null == wv) {
+                stateMap.put("scrollYPos", 0);
+            } else {
+                stateMap.put("scrollYPos", findWebView().getScrollY());
+                Log.d(TAG, "Scroll Y Pos: " + findWebView().getScrollY());
+            }
 
             return stateMap;
         } catch (RuntimeException rte) {
