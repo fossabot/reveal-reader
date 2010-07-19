@@ -16,32 +16,38 @@ import android.widget.TextView;
 public class InfoDialog extends Dialog implements View.OnClickListener {
 
     /**
-     * Constructs an information dialag.
+     * Constructs an information dialog.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            title for the dialog
-     * @param message
-     *            message for the dialog
+     * @param parentContext parent Context
+     * @param title title for the dialog
+     * @param message message for the dialog
      */
-    protected InfoDialog(final Context _this, String title, String message) {
-        super(_this);
+    protected InfoDialog(final Context parentContext, String title, String message) {
+        super(parentContext);
         setContentView(getContentViewId());
 
-        Button closeBtn = (Button) findViewById(R.id.close_btn);
-        closeBtn.setOnClickListener(this);
+        findCloseButton().setOnClickListener(this);
 
-        if (message != null)
-            ((TextView) findViewById(R.id.info_message)).setText(Html.fromHtml(message));
+        if (message != null) {
+            findInfoMessageView().setText(Html.fromHtml(message));
+        }
 
-        if (title != null)
+        if (title != null) {
             setTitle(title);
+        }
     }
-    
+
+    private TextView findInfoMessageView() {
+        return (TextView) findViewById(R.id.info_message);
+    }
+
+    private Button findCloseButton() {
+        return (Button) findViewById(R.id.close_btn);
+    }
+
     /**
      * Gets the contentview resource ID (this is to allow subclasses to use a different contentview.
-     *  
+     * 
      * @return the resource id
      */
     protected int getContentViewId() {
@@ -55,42 +61,33 @@ public class InfoDialog extends Dialog implements View.OnClickListener {
     /**
      * Displays information dialog with given title and message.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            title for the dialog
-     * @param message
-     *            message for the dialog
+     * @param parentContext parent Context
+     * @param title title for the dialog
+     * @param message message for the dialog
      */
-    public static void create(final Context _this, String title, String message) {
-        new InfoDialog(_this, title, message).show();
+    public static void create(final Context parentContext, String title, String message) {
+        new InfoDialog(parentContext, title, message).show();
     }
 
     /**
      * Displays information dialog with given title and message.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            string resource id of title for the dialog
-     * @param message
-     *            string resource id of message for the dialog
+     * @param parentContext parent Context
+     * @param titleId string resource id of title for the dialog
+     * @param messageId string resource id of message for the dialog
      */
-    public static void create(final Context _this, int title, int message) {
-        new InfoDialog(_this, _this.getResources().getString(title), _this.getResources().getString(message)).show();
+    public static void create(final Context parentContext, int titleId, int messageId) {
+        create(parentContext, titleId, parentContext.getResources().getString(messageId));
     }
 
     /**
      * Displays information dialog with given title and message.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            string resource id of title for the dialog
-     * @param message
-     *            message for the dialog
+     * @param parentContext parent Context
+     * @param titleId string resource id of title for the dialog
+     * @param message message for the dialog
      */
-    public static void create(final Context _this, int title, String message) {
-        new InfoDialog(_this, _this.getResources().getString(title), message).show();
+    public static void create(final Context parentContext, int titleId, String message) {
+        create(parentContext, parentContext.getResources().getString(titleId), message);
     }
 }

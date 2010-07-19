@@ -8,7 +8,6 @@
 	        android:summaryOn="@string/summary_on_show_splash_screen" 
 	        android:summaryOff="@string/summary_off_show_splash_screen" 
 	        android:defaultValue="true"/>
-	            
     
     <PreferenceCategory android:title="@string/prefs_display">
         <CheckBoxPreference
@@ -61,6 +60,7 @@
 			android:title="@string/title_default_font_size"  
 			android:summary="@string/summary_default_font_size"  
 			android:entries="@array/fontsize"  
-			android:entryValues="@array/fontsize_number" android:defaultValue="16"/>
+			android:entryValues="@array/fontsize_number" 
+            android:defaultValue="16"/>
 	</PreferenceCategory>
 </PreferenceScreen>

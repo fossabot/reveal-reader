@@ -17,16 +17,11 @@ public class ConfirmActionDialog extends Dialog implements View.OnClickListener 
     /**
      * Constructs a confirm dialag.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            title for the dialog
-     * @param message
-     *            message for the dialog
-     * @param okButtonLabel
-     *            label for the ok button
-     * @param action
-     *            action to perform if confirmed
+     * @param _this parent Context
+     * @param title title for the dialog
+     * @param message message for the dialog
+     * @param okButtonLabel label for the ok button
+     * @param action action to perform if confirmed
      */
     private ConfirmActionDialog(final Context _this, String title, String message, String okButtonLabel,
             final SafeRunnable action) {
@@ -61,16 +56,11 @@ public class ConfirmActionDialog extends Dialog implements View.OnClickListener 
     /**
      * Performs an action if confirmed by user.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            title for the dialog
-     * @param message
-     *            message for the dialog
-     * @param okButtonLabel
-     *            label for the ok button
-     * @param action
-     *            action to perform if confirmed
+     * @param _this parent Context
+     * @param title title for the dialog
+     * @param message message for the dialog
+     * @param okButtonLabel label for the ok button
+     * @param action action to perform if confirmed
      */
     public static void confirmedAction(final Context _this, String title, String message, String okButtonLabel,
             SafeRunnable action) {
@@ -80,16 +70,11 @@ public class ConfirmActionDialog extends Dialog implements View.OnClickListener 
     /**
      * Performs an action if confirmed by user.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            string resource id of title for the dialog
-     * @param message
-     *            string resource id of message for the dialog
-     * @param okButtonLabel
-     *            string resource id of label for the ok button
-     * @param action
-     *            action to perform if confirmed
+     * @param _this parent Context
+     * @param title string resource id of title for the dialog
+     * @param message string resource id of message for the dialog
+     * @param okButtonLabel string resource id of label for the ok button
+     * @param action action to perform if confirmed
      */
     public static void confirmedAction(final Context _this, int title, int message, int okButtonLabel,
             SafeRunnable action) {
@@ -100,16 +85,11 @@ public class ConfirmActionDialog extends Dialog implements View.OnClickListener 
     /**
      * Performs an action if confirmed by user.
      * 
-     * @param _this
-     *            parent Context
-     * @param title
-     *            string resource id of title for the dialog
-     * @param message
-     *            message for the dialog
-     * @param okButtonLabel
-     *            string resource id of label for the ok button
-     * @param action
-     *            action to perform if confirmed
+     * @param _this parent Context
+     * @param title string resource id of title for the dialog
+     * @param message message for the dialog
+     * @param okButtonLabel string resource id of label for the ok button
+     * @param action action to perform if confirmed
      */
     public static void confirmedAction(final Context _this, int title, String message, int okButtonLabel,
             SafeRunnable action) {

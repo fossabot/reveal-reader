@@ -179,12 +179,12 @@
 	<string name="really_delete_folder">Really Delete Folder?</string>
 	<string name="confirm_delete_folder">Do you really want to delete the selected Folder?\n\nTitle: {0}\n</string>
 	<string name="folder_name_title">Enter Folder Name</string>
-<string name="ebook_dir_invalid">Your eBook directory was not changed.  Please choose a directory path starting with \&quot;%s/\&quot;.</string>
-<string name="prefs_display">Display</string>
-<string name="label_touchable">Make Touchable</string>
-<string name="summary_on_touchable">Links are finger-friendly</string>
-<string name="summary_off_touchable">Links are not finger-friendly</string>
-<string name="label_scroll_tab">Show Scroll Tab</string>
-<string name="summary_on_scroll_tab">Scroll tab is enabled</string>
-<string name="summary_off_scroll_tab">Scroll tab is disabled</string>
+    <string name="ebook_dir_invalid">Your eBook directory was not changed.  Please choose a directory path starting with \&quot;%s/\&quot;.</string>
+    <string name="prefs_display">Display</string>
+    <string name="label_touchable">Make Touchable</string>
+    <string name="summary_on_touchable">Links are finger-friendly</string>
+    <string name="summary_off_touchable">Links are not finger-friendly</string>
+    <string name="label_scroll_tab">Show Scroll Tab</string>
+    <string name="summary_on_scroll_tab">Scroll tab is enabled</string>
+    <string name="summary_off_scroll_tab">Scroll tab is disabled</string>
 </resources>

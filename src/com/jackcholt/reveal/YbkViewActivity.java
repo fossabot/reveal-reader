@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,19 +24,19 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.GestureDetector.OnGestureListener;
-import android.view.View.OnClickListener;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.webkit.WebView.PictureListener;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -186,8 +187,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         mBookWalkIndex = -1;
                         Chapter firstChapter = getNextBookWalkerChapter();
                         if (firstChapter == null) {
-                            setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent().getExtras()
-                                    .getInt(Main.BOOK_WALK_INDEX, -1)));
+                            setResult(
+                                    RESULT_OK,
+                                    new Intent().putExtra(Main.BOOK_WALK_INDEX,
+                                            getIntent().getExtras().getInt(Main.BOOK_WALK_INDEX, -1)));
                             finish();
                         } else {
                             mCurrChap.setChapFileName(firstChapter.fileName);
@@ -201,12 +204,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
             } catch (IOException ioe) {
-                Log.e(TAG, "Could not load: " + mCurrChap.getBookFileName() + " chapter: "
-                        + mCurrChap.getChapFileName() + ". " + ioe.getMessage());
+                Log.e(TAG,
+                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
+                                + ". " + ioe.getMessage());
 
-                Toast.makeText(this, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " 
-                        + mCurrChap.getChapFileName()
-                        + ". Please report this at " + getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
+                Toast.makeText(
+                        this,
+                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
+                                + ". Please report this at " + getResources().getText(R.string.website),
+                        Toast.LENGTH_LONG).show();
             }
             setWebViewClient();
 
@@ -311,8 +317,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      */
     private void unexpectedError(Throwable throwable) {
         finish();
-        Util.unexpectedError(this, throwable, "book: " + mCurrChap.getBookFileName(), "chapter: "
-                + mCurrChap.getChapFileName());
+        Util.unexpectedError(this, throwable, "book: " + mCurrChap.getBookFileName(),
+                "chapter: " + mCurrChap.getChapFileName());
     }
 
     @Override
@@ -434,8 +440,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 menu.findItem(PREVIOUS_ID).setVisible(false).setEnabled(false);
                 menu.findItem(NEXT_ID).setVisible(false).setEnabled(false);
             } else {
-                menu.findItem(PREVIOUS_ID).setVisible(hasNextChapter() || hasPreviousChapter()).setEnabled(
-                        hasPreviousChapter());
+                menu.findItem(PREVIOUS_ID).setVisible(hasNextChapter() || hasPreviousChapter())
+                        .setEnabled(hasPreviousChapter());
                 menu.findItem(NEXT_ID).setVisible(hasNextChapter() || hasPreviousChapter())
                         .setEnabled(hasNextChapter());
             }
@@ -526,8 +532,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                         try {
                             if (loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
-                                initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap
-                                        .getChapFileName());
+                                initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(),
+                                        mCurrChap.getChapFileName());
 
                             }
                         } catch (IOException ioe) {
@@ -580,8 +586,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             try {
                                 if (loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
 
-                                    initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap
-                                            .getChapFileName());
+                                    initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(),
+                                            mCurrChap.getChapFileName());
 
                                     findWebView().scrollTo(0, mCurrChap.getScrollYPos());
                                 }
@@ -613,8 +619,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         break;
 
                     default:
-                        Log.e(TAG, "Unsupported verse context menu option: "
-                                + intent.getIntExtra(VerseContextDialog.MENU_ITEM_TAG, -1));
+                        Log.e(TAG,
+                                "Unsupported verse context menu option: "
+                                        + intent.getIntExtra(VerseContextDialog.MENU_ITEM_TAG, -1));
                     }
                     break;
 
@@ -687,7 +694,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      * @param saveToBackStack Should the current chapter be saved to the back stack?
      * @throws IOException
      */
-    private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack) throws IOException {
+    /* package */boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack) throws IOException {
         return loadChapter(filePath, chapter, saveToBackStack, false);
     }
 
@@ -840,8 +847,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             content = Util.convertIfvar(content);
             // Inside htmlize we now have support for night mode
             content = Util.htmlize(content, getSharedPrefs(), nf);
-            content = Util.annotHiliteContent(content, YbkDAO.getInstance(this).getChapterAnnotHilites(book.fileName,
-                    chap), this);
+            content = Util.annotHiliteContent(content,
+                    YbkDAO.getInstance(this).getChapterAnnotHilites(book.fileName, chap), this);
 
             if (!reloading && isShowInPopup(chapter)) {
                 Log.d(TAG, "Showing chapter in popup");
@@ -880,8 +887,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private void showChapterInPopup(String content, Book book, String strUrl) {
         setProgressBarIndeterminateVisibility(true);
-        Intent popupIntent = new Intent(this, YbkPopupActivity.class).putExtra("content", content).putExtra("strUrl",
-                strUrl).putExtra(YbkDAO.FILENAME, book.fileName);
+        Intent popupIntent = new Intent(this, YbkPopupActivity.class).putExtra("content", content)
+                .putExtra("strUrl", strUrl).putExtra(YbkDAO.FILENAME, book.fileName);
         startActivity(popupIntent);
         setProgressBarIndeterminateVisibility(false);
     }
@@ -958,9 +965,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 final View textEntryView = factory.inflate(R.layout.view_ask_name, null);
                 final EditText et = (EditText) textEntryView.findViewById(R.id.ask_name);
 
-                return new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_info).setTitle(
-                        "Enter Bookmark Name").setView(textEntryView).setPositiveButton(R.string.alert_dialog_ok,
-                        new DialogInterface.OnClickListener() {
+                return new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_info)
+                        .setTitle("Enter Bookmark Name").setView(textEntryView)
+                        .setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
 
                                 try {
@@ -970,13 +977,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     int bookmarkNumber = ybkDao.getMaxBookmarkNumber();
 
                                     // insert the bookmark
-                                    ybkDao.insertBookmark(mCurrChap.getBookFileName(), bmName, mCurrChap
-                                            .getChapFileName(), findWebView().getScrollY(), bookmarkNumber);
+                                    ybkDao.insertBookmark(mCurrChap.getBookFileName(), bmName,
+                                            mCurrChap.getChapFileName(), findWebView().getScrollY(), bookmarkNumber);
 
                                 } catch (IOException ioe) {
                                     // TODO - add a friendly message
-                                    Util.displayError(YbkViewActivity.this, ioe, getResources().getString(
-                                            R.string.error_bookmark_save));
+                                    Util.displayError(YbkViewActivity.this, ioe,
+                                            getResources().getString(R.string.error_bookmark_save));
                                 }
                             }
                         }).create();
@@ -1201,106 +1208,112 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 if (isProtocolRemote(url)) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toLowerCase())));
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toLowerCase())));
+                    } catch (ActivityNotFoundException anfe) {
+                        Log.w(TAG, "Could not find the activity to handle: " + url);
+                    }
                     return HANDLED_BY_HOST_APP;
                 }
 
-                if (url.length() > contentUriLength + 1) {
+                if (url.length() <= contentUriLength + 1) {
+                    return HANDLED_BY_HOST_APP;
+                }
 
-                    Log.d(TAG, "WebView URL: " + url);
-                    String book;
-                    String chapter = "";
-                    String shortTitle = null;
+                Log.d(TAG, "WebView URL: " + url);
+                String book;
+                String chapter = "";
+                String shortTitle = null;
 
-                    if (url.indexOf('@') != -1) {
-                        if (getEmailPattern().matcher(url).matches()) {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url)));
-                        } else {
-                            // pop up a context menu
-                            try {
-                                startActivityForResult(new Intent(view.getContext(), VerseContextDialog.class)
-                                        .putExtra(YbkDAO.VERSE, obtainVerse(url)).putExtra(YbkDAO.BOOK_FILENAME,
-                                                getBookFileName()).putExtra(YbkDAO.CHAPTER_FILENAME,
-                                                mCurrChap.getChapFileName()), CALL_VERSE_CONTEXT_MENU);
+                if (url.indexOf('@') != -1) {
+                    if (getEmailPattern().matcher(url).matches()) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url)));
+                    } else {
+                        // pop up a context menu
+                        try {
+                            startActivityForResult(
+                                    new Intent(view.getContext(), VerseContextDialog.class)
+                                            .putExtra(YbkDAO.VERSE, obtainVerse(url))
+                                            .putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
+                                            .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
+                                    CALL_VERSE_CONTEXT_MENU);
 
-                            } catch (NumberFormatException nfe) {
-                                Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG)
-                                        .show();
-                            }
+                        } catch (NumberFormatException nfe) {
+                            Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG)
+                                    .show();
                         }
-                        return HANDLED_BY_HOST_APP;
                     }
+                    return HANDLED_BY_HOST_APP;
+                }
 
-                    String dataString;
-                    try {
-                        dataString = URLDecoder.decode(url.substring(contentUriLength + 1), "UTF-8");
-                    } catch (UnsupportedEncodingException uee) {
-                        dataString = url.substring(contentUriLength + 1);
-                    }
+                String dataString;
+                try {
+                    dataString = URLDecoder.decode(url.substring(contentUriLength + 1), "UTF-8");
+                } catch (UnsupportedEncodingException uee) {
+                    dataString = url.substring(contentUriLength + 1);
+                }
 
-                    String httpString = dataString;
+                String httpString = dataString;
 
-                    if (!httpString.toLowerCase().startsWith("http://")) {
-                        httpString = "http://" + httpString;
-                    }
+                if (!httpString.toLowerCase().startsWith("http://")) {
+                    httpString = "http://" + httpString;
+                }
 
-                    if (getUrlPattern().matcher(httpString).matches()) {
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(httpString)));
-                        return HANDLED_BY_HOST_APP;
-                    }
+                if (getUrlPattern().matcher(httpString).matches()) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(httpString)));
+                    return HANDLED_BY_HOST_APP;
+                }
 
-                    String[] urlParts = dataString.split("/");
+                String[] urlParts = dataString.split("/");
 
-                    // keep original chapter name around so we can check for leading characters later
-                    mOrigChapName = urlParts[0];
-                    // get rid of the book indicator since it is only used in some cases.
-                    book = shortTitle = mOrigChapName;
-                    if (book.charAt(0) == '!' || book.charAt(0) == '^') {
-                        shortTitle = urlParts[0] = book.substring(1);
-                    }
+                // keep original chapter name around so we can check for leading characters later
+                mOrigChapName = urlParts[0];
+                // get rid of the book indicator since it is only used in some cases.
+                book = shortTitle = mOrigChapName;
+                if (book.charAt(0) == '!' || book.charAt(0) == '^') {
+                    shortTitle = urlParts[0] = book.substring(1);
+                }
 
-                    book = urlParts[0] + ".ybk";
+                book = urlParts[0] + ".ybk";
 
-                    for (int i = 0; i < urlParts.length; i++) {
-                        chapter += "\\" + urlParts[i];
-                    }
+                for (int i = 0; i < urlParts.length; i++) {
+                    chapter += "\\" + urlParts[i];
+                }
 
-                    YbkFileReader ybkRdr = null;
-                    try {
-                        setProgressBarIndeterminateVisibility(true);
-                        ybkRdr = YbkFileReader.getReader(YbkViewActivity.this, book);
-                        if (null != ybkRdr.getBook()) {
+                YbkFileReader ybkRdr = null;
+                try {
+                    setProgressBarIndeterminateVisibility(true);
+                    ybkRdr = YbkFileReader.getReader(YbkViewActivity.this, book);
+                    if (null != ybkRdr.getBook()) {
 
-                            boolean bookLoaded = false;
-                            if (chapterExists(chapter, ybkRdr, removeChapterFragment(chapter))) {
-                                bookLoaded = loadChapter(book, chapter, true);
-                            } else {
-                                mDialogChapter = removeChapterFragment(chapter)
-                                        .substring(chapter.lastIndexOf("\\") + 1);
-                                showDialog(CHAPTER_NONEXIST);
-                            }
-
-                            if (bookLoaded) {
-                                initFolderBookChapButtons(shortTitle, book, chapter);
-                                mCurrChap.setScrollYPos(0);
-                            } else {
-                                mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
-                                showDialog(CHAPTER_NONEXIST);
-                            }
+                        boolean bookLoaded = false;
+                        if (chapterExists(chapter, ybkRdr, removeChapterFragment(chapter))) {
+                            bookLoaded = loadChapter(book, chapter, true);
                         } else {
-                            mDialogFilename = book;
-                            showDialog(FILE_NONEXIST);
+                            mDialogChapter = removeChapterFragment(chapter).substring(chapter.lastIndexOf("\\") + 1);
+                            showDialog(CHAPTER_NONEXIST);
                         }
-                    } catch (IOException ioe) {
+
+                        if (bookLoaded) {
+                            initFolderBookChapButtons(shortTitle, book, chapter);
+                            mCurrChap.setScrollYPos(0);
+                        } else {
+                            mDialogChapter = chapter.substring(chapter.lastIndexOf("\\") + 1);
+                            showDialog(CHAPTER_NONEXIST);
+                        }
+                    } else {
                         mDialogFilename = book;
                         showDialog(FILE_NONEXIST);
-                    } finally {
-                        if (ybkRdr != null) {
-                            ybkRdr.unuse();
-                            ybkRdr = null;
-                        }
-                        setProgressBarIndeterminateVisibility(false);
                     }
+                } catch (IOException ioe) {
+                    mDialogFilename = book;
+                    showDialog(FILE_NONEXIST);
+                } finally {
+                    if (ybkRdr != null) {
+                        ybkRdr.unuse();
+                        ybkRdr = null;
+                    }
+                    setProgressBarIndeterminateVisibility(false);
                 }
 
                 return HANDLED_BY_HOST_APP;
@@ -1331,9 +1344,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         private boolean isProtocolRemote(final String url) {
-            return url.toLowerCase().startsWith("mailto:") || url.toLowerCase().startsWith("geo:")
-                    || url.toLowerCase().startsWith("tel:") || url.toLowerCase().startsWith("http://")
-                    || url.toLowerCase().startsWith("https://");
+            String urlLower = url.toLowerCase();
+            return urlLower.startsWith("mailto:") || urlLower.startsWith("geo:") || urlLower.startsWith("tel:")
+                    || urlLower.startsWith("http://") || urlLower.startsWith("https://");
         }
 
         private boolean chapterExists(String chapter, YbkFileReader ybkRdr, String chap) throws IOException {
@@ -1383,8 +1396,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             try {
                 Chapter nextChapter = getNextBookWalkerChapter();
                 if (nextChapter == null) {
-                    setResult(RESULT_OK, new Intent().putExtra(Main.BOOK_WALK_INDEX, getIntent().getExtras().getInt(
-                            Main.BOOK_WALK_INDEX, -1)));
+                    setResult(
+                            RESULT_OK,
+                            new Intent().putExtra(Main.BOOK_WALK_INDEX,
+                                    getIntent().getExtras().getInt(Main.BOOK_WALK_INDEX, -1)));
                     finish();
                 } else {
                     setProgressBarIndeterminateVisibility(true);
@@ -1465,9 +1480,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     private void startNoteEditForResult(final Intent intent) {
-        startActivityForResult(new Intent(getBaseContext(), AnnotationDialog.class).putExtra(YbkDAO.VERSE,
-                intent.getIntExtra(YbkDAO.VERSE, -1)).putExtra(YbkDAO.CHAPTER_FILENAME,
-                intent.getStringExtra(YbkDAO.CHAPTER_FILENAME)).putExtra(YbkDAO.BOOK_FILENAME,
-                intent.getStringExtra(YbkDAO.BOOK_FILENAME)), CALL_NOTE_EDITED);
+        startActivityForResult(
+                new Intent(getBaseContext(), AnnotationDialog.class)
+                        .putExtra(YbkDAO.VERSE, intent.getIntExtra(YbkDAO.VERSE, -1))
+                        .putExtra(YbkDAO.CHAPTER_FILENAME, intent.getStringExtra(YbkDAO.CHAPTER_FILENAME))
+                        .putExtra(YbkDAO.BOOK_FILENAME, intent.getStringExtra(YbkDAO.BOOK_FILENAME)), CALL_NOTE_EDITED);
     }
 }
