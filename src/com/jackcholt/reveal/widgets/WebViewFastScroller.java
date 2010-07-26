@@ -146,8 +146,8 @@ class WebViewFastScroller {
     private void useThumbDrawable(Drawable drawable, Context context) {
         mThumbDrawable = drawable;
 
-        mThumbW = 64; // mCurrentThumb.getIntrinsicWidth();
-        mThumbH = 52; // mCurrentThumb.getIntrinsicHeight();
+        mThumbH = drawable.getIntrinsicHeight();
+        mThumbW = (int) (mThumbH * 1.2);
 
         mChangedBounds = true;
     }

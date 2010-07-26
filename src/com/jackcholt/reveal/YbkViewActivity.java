@@ -1231,13 +1231,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     } else {
                         // pop up a context menu
                         try {
+                            int verse = obtainVerse(url);
+                            if (verse > 0) {
                             startActivityForResult(
                                     new Intent(view.getContext(), VerseContextDialog.class)
-                                            .putExtra(YbkDAO.VERSE, obtainVerse(url))
+                                            .putExtra(YbkDAO.VERSE, verse)
                                             .putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
                                             .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
                                     CALL_VERSE_CONTEXT_MENU);
-
+                            }
                         } catch (NumberFormatException nfe) {
                             Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG)
                                     .show();
@@ -1327,7 +1329,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         private int obtainVerse(final String url) {
-            String verseInfo = url.split("@")[1];
+            String[] verseUrlParts = url.split("@");
+            if (verseUrlParts.length < 1) {
+                return 0;
+            }
+            String verseInfo = verseUrlParts[1];
             return Integer.valueOf(verseInfo.split(",")[0]);
         }
 
