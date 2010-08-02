@@ -6,7 +6,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.flurry.android.FlurryAgent;
 
 /**
  * RefreshDialog for asking people to please wait for refresh
@@ -35,14 +34,12 @@ public class RefreshDialog extends Dialog {
             // Normal refresh Dialog
             messageView.setText(R.string.wait_for_refresh);
             setTitle(R.string.refresh_title);
-            FlurryAgent.onEvent("RefreshTitles");
             break;
 
         case UPGRADE_DB:
             // Upgrade Dialog
             messageView.setText(R.string.wait_for_refresh);
             setTitle(R.string.upgrade_database);
-            FlurryAgent.onEvent("UpgradeDatabase");
             break;
         }
     }

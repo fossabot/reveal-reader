@@ -9,7 +9,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
-import com.flurry.android.FlurryAgent;
 
 /**
  * ErrorDialog for informing users of something that happening
@@ -30,8 +29,6 @@ public class ErrorDialog extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Util.startFlurrySession(this);
-        FlurryAgent.onEvent("ErrorDialog");
         setContentView(R.layout.dialog_error);
 
         final CheckBox exitCheckBox = (CheckBox) findViewById(R.id.exit_reveal_btn);
@@ -70,7 +67,6 @@ public class ErrorDialog extends Activity {
                 }
             }
         });
-        FlurryAgent.onEvent("ErrorDialog");
         setTitle(R.string.unexpected_error_title);
     }
 
@@ -135,7 +131,6 @@ public class ErrorDialog extends Activity {
     @Override
     protected void onStart() {
         try {
-            Util.startFlurrySession(this);
             super.onStart();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -149,7 +144,6 @@ public class ErrorDialog extends Activity {
     protected void onStop() {
         try {
             super.onStop();
-            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

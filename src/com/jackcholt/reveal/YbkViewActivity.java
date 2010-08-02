@@ -42,7 +42,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
@@ -84,9 +83,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-
-            Util.startFlurrySession(this);
-            FlurryAgent.onEvent(TAG);
 
             initDisplayFeatures();
 
@@ -324,7 +320,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     @Override
     protected void onStart() {
         try {
-            Util.startFlurrySession(this);
             super.onStart();
 
         } catch (RuntimeException rte) {
@@ -339,8 +334,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     protected void onStop() {
         try {
             super.onStop();
-
-            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -538,11 +531,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             }
                         } catch (IOException ioe) {
                             Log.e(TAG, "Couldn't load chapter from history. " + ioe.getMessage());
-                            FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");
                         }
                     } else {
                         Log.e(TAG, "Couldn't load chapter from history. ");
-                        FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");
                     }
 
                     setProgressBarIndeterminateVisibility(false);
@@ -593,12 +584,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 }
                             } catch (IOException ioe) {
                                 Log.e(TAG, "Couldn't load chapter from bookmarks. " + ioe.getMessage());
-                                FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks",
-                                        "WARNING");
                             }
                         } else {
                             Log.e(TAG, "Couldn't load chapter from bookmarks");
-                            FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");
                         }
 
                         setProgressBarIndeterminateVisibility(false);

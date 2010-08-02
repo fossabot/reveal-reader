@@ -6,7 +6,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
 import android.widget.Button;
 
-import com.flurry.android.FlurryAgent;
+
 
 /**
  * AboutDialog for telling people who we be :)
@@ -17,8 +17,7 @@ import com.flurry.android.FlurryAgent;
 public class AboutDialog extends Dialog {
     public AboutDialog() {
         super(Main.getMainApplication());
-        FlurryAgent.onEvent("AboutDialog");
-
+        
         setContentView(R.layout.dialog_about);
 
         Button close = (Button) findViewById(R.id.close_about_btn);

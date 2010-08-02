@@ -14,7 +14,7 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
-import com.flurry.android.FlurryAgent;
+
 import com.jackcholt.reveal.data.AnnotHilite;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -39,9 +39,7 @@ public class AnnotationDialog extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Util.startFlurrySession(this);
-        FlurryAgent.onEvent("AnnotationDialog");
+        super.onCreate(savedInstanceState);        
         
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setTheme(android.R.style.Theme_Dialog);

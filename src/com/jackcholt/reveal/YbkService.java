@@ -20,7 +20,6 @@ import android.os.Looper;
 import android.os.Process;
 import android.preference.PreferenceManager;
 
-import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -65,7 +64,6 @@ public class YbkService extends Service {
     @Override
     public void onCreate() {
         try {
-            Util.startFlurrySession(this);
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             HandlerThread libThread = new HandlerThread("YbkUpdateWorker");
             libThread.start();
@@ -274,7 +272,6 @@ public class YbkService extends Service {
         try {
             mLibLooper.quit();
             mDownloadLooper.quit();
-            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
