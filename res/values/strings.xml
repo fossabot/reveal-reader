@@ -37,7 +37,7 @@
 	<string name="update_url">http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=</string>
 	<string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
 	<string name="ebook_update_complete">Finished Updating eBook Catalog</string>
-	<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella</string>
+	<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella, Blake VandeMerwe</string>
 	<string name="contact">Contact Info for our developers.  jackcholt@gmail.com dave@thepackhams.com</string>
 	<string name="website">Please Visit our website for HELP or More information  http://revealreader.thepackhams.com</string>
 	<string name="close">Close</string>
