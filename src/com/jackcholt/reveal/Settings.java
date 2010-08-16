@@ -42,7 +42,6 @@ public class Settings extends PreferenceActivity {
 
             EditTextPreference defaultEbookDir = (EditTextPreference) findPreference("default_ebook_dir");
             defaultEbookDir.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-                @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if (((String) newValue).startsWith(Environment.getExternalStorageDirectory().toString())) {
                         returnIntent.putExtra(EBOOK_DIR_CHANGED, true);

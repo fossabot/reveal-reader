@@ -448,9 +448,9 @@ public class Util {
         String hiliteDivStart = "";
         String hiliteDivEnd = "";
         if (colorHex.length() > 2) {
-            hiliteDivStart = (ah.color == Color.TRANSPARENT) ? "" : "<div style=\"background : #"
+            hiliteDivStart = (ah.color == Color.TRANSPARENT) ? "" : "<span style=\"background : #"
                     + colorHex.substring(2) + "; color : black;\">";
-            hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</div>";
+            hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</span>";
         }
         return new StringBuffer().append(hiliteDivStart).append(annot).append(content).append(hiliteDivEnd);
     }
