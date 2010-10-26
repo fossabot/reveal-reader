@@ -1456,6 +1456,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     public void onLongPress(MotionEvent e) {
+    	WebView wv = findWebView();
+    	wv.scrollTo(0, wv.getScrollY() + 10);
     }
 
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -1468,7 +1470,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public boolean onSingleTapUp(MotionEvent e) {
         return true;
     }
-
+    
     public String getBookFileName() {
         return mCurrChap.getBookFileName();
     }
