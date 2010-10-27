@@ -143,10 +143,7 @@
 	</string-array>
 	<string name="changing_charset">Re-adding book using {0} character set. It should appear in the list momentarily. </string>
 	<string name="motd_title">Message of the Day</string>
-	<string name="version_notes_title">Version Notes</string>
-	
-	
-	
+	<string name="version_notes_title">Version Notes</string>	
 	<string name="paypalURL">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4146444</string>
 	<string name="title_download_url_ourDB">http://revealreader.thepackhams.com/ebooks</string>
 	<string name="no_swipe_available">No Swipe Info Available Here...</string>
@@ -187,4 +184,5 @@
     <string name="label_scroll_tab">Show Scroll Tab</string>
     <string name="summary_on_scroll_tab">Scroll tab is enabled</string>
     <string name="summary_off_scroll_tab">Scroll tab is disabled</string>
+    <string name="annot_brow">Notes Browser</string>
 </resources>

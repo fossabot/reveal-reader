@@ -697,7 +697,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      */
     private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack, boolean reloading)
             throws IOException {
-        boolean bookLoaded = false;
+        
+        if (null == mYbkReader) {
+            return false;
+        }
+        
         YbkFileReader ybkReader = mYbkReader;
 
         if (needToSaveBookChapterToHistory(chapter)) {
@@ -732,18 +736,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         // Only create a new YbkFileReader if we're opening a different book
-        if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
+        if (isOpeningNewBook(filePath, ybkReader)) {
             ybkReader.unuse();
             ybkReader = mYbkReader = YbkFileReader.getReader(this, filePath);
         }
-        Book book = ybkReader.getBook();
-
+        
         try {
             if (chap.equals("index")) {
-                String tryFileToOpen = "\\" + book.shortTitle + ".html.gz";
+                String tryFileToOpen = "\\" + ybkReader.getBook().shortTitle + ".html.gz";
                 content = ybkReader.readInternalFile(tryFileToOpen);
                 if (content == null) {
-                    tryFileToOpen = "\\" + book.shortTitle + ".html";
+                    tryFileToOpen = "\\" + ybkReader.getBook().shortTitle + ".html";
                     content = ybkReader.readInternalFile(tryFileToOpen);
                 }
 
@@ -836,20 +839,20 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             // Inside htmlize we now have support for night mode
             content = Util.htmlize(content, getSharedPrefs(), nf);
             content = Util.annotHiliteContent(content,
-                    YbkDAO.getInstance(this).getChapterAnnotHilites(book.fileName, chap), this);
+                    YbkDAO.getInstance(this).getChapterAnnotHilites(ybkReader.getBook().fileName, chap), this);
 
             if (!reloading && isShowInPopup(chapter)) {
                 Log.d(TAG, "Showing chapter in popup");
-                showChapterInPopup(content, book, strUrl);
+                showChapterInPopup(content, ybkReader.getBook(), strUrl);
             } else {
                 findWebView().loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
                 mCurrChap.setChapOrderNbr((null == chapObj) ? -1 : chapObj.orderNumber);
                 mCurrChap.setNavFile(nf);
-                mCurrChap.setBookFileName(book.fileName);
+                mCurrChap.setBookFileName(ybkReader.getBook().fileName);
                 mCurrChap.setChapFileName(chap);
             }
 
-            bookLoaded = true;
+            return true;
 
         } catch (IOException e) {
             findWebView().loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain", "utf-8");
@@ -857,8 +860,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
             return false;
         }
+    }
 
-        return bookLoaded;
+    private boolean isOpeningNewBook(String filePath, YbkFileReader ybkReader) {
+        return null == ybkReader.getFilename() || !ybkReader.getFilename().equalsIgnoreCase(filePath);
     }
 
     private String parseNavFile(String content, int posEnd) {
@@ -1241,6 +1246,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     dataString = URLDecoder.decode(url.substring(contentUriLength + 1), "UTF-8");
                 } catch (UnsupportedEncodingException uee) {
                     dataString = url.substring(contentUriLength + 1);
+                } catch (IllegalArgumentException iae) {
+                    dataString = url.substring(contentUriLength + 1);                    
                 }
 
                 String httpString = dataString;
