@@ -7,7 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import com.flurry.android.FlurryAgent;
 
 /**
  * A class to do all the work of reading and accessing YBK files.
@@ -79,8 +78,7 @@ public class YbkTitleReader {
         byte[] indexArray = new byte[indexLength];
 
         if (dataInput.read(indexArray) < indexLength) {
-            FlurryAgent.onError("YbkTitleReader", "Index Length Greater than length of file", "WARNING");
-            throw new InvalidFileFormatException("Index Length is greater than length of file.");
+              throw new InvalidFileFormatException("Index Length is greater than length of file.");
         }
 
         // Read the index information into the internalFiles list
@@ -113,8 +111,6 @@ public class YbkTitleReader {
                 } catch (IOException ioe) {
                     Log.w("YbkFileReader",
                             "YBK file's DataInputStream had to be closed and reopened. " + ioe.getMessage());
-                    FlurryAgent.onError("YbkTitleReader", "YBK file's DataInputStream had to be closed and reopened",
-                            "WARNING");
                     dataInput.close();
                     initDataStream();
                 }
@@ -144,7 +140,6 @@ public class YbkTitleReader {
      */
     public String readBindingFile(final int offset, final int len) throws IOException, InvalidFileFormatException {
         if (0 == len) {
-            FlurryAgent.onError("YbkTitleReader", "The YBK file contains no binding.html", "WARNING");
             throw new InvalidFileFormatException("The YBK file contains no binding.html");
         }
         
@@ -153,8 +148,6 @@ public class YbkTitleReader {
         try {
             dataInput.reset();
         } catch (IOException ioe) {
-            FlurryAgent
-                    .onError("YbkTitleReader", "YBK file's DataInputStream had to be closed and reopened", "WARNING");
             Log.w("YbkTitleReader", "YBK file's DataInputStream had to be closed and reopened. " + ioe.getMessage());
             dataInput.close();
             initDataStream();

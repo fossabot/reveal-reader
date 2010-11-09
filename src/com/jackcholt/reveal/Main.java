@@ -52,7 +52,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
@@ -116,15 +115,10 @@ public class Main extends ListActivity {
                 mCurrentFolder = savedInstanceState.getString("mCurrentFolder");
             }
 
-            // Disable the Flurry Uncaught Exception Handler
-            FlurryAgent.setCaptureUncaughtExceptions(false);
             // and enable the one that emails us :)
             ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
 
             mApplication = this;
-
-            Util.startFlurrySession(this);
-            FlurryAgent.onEvent("Main");
 
             // If this is the first time we've run (the default) then we need to init some values
             if (getSharedPrefs().getBoolean("first_run", true)) {
@@ -240,7 +234,6 @@ public class Main extends ListActivity {
 
     @Override
     protected void onStart() {
-        Util.startFlurrySession(this);
         super.onStart();
     }
 
@@ -249,8 +242,6 @@ public class Main extends ListActivity {
     protected void onStop() {
         try {
             super.onStop();
-            FlurryAgent.onEndSession(this);
-
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -667,7 +658,6 @@ public class Main extends ListActivity {
                 ((ArrayAdapter<Book>) getListView().getAdapter()).remove(book);
                 Map<String, String> filenameMap = new HashMap<String, String>();
                 filenameMap.put("filename", book.fileName);
-                FlurryAgent.onEvent("ChangeCharset", filenameMap);
                 Toast.makeText(
                         Main.this,
                         MessageFormat.format(getResources().getString(R.string.changing_charset),
@@ -729,8 +719,7 @@ public class Main extends ListActivity {
                     // remove the book from the on-screen list
                     ((ArrayAdapter<Book>) getListView().getAdapter()).remove(book);
                     Map<String, String> filenameMap = new HashMap<String, String>();
-                    filenameMap.put("filename", book.fileName);
-                    FlurryAgent.onEvent("DeleteBook", filenameMap);
+                    filenameMap.put("filename", book.fileName);;
                 }
             };
             String message = MessageFormat.format(getResources().getString(R.string.confirm_delete_ebook), book.title,
@@ -1124,7 +1113,6 @@ public class Main extends ListActivity {
         SafeRunnable action = new SafeRunnable() {
             @Override
             public void protectedRun() {
-                FlurryAgent.onEvent("Reset");
                 // cleanup current library directory
                 File libDir = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                         Settings.DEFAULT_EBOOK_DIRECTORY));

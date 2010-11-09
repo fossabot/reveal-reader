@@ -4,7 +4,6 @@ import java.text.MessageFormat;
 
 import android.content.Context;
 
-import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -23,7 +22,7 @@ public abstract class DeleteBookmarkDialog {
             public void protectedRun() {
                 YbkDAO ybkDao = YbkDAO.getInstance(_this);
                 ybkDao.deleteBookmark(hist);
-                FlurryAgent.onEvent("DeleteBookmark");
+
             }
         };
 

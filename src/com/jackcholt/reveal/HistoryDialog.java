@@ -3,7 +3,6 @@ package com.jackcholt.reveal;
 import java.io.IOException;
 import java.util.List;
 
-import com.flurry.android.FlurryAgent;
 
 import android.app.ListActivity;
 import android.content.Intent;
@@ -21,8 +20,6 @@ public class HistoryDialog extends ListActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            Util.startFlurrySession(this);
-            FlurryAgent.onEvent("HistoryDialog");
 
             setContentView(R.layout.dialog_history);
 
@@ -69,7 +66,6 @@ public class HistoryDialog extends ListActivity {
     @Override
     protected void onStart() {
         try {
-            Util.startFlurrySession(this);
             super.onStart();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -83,7 +79,6 @@ public class HistoryDialog extends ListActivity {
     protected void onStop() {
         try {
             super.onStop();
-            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

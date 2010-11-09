@@ -12,8 +12,6 @@ import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.widget.Toast;
 
-import com.flurry.android.FlurryAgent;
-
 public class Settings extends PreferenceActivity {
 
     public static final String DEFAULT_EBOOK_DIRECTORY = Environment.getExternalStorageDirectory().toString()
@@ -42,12 +40,8 @@ public class Settings extends PreferenceActivity {
             // always return an OK result
             setResult(RESULT_OK, returnIntent);
 
-            Util.startFlurrySession(this);
-            FlurryAgent.onEvent("SettingScreen");
-
             EditTextPreference defaultEbookDir = (EditTextPreference) findPreference("default_ebook_dir");
             defaultEbookDir.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-                @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if (((String) newValue).startsWith(Environment.getExternalStorageDirectory().toString())) {
                         returnIntent.putExtra(EBOOK_DIR_CHANGED, true);
@@ -124,7 +118,6 @@ public class Settings extends PreferenceActivity {
     @Override
     protected void onStart() {
         try {
-            Util.startFlurrySession(this);
             super.onStart();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -146,7 +139,6 @@ public class Settings extends PreferenceActivity {
             // Don't forget to commit your edits!!!
             editor.commit();
             setResult(RESULT_OK, returnIntent);
-            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

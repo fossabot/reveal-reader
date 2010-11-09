@@ -17,7 +17,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.flurry.android.FlurryAgent;
+
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class MoveDialog extends ListActivity {
@@ -29,8 +29,6 @@ public class MoveDialog extends ListActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            Util.startFlurrySession(this);
-            FlurryAgent.onEvent("MoveDialog");
 
             setContentView(R.layout.dialog_move);
             registerForContextMenu(getListView());
@@ -114,7 +112,6 @@ public class MoveDialog extends ListActivity {
     @Override
     protected void onStart() {
         try {
-            Util.startFlurrySession(this);
             super.onStart();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -128,7 +125,6 @@ public class MoveDialog extends ListActivity {
     protected void onStop() {
         try {
             super.onStop();
-            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

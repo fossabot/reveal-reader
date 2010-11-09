@@ -156,8 +156,7 @@ public class YbkFileReader {
             throws FileNotFoundException, IOException {
         // clean up the existing book if any
         closeReader(fileName);
-        YbkDAO ybkDao = YbkDAO.getInstance(ctx);
-        ybkDao.deleteBook(fileName);
+        YbkDAO.getInstance(ctx).deleteBook(fileName);
 
         YbkFileReader reader = new YbkFileReader(ctx, fileName);
         reader.mCharset = charset;
@@ -371,9 +370,8 @@ public class YbkFileReader {
      * @throws IOException
      */
     public Book populateBook() throws IOException {
-        String fileName = mFilename;
         populateFileData();
-        mBook = YbkDAO.getInstance(mCtx).insertBook(fileName, mCharset, mTitle, mShortTitle, mChapterIndex);
+        mBook = YbkDAO.getInstance(mCtx).insertBook(mFilename, mCharset, mTitle, mShortTitle, mChapterIndex);
         return mBook;
     }
 

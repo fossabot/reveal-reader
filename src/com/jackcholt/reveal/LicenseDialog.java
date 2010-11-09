@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.flurry.android.FlurryAgent;
 
 
 /**
@@ -21,7 +20,6 @@ import com.flurry.android.FlurryAgent;
 public class LicenseDialog extends Dialog {
 	public LicenseDialog(Context _this) {
 	    super(_this);
-		FlurryAgent.onEvent("LicenseDialog");
 	    setContentView(R.layout.dialog_license);
 	
 	    Button close = (Button) findViewById(R.id.close_about_btn);

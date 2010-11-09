@@ -28,7 +28,6 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 
-import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.PopDialogCheck;
 import com.jackcholt.reveal.data.PopDialogDAO;
 
@@ -53,7 +52,6 @@ public class PopupDialogBase extends Dialog {
         mMessageURL = messageURL;
         mPrefix = prefix;
 
-        FlurryAgent.onEvent(prefix);
         setContentView(R.layout.dialog_dismissable);
         setTitle(title);
 

@@ -42,7 +42,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
@@ -84,9 +83,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-
-            Util.startFlurrySession(this);
-            FlurryAgent.onEvent(TAG);
 
             initDisplayFeatures();
 
@@ -324,7 +320,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     @Override
     protected void onStart() {
         try {
-            Util.startFlurrySession(this);
             super.onStart();
 
         } catch (RuntimeException rte) {
@@ -339,8 +334,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     protected void onStop() {
         try {
             super.onStop();
-
-            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -538,11 +531,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             }
                         } catch (IOException ioe) {
                             Log.e(TAG, "Couldn't load chapter from history. " + ioe.getMessage());
-                            FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");
                         }
                     } else {
                         Log.e(TAG, "Couldn't load chapter from history. ");
-                        FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from history", "WARNING");
                     }
 
                     setProgressBarIndeterminateVisibility(false);
@@ -593,12 +584,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 }
                             } catch (IOException ioe) {
                                 Log.e(TAG, "Couldn't load chapter from bookmarks. " + ioe.getMessage());
-                                FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks",
-                                        "WARNING");
                             }
                         } else {
                             Log.e(TAG, "Couldn't load chapter from bookmarks");
-                            FlurryAgent.onError("YbkViewActivity", "Couldn't load chapter from bookmarks", "WARNING");
                         }
 
                         setProgressBarIndeterminateVisibility(false);
@@ -709,7 +697,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      */
     private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack, boolean reloading)
             throws IOException {
-        boolean bookLoaded = false;
+        
+        if (null == mYbkReader) {
+            return false;
+        }
+        
         YbkFileReader ybkReader = mYbkReader;
 
         if (needToSaveBookChapterToHistory(chapter)) {
@@ -744,18 +736,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         // Only create a new YbkFileReader if we're opening a different book
-        if (!ybkReader.getFilename().equalsIgnoreCase(filePath)) {
+        if (isOpeningNewBook(filePath, ybkReader)) {
             ybkReader.unuse();
             ybkReader = mYbkReader = YbkFileReader.getReader(this, filePath);
         }
-        Book book = ybkReader.getBook();
-
+        
         try {
             if (chap.equals("index")) {
-                String tryFileToOpen = "\\" + book.shortTitle + ".html.gz";
+                String tryFileToOpen = "\\" + ybkReader.getBook().shortTitle + ".html.gz";
                 content = ybkReader.readInternalFile(tryFileToOpen);
                 if (content == null) {
-                    tryFileToOpen = "\\" + book.shortTitle + ".html";
+                    tryFileToOpen = "\\" + ybkReader.getBook().shortTitle + ".html";
                     content = ybkReader.readInternalFile(tryFileToOpen);
                 }
 
@@ -848,20 +839,20 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             // Inside htmlize we now have support for night mode
             content = Util.htmlize(content, getSharedPrefs(), nf);
             content = Util.annotHiliteContent(content,
-                    YbkDAO.getInstance(this).getChapterAnnotHilites(book.fileName, chap), this);
+                    YbkDAO.getInstance(this).getChapterAnnotHilites(ybkReader.getBook().fileName, chap), this);
 
             if (!reloading && isShowInPopup(chapter)) {
                 Log.d(TAG, "Showing chapter in popup");
-                showChapterInPopup(content, book, strUrl);
+                showChapterInPopup(content, ybkReader.getBook(), strUrl);
             } else {
                 findWebView().loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
                 mCurrChap.setChapOrderNbr((null == chapObj) ? -1 : chapObj.orderNumber);
                 mCurrChap.setNavFile(nf);
-                mCurrChap.setBookFileName(book.fileName);
+                mCurrChap.setBookFileName(ybkReader.getBook().fileName);
                 mCurrChap.setChapFileName(chap);
             }
 
-            bookLoaded = true;
+            return true;
 
         } catch (IOException e) {
             findWebView().loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain", "utf-8");
@@ -869,8 +860,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
             return false;
         }
+    }
 
-        return bookLoaded;
+    private boolean isOpeningNewBook(String filePath, YbkFileReader ybkReader) {
+        return null == ybkReader.getFilename() || !ybkReader.getFilename().equalsIgnoreCase(filePath);
     }
 
     private String parseNavFile(String content, int posEnd) {
@@ -1231,13 +1224,15 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     } else {
                         // pop up a context menu
                         try {
+                            int verse = obtainVerse(url);
+                            if (verse > 0) {
                             startActivityForResult(
                                     new Intent(view.getContext(), VerseContextDialog.class)
-                                            .putExtra(YbkDAO.VERSE, obtainVerse(url))
+                                            .putExtra(YbkDAO.VERSE, verse)
                                             .putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
                                             .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
                                     CALL_VERSE_CONTEXT_MENU);
-
+                            }
                         } catch (NumberFormatException nfe) {
                             Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG)
                                     .show();
@@ -1251,6 +1246,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     dataString = URLDecoder.decode(url.substring(contentUriLength + 1), "UTF-8");
                 } catch (UnsupportedEncodingException uee) {
                     dataString = url.substring(contentUriLength + 1);
+                } catch (IllegalArgumentException iae) {
+                    dataString = url.substring(contentUriLength + 1);                    
                 }
 
                 String httpString = dataString;
@@ -1327,7 +1324,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         private int obtainVerse(final String url) {
-            String verseInfo = url.split("@")[1];
+            String[] verseUrlParts = url.split("@");
+            if (verseUrlParts.length < 1) {
+                return 0;
+            }
+            String verseInfo = verseUrlParts[1];
             return Integer.valueOf(verseInfo.split(",")[0]);
         }
 
@@ -1462,6 +1463,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     public void onLongPress(MotionEvent e) {
+    	WebView wv = findWebView();
+    	wv.scrollTo(0, wv.getScrollY() + 10);
     }
 
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -1474,7 +1477,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public boolean onSingleTapUp(MotionEvent e) {
         return true;
     }
-
+    
     public String getBookFileName() {
         return mCurrChap.getBookFileName();
     }
