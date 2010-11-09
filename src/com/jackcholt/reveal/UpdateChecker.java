@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.os.Process;
 import android.widget.Toast;
 
+import com.flurry.android.FlurryAgent;
 
 /**
  * Checks for updates to the program
@@ -34,6 +35,7 @@ public class UpdateChecker {
 
 		try {
 			// Get the XML update Version to prompt user to get a new Update from the market
+			FlurryAgent.onEvent("UpdateCheck");
 			URLConnection cnVersion;
 			URL urlVersion = new URL(
 					"http://revealreader.thepackhams.com/revealVersion.xml?ClientVer="

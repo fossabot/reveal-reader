@@ -62,6 +62,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.R.style;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.AnnotHilite;
@@ -767,6 +768,7 @@ public class Util {
             }
             success = true;
         } catch (IOException ioe) {
+            FlurryAgent.onError("fetchTitle", filename, "WARNING");
             ReportError.reportError("Missing eBook: " + filename + ".\n" + ioe.getMessage(), false);
             throw ioe;
         } finally {
@@ -1141,6 +1143,31 @@ public class Util {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Start flurry session.
+     * 
+     * @param context
+     */
+    public static void startFlurrySession(Context context) {
+
+        if (Global.DEBUG == 0) {
+            // Release Key for use of the END USERS
+            FlurryAgent.onStartSession(context, "BLRRZRSNYZ446QUWKSP4");
+            FlurryAgent.onEvent(shouldDisableAnalytics(context) ? "LocationDisabled" : "LocationEnabled");
+        } else {
+            // Development key for use of the DEVELOPMENT TEAM
+            FlurryAgent.onStartSession(context, "VYRRJFNLNSTCVKBF73UP");
+        }
+
+        if (shouldDisableAnalytics(context)) {
+            FlurryAgent.setReportLocation(false);
+        }
+    }
+
+    private static boolean shouldDisableAnalytics(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean("disable_analytics", false);
     }
 
     public static void thumbOnlineUpdate(final String eBookName) {

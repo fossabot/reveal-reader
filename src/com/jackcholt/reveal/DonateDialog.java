@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.webkit.WebView;
 
-
+import com.flurry.android.FlurryAgent;
 
 /**
  * DonateDialog for online Donations system
@@ -36,6 +36,7 @@ public class DonateDialog extends Dialog {
     }
 
     public static DonateDialog create(Context _this) {
+        FlurryAgent.onEvent("DonateDialog");
         DonateDialog dlg = new DonateDialog(_this);
         return dlg;
     }

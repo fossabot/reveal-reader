@@ -11,3 +11,10 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+What is Flurry Analytics?
+
+Flurry Analytics provides accurate, real time data to developers about how consumers use their mobile applications, as well as how applications are performing across different handsets. Application developers receive aggregated usage and performance data, as well as robust reporting and analysis tools. With this data, developers can identify issues and opportunities, create a more informed product roadmap, increase retention and grow their user base.
+
+How does Flurry Analytics work?
+
+Flurry Analytics places a lightweight agent into an application, so that performance data are tracked, logged and reported back for analysis. This information is confidential and available only to the developer to analyze in aggregate. Individual user data is not identifiable. Developers are provided a wealth of metrics around usage behavior, any custom event they choose to track and technical information about the device, firmware version, carrier and more. 

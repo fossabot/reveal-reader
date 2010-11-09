@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
+import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
@@ -34,6 +35,8 @@ public class BookmarkDialog extends ListActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
+            Util.startFlurrySession(this);
+            FlurryAgent.onEvent("BookMarkDialog");
 
             setContentView(R.layout.dialog_bookmark);
             registerForContextMenu(getListView());
@@ -88,6 +91,7 @@ public class BookmarkDialog extends ListActivity {
     @Override
     protected void onStart() {
         try {
+            Util.startFlurrySession(this);
             super.onStart();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -101,7 +105,7 @@ public class BookmarkDialog extends ListActivity {
     protected void onStop() {
         try {
             super.onStop();
-
+            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

@@ -34,6 +34,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Category;
 import com.jackcholt.reveal.data.Title;
@@ -64,6 +65,9 @@ public class TitleBrowser extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
+
+            Util.startFlurrySession(this);
+            FlurryAgent.onEvent("TitleBrowser");
 
             Map<String, String> flurryMap = new HashMap<String, String>();
             flurryMap.put("eBook Downloaded", "eBookname");
@@ -113,6 +117,7 @@ public class TitleBrowser extends ListActivity {
     @Override
     protected void onStart() {
         try {
+            Util.startFlurrySession(this);
             super.onStart();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -125,6 +130,7 @@ public class TitleBrowser extends ListActivity {
     protected void onStop() {
         try {
             super.onStop();
+            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -163,6 +169,7 @@ public class TitleBrowser extends ListActivity {
             if (selected instanceof Title) {
                 if (mBusy) {
                     Toast.makeText(this, R.string.ebook_download_busy, Toast.LENGTH_LONG).show();
+                    FlurryAgent.onError("TitleBrowser", "Download Busy", "WARNING");
                 } else {
                     downloadTitle((Title) selected);
                 }
@@ -259,6 +266,11 @@ public class TitleBrowser extends ListActivity {
                 }
             }
         };
+        // Create a map and add the name of the downloaded eBook to it
+        Map<String, String> flurryMap = new HashMap<String, String>();
+        flurryMap.put("eBook Downloaded", title.name);
+        FlurryAgent.onEvent("TitleBrowser", flurryMap);
+
         SafeRunnable action = new SafeRunnable() {
             @Override
             public void protectedRun() {

@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Looper;
 import android.os.Process;
 import android.webkit.WebView;
+import com.flurry.android.FlurryAgent;
 
 /**
  * Reports Errors in the program to the Reveal Website VIA URL with "?errorString"
@@ -21,7 +22,7 @@ public class ReportError {
 
         try {
             // Send the errorToReport string to the website.
-
+            FlurryAgent.onEvent("ReportErrorToWebsite");
             WebView webView = new WebView(Main.getMainApplication());
             webView.clearCache(true);
             webView.getSettings().setJavaScriptEnabled(true);

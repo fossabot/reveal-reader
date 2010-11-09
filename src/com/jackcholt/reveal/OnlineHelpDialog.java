@@ -5,6 +5,7 @@ import android.content.Context;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.flurry.android.FlurryAgent;
 
 /**
  * HelpDialog for online HELP system
@@ -15,6 +16,8 @@ import android.webkit.WebViewClient;
 public class OnlineHelpDialog extends Dialog {
     public OnlineHelpDialog(Context _this) {
         super(_this);
+
+        FlurryAgent.onEvent("OnlineHelp");
 
         setContentView(R.layout.dialog_help);
         String title;

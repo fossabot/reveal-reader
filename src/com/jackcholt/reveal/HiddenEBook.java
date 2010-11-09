@@ -6,6 +6,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.flurry.android.FlurryAgent;
+
 /**
  * Hidden eBook notification so people dont keep downloading it
  * 
@@ -26,6 +28,7 @@ public class HiddenEBook extends Dialog {
         });
         messageView.setText(R.string.hidden_ebook);
         setTitle(R.string.hidden_ebook_title);
+        FlurryAgent.onEvent("HiddenEBook");
     }
 
     public static HiddenEBook create(Context _this) {

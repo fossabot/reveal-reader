@@ -37,7 +37,7 @@
 	<string name="update_url">http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=</string>
 	<string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
 	<string name="ebook_update_complete">Finished Updating eBook Catalog</string>
-	<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella, Blake VandeMerwe</string>
+	<string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella</string>
 	<string name="contact">Contact Info for our developers.  jackcholt@gmail.com dave@thepackhams.com</string>
 	<string name="website">Please Visit our website for HELP or More information  http://revealreader.thepackhams.com</string>
 	<string name="close">Close</string>
@@ -99,7 +99,7 @@
 	<string name="reveal_main_ebook_menu">Reveal :: eBook Directory</string>
 	<string name="chapter_not_found">\&quot;{0}\&quot; cannot be found.</string>
 	<string name="powered_by_our_own_db">Powered by our own DB  :)</string>
-	<string name="menu_license">License Info</string>
+	<string name="menu_license">License &amp; Analytics Info</string>
 	<string name="title_license">Reveal License</string>
 	<string name="menu_delete_ebook">Delete eBook</string>
 	<string name="menu_open_ebook">Open eBook</string>
@@ -143,7 +143,10 @@
 	</string-array>
 	<string name="changing_charset">Re-adding book using {0} character set. It should appear in the list momentarily. </string>
 	<string name="motd_title">Message of the Day</string>
-	<string name="version_notes_title">Version Notes</string>	
+	<string name="version_notes_title">Version Notes</string>
+	<string name="summary_on_disable_analytics">Analytics Location Off</string>
+	<string name="summary_off_disable_analytics">Analytics location is on</string>
+	<string name="disable_analytics">Disable Analytics</string>
 	<string name="paypalURL">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4146444</string>
 	<string name="title_download_url_ourDB">http://revealreader.thepackhams.com/ebooks</string>
 	<string name="no_swipe_available">No Swipe Info Available Here...</string>
@@ -184,5 +187,4 @@
     <string name="label_scroll_tab">Show Scroll Tab</string>
     <string name="summary_on_scroll_tab">Scroll tab is enabled</string>
     <string name="summary_off_scroll_tab">Scroll tab is disabled</string>
-    <string name="annot_brow">Notes Browser</string>
 </resources>

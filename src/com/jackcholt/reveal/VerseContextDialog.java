@@ -11,17 +11,21 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.flurry.android.FlurryAgent;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class VerseContextDialog extends ListActivity {
     public static final int ANNOTATE_ID = 0;
     public static final int GOTO_TOP_ID = 1;
     public static final String MENU_ITEM_TAG = "menu_item_id";
+    private static final String TAG = "reveal.VerseContextDialog";
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
+            Util.startFlurrySession(this);
+            FlurryAgent.onEvent(TAG);
 
             requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -61,6 +65,7 @@ public class VerseContextDialog extends ListActivity {
     protected void onStop() {
         try {
             super.onStop();
+            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {

@@ -20,6 +20,8 @@ import android.os.Looper;
 import android.os.Process;
 import android.preference.PreferenceManager;
 
+import com.flurry.android.FlurryAgent;
+import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
 
 /**
@@ -63,6 +65,7 @@ public class YbkService extends Service {
     @Override
     public void onCreate() {
         try {
+            Util.startFlurrySession(this);
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             HandlerThread libThread = new HandlerThread("YbkUpdateWorker");
             libThread.start();
@@ -93,18 +96,87 @@ public class YbkService extends Service {
             switch (intent.getExtras().getInt(ACTION_KEY)) {
             case ADD_BOOK:
                 Log.i(TAG, "Received request to add book: " + intent.getExtras().getString(TARGET_KEY));
-                if (null == intent.getExtras().getString(TARGET_KEY)) {
+                if (intent.getExtras().getString(TARGET_KEY) != null) {
+                    Runnable job = new SafeRunnable() {
+
+                        @Override
+                        public void protectedRun() {
+                            String bookName = intent.getStringExtra(TARGET_KEY).replaceFirst("\\.[^\\.]$", "");
+                            boolean succeeded;
+                            String message;
+                            YbkFileReader ybkRdr = null;
+                            try {
+                                // clean up any previous instance of the book
+                                YbkFileReader.closeReader(intent.getExtras().getString(TARGET_KEY));
+                                YbkDAO ybkDao = YbkDAO.getInstance(YbkService.this);
+                                ybkDao.deleteBook(intent.getExtras().getString(TARGET_KEY));
+
+                                String useCharset = intent.getExtras().getString(CHARSET_KEY);
+
+                                // kludge for the known Cyrillic books
+                                if (useCharset == null) {
+                                    if (intent.getExtras().getString(TARGET_KEY).equalsIgnoreCase("km.ybk")
+                                            || intent.getExtras().getString(TARGET_KEY).equalsIgnoreCase("vz.ybk")
+                                            || intent.getExtras().getString(TARGET_KEY).equalsIgnoreCase("nz.ybk")) {
+                                        useCharset = "CP1251";
+                                    } else {
+                                        useCharset = YbkFileReader.DEFAULT_YBK_CHARSET;
+                                    }
+                                }
+
+                                // Add the book.
+                                ybkRdr = YbkFileReader.addBook(YbkService.this, intent.getExtras()
+                                        .getString(TARGET_KEY), useCharset);
+                                Book book = ybkRdr.getBook();
+                                bookName = book.title == null ? bookName : book.title;
+                                message = "Added '" + bookName + "' to the library";
+                                succeeded = true;
+                            } catch (InvalidFileFormatException ioe) {
+                                succeeded = false;
+                                message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
+                                Util.displayError(Main.getMainApplication(), null, getResources().getString(
+                                        R.string.error_damaged_ebook), bookName);
+                            } catch (IOException ioe) {
+                                succeeded = false;
+                                message = "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.";
+                                Util.unexpectedError(Main.getMainApplication(), ioe, "book: "
+                                        + intent.getExtras().getString(TARGET_KEY));
+                            } finally {
+                                if (ybkRdr != null) {
+                                    ybkRdr.unuse();
+                                    ybkRdr = null;
+                                }
+                            }
+
+                            if (succeeded) {
+                                Log.i(TAG, message);
+                            } else {
+                                Log.e(TAG, message);
+                            }
+
+                            if (intent.getLongExtra(CALLBACKS_KEY, 0) == 0 || null == callbackMap) {
+                                return;
+                            }
+
+                            Completion[] comps = callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0));
+                            if (null == comps) {
+                                return;
+                            }
+
+                            for (int index = 0, compLen = comps.length; index < compLen; index++) {
+                                comps[index].completed(succeeded, message);
+                            }
+                        }
+                    };
+                    mLibHandler.post(job);
+                } else {
                     Log.e(TAG, "Add book request missing target.");
-                    break;
                 }
-
-                mLibHandler.post(new AddBookJob(intent));
-
                 break;
             case REMOVE_BOOK:
                 Log.i(TAG, "Received request to remove book: " + intent.getExtras().getString(TARGET_KEY));
                 if (intent.getExtras().getString(TARGET_KEY) != null) {
-                    Runnable removeJob = new SafeRunnable() {
+                    Runnable job = new SafeRunnable() {
                         @Override
                         public void protectedRun() {
                             String bookName = new File(intent.getExtras().getString(TARGET_KEY)).getName()
@@ -131,7 +203,7 @@ public class YbkService extends Service {
                             }
                         }
                     };
-                    mLibHandler.post(removeJob);
+                    mLibHandler.post(job);
                 } else {
                     Log.e(TAG, "Remove book request missing target.");
                 }
@@ -171,10 +243,10 @@ public class YbkService extends Service {
                 try {
                     Completion callbacks[] = callbackMap.get(Long.valueOf((long) Long.valueOf(intent.getExtras()
                             .getLong(CALLBACKS_KEY))));
-                    List<String> downloads = Util.fetchTitle(new File(intent.getExtras().getString(TARGET_KEY)),
-                            new URL(intent.getExtras().getString(SOURCE_KEY)),
-                            getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
-                            context, callbacks);
+                    List<String> downloads = Util
+                            .fetchTitle(new File(intent.getExtras().getString(TARGET_KEY)), new URL(intent.getExtras()
+                                    .getString(SOURCE_KEY)), getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
+                                    Settings.DEFAULT_EBOOK_DIRECTORY), context, callbacks);
 
                     if (downloads.isEmpty()) {
                         throw new FileNotFoundException();
@@ -186,9 +258,8 @@ public class YbkService extends Service {
                 } catch (IOException ioe) {
                     Log.e(TAG, "Unable to download '" + intent.getStringExtra(SOURCE_KEY) + "': " + ioe.toString());
                     for (Completion callback : callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0))) {
-                        callback.completed(false,
-                                "Could not download '" + new File(intent.getStringExtra(TARGET_KEY)).getName() + "'. "
-                                        + ioe.toString());
+                        callback.completed(false, "Could not download '"
+                                + new File(intent.getStringExtra(TARGET_KEY)).getName() + "'. " + ioe.toString());
                     }
                 }
             }
@@ -203,6 +274,7 @@ public class YbkService extends Service {
         try {
             mLibLooper.quit();
             mDownloadLooper.quit();
+            FlurryAgent.onEndSession(this);
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -224,8 +296,8 @@ public class YbkService extends Service {
      * @param callbacks (optional) completion callback
      */
     public static void requestAddBook(Context context, String target, String charset, Completion... callbacks) {
-        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_BOOK)
-                .putExtra(TARGET_KEY, target).putExtra(CHARSET_KEY, charset);
+        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, ADD_BOOK).putExtra(TARGET_KEY,
+                target).putExtra(CHARSET_KEY, charset);
 
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
@@ -262,8 +334,8 @@ public class YbkService extends Service {
      * @param callbacks (optional) completion callback
      */
     public static void requestDownloadBook(Context context, String source, String target, Completion... callbacks) {
-        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, DOWNLOAD_BOOK)
-                .putExtra(SOURCE_KEY, source).putExtra(TARGET_KEY, target);
+        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, DOWNLOAD_BOOK).putExtra(SOURCE_KEY,
+                source).putExtra(TARGET_KEY, target);
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
             callbackMap.put(callbackID, callbacks);
@@ -274,72 +346,6 @@ public class YbkService extends Service {
 
     public static void stop(Context ctx) {
         ctx.stopService(new Intent(ctx, YbkService.class));
-    }
-
-    private final class AddBookJob extends SafeRunnable {
-        private final Intent intent;
-
-        private AddBookJob(Intent intent) {
-            this.intent = intent;
-        }
-
-        @Override
-        public void protectedRun() {
-            String bookName = intent.getStringExtra(TARGET_KEY).replaceFirst("\\.[^\\.]$", "");
-            boolean succeeded = true;
-            YbkFileReader ybkRdr = null;
-            try {
-                // clean up any previous instance of the book
-                YbkFileReader.closeReader(intent.getStringExtra(TARGET_KEY));
-                YbkDAO.getInstance(YbkService.this).deleteBook(intent.getStringExtra(TARGET_KEY));
-
-                // Add the book.
-                ybkRdr = YbkFileReader.addBook(YbkService.this, intent.getStringExtra(TARGET_KEY), determineCharset());
-                bookName = ybkRdr.getBook().title == null ? bookName : ybkRdr.getBook().title;
-            } catch (InvalidFileFormatException ioe) {
-                succeeded = false;
-                Log.e(TAG, "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.");
-                Util.displayError(Main.getMainApplication(), null,
-                        getResources().getString(R.string.error_damaged_ebook), bookName);
-            } catch (IOException ioe) {
-                succeeded = false;
-                Log.e(TAG, "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.");
-                Util.unexpectedError(Main.getMainApplication(), ioe, "book: " + intent.getStringExtra(TARGET_KEY));
-            } finally {
-                if (ybkRdr != null) {
-                    ybkRdr.unuse();
-                    ybkRdr = null;
-                }
-            }
-
-            if (intent.getLongExtra(CALLBACKS_KEY, 0) == 0 || null == callbackMap) {
-                return;
-            }
-
-            Completion[] comps = callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0));
-            if (null == comps) {
-                return;
-            }
-
-            for (int index = 0, compLen = comps.length; index < compLen; index++) {
-                comps[index].completed(succeeded, "Added '" + bookName + "' to the library");
-            }
-        }
-
-        private String determineCharset() {
-            if (null != intent.getStringExtra(CHARSET_KEY)) {
-                return intent.getStringExtra(CHARSET_KEY);
-            }
-
-            // TODO remove this kludge for the known Cyrillic books
-            if (intent.getStringExtra(TARGET_KEY).equalsIgnoreCase("km.ybk")
-                    || intent.getStringExtra(TARGET_KEY).equalsIgnoreCase("vz.ybk")
-                    || intent.getStringExtra(TARGET_KEY).equalsIgnoreCase("nz.ybk")) {
-                return "CP1251";
-            }
-
-            return YbkFileReader.DEFAULT_YBK_CHARSET;
-        }
     }
 
     /**
