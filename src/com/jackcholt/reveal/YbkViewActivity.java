@@ -295,6 +295,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (getSharedPrefs().getBoolean("show_fullscreen", false)) {
             getWindow()
                     .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
         }
         if (isPopup()) {
             requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -1065,7 +1066,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
          * referenced after we have moved on from the chapter, so force making a copy of just the string we want.
          */
         mChapBtnText = new String((fullName.length() == 0 || fullName.length() == content.length()) ? getResources()
-                .getString(R.string.unknown) : truncateString(fullName, 20));
+                .getString(R.string.unknown) : truncateString(fullName, 16));
     }
 
     private String truncateString(String string, int maxLength) {

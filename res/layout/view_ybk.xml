@@ -6,27 +6,35 @@
     <LinearLayout android:id="@+id/breadCrumb"
        android:orientation="horizontal"
        android:layout_height="wrap_content"
-       android:layout_width="fill_parent" android:background="#cccccc">
+       android:layout_width="fill_parent" 
+       android:background="@drawable/blue_gradient"
+       android:paddingTop="4dp">
         <ImageButton android:id="@+id/mainMenu"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/home32"
-              android:textSize="@dimen/button_font_size"/>
+              android:textSize="@dimen/button_font_size" 
+              android:tint="#3b5d74"/>
         <ImageButton android:id="@+id/folderButton"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/folder32"
-              android:textSize="@dimen/button_font_size"/>
+              android:textSize="@dimen/button_font_size"
+              android:tint="#3b5d74"/>
         <Button android:id="@+id/bookButton"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:visibility="invisible"
-              android:textSize="@dimen/button_font_size" android:height="51sp"/>
+              android:textSize="@dimen/button_font_size" 
+              android:height="51sp"
+              android:textColor="#3b5d74"/>
         <Button android:id="@+id/chapterButton"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:visibility="invisible"
-              android:textSize="@dimen/button_font_size" android:height="51sp"/>
+              android:textSize="@dimen/button_font_size" 
+              android:height="51sp"
+              android:textColor="#3b5d74"/>
     </LinearLayout>
     <com.jackcholt.reveal.widgets.FastScrollWebView android:id="@+id/ybkView"
           android:layout_width="fill_parent"
