@@ -3,7 +3,6 @@ package com.jackcholt.reveal;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -172,9 +171,9 @@ public class YbkService extends Service {
                     Completion callbacks[] = callbackMap.get(Long.valueOf((long) Long.valueOf(intent.getExtras()
                             .getLong(CALLBACKS_KEY))));
                     List<String> downloads = Util.fetchTitle(new File(intent.getExtras().getString(TARGET_KEY)),
-                            new URL(intent.getExtras().getString(SOURCE_KEY)),
                             getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
-                            context, callbacks);
+                            context,
+                            callbacks);
 
                     if (downloads.isEmpty()) {
                         throw new FileNotFoundException();

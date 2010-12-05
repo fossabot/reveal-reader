@@ -53,6 +53,7 @@ import android.net.NetworkInfo;
 import android.os.Environment;
 import android.os.Looper;
 import android.os.Process;
+import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -81,8 +82,7 @@ public class Util {
     public static final String DOWNLOAD_MIRROR = "http://revealreader.thepackhams.com/ebooks/";
     public static final String EMPTY_STRING = new String();
     public static final String NIGHT_MODE_STYLE = "body {background-color:black;color:#b3b3b3;} "
-            + "hr{border:1px solid #564129} a:link{color:#6699cc} a:visited{color:#336699}"
-            + "a:active{color:#3399ff}";
+            + "hr{border:1px solid #564129} a:link{color:#6699cc} a:visited{color:#336699}" + "a:active{color:#3399ff}";
 
     public static void displayToastMessage(String message) {
         Toast.makeText(Main.getMainApplication(), message, Toast.LENGTH_LONG).show();
@@ -366,7 +366,7 @@ public class Util {
             "     r.style[e] = v;" + //
             "     return;" + //
             "    }" + //
-            "   }" + // 
+            "   }" + //
             "  }" + //
             " }" + //
             "}" + //
@@ -483,21 +483,22 @@ public class Util {
             content = content.substring(pos + 5);
         }
 
-        String style = "<style>" // 
+        String style = "<style>" //
                 + "._showpicture {" + (showPicture ? "display:inline;" : "display:none") + "} "
                 + "._hidepicture {"
                 + (showPicture ? "display:none;" : "display:inline") + "} "
                 + " ._showcontents {display:inline}"
                 + " ._hidecontents {display:none} .ah {" + (showAH ? "display:inline;" : "display:none")
                 + "}"
-                + (nightMode ? NIGHT_MODE_STYLE : ""); 
-                
-        /* if navFile is not "0" convert all link anchor tags to block level entities with a larger font that resembles 
+                + (nightMode ? NIGHT_MODE_STYLE : "");
+
+        /*
+         * if navFile is not "0" convert all link anchor tags to block level entities with a larger font that resembles
          * list view entries.
          */
         if (touchable && !navFile.equals("0")) {
-            style += "a[href]{display:block;width:100%;text-decoration:none;font-size:150%;background:#eee;" +
-            		"margin-bottom:.2em;padding:.2em;}";
+            style += "a[href]{display:block;width:100%;text-decoration:none;font-size:150%;background:#eee;"
+                    + "margin-bottom:.2em;padding:.2em;}";
         }
         style += "</style>";
 
@@ -668,15 +669,15 @@ public class Util {
                 "<ifvar=" + spanNameCapturingGroup + ">" + //
                 lazyZeroOrMoreAnyCharacterCapturingGroup + //
                 "<a" + //
-                oneOrMoreSpaceCharacter + // 
-                "href=" + singleOrDoubleQuote + plusSign + spanName + "=0" + singleOrDoubleQuote + ">" + // 
+                oneOrMoreSpaceCharacter + //
+                "href=" + singleOrDoubleQuote + plusSign + spanName + "=0" + singleOrDoubleQuote + ">" + //
                 lazyZeroOrMoreAnyCharacterCapturingGroup + //
                 "</a>" + lazyOneOrMoreAnyCharacterCapturingGroup + //
                 "<elsevar=" + spanName + ">" + //
-                lazyZeroOrMoreAnyCharacterCapturingGroup + // 
+                lazyZeroOrMoreAnyCharacterCapturingGroup + //
                 "<a" + //
-                oneOrMoreSpaceCharacter + // 
-                "href=" + singleOrDoubleQuote + plusSign + spanName + "=1" + singleOrDoubleQuote + ">" + // 
+                oneOrMoreSpaceCharacter + //
+                "href=" + singleOrDoubleQuote + plusSign + spanName + "=1" + singleOrDoubleQuote + ">" + //
                 lazyOneOrMoreAnyCharacterCapturingGroup + //
                 "</a>" + //
                 lazyZeroOrMoreAnyCharacterCapturingGroup + //
@@ -700,47 +701,37 @@ public class Util {
      * Download and install title into library. Used by the title browser thread.
      * 
      * @param fileName Target file name
-     * @param downloadUrl Url from which we are downloading
      * @param libDir library directory
      * @param context the caller's context
-     * @param completion callbacks
+     * @param callbacks
      * @return list of file paths to add to library
      * @throws IOException if download fails
      */
-    public static List<String> fetchTitle(final File fileName, final URL downloadUrl, final String libDir,
-            final Context context, Completion... callbacks) throws IOException {
+    public static List<String> fetchTitle(final File fileName, final String libDir, final Context context,
+            Completion... callbacks) throws IOException {
 
         boolean success = false;
         boolean isZip = false;
 
         ArrayList<File> files = new ArrayList<File>();
-        ArrayList<String> downloaded = new ArrayList<String>();
 
-        File libDirFile = new File(libDir);
-        String filename = fileName.getName();
-
-        // URL encode the filename, but apparently our server code can't handle
-        // the standard substitution of plus for space :(
-        String urlFileName = URLEncoder.encode(filename, "UTF-8").replace("+", "%20");
-
-        File tempFile = new File(libDir, filename + TMP_EXTENSION);
+        File tempFile = new File(libDir, fileName.getName() + TMP_EXTENSION);
         FileOutputStream out = null;
         InputStream in = null;
 
         // Get the file that was referred to us
         final byte[] buffer = new byte[512];
         try {
-            URL ourUrl = new URL(new URL(DOWNLOAD_MIRROR), urlFileName);
-            URLConnection connection = ourUrl.openConnection();
+            URLConnection connection = new URL(DOWNLOAD_MIRROR
+                    + URLEncoder.encode(fileName.getName(), "UTF-8").replace("+", "%20")).openConnection();
             // set timeouts for 5 minutes. This will give generous time to deal with network and server glitches
             // but won't cause us to block forever
             connection.setConnectTimeout(300000);
             connection.setReadTimeout(300000);
-            int totalBytes = connection.getContentLength();
-            // StatFs statFs = new StatFs(Environment.getExternalStorageDirectory().getName());
-            // if(totalBytes * 2 > statFs.getAvailableBlocks() * statFs.getBlockSize()) {
-            // throw new IOException(context.getResources().getString(R.string.sdcard_full));
-            // }
+            StatFs statFs = new StatFs(Environment.getExternalStorageDirectory().getName());
+            if (connection.getContentLength() * 2 > statFs.getAvailableBlocks() * statFs.getBlockSize()) {
+                throw new IOException(context.getResources().getString(R.string.sdcard_full));
+            }
             in = connection.getInputStream();
             if (in == null) {
                 // getInputStream isn't suppose to return null, but we sometimes get a null pointer exception later on
@@ -749,7 +740,9 @@ public class Util {
                 // diagnose what is going on.
                 throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
             }
-            Log.d(TAG, "download from " + ourUrl);
+            Log.d(TAG,
+                    "download from " + DOWNLOAD_MIRROR
+                            + URLEncoder.encode(fileName.getName(), "UTF-8").replace("+", "%20"));
 
             out = new FileOutputStream(tempFile);
 
@@ -762,12 +755,12 @@ public class Util {
                 totalBytesRead += bytesRead;
                 out.write(buffer, 0, bytesRead);
                 for (Completion callback : callbacks) {
-                    callback.completed(true, ((totalBytesRead * 100) / totalBytes) + "%");
+                    callback.completed(true, ((totalBytesRead * 100) / connection.getContentLength()) + "%");
                 }
             }
             success = true;
         } catch (IOException ioe) {
-            ReportError.reportError("Missing eBook: " + filename + ".\n" + ioe.getMessage(), false);
+            ReportError.reportError("eBook error: " + fileName.getName() + ".\n" + ioe.getMessage(), false);
             throw ioe;
         } finally {
             if (in != null) {
@@ -782,7 +775,7 @@ public class Util {
         }
 
         if (!tempFile.exists()) {
-            return downloaded;
+            return new ArrayList<String>();
         }
 
         if (isZip) {
@@ -800,7 +793,7 @@ public class Util {
                         entryName = entryName.substring(entryName.lastIndexOf('/'));
                     }
 
-                    File file = new File(libDirFile, entryName);
+                    File file = new File(libDir + entryName);
 
                     // check to see if they already have this title
                     if (file.exists()) {
@@ -808,7 +801,7 @@ public class Util {
                         YbkDAO.getInstance(context).deleteBook(entryName);
                     }
 
-                    file = new File(libDirFile, entryName + TMP_EXTENSION);
+                    file = new File(libDir + entryName + TMP_EXTENSION);
                     out = new FileOutputStream(file);
                     files.add(file);
                     try {
@@ -830,6 +823,7 @@ public class Util {
             files.add(tempFile);
         }
 
+        ArrayList<String> downloaded = new ArrayList<String>();
         for (File file : files) {
             // rename from tmp
             String realNameString = file.getAbsolutePath();
