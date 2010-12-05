@@ -1326,7 +1326,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         private int obtainVerse(final String url) {
             String[] verseUrlParts = url.split("@");
-            if (verseUrlParts.length < 1) {
+            if (verseUrlParts.length < 2) {
                 return 0;
             }
             String verseInfo = verseUrlParts[1];
