@@ -78,7 +78,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private GestureDetector mGestureScanner = new GestureDetector(this);
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         try {
@@ -91,6 +90,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             String content = null;
             String strUrl = null;
 
+            @SuppressWarnings("unchecked")
             HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
             if (statusMap != null) {
                 mCurrChap.setBookFileName((String) statusMap.get("bookFileName"));
@@ -698,11 +698,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      */
     private boolean loadChapter(String filePath, final String chapter, boolean saveToBackStack, boolean reloading)
             throws IOException {
-        
+
         if (null == mYbkReader) {
             return false;
         }
-        
+
         YbkFileReader ybkReader = mYbkReader;
 
         if (needToSaveBookChapterToHistory(chapter)) {
@@ -717,8 +717,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         // check the format of the internal file name
         if (!chapter.equals("index") && chapter.toLowerCase().indexOf(".html") == -1) {
-            showDialog(INVALID_CHAPTER);
+            //showDialog(INVALID_CHAPTER);
             Log.e(TAG, "The chapter is invalid: " + chapter);
+            return false;
         }
 
         // get rid of any urlencoded spaces
@@ -741,7 +742,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             ybkReader.unuse();
             ybkReader = mYbkReader = YbkFileReader.getReader(this, filePath);
         }
-        
+
         try {
             if (chap.equals("index")) {
                 String tryFileToOpen = "\\" + ybkReader.getBook().shortTitle + ".html.gz";
@@ -823,8 +824,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             content = fixSmartQuotes(content);
 
-            String strUrl = Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString();
-
             int posEnd = content.toLowerCase().indexOf("<end>");
 
             String nf = (posEnd != -1) ? parseNavFile(content, posEnd) : "1";
@@ -844,16 +843,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             if (!reloading && isShowInPopup(chapter)) {
                 Log.d(TAG, "Showing chapter in popup");
-                showChapterInPopup(content, ybkReader.getBook(), strUrl);
-            } else {
-                findWebView().loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-                mCurrChap.setChapOrderNbr((null == chapObj) ? -1 : chapObj.orderNumber);
-                mCurrChap.setNavFile(nf);
-                mCurrChap.setBookFileName(ybkReader.getBook().fileName);
-                mCurrChap.setChapFileName(chap);
+                showChapterInPopup(content, ybkReader.getBook(), Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book")
+                        .toString());
+                return true;
             }
 
-            return true;
+            findWebView().loadDataWithBaseURL(Uri.withAppendedPath(YbkProvider.CONTENT_URI, "book").toString(),
+                    content, "text/html", "utf-8", "");
+            mCurrChap.setChapOrderNbr((null == chapObj) ? -1 : chapObj.orderNumber);
+            mCurrChap.setNavFile(nf);
+            mCurrChap.setBookFileName(ybkReader.getBook().fileName);
+            mCurrChap.setChapFileName(chap);
 
         } catch (IOException e) {
             findWebView().loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain", "utf-8");
@@ -861,6 +861,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             Log.e(TAG, chap + " in " + filePath + " could not be opened. " + e.getMessage());
             return false;
         }
+
+        return true;
     }
 
     private boolean isOpeningNewBook(String filePath, YbkFileReader ybkReader) {
@@ -1227,12 +1229,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         try {
                             int verse = obtainVerse(url);
                             if (verse > 0) {
-                            startActivityForResult(
-                                    new Intent(view.getContext(), VerseContextDialog.class)
-                                            .putExtra(YbkDAO.VERSE, verse)
-                                            .putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
-                                            .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
-                                    CALL_VERSE_CONTEXT_MENU);
+                                startActivityForResult(
+                                        new Intent(view.getContext(), VerseContextDialog.class)
+                                                .putExtra(YbkDAO.VERSE, verse)
+                                                .putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
+                                                .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
+                                        CALL_VERSE_CONTEXT_MENU);
                             }
                         } catch (NumberFormatException nfe) {
                             Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG)
@@ -1248,7 +1250,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 } catch (UnsupportedEncodingException uee) {
                     dataString = url.substring(contentUriLength + 1);
                 } catch (IllegalArgumentException iae) {
-                    dataString = url.substring(contentUriLength + 1);                    
+                    dataString = url.substring(contentUriLength + 1);
                 }
 
                 String httpString = dataString;
@@ -1464,8 +1466,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     public void onLongPress(MotionEvent e) {
-    	WebView wv = findWebView();
-    	wv.scrollTo(0, wv.getScrollY() + 10);
+        WebView wv = findWebView();
+        wv.scrollTo(0, wv.getScrollY() + 10);
     }
 
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -1478,7 +1480,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public boolean onSingleTapUp(MotionEvent e) {
         return true;
     }
-    
+
     public String getBookFileName() {
         return mCurrChap.getBookFileName();
     }
