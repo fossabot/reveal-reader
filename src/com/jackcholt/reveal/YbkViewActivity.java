@@ -717,7 +717,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         // check the format of the internal file name
         if (!chapter.equals("index") && chapter.toLowerCase().indexOf(".html") == -1) {
-            //showDialog(INVALID_CHAPTER);
+            // showDialog(INVALID_CHAPTER);
             Log.e(TAG, "The chapter is invalid: " + chapter);
             return false;
         }
@@ -1072,19 +1072,20 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     private String truncateString(String string, int maxLength) {
-        if (string.length() > maxLength) {
-            Log.d(TAG, "string: " + string);
-            if (string.indexOf(":") != -1) {
-                String noColonString = string.substring(string.lastIndexOf(":") + 1).trim();
-                if (noColonString.length() > maxLength) {
-                    return noColonString.substring(0, maxLength) + "...";
-                }
-                return noColonString;
-            }
-            return string.substring(0, maxLength) + "...";
-        } else {
+        if (string.length() <= maxLength) {
             return string;
         }
+
+        if (string.indexOf(":") == -1) {
+            return string.substring(0, maxLength) + "...";
+        }
+
+        string = string.substring(string.lastIndexOf(":") + 1).trim();
+        if (string.length() <= maxLength) {
+            return string;
+        }
+        
+        return string.substring(0, maxLength) + "...";
     }
 
     @Override
