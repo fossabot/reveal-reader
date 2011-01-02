@@ -1072,7 +1072,19 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     private String truncateString(String string, int maxLength) {
-        return (string.length() > maxLength) ? string.substring(0, maxLength) + "..." : string;
+        if (string.length() > maxLength) {
+            Log.d(TAG, "string: " + string);
+            if (string.indexOf(":") != -1) {
+                String noColonString = string.substring(string.lastIndexOf(":") + 1).trim();
+                if (noColonString.length() > maxLength) {
+                    return noColonString.substring(0, maxLength) + "...";
+                }
+                return noColonString;
+            }
+            return string.substring(0, maxLength) + "...";
+        } else {
+            return string;
+        }
     }
 
     @Override
