@@ -1072,12 +1072,14 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     }
 
     private String truncateString(String string, int maxLength) {
+        assert maxLength > 3 : "maxLength must be 3 or greater";
+        
         if (string.length() <= maxLength) {
             return string;
         }
 
         if (string.indexOf(":") == -1) {
-            return string.substring(0, maxLength) + "...";
+            return string.substring(0, maxLength - 3) + "...";
         }
 
         string = string.substring(string.lastIndexOf(":") + 1).trim();
@@ -1085,7 +1087,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             return string;
         }
         
-        return string.substring(0, maxLength) + "...";
+        return string.substring(0, maxLength - 3) + "...";
     }
 
     @Override
