@@ -1,9 +1,11 @@
 package com.jackcholt.reveal;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,16 +23,22 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.SpannableStringBuilder;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -58,6 +66,7 @@ public class TitleBrowser extends ListActivity {
     private SharedPreferences mSharedPref;
     private boolean mBusy = false;
     private boolean BOOLshowFullScreen;
+    private static final int SEARCH_ID = Menu.FIRST;
 
     /** Called when the activity is first created. */
     @Override
@@ -73,6 +82,7 @@ public class TitleBrowser extends ListActivity {
 
             mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
             BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
+            requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
             if (BOOLshowFullScreen) {
                 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -138,18 +148,23 @@ public class TitleBrowser extends ListActivity {
     }
 
     protected void updateScreen() {
-        populate();
+        try {
+            setProgressBarIndeterminateVisibility(true);
+            populate();
 
-        if (mListTitles.size() > 0) {
-            ArrayAdapter<Title> titleAdapter = new ArrayAdapter<Title>(this, R.layout.browser_list_item,
-                    R.id.book_name, mListTitles);
+            if (mListTitles.size() > 0) {
+                ArrayAdapter<Title> titleAdapter = new ArrayAdapter<Title>(this, R.layout.browser_list_item,
+                        R.id.book_name, mListTitles);
 
-            setListAdapter(titleAdapter);
-        } else {
-            ArrayAdapter<Category> categoryAdapter = new ArrayAdapter<Category>(this, R.layout.browser_list_item,
-                    R.id.book_name, mListCategories);
+                setListAdapter(titleAdapter);
+            } else {
+                ArrayAdapter<Category> categoryAdapter = new ArrayAdapter<Category>(this, R.layout.browser_list_item,
+                        R.id.book_name, mListCategories);
 
-            setListAdapter(categoryAdapter);
+                setListAdapter(categoryAdapter);
+            }
+        } finally {
+            setProgressBarIndeterminateVisibility(false);
         }
     }
 
@@ -201,6 +216,65 @@ public class TitleBrowser extends ListActivity {
         }
 
         return false;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(final Menu menu) {
+        try {
+            super.onCreateOptionsMenu(menu);
+            menu.add(Menu.NONE, SEARCH_ID, Menu.NONE, R.string.title_search).setIcon(android.R.drawable.ic_menu_search);
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
+        try {
+            switch (item.getItemId()) {
+            case SEARCH_ID:
+                final EditText input = new EditText(this);
+                final TitleBrowser caller = this;
+
+                AlertDialog.Builder searchDialog = new AlertDialog.Builder(this);
+                {
+                    searchDialog.setTitle("Search");
+                    searchDialog.setView(input);
+                }
+
+                searchDialog.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        SpannableStringBuilder value = new SpannableStringBuilder(input.getText());
+
+                        try {
+                            mBreadCrumb.push(new URL(mDownloadServer + "?s="
+                                    + URLEncoder.encode(value.toString(), "UTF-8")));
+                        } catch (MalformedURLException e) {
+                            Util.unexpectedError(caller, e);
+                        } catch (UnsupportedEncodingException e) {
+                            Util.unexpectedError(caller, e);
+                        }
+
+                        updateScreen();
+                    }
+                });
+
+                searchDialog.show();
+
+                return true;
+            }
+        } catch (RuntimeException rte) {
+            Util.unexpectedError(this, rte);
+        } catch (Error e) {
+            Util.unexpectedError(this, e);
+        }
+
+        return super.onMenuItemSelected(featureId, item);
     }
 
     private void downloadTitle(final Title title) {
@@ -310,8 +384,9 @@ public class TitleBrowser extends ListActivity {
     }
 
     /**
-     * XML parsing handler. This controls the sax parsing and insertion of information into the title list. All data is
-     * coming from our own organization on the server side.
+     * XML parsing handler. This controls the sax parsing and insertion of
+     * information into the title list. All data is coming from our own
+     * organization on the server side.
      * 
      * @author jwiggins
      * 
