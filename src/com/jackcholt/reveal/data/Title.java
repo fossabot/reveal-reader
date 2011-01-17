@@ -20,7 +20,8 @@ public class Title {
     protected String url;
     protected Date created;
 
-    protected SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    protected final SimpleDateFormat parseFormat = new SimpleDateFormat("yyyy-MM-dd");
+    protected final SimpleDateFormat displayFormat = new SimpleDateFormat("MMMM d, yyyy");
 
     public int getId() {
         return id;
@@ -104,7 +105,7 @@ public class Title {
 
     public void setCreated(String date, Date defaultValue) {
         try {
-            this.created = dateFormat.parse(date);
+            this.created = parseFormat.parse(date);
         } catch (ParseException e) {
             this.created = defaultValue;
         }
@@ -125,7 +126,7 @@ public class Title {
             information.append("Size: " + fileSize + " KB\n");
         }
         if (created != null) {
-            information.append("Created: " + created + "\n");
+            information.append("Created: " + displayFormat.format(created) + "\n");
         }
         if (description != null) {
             information.append("Description: " + description + "\n");

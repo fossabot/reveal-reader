@@ -436,7 +436,7 @@ public class TitleBrowser extends ListActivity {
                 book.getChild(TITLE_CREATED_TAG).setEndTextElementListener(new EndTextElementListener() {
                     @Override
                     public void end(String body) {
-                        mCurrentTitle.setCreated(body, new Date());
+                        mCurrentTitle.setCreated(body, null);
                     }
                 });
                 book.getChild(TITLE_FILENAME_TAG).setEndTextElementListener(new EndTextElementListener() {
