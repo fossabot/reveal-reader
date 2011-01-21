@@ -1,6 +1,5 @@
 package com.jackcholt.reveal;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -8,21 +7,12 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -215,6 +205,9 @@ public class TitleBrowser extends ListActivity {
                 } else {
                     finish();
                 }
+            } else if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+                startSearch();
+                return true;
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -244,35 +237,7 @@ public class TitleBrowser extends ListActivity {
         try {
             switch (item.getItemId()) {
             case SEARCH_ID:
-                final EditText input = new EditText(this);
-                final TitleBrowser caller = this;
-
-                AlertDialog.Builder searchDialog = new AlertDialog.Builder(this);
-                {
-                    searchDialog.setTitle("Search");
-                    searchDialog.setView(input);
-                }
-
-                searchDialog.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        SpannableStringBuilder value = new SpannableStringBuilder(input.getText());
-
-                        try {
-                            mBreadCrumb.push(new URL(mDownloadServer + "?s="
-                                    + URLEncoder.encode(value.toString(), "UTF-8")));
-                        } catch (MalformedURLException e) {
-                            Util.unexpectedError(caller, e);
-                        } catch (UnsupportedEncodingException e) {
-                            Util.unexpectedError(caller, e);
-                        }
-
-                        updateScreen();
-                    }
-                });
-
-                searchDialog.show();
-
+                startSearch();
                 return true;
             }
         } catch (RuntimeException rte) {
@@ -282,6 +247,36 @@ public class TitleBrowser extends ListActivity {
         }
 
         return super.onMenuItemSelected(featureId, item);
+    }
+
+    public void startSearch() {
+        final EditText input = new EditText(this);
+        final TitleBrowser caller = this;
+
+        AlertDialog.Builder searchDialog = new AlertDialog.Builder(this);
+        {
+            searchDialog.setTitle("Search");
+            searchDialog.setView(input);
+        }
+
+        searchDialog.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                SpannableStringBuilder value = new SpannableStringBuilder(input.getText());
+
+                try {
+                    mBreadCrumb.push(new URL(mDownloadServer + "?s=" + URLEncoder.encode(value.toString(), "UTF-8")));
+                } catch (MalformedURLException e) {
+                    Util.unexpectedError(caller, e);
+                } catch (UnsupportedEncodingException e) {
+                    Util.unexpectedError(caller, e);
+                }
+
+                updateScreen();
+            }
+        });
+
+        searchDialog.show();
     }
 
     private void downloadTitle(final Title title) {
