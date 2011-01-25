@@ -185,4 +185,7 @@
     <string name="summary_on_scroll_tab">Scroll tab is enabled</string>
     <string name="summary_off_scroll_tab">Scroll tab is disabled</string>
     <string name="annot_brow">Notes Browser</string>
+    <string name="readingSession">Automatically update this bookmark as I read from it</string>    
+    <string name="reading_session_resumed_title">Reading Session Resumed</string>    
+    <string name="reading_session_resumed">Your reading progress from this bookmark will be automatically tracked.</string>    
 </resources>

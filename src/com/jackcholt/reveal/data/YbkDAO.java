@@ -341,10 +341,12 @@ public class YbkDAO {
      *            The position in the chapter that was being read.
      * @param bookmarkNumber
      *            The number of the bookmark to save.
+     * @param isReadingSession 
+     *            Whether the bookmark is one that is tracking a reading session            
      * @return True if the insert succeeded, False otherwise.
      */
     public boolean insertBookmark(final String bookFileName, final String title, final String chapterName,
-            final int scrollYPos, final int bookmarkNumber) {
+            final int scrollYPos, final int bookmarkNumber, boolean isReadingSession) {
         String chapterNameNoGz = chapterName.replaceFirst("(?i)\\.gz$", "");
         History hist = new History();
         hist.bookFileName = bookFileName;
@@ -352,6 +354,9 @@ public class YbkDAO {
         hist.chapterName = chapterNameNoGz;
         hist.scrollYPos = scrollYPos;
         hist.title = title;
+        hist.isReadingSession = isReadingSession;
+        if(isReadingSession)
+            Log.d(TAG, "Added new reading session: " + hist.title);        
         synchronized (mBookmarkList) {
             mBookmarkList.add(hist);
             storeBookmarkList();

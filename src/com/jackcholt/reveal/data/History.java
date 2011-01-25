@@ -22,7 +22,8 @@ public class History implements Serializable {
     public int scrollYPos;
     public String title;
     public int bookmarkNumber = 0;
-
+    public boolean isReadingSession = false;
+    
     public String toString() {
         return title;
     }

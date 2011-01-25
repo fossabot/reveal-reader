@@ -17,5 +17,11 @@
         android:singleLine="true"
         android:id="@+id/ask_name"
         />
+<CheckBox 
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content" 
+		android:text="@string/readingSession" 
+		android:id="@+id/reading_session"
+		/>        
 </LinearLayout>
     

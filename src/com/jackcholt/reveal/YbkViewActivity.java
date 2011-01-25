@@ -38,10 +38,12 @@ import android.webkit.WebView;
 import android.webkit.WebView.PictureListener;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.jackcholt.reveal.Main.EBookPropertiesDialog;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
@@ -60,7 +62,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private int mBookWalkIndex = -1;
     private String mOrigChapName;
     private Handler mHandler = new Handler();
-
+    private History mCurrReadingSession;
+    
     private static final String TAG = "reveal.YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
@@ -123,6 +126,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     mCurrChap.setChapFileName(hist.chapterName);
                     mCurrChap.setScrollYPos(hist.scrollYPos);
                     mHistTitle = hist.title;
+                    // are we resuming a reading session?
+                    if(hist.isReadingSession) {
+                        mCurrReadingSession = hist;
+                        new InfoDialog(this, getResources().getString(R.string.reading_session_resumed_title), getResources().getString(R.string.reading_session_resumed)).show();                    
+                    }
                 }
             }
             if (null == mCurrChap.getBookFileName()) {
@@ -582,6 +590,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                             mCurrChap.getChapFileName());
 
                                     findWebView().scrollTo(0, mCurrChap.getScrollYPos());
+                                    // determine whether we need to auto-update the bookmark
+                                    if(bm.isReadingSession) {
+                                        mCurrReadingSession = bm;
+                                        new InfoDialog(this, getResources().getString(R.string.reading_session_resumed_title), getResources().getString(R.string.reading_session_resumed)).show();                    
+                                    }
+                                    else
+                                        mCurrReadingSession = null;
                                 }
                             } catch (IOException ioe) {
                                 Log.e(TAG, "Couldn't load chapter from bookmarks. " + ioe.getMessage());
@@ -958,7 +973,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 LayoutInflater factory = LayoutInflater.from(this);
                 final View textEntryView = factory.inflate(R.layout.view_ask_name, null);
                 final EditText et = (EditText) textEntryView.findViewById(R.id.ask_name);
-
+                final CheckBox cb = (CheckBox) textEntryView.findViewById(R.id.reading_session);
+                
                 return new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_info)
                         .setTitle("Enter Bookmark Name").setView(textEntryView)
                         .setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
@@ -966,14 +982,19 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
                                 try {
                                     String bmName = (String) et.getText().toString();
-
+                                    boolean isReadingSession = cb.isChecked();
+                                    
                                     YbkDAO ybkDao = YbkDAO.getInstance(getBaseContext());
                                     int bookmarkNumber = ybkDao.getMaxBookmarkNumber();
 
                                     // insert the bookmark
                                     ybkDao.insertBookmark(mCurrChap.getBookFileName(), bmName,
-                                            mCurrChap.getChapFileName(), findWebView().getScrollY(), bookmarkNumber);
+                                            mCurrChap.getChapFileName(), findWebView().getScrollY(), bookmarkNumber, isReadingSession);
 
+                                    
+                                    if(isReadingSession) {
+                                        mCurrReadingSession = ybkDao.getBookmark(bookmarkNumber);
+                                    }
                                 } catch (IOException ioe) {
                                     // TODO - add a friendly message
                                     Util.displayError(YbkViewActivity.this, ioe,
@@ -1155,6 +1176,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     protected void onSaveInstanceState(final Bundle outState) {
         try {
             outState.putString(YbkDAO.FILENAME, mCurrChap.getBookFileName());
+            updateReadingSession();
             super.onSaveInstanceState(outState);
         } catch (RuntimeException rte) {
             unexpectedError(rte);
@@ -1169,6 +1191,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             if (isFinishing() && !isPopup()) {
                 YbkDAO.getInstance(this).clearBackStack();
             }
+            updateReadingSession();
             if (mYbkReader != null) {
                 mYbkReader.unuse();
                 mYbkReader = null;
@@ -1460,9 +1483,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         } catch (IOException ioe) {
             Log.e(TAG, "Could not move to the next chapter. " + ioe.getMessage());
         }
+        updateReadingSession();
         setProgressBarIndeterminateVisibility(false);
     }
 
+    protected void updateReadingSession() {
+        if(mCurrReadingSession != null) {
+            YbkDAO.getInstance(this).updateBookmark(mCurrReadingSession.bookmarkNumber, mCurrChap.getBookFileName(), mCurrChap.getChapFileName(),
+                    findWebView().getScrollY());
+        }
+    }
+        
     public void onLongPress(MotionEvent e) {
     	WebView wv = findWebView();
     	wv.scrollTo(0, wv.getScrollY() + 10);
