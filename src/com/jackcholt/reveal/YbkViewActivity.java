@@ -103,7 +103,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     content = (String) savedInstanceState.get("content");
                     strUrl = (String) savedInstanceState.getString("strUrl");
                 }
-            } else {
+            } else { // statusMap == null
                 long historyId = 0;
                 if (savedInstanceState != null) {
                     mCurrChap.setBookFileName((String) savedInstanceState.get("bookFileName"));
@@ -112,6 +112,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     if (extras != null) {
                         historyId = extras.getLong(YbkDAO.HISTORY_ID);
                         mCurrChap.setBookFileName(extras.getString(YbkDAO.FILENAME));
+                        mCurrChap.setChapFileName(extras.getString(YbkDAO.CHAPTER_FILENAME));
+                        mCurrChap.setVerse(extras.getString(YbkDAO.VERSE));
                         content = (String) extras.get("content");
                         strUrl = (String) extras.getString("strUrl");
                         mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
@@ -144,29 +146,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             if ((isPopup())) {
                 findWebView().loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
             } else {
-                findChapterButton().setOnClickListener(new OnClickListener() {
-                    public void onClick(final View v) {
-                        // set the chapter button so it scrolls the window to the top
-                        findWebView().scrollTo(0, 0);
-                    }
-                });
-                findMainButton().setOnClickListener(new OnClickListener() {
-                    public void onClick(final View view) {
-                        YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
-                                mCurrChap.getChapFileName(), findWebView().getScrollY());
-                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER, ""));
-                        finish();
-                    }
-                });
-                findFolderButton().setOnClickListener(new OnClickListener() {
-                    public void onClick(final View view) {
-                        YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
-                                mCurrChap.getChapFileName(), findWebView().getScrollY());
-                        setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER, YbkDAO
-                                .getInstance(getBaseContext()).getBookFolder(mCurrChap.getBookFileName())));
-                        finish();
-                    }
-                });
+                setupBreadcrumbButtons();
             }
 
             try {
@@ -191,8 +171,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         } else {
                             mCurrChap.setChapFileName(firstChapter.fileName);
                         }
-                    } else
+                    } else {
                         mCurrChap.setChapFileName("\\" + book.shortTitle + ".html");
+                    }
                 }
 
                 if (!isPopup() && loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
@@ -200,15 +181,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
             } catch (IOException ioe) {
-                Log.e(TAG,
-                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
-                                + ". " + ioe.getMessage());
-
-                Toast.makeText(
-                        this,
-                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
-                                + ". Please report this at " + getResources().getText(R.string.website),
-                        Toast.LENGTH_LONG).show();
+                Log.e(TAG, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
+                        + ". " + ioe.getMessage());
+                Toast.makeText(this, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " // 
+                        + mCurrChap.getChapFileName() + ". Please report this at " + //
+                        getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
             }
             setWebViewClient();
 
@@ -220,16 +197,42 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
     }
 
+    private void setupBreadcrumbButtons() {
+        findChapterButton().setOnClickListener(new OnClickListener() {
+            public void onClick(final View v) {
+                // set the chapter button so it scrolls the window to the top
+                findWebView().scrollTo(0, 0);
+            }
+        });
+        
+        findMainButton().setOnClickListener(new OnClickListener() {
+            public void onClick(final View view) {
+                YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
+                        mCurrChap.getChapFileName(), findWebView().getScrollY());
+                setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER, ""));
+                finish();
+            }
+        });
+        findFolderButton().setOnClickListener(new OnClickListener() {
+            public void onClick(final View view) {
+                YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
+                        mCurrChap.getChapFileName(), findWebView().getScrollY());
+                setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER, YbkDAO
+                        .getInstance(getBaseContext()).getBookFolder(mCurrChap.getBookFileName())));
+                finish();
+            }
+        });
+    }
+
     private void configWebView() {
         findWebView().getSettings().setJavaScriptEnabled(true);
-
+        findWebView().addJavascriptInterface(this, "App");
+        
         if (getSharedPrefs().getBoolean("show_zoom", false)) {
             findWebView().getSettings().setBuiltInZoomControls(true);
         } else {
             findWebView().getSettings().setBuiltInZoomControls(false);
         }
-
-        findWebView().addJavascriptInterface(this, "App");
     }
 
     private WebView findWebView() {
@@ -303,8 +306,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }
-        if (!isPopup())
+        if (!isPopup()) {
             Util.setTheme(getSharedPrefs(), this);
+        }
     }
 
     /**
@@ -1051,7 +1055,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
 
         return content;
-
     }
 
     /**
@@ -1060,34 +1063,13 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      * @param content The content of the chapter.
      */
     private void setChapBtnText(final String content) {
-        String fullName = content.replaceAll("(?is)^.*<fn>(.*)<nf>.*$", "$1");
-        /*
-         * NOTE: Apparently in order to conserve memory, the Android implementation of String.substring() just points to
-         * a offset and location within the original String. That is all well and good, except that we keep a copy of
-         * the title around in the history stack, which causes the whole internal character array of the chapter to be
-         * referenced after we have moved on from the chapter, so force making a copy of just the string we want.
-         */
+        String fullName = extractFullNameFromContent(content);
         mChapBtnText = new String((fullName.length() == 0 || fullName.length() == content.length()) ? getResources()
-                .getString(R.string.unknown) : truncateString(fullName, 16));
+                .getString(R.string.unknown) : fullName);
     }
 
-    private String truncateString(String string, int maxLength) {
-        assert maxLength > 3 : "maxLength must be 3 or greater";
-        
-        if (string.length() <= maxLength) {
-            return string;
-        }
-
-        if (string.indexOf(":") == -1) {
-            return string.substring(0, maxLength - 3) + "...";
-        }
-
-        string = string.substring(string.lastIndexOf(":") + 1).trim();
-        if (string.length() <= maxLength) {
-            return string;
-        }
-        
-        return string.substring(0, maxLength - 3) + "...";
+    private String extractFullNameFromContent(final String content) {
+        return content.replaceAll("(?is)^.*<fn>(.*)<nf>.*$", "$1");
     }
 
     @Override

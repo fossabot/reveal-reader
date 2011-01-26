@@ -184,6 +184,6 @@
     <string name="label_scroll_tab">Show Scroll Tab</string>
     <string name="summary_on_scroll_tab">Scroll tab is enabled</string>
     <string name="summary_off_scroll_tab">Scroll tab is disabled</string>
-    <string name="annot_brow">Notes Browser</string>
+    <string name="annot_brow">Browse Notes</string>
     <string name="title_search">Search</string>
 </resources>
