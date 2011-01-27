@@ -85,8 +85,8 @@
 	<string name="no_more_history">You\'ve run out of history!</string>
 	<string name="no_history">No History</string>
 	<string name="menu_help">Online Help</string>
-	<string name="add_bookmark">Add Bookmark here</string>
-	<string name="no_bookmark">No Bookmarks</string>
+	<string name="add_bookmark">Add bookmark here</string>
+	<string name="no_bookmark">No bookmarks</string>
 	<string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
 	<string name="wait_for_db_update">Please wait while we UPGRADE the eBook library database listing in the background...  this process will take a few minutes to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
 	<string name="refresh_title">Refreshing eBooks.</string>
@@ -186,4 +186,5 @@
     <string name="summary_off_scroll_tab">Scroll tab is disabled</string>
     <string name="annot_brow">Browse Notes</string>
     <string name="title_search">Search</string>
+    <string name="bmLongPressHint">Press and hold on a bookmark for more options.</string>
 </resources>
