@@ -642,12 +642,22 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         setProgressBarIndeterminateVisibility(false);
                     }
                     break;
-                    
+
                 case NOTE_BROWSER_ID:
-                    startActivity(new Intent(this, YbkViewActivity.class)
-                            .putExtra(YbkDAO.FILENAME, intent.getStringExtra(YbkDAO.FILENAME))
-                            .putExtra(YbkDAO.CHAPTER_FILENAME, intent.getStringExtra(YbkDAO.CHAPTER_FILENAME))
-                            .putExtra(YbkDAO.VERSE, intent.getStringExtra(YbkDAO.VERSE)));
+
+                    mCurrChap.setBookFileName(intent.getStringExtra(YbkDAO.FILENAME));
+                    mCurrChap.setChapFileName(intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
+                    mCurrChap.setFragment(intent.getStringExtra(YbkDAO.VERSE));
+                    mCurrChap.setNavFile("1");
+                    
+                    try {
+                        if (loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
+                            initFolderBookChapButtons(ybkDao.getBook(mCurrChap.getBookFileName()).shortTitle,
+                                    mCurrChap.getBookFileName(), mCurrChap.getChapFileName());
+                        }
+                    } catch (IOException ioe) {
+                        Log.e(TAG, "Couldn't load chapter from annotation. " + ioe.getMessage());
+                    }
                     break;
                 }
             }
