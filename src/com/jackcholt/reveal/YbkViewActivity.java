@@ -70,6 +70,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private static final int NEXT_ID = Menu.FIRST + 1;
     private static final int HISTORY_ID = Menu.FIRST + 2;
     private static final int BOOKMARK_ID = Menu.FIRST + 3;
+    private static final int NOTE_BROWSER_ID = Menu.FIRST + 4;
     public static final int CALL_HISTORY = 1;
     public static final int CALL_BOOKMARK = 2;
     public static final int CALL_VERSE_CONTEXT_MENU = 3;
@@ -113,7 +114,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         historyId = extras.getLong(YbkDAO.HISTORY_ID);
                         mCurrChap.setBookFileName(extras.getString(YbkDAO.FILENAME));
                         mCurrChap.setChapFileName(extras.getString(YbkDAO.CHAPTER_FILENAME));
-                        mCurrChap.setVerse(extras.getString(YbkDAO.VERSE));
+                        mCurrChap.setFragment(extras.getString(YbkDAO.VERSE));
                         content = (String) extras.get("content");
                         strUrl = (String) extras.getString("strUrl");
                         mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
@@ -181,9 +182,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
             } catch (IOException ioe) {
-                Log.e(TAG, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
-                        + ". " + ioe.getMessage());
-                Toast.makeText(this, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " // 
+                Log.e(TAG,
+                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
+                                + ". " + ioe.getMessage());
+                Toast.makeText(this, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " //
                         + mCurrChap.getChapFileName() + ". Please report this at " + //
                         getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
             }
@@ -204,7 +206,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 findWebView().scrollTo(0, 0);
             }
         });
-        
+
         findMainButton().setOnClickListener(new OnClickListener() {
             public void onClick(final View view) {
                 YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
@@ -217,8 +219,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             public void onClick(final View view) {
                 YbkDAO.getInstance(getBaseContext()).insertHistory(mCurrChap.getBookFileName(), mChapBtnText,
                         mCurrChap.getChapFileName(), findWebView().getScrollY());
-                setResult(RESULT_OK, new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER, YbkDAO
-                        .getInstance(getBaseContext()).getBookFolder(mCurrChap.getBookFileName())));
+                setResult(
+                        RESULT_OK,
+                        new Intent(getBaseContext(), Main.class).putExtra(Main.FOLDER,
+                                YbkDAO.getInstance(getBaseContext()).getBookFolder(mCurrChap.getBookFileName())));
                 finish();
             }
         });
@@ -227,7 +231,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private void configWebView() {
         findWebView().getSettings().setJavaScriptEnabled(true);
         findWebView().addJavascriptInterface(this, "App");
-        
+
         if (getSharedPrefs().getBoolean("show_zoom", false)) {
             findWebView().getSettings().setBuiltInZoomControls(true);
         } else {
@@ -418,9 +422,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     android.R.drawable.ic_menu_recent_history);
             menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark)
                     .setIcon(android.R.drawable.ic_input_get);
+            menu.add(Menu.NONE, NOTE_BROWSER_ID, Menu.NONE, R.string.annot_brow);
             menu.add(Menu.NONE, PREVIOUS_ID, Menu.NONE, R.string.menu_previous).setIcon(R.drawable.previous_chapter);
             menu.add(Menu.NONE, NEXT_ID, Menu.NONE, R.string.menu_next).setIcon(R.drawable.next_chapter);
-
         } catch (RuntimeException rte) {
             unexpectedError(rte);
         } catch (Error e) {
@@ -486,8 +490,11 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 startActivityForResult(new Intent(this, BookmarkDialog.class), CALL_BOOKMARK);
                 setProgressBarIndeterminateVisibility(false);
                 return true;
-            }
 
+            case NOTE_BROWSER_ID:
+                startActivityForResult(new Intent(this, NotesListActivity.class), NOTE_BROWSER_ID);
+                return true;
+            }
             return super.onMenuItemSelected(featureId, item);
         } catch (RuntimeException rte) {
             unexpectedError(rte);
@@ -634,6 +641,14 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     } finally {
                         setProgressBarIndeterminateVisibility(false);
                     }
+                    break;
+                    
+                case NOTE_BROWSER_ID:
+                    startActivity(new Intent(this, YbkViewActivity.class)
+                            .putExtra(YbkDAO.FILENAME, intent.getStringExtra(YbkDAO.FILENAME))
+                            .putExtra(YbkDAO.CHAPTER_FILENAME, intent.getStringExtra(YbkDAO.CHAPTER_FILENAME))
+                            .putExtra(YbkDAO.VERSE, intent.getStringExtra(YbkDAO.VERSE)));
+                    break;
                 }
             }
             super.onActivityResult(requestCode, resultCode, intent);
@@ -731,7 +746,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         String chap = chapter.replace("%20", " ");
 
         String content = "";
-        mCurrChap.setFragment(null);
+        // mCurrChap.setFragment(null);
 
         File testFile = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                 Settings.DEFAULT_EBOOK_DIRECTORY), filePath);
@@ -1033,6 +1048,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
      */
     private String readConcatFile(final String chap, final YbkFileReader ybkReader) throws IOException {
         // need to read a special footnote chapter
+        if (chap.lastIndexOf("\\") == -1) {
+            throw new IllegalStateException("The chapter does not contain a backslash");
+        }
+
         String concatChap = chap.substring(0, chap.lastIndexOf("\\")) + "_.html.gz";
 
         String endString = (chap.contains(".html")) ? ".html" : ".";
@@ -1357,6 +1376,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         @Override
         public void onPageFinished(final WebView view, final String url) {
+            /*
+             * try { Log.d(TAG, "fragment " + (null == mCurrChap.getFragment() ? "nil" : mCurrChap.getFragment())); //
+             * make it jump to the internal link if (mCurrChap.getFragment() != null) {
+             * view.loadUrl("javascript:location.href=\"#" + mCurrChap.getFragment() + "\"");
+             * mCurrChap.setFragment(null); } else if (url.indexOf('@') != -1) { view.scrollTo(0, 0); } else if
+             * (mCurrChap.getScrollYPos() != 0) { view.scrollTo(0, mCurrChap.getScrollYPos()); }
+             * 
+             * setProgressBarIndeterminateVisibility(false); if (mBookWalk) { mHandler.postDelayed(new ChapterWalker(),
+             * 100); } } catch (RuntimeException rte) { unexpectedError(rte); } catch (Error e) { unexpectedError(e); }
+             */
+
             // In Android 2.0 we can't scroll immediately because rendering hasn't happened yet.
             // We can get an onNewPicture message when rendering is complete, but we also get
             // those messages when there is a picture on the page (before this message), so we have to install a

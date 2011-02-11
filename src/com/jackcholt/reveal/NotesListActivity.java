@@ -44,7 +44,7 @@ public class NotesListActivity extends ListActivity {
         setResult(
                 RESULT_OK,
                 new Intent().putExtra(YbkDAO.FILENAME, ah.bookFilename)
-                        .putExtra(YbkDAO.CHAPTER_FILENAME, ah.chapterFilename).putExtra(YbkDAO.VERSE, ah.verse));
+                        .putExtra(YbkDAO.CHAPTER_FILENAME, ah.chapterFilename).putExtra(YbkDAO.VERSE, Integer.toString(ah.verse)));
         finish();
     }
 

@@ -60,11 +60,11 @@ public class YbkDAO {
 
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
 
-    public static final String NOTE = "note";
-    public static final String COLOR = "color";
-    public static final String VERSE = "verse";
-    public static final String BOOK_FILENAME = "book_filename";
-    public static final String CHAPTER_FILENAME = "chapter_filename";
+    public static final String NOTE = "com.jackcholt.reveal.YbkDAO.note";
+    public static final String COLOR = "com.jackcholt.reveal.YbkDAO.color";
+    public static final String VERSE = "com.jackcholt.reveal.YbkDAO.verse";
+    public static final String BOOK_FILENAME = "com.jackcholt.reveal.YbkDAO.book_filename";
+    public static final String CHAPTER_FILENAME = "com.jackcholt.reveal.YbkDAO.chapter_filename";
 
     private static YbkDAO instance = null;
 

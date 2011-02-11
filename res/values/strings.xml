@@ -4,6 +4,7 @@
 	<string name="app_name">Reveal</string>
 	<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card.</string>
 	<string name="no_books_xml">No books were found.</string>
+    <string name="no_notes">You don\'t have any notes yet.</string>
 	<string name="menu_bookmark">Bookmarks</string>
 	<string name="menu_history">eBook History</string>
 	<string name="menu_settings">Program Settings</string>

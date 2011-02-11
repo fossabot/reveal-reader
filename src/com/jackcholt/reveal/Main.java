@@ -943,6 +943,7 @@ public class Main extends ListActivity {
 
             case NOTE_BROWSER_ID:
                 startActivityForResult(new Intent(this, NotesListActivity.class), NOTE_BROWSER_ID);
+                return true;
             }
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
