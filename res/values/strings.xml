@@ -2,15 +2,15 @@
 <resources>
 	<string name="charset_label">Character set:</string>
 	<string name="app_name">Reveal</string>
-	<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\' to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card.</string>
+	<string name="no_books">No eBooks Available!  Please hit \'MENU\' then \'eBook Download\' to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card.</string>
 	<string name="no_books_xml">No books were found.</string>
     <string name="no_notes">You don\'t have any notes yet.</string>
 	<string name="menu_bookmark">Bookmarks</string>
 	<string name="menu_history">eBook History</string>
-	<string name="menu_settings">Program Settings</string>
+	<string name="menu_settings">Settings</string>
 	<string name="menu_refresh_library">Refresh eBook Library</string>
 	<string name="label_splash_screen">Enable Splash Screen</string>
-	<string name="menu_browser">Online eBook Download</string>
+	<string name="menu_browser">eBook Download</string>
 	<string name="settings_name">Reveal Settings</string>
 	<string name="summary_on_show_splash_screen">Splash screen is enabled</string>
 	<string name="summary_off_show_splash_screen">Splash screen is disabled</string>
@@ -188,4 +188,5 @@
     <string name="annot_brow">Browse Notes</string>
     <string name="title_search">Search</string>
     <string name="bmLongPressHint">Press and hold on a bookmark for more options.</string>
+    <string name="more">More</string>
 </resources>

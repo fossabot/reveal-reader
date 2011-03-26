@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu android:id="@+id/shared_menu"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item 
+        android:icon="@android:drawable/ic_menu_recent_history" 
+        android:title="@string/menu_history" 
+        android:id="@+id/menu_item_history"/>
+    <item android:icon="@android:drawable/ic_input_get" 
+        android:title="@string/menu_bookmark" 
+        android:id="@+id/menu_item_bookmark"/>
+    <item android:id="@+id/menu_item_previous" 
+        android:icon="@drawable/previous_chapter" 
+        android:title="@string/menu_previous"/>
+    <item android:id="@+id/menu_item_next" 
+        android:icon="@drawable/next_chapter" 
+        android:title="@string/menu_next"/>
+    <item android:icon="@android:drawable/ic_menu_set_as" 
+        android:id="@+id/menu_item_download" 
+        android:title="@string/menu_browser"/>
+    <item android:icon="@android:drawable/ic_menu_preferences" 
+        android:id="@+id/menu_item_settings" 
+        android:title="@string/menu_settings"/>
+    <item android:id="@+id/menu_item_note_browser" 
+        android:title="@string/annot_brow" 
+        android:icon="@android:drawable/ic_input_get"/>
+    <item android:icon="@android:drawable/ic_menu_more" 
+        android:title="@string/more" 
+        android:id="@+id/menu_extra">
+        <menu> 
+            <item android:id="@+id/menu_item_download" 
+                android:title="@string/menu_browser"/>
+            <item android:id="@+id/menu_item_note_browser" 
+                android:title="@string/annot_brow"/>
+            <item android:title="@string/menu_help" 
+                android:id="@+id/menu_item_help"/>
+            <item android:title="@string/menu_refresh_library" 
+                android:id="@+id/menu_item_refresh_lib"/>
+            <item android:title="@string/menu_update" 
+                android:id="@+id/menu_item_update"/>
+            <item android:title="@string/reset" 
+                android:id="@+id/menu_item_reset"/>
+            <item android:title="@string/donate_menu" 
+                android:id="@+id/menu_item_donate"/>
+            <item android:title="@string/menu_license" 
+                android:id="@+id/menu_item_license"/>
+            <item android:id="@+id/menu_item_about" 
+                android:title="@string/menu_about"/>
+        </menu>
+    </item>
+</menu>

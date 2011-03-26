@@ -168,8 +168,16 @@ public class Util {
     }
 
     private static boolean isNetworkUp(Context context, int netType) {
-        return ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getNetworkInfo(netType)
-                .getState() == NetworkInfo.State.CONNECTED;
+        if (null == context) {
+            throw new IllegalArgumentException("Context is null");
+        }
+
+        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (null == connMgr) {
+            return false;
+        }
+
+        return connMgr.getNetworkInfo(netType).getState() == NetworkInfo.State.CONNECTED;
     }
 
     /**
@@ -1026,7 +1034,6 @@ public class Util {
             public void run() {
                 ErrorDialog.start(ctx, t, strings);
             }
-
         });
     }
 
@@ -1075,14 +1082,16 @@ public class Util {
      * @param pattern regular expression
      */
     public static void deleteFiles(File dir, String pattern) {
-        Pattern filter = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
         File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (filter.matcher(file.getName()).matches()) {
-                    if (!file.delete())
-                        file.deleteOnExit();
-                }
+
+        if (null == files) {
+            return;
+        }
+
+        Pattern filter = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+        for (File file : files) {
+            if (filter.matcher(file.getName()).matches() && !file.delete()) {
+                file.deleteOnExit();
             }
         }
     }

@@ -34,6 +34,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -42,7 +43,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -50,7 +51,6 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
@@ -59,32 +59,32 @@ import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity {
     private static final String TAG = "reveal.Main";
-    private static final int HISTORY_ID = Menu.FIRST;
-    private static final int BOOKMARK_ID = Menu.FIRST + 1;
-    private static final int SETTINGS_ID = Menu.FIRST + 2;
-    private static final int REFRESH_LIB_ID = Menu.FIRST + 3;
-    private static final int BROWSER_ID = Menu.FIRST + 4;
-    private static final int HELP_ID = Menu.FIRST + 5;
-    private static final int ABOUT_ID = Menu.FIRST + 6;
-    private static final int DONATE_ID = Menu.FIRST + 7;
-    private static final int LICENSE_ID = Menu.FIRST + 8;
-    private static final int REVELUPDATE_ID = Menu.FIRST + 9;
+    private static final int HISTORY_ID = R.id.menu_item_history;
+    private static final int BOOKMARK_ID = R.id.menu_item_bookmark;
+    private static final int SETTINGS_ID = R.id.menu_item_settings;
+    private static final int REFRESH_LIB_ID = R.id.menu_item_refresh_lib;
+    private static final int BROWSER_ID = R.id.menu_item_download;
+    private static final int HELP_ID = R.id.menu_item_help;
+    private static final int ABOUT_ID = R.id.menu_item_about;
+    private static final int DONATE_ID = R.id.menu_item_donate;
+    private static final int LICENSE_ID = R.id.menu_item_license;
+    private static final int REVELUPDATE_ID = R.id.menu_item_update;
+    private static final int NOTE_BROWSER_ID = R.id.menu_item_note_browser;
+    private static final int BOOK_WALKER_ID = Menu.FIRST + 13;
     private static final int DELETE_ID = Menu.FIRST + 10;
     private static final int OPEN_ID = Menu.FIRST + 11;
     private static final int RESET_ID = Menu.FIRST + 12;
-    private static final int BOOK_WALKER_ID = Menu.FIRST + 13;
     private static final int PROPERTIES_ID = Menu.FIRST + 14;
     private static final int MOVE_TO_FOLDER_ID = Menu.FIRST + 15;
     private static final int RENAME_ID = Menu.FIRST + 16;
-    private static final int NOTE_BROWSER_ID = Menu.FIRST + 17;
 
     public static int mNotifId = 1;
     public static Main mApplication;
-    private static final int ACTIVITY_SETTINGS = 0;
+    public static final int ACTIVITY_SETTINGS = 0;
     private static final int LIBRARY_NOT_CREATED = 0;
     private static final int WALK_BOOK = 20;
 
-    private static final boolean ADD_BOOKS = true;
+    public static final boolean ADD_BOOKS = true;
     public static final String BOOK_WALK_INDEX = "bw_index";
     public static final String FOLDER = "folder";
 
@@ -259,7 +259,6 @@ public class Main extends ListActivity {
             } catch (Error e) {
                 Util.unexpectedError(Main.this, e);
             }
-
         }
     };
 
@@ -286,7 +285,7 @@ public class Main extends ListActivity {
     /**
      * Convenience method to make calling refreshLibrary() without any parameters retaining its original behavior.
      */
-    private void refreshLibrary(final String strLibDir) {
+    public void refreshLibrary(final String strLibDir) {
         refreshLibrary(strLibDir, ADD_BOOKS);
     }
 
@@ -379,7 +378,7 @@ public class Main extends ListActivity {
     /**
      * Refresh the list of books in the main list.
      */
-    private void refreshBookList() {
+    /* package */void refreshBookList() {
         mBookTitleList = YbkDAO.getInstance(this).getBookTitles();
         SortedMap<String, SortedSet<String>> folderMap = YbkDAO.getInstance(this).getFolderMap();
         mCurrentList = new ArrayList<Object>();
@@ -559,14 +558,15 @@ public class Main extends ListActivity {
             startActivityForResult(
                     new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME, ((Book) item).fileName),
                     YbkViewActivity.SHOW_BOOK);
-        } else {
-            // open folder
-            mCurrentFolder = item.toString();
-            if (mCurrentFolder.equals(getResources().getString(R.string.top_level_folder))) {
-                mCurrentFolder = "";
-            }
-            refreshBookList();
+            return;
         }
+    
+        // open folder
+        mCurrentFolder = item.toString();
+        if (mCurrentFolder.equals(getResources().getString(R.string.top_level_folder))) {
+            mCurrentFolder = "";
+        }
+        refreshBookList();
     }
 
     protected boolean showEBookProperties(MenuItem item) {
@@ -832,41 +832,19 @@ public class Main extends ListActivity {
 
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
-        try {
-            super.onCreateOptionsMenu(menu);
-            menu.add(Menu.NONE, HISTORY_ID, Menu.NONE, R.string.menu_history).setIcon(
-                    android.R.drawable.ic_menu_recent_history);
-            menu.add(Menu.NONE, BOOKMARK_ID, Menu.NONE, R.string.menu_bookmark)
-                    .setIcon(android.R.drawable.ic_input_get);
-            menu.add(Menu.NONE, REFRESH_LIB_ID, Menu.NONE, R.string.menu_refresh_library).setIcon(
-                    android.R.drawable.ic_menu_rotate);
-            menu.add(Menu.NONE, BROWSER_ID, Menu.NONE, R.string.menu_browser)
-                    .setIcon(android.R.drawable.ic_menu_set_as);
-            menu.add(Menu.NONE, HELP_ID, Menu.NONE, R.string.menu_help)
-                    .setIcon(android.R.drawable.ic_menu_info_details);
-            menu.add(Menu.NONE, ABOUT_ID, Menu.NONE, R.string.menu_about).setIcon(
-                    android.R.drawable.ic_menu_info_details);
-            menu.add(Menu.NONE, DONATE_ID, Menu.NONE, R.string.donate_menu).setIcon(
-                    android.R.drawable.ic_menu_info_details);
-            menu.add(Menu.NONE, LICENSE_ID, Menu.NONE, R.string.menu_license).setIcon(
-                    android.R.drawable.ic_menu_info_details);
-            menu.add(Menu.NONE, SETTINGS_ID, Menu.NONE, R.string.menu_settings).setIcon(
-                    android.R.drawable.ic_menu_preferences);
-            menu.add(Menu.NONE, REVELUPDATE_ID, Menu.NONE, R.string.menu_update).setIcon(
-                    android.R.drawable.ic_menu_share);
-            menu.add(Menu.NONE, RESET_ID, Menu.NONE, R.string.reset).setIcon(android.R.drawable.ic_menu_share);
-            menu.add(Menu.NONE, NOTE_BROWSER_ID, Menu.NONE, R.string.annot_brow);
+        super.onCreateOptionsMenu(menu);
 
-            if (1 == Global.DEBUG) {
-                menu.add(Menu.NONE, BOOK_WALKER_ID, Menu.NONE, R.string.book_walker).setIcon(
-                        android.R.drawable.ic_menu_share);
-            }
-        } catch (RuntimeException rte) {
-            Util.unexpectedError(this, rte);
-        } catch (Error e) {
-            Util.unexpectedError(this, e);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        menu.findItem(R.id.menu_item_previous).setVisible(false);
+        menu.findItem(R.id.menu_item_next).setVisible(false);
+        menu.findItem(R.id.menu_extra).getSubMenu().findItem(BROWSER_ID).setVisible(false);
+        menu.findItem(R.id.menu_extra).getSubMenu().findItem(NOTE_BROWSER_ID).setVisible(false);
+        menu.findItem(R.id.menu_extra).getSubMenu().clearHeader();
+
+        if (1 == Global.DEBUG) {
+            menu.findItem(R.id.menu_extra).getSubMenu().add(Menu.NONE, BOOK_WALKER_ID, Menu.NONE, R.string.book_walker);
         }
-
         return true;
     }
 
@@ -896,7 +874,7 @@ public class Main extends ListActivity {
                 return true;
 
             case ABOUT_ID:
-                AboutDialog.create();
+                AboutDialog.create(this);
                 return true;
 
             case DONATE_ID:
@@ -1023,42 +1001,7 @@ public class Main extends ListActivity {
                 }
 
             case ACTIVITY_SETTINGS:
-                if (mThemeId != Util.getTheme(getSharedPrefs())) {
-
-                    // (Notes: The following is based on both empirical evidence and what I've been able to find in the
-                    // developer forums. In Android 1.0, using Acitivy.setTheme() would reset all the theme elements. In
-                    // each subsequent version if, fewer and fewer theme elements changes actually take effect unless
-                    // the theme is set before the initial call to onCreate(). In Android 2.0 and beyond, some of color
-                    // changes that we make when switching to/from the night mode theme don't happen properly. The
-                    // result is that after switching themes dynamically, we are left with an unreadable display. The
-                    // only way to fully reset the theme is to restart the activity.
-
-                    final Intent intent = new Intent(this, ReloadMainActivity.class);
-                    if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
-                        // for reasons unknown, possibly related to the version of Android, the ReloadMainActivity
-                        // doesn't seem to be found by some of our users. So if the activity can't be found, try to do
-                        // it the old way and hope that those who are having this problem are those with an older
-                        // version of Android where dynamic setting of the theme actually works.
-                        mThemeId = Util.getTheme(getSharedPrefs());
-                        setTheme(mThemeId);
-                        Log.w(TAG, "The ReloadMainActivity is not found.  We cannot change the theme that way. "
-                                + "Trying the old way");
-                    } else {
-                        startActivity(intent);
-                        finish();
-                        return;
-                    }
-                }
-
-                if (extras != null && extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
-
-                    YbkDAO.getInstance(this).open(this);
-                    String eBookDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
-                            Settings.DEFAULT_EBOOK_DIRECTORY);
-
-                    refreshLibrary(eBookDir, ADD_BOOKS);
-                }
-                refreshBookList();
+                activatePreferenceChanges(extras);
                 break;
 
             case MOVE_TO_FOLDER_ID:
@@ -1115,6 +1058,45 @@ public class Main extends ListActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    private void activatePreferenceChanges(Bundle extras) {
+        if (extras != null && extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
+
+            YbkDAO.getInstance(this).open(this);
+            refreshLibrary(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
+                    ADD_BOOKS);
+        }
+        refreshBookList();
+
+        if (mThemeId == Util.getTheme(getSharedPrefs())) {
+            return;
+        }
+        /*
+         * (Notes: The following is based on both empirical evidence and what I've been able to find in the developer
+         * forums. In Android 1.0, using Acitivy.setTheme() would reset all the theme elements. In each subsequent
+         * version if, fewer and fewer theme elements changes actually take effect unless the theme is set before the
+         * initial call to onCreate(). In Android 2.0 and beyond, some of color changes that we make when switching
+         * to/from the night mode theme don't happen properly. The result is that after switching themes dynamically, we
+         * are left with an unreadable display. The only way to fully reset the theme is to restart the activity.
+         */
+        final Intent intent = new Intent(this, ReloadMainActivity.class);
+        if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
+            /*
+             * For reasons unknown, possibly related to the version of Android, the ReloadMainActivity doesn't seem to
+             * be found by some of our users. So if the activity can't be found, try to do it the old way and hope that
+             * those who are having this problem are those with an older version of Android where dynamic setting of the
+             * theme actually works.
+             */
+            mThemeId = Util.getTheme(getSharedPrefs());
+            setTheme(mThemeId);
+            Log.w(TAG, "The ReloadMainActivity is not found.  We cannot change the theme that way. "
+                    + "Trying the old way");
+            return;
+        }
+
+        startActivity(intent);
+        finish();
+    }
+
     // used to give access to "this" in threads and other places DKP
     public static Main getMainApplication() {
         return mApplication;
@@ -1132,8 +1114,7 @@ public class Main extends ListActivity {
                 Util.deleteFiles(libDir, ".*\\.(tmp|lg|db)");
                 Util.deleteFiles(new File(libDir, "data"), "books\\.dat|.*\\.chp");
                 if (!libDir.getAbsoluteFile().toString().equalsIgnoreCase(Settings.DEFAULT_EBOOK_DIRECTORY)) {
-                    // cleanup default library directory if it wasn't the one we
-                    // were using
+                    // cleanup default library directory if it wasn't the one we were using
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, ".images"), ".*");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, ".thumbnails"), ".*");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY), ".*\\.(tmp|lg|db)");
@@ -1142,8 +1123,7 @@ public class Main extends ListActivity {
                 // cleanup any sqlite databases
                 Util.deleteFiles(new File("/data/data/com.jackcholt.reveal/databases"), ".*\\.db");
 
-                // cleanup preferences (can't seem to delete file, so tell the
-                // preferences manager to clear them all)
+                // cleanup preferences (can't seem to delete file, so tell the preferences manager to clear them all)
                 getSharedPrefs().edit().clear().commit();
 
                 // shutdown, but first queue a request to restart
