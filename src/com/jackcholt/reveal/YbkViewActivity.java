@@ -708,9 +708,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 break;
 
             case NOTE_BROWSER_ID:
-
-                if (null == mCurrChap) {
-                    Log.e(TAG, "The current chapter info is null when trying to jump to the note reference.");
+                
+                if (null == mCurrChap || null == intent) {
                     break;
                 }
                 mCurrChap.setBookFileName(intent.getStringExtra(YbkDAO.FILENAME));
