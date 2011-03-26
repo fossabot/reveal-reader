@@ -19,7 +19,7 @@ import com.jackcholt.reveal.data.AnnotHilite;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class AnnotationDialog extends Activity {
-    public static final String TAG = "ldssa.AnnotationDialog";
+    public static final String TAG = AnnotationDialog.class.getSimpleName();
     
     public static final int RED_HILITE = Color.parseColor("#ffaaaa");
     public static final int PINK_HILITE = Color.parseColor("#ffcccc");

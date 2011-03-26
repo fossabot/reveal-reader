@@ -25,7 +25,7 @@ public class LicenseDialog extends Dialog {
 	    Button close = (Button) findViewById(R.id.close_about_btn);
 	    close.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                    dismiss();
+                dismiss();
             }
 	    });
 	    setTitle(R.string.title_license);
@@ -35,8 +35,7 @@ public class LicenseDialog extends Dialog {
 	    try {
 	        byte buf[] = new byte[inputFile.available()];
 	        inputFile.read(buf);
-	        String license = new String(buf,"UTF-8");
-	        licenseText.setText(license);
+	        licenseText.setText(new String(buf,"UTF-8"));
 	    } catch (IOException e) {
 	        licenseText.setText("Unable to find license text");
         }

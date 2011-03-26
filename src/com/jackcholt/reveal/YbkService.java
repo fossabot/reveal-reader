@@ -168,12 +168,10 @@ public class YbkService extends Service {
             @Override
             public void protectedRun() {
                 try {
-                    Completion callbacks[] = callbackMap.get(Long.valueOf((long) Long.valueOf(intent.getExtras()
-                            .getLong(CALLBACKS_KEY))));
+                    Completion callbacks[] = callbackMap.get(intent.getLongExtra(CALLBACKS_KEY, 0));
                     List<String> downloads = Util.fetchTitle(new File(intent.getExtras().getString(TARGET_KEY)),
                             getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
-                            context,
-                            callbacks);
+                            context, callbacks);
 
                     if (downloads.isEmpty()) {
                         throw new FileNotFoundException();
@@ -194,7 +192,6 @@ public class YbkService extends Service {
         };
 
         mDownloadHandler.post(job);
-
     }
 
     @Override
@@ -255,19 +252,21 @@ public class YbkService extends Service {
     /**
      * Requests that a book be downloaded and added to the library.
      * 
-     * @param context the caller's context
-     * @param source URL of the book to be downloaded
-     * @param target the suggested absolute filename of the book to be added
-     * @param callbacks (optional) completion callback
+     * @param context the caller's context.
+     * @param source URL of the book to be downloaded.
+     * @param target the suggested absolute filename of the book to be added.
+     * @param callbacks (optional) completion callback.
      */
     public static void requestDownloadBook(Context context, String source, String target, Completion... callbacks) {
         Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, DOWNLOAD_BOOK)
                 .putExtra(SOURCE_KEY, source).putExtra(TARGET_KEY, target);
+
         if (callbacks != null && callbacks.length != 0) {
             Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
             callbackMap.put(callbackID, callbacks);
             intent.putExtra(CALLBACKS_KEY, callbackID);
         }
+
         context.startService(intent);
     }
 

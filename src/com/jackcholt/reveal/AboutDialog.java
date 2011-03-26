@@ -1,6 +1,7 @@
 package com.jackcholt.reveal;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
@@ -15,8 +16,8 @@ import android.widget.Button;
  */
 
 public class AboutDialog extends Dialog {
-    public AboutDialog() {
-        super(Main.getMainApplication());
+    public AboutDialog(Context _this) {
+        super(_this);
         
         setContentView(R.layout.dialog_about);
 
@@ -40,10 +41,11 @@ public class AboutDialog extends Dialog {
         } catch (NameNotFoundException e) {
             title = "Unknown version";
         }
+        findViewById(R.id.about_layout).forceLayout();
     }
 
-    public static AboutDialog create() {
-        AboutDialog dlg = new AboutDialog();
+    public static AboutDialog create(Context _this) {
+        AboutDialog dlg = new AboutDialog(_this);
         dlg.show();
         return dlg;
     }

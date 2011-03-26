@@ -289,42 +289,45 @@ public class TitleBrowser extends ListActivity {
             return;
         }
 
-        final String downloadUrlString = downloadUrl.toExternalForm();
-        final String fileLocationString = title.getFileName();
-
-        if (fileLocationString.contains("SH Images.zip")) {
+        if (title.getFileName().contains("SH Images.zip")) {
             HiddenEBook.create(this);
         }
 
         final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++,
                 R.drawable.ebooksmall, MessageFormat.format(getResources().getString(R.string.downloading),
                         title.getName()));
+        
         final Completion callback = new Completion() {
             public void completed(boolean succeeded, String message) {
                 Main main = Main.getMainApplication();
                 if (null == main) {
                     return;
                 }
-                if (succeeded) {
-                    if (message.endsWith("%")) {
-                        int percent = Integer.parseInt(message.substring(0, message.length() - 1));
-                        progressNotification.update(100, percent);
-                    } else {
-                        progressNotification.hide();
-                        main.refreshNotify(message);
-                        main.scheduleRefreshBookList();
-                    }
-                } else {
+
+                if (!succeeded) {
                     progressNotification.hide();
                     Util.sendNotification(TitleBrowser.this, message, android.R.drawable.stat_sys_warning,
                             getResources().getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
+                    return;
                 }
+
+                if (message.endsWith("%")) {
+                    int percent = Integer.parseInt(message.substring(0, message.length() - 1));
+                    progressNotification.update(100, percent);
+                    return;
+                }
+            
+                progressNotification.hide();
+                main.refreshNotify(message);
+                main.scheduleRefreshBookList();
             }
         };
+
+        final String downloadUrlString = downloadUrl.toExternalForm();
         SafeRunnable action = new SafeRunnable() {
             @Override
             public void protectedRun() {
-                YbkService.requestDownloadBook(TitleBrowser.this, downloadUrlString, fileLocationString, callback);
+                YbkService.requestDownloadBook(TitleBrowser.this, downloadUrlString, title.getFileName(), callback);
                 Toast.makeText(TitleBrowser.this, R.string.ebook_download_started, Toast.LENGTH_SHORT).show();
                 progressNotification.show();
             }
@@ -345,9 +348,8 @@ public class TitleBrowser extends ListActivity {
     }
 
     /**
-     * XML parsing handler. This controls the sax parsing and insertion of
-     * information into the title list. All data is coming from our own
-     * organization on the server side.
+     * XML parsing handler. This controls the sax parsing and insertion of information into the title list. All data is
+     * coming from our own organization on the server side.
      * 
      * @author jwiggins
      * 
