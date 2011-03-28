@@ -5,9 +5,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
-
-
 
 /**
  * AboutDialog for telling people who we be :)
@@ -16,17 +15,19 @@ import android.widget.Button;
  */
 
 public class AboutDialog extends Dialog {
+    private static final String TAG = AboutDialog.class.getSimpleName();
+    
     public AboutDialog(Context _this) {
         super(_this);
         
         setContentView(R.layout.dialog_about);
 
-        Button close = (Button) findViewById(R.id.close_about_btn);
-        close.setOnClickListener(new View.OnClickListener() {
+        ((Button) findViewById(R.id.close_about_btn)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 dismiss();
             }
         });
+        
         String title;
         try {
             title = getContext().getString(R.string.app_name)
@@ -46,7 +47,14 @@ public class AboutDialog extends Dialog {
 
     public static AboutDialog create(Context _this) {
         AboutDialog dlg = new AboutDialog(_this);
-        dlg.show();
+        
+        try {
+            dlg.show();
+        } catch (WindowManager.BadTokenException bte) {
+            // This gets thrown if the Activity associated with _this is not running. Do nothing
+            Log.w(TAG, "Bad token associated with the context");
+        }
+        
         return dlg;
     }
 }

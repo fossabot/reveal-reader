@@ -16,7 +16,6 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Picture;
 import android.net.Uri;
 import android.os.Build;
@@ -89,7 +88,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private GestureDetector mGestureScanner = new GestureDetector(this);
 
-    private int mThemeId = -1;
+    //private int mThemeId = -1;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -727,9 +726,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
                 break;
 
-            case Main.ACTIVITY_SETTINGS:
-                activatePreferenceChanges(intent.getExtras());
-                break;
             }
 
             super.onActivityResult(requestCode, resultCode, intent);
@@ -738,53 +734,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         } catch (Error e) {
             unexpectedError(e);
         }
-    }
-
-    private void activatePreferenceChanges(Bundle extras) {
-        if (extras != null && extras.getBoolean(Settings.EBOOK_DIR_CHANGED)) {
-            YbkDAO.getInstance(this).open(this);
-            Main.getMainApplication().refreshLibrary(
-                    getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY));
-        }
-        Main.getMainApplication().refreshBookList();
-
-        if (mThemeId == Util.getTheme(getSharedPrefs())) {
-            return;
-        }
-        /*
-         * (Notes: The following is based on both empirical evidence and what I've been able to find in the developer
-         * forums. In Android 1.0, using Acitivy.setTheme() would reset all the theme elements. In each subsequent
-         * version if, fewer and fewer theme elements changes actually take effect unless the theme is set before the
-         * initial call to onCreate(). In Android 2.0 and beyond, some of color changes that we make when switching
-         * to/from the night mode theme don't happen properly. The result is that after switching themes dynamically, we
-         * are left with an unreadable display. The only way to fully reset the theme is to restart the activity.
-         */
-        final Intent intent = new Intent(this, ReloadYbkViewActivity.class);
-
-        if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size() == 0) {
-            /*
-             * For reasons unknown, possibly related to the version of Android, the ReloadYbkActivity doesn't seem to be
-             * found by some of our users. So if the activity can't be found, try to do it the old way and hope that
-             * those who are having this problem are those with an older version of Android where dynamic setting of the
-             * theme actually works.
-             */
-            mThemeId = Util.getTheme(getSharedPrefs());
-            setTheme(mThemeId);
-            Log.w(TAG, "The ReloadYbkViewActivity is not found.  We cannot change the theme that way. Trying the old "
-                    + "way");
-            return;
-
-        }
-
-        startActivity(intent.putExtra(YbkDAO.FILENAME, mCurrChap.getBookFileName()));
-        finish();
-    }
-
-    @Override
-    public void setTheme(int resid) {
-        // bug workaround alert: see http://code.google.com/p/android/issues/detail?id=4394
-        mThemeId = Util.getTheme(getSharedPrefs());
-        super.setTheme(mThemeId);
     }
 
     /**
@@ -1505,17 +1454,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         @Override
         public void onPageFinished(final WebView view, final String url) {
-            /*
-             * try { Log.d(TAG, "fragment " + (null == mCurrChap.getFragment() ? "nil" : mCurrChap.getFragment())); //
-             * make it jump to the internal link if (mCurrChap.getFragment() != null) {
-             * view.loadUrl("javascript:location.href=\"#" + mCurrChap.getFragment() + "\"");
-             * mCurrChap.setFragment(null); } else if (url.indexOf('@') != -1) { view.scrollTo(0, 0); } else if
-             * (mCurrChap.getScrollYPos() != 0) { view.scrollTo(0, mCurrChap.getScrollYPos()); }
-             * 
-             * setProgressBarIndeterminateVisibility(false); if (mBookWalk) { mHandler.postDelayed(new ChapterWalker(),
-             * 100); } } catch (RuntimeException rte) { unexpectedError(rte); } catch (Error e) { unexpectedError(e); }
-             */
-
             // In Android 2.0 we can't scroll immediately because rendering hasn't happened yet.
             // We can get an onNewPicture message when rendering is complete, but we also get
             // those messages when there is a picture on the page (before this message), so we have to install a
