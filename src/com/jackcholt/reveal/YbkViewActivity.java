@@ -565,7 +565,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent intent) {
-
+        if (null == intent) {
+            return;
+        }
+        
         Bundle extras;
 
         try {
@@ -615,6 +618,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 return;
 
             case CALL_BOOKMARK:
+                
                 extras = intent.getExtras();
 
                 boolean addBookMark = extras.getBoolean(BookmarkDialog.ADD_BOOKMARK);
@@ -686,10 +690,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 break;
 
             case CALL_NOTE_EDITED:
-                if (null == intent) {
-                    break;
-                }
-                
                 YbkDAO.getInstance(this).insertAnnotHilite(intent.getStringExtra(YbkDAO.NOTE),
                         intent.getIntExtra(YbkDAO.COLOR, AnnotationDialog.NO_HILITE),
                         intent.getIntExtra(YbkDAO.VERSE, -1), intent.getStringExtra(YbkDAO.BOOK_FILENAME),
@@ -708,10 +708,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 break;
 
             case NOTE_BROWSER_ID:
-                
-                if (null == mCurrChap || null == intent) {
+                if (null == mCurrChap) {
                     break;
                 }
+                
                 mCurrChap.setBookFileName(intent.getStringExtra(YbkDAO.FILENAME));
                 mCurrChap.setChapFileName(intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
                 mCurrChap.setFragment(intent.getStringExtra(YbkDAO.VERSE));
