@@ -14,10 +14,10 @@
 			android:layout_weight="1.0" android:paddingLeft="5dip"
 			android:paddingRight="5dip" android:orientation="vertical">
 			
-    		<TextView android:layout_width="fill_parent"
-    			android:layout_height="wrap_content" 
-    			android:id="@+id/license_text"
-    			android:layout_margin="5sp" />
+		<TextView android:layout_width="fill_parent"
+			android:layout_height="wrap_content" 
+			android:id="@+id/license_text"
+			android:layout_margin="5sp" />
 		</LinearLayout>
 	</ScrollView>
 		

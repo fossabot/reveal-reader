@@ -6,42 +6,27 @@
     <LinearLayout android:id="@+id/breadCrumb"
        android:orientation="horizontal"
        android:layout_height="wrap_content"
-       android:layout_width="fill_parent" 
-       android:background="@drawable/blue_gradient"
-       android:paddingTop="4dp">
+       android:layout_width="fill_parent" android:background="#cccccc">
         <ImageButton android:id="@+id/mainMenu"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/home32"
-              android:textSize="@dimen/button_font_size" 
-              android:tint="#3b5d74"
-              />
+              android:textSize="@dimen/button_font_size"/>
         <ImageButton android:id="@+id/folderButton"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/folder32"
-              android:textSize="@dimen/button_font_size"
-              android:tint="#3b5d74"
-              />
+              android:textSize="@dimen/button_font_size"/>
         <Button android:id="@+id/bookButton"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:visibility="invisible"
-              android:textSize="@dimen/button_font_size" 
-              android:height="51sp"
-              android:textColor="#3b5d74"
-              android:ellipsize="end"
-              />
+              android:textSize="@dimen/button_font_size" android:height="51sp"/>
         <Button android:id="@+id/chapterButton"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:visibility="invisible"
-              android:textSize="@dimen/button_font_size" 
-              android:height="51sp"
-              android:textColor="#3b5d74"
-              android:ellipsize="start"
-              android:singleLine="true"
-        />
+              android:textSize="@dimen/button_font_size" android:height="51sp"/>
     </LinearLayout>
     <com.jackcholt.reveal.widgets.FastScrollWebView android:id="@+id/ybkView"
           android:layout_width="fill_parent"

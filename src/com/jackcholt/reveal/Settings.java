@@ -40,20 +40,22 @@ public class Settings extends PreferenceActivity {
             // always return an OK result
             setResult(RESULT_OK, returnIntent);
 
-            ((EditTextPreference) findPreference("default_ebook_dir"))
-                    .setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-                        public boolean onPreferenceChange(Preference preference, Object newValue) {
-                            if (((String) newValue).startsWith(Environment.getExternalStorageDirectory().toString())) {
-                                returnIntent.putExtra(EBOOK_DIR_CHANGED, true);
-                                return true;
-                            }
+            EditTextPreference defaultEbookDir = (EditTextPreference) findPreference("default_ebook_dir");
+            defaultEbookDir.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if (((String) newValue).startsWith(Environment.getExternalStorageDirectory().toString())) {
+                        returnIntent.putExtra(EBOOK_DIR_CHANGED, true);
+                        return true;
+                    }
 
-                            Toast.makeText(prefContext, getResources().getString(R.string.ebook_dir_invalid,
-                                    Environment.getExternalStorageDirectory().toString()), Toast.LENGTH_LONG).show();
+                    String ebookDirBadMsg = getResources().getString(R.string.ebook_dir_invalid,
+                            Environment.getExternalStorageDirectory().toString());
 
-                            return false;
-                        }
-                    });
+                    Toast.makeText(prefContext, ebookDirBadMsg, Toast.LENGTH_LONG).show();
+
+                    return false;
+                }
+            });
 
             getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(
                     new SharedPreferences.OnSharedPreferenceChangeListener() {

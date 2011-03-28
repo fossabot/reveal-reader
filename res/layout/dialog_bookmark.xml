@@ -1,39 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout 
 	xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-	<TextView android:id="@+id/hint"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/bmLongPressHint"
-        android:padding="5dip"
-    />
-    <Button android:id="@+id/addBMButton"
-	          android:layout_width="fill_parent"
-	          android:layout_height="wrap_content"
-	          android:textSize="@dimen/button_font_size"
-	          android:text="@string/add_bookmark" 
-              android:padding="5dip"
-    />
-	<LinearLayout android:id="@+id/list"
-       android:orientation="vertical"
+	<LinearLayout android:id="@+id/bookmarkButton"
+       android:orientation="horizontal"
        android:layout_height="wrap_content"
        android:layout_width="fill_parent"
        android:padding="5dip"
        >
-        <ListView android:id="@+id/android:list"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:textFilterEnabled="true"
-              android:textSize="@dimen/font_size"
-              />
-        <TextView android:id="@+id/android:empty"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:text="@string/no_bookmark"
-              android:textSize="@dimen/font_size"/>
+	   <Button android:id="@+id/addBMButton"
+	          android:layout_width="fill_parent"
+	          android:layout_height="wrap_content"
+	          android:textSize="@dimen/button_font_size"
+	          android:text="@string/add_bookmark"/>
     </LinearLayout>
+	<ListView android:id="@+id/android:list"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:textFilterEnabled="true"
+          android:textSize="@dimen/font_size"
+          android:gravity="center_vertical|center_horizontal"/>
+    <TextView android:id="@+id/android:empty"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/no_bookmark"
+          android:textSize="@dimen/font_size"/>
 </LinearLayout>

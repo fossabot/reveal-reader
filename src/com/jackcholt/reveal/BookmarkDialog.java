@@ -48,8 +48,8 @@ public class BookmarkDialog extends ListActivity {
             findAddButton().setOnClickListener(new OnClickListener() {
                 public void onClick(final View view) {
                     Log.d(TAG, "Adding a bookmark");
-                    setResult(RESULT_OK,
-                            new Intent(getBaseContext(), YbkViewActivity.class).putExtra(ADD_BOOKMARK, true));
+                    setResult(RESULT_OK, new Intent(getBaseContext(), YbkViewActivity.class).putExtra(ADD_BOOKMARK,
+                            true));
                     finish();
                 }
 
@@ -59,6 +59,7 @@ public class BookmarkDialog extends ListActivity {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
+
     }
 
     private Button findAddButton() {
@@ -73,10 +74,8 @@ public class BookmarkDialog extends ListActivity {
     protected void onListItemClick(final ListView listView, final View view, final int selectionRowId, final long id) {
         try {
             Log.d(TAG, "selectionRowId/id: " + selectionRowId + "/" + id);
-            setResult(
-                    RESULT_OK,
-                    new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.HISTORY_ID,
-                            ((History) listView.getItemAtPosition(selectionRowId)).id));
+            setResult(RESULT_OK, new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.HISTORY_ID,
+                    ((History) listView.getItemAtPosition(selectionRowId)).id));
 
             finish();
         } catch (RuntimeException rte) {
@@ -90,7 +89,6 @@ public class BookmarkDialog extends ListActivity {
     protected void onStart() {
         try {
             super.onStart();
-            
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -127,6 +125,7 @@ public class BookmarkDialog extends ListActivity {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
+
     }
 
     @Override
@@ -171,4 +170,5 @@ public class BookmarkDialog extends ListActivity {
         }
         return true;
     }
+
 }

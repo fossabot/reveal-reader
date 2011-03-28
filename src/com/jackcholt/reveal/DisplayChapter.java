@@ -11,7 +11,6 @@ public class DisplayChapter {
     private String fragment;
     private int chapOrderNbr = 0;
     private String navFile = "1";
-    private String verse;
 
     public void setBookFileName(String bookFileName) {
         this.bookFileName = bookFileName;
@@ -19,6 +18,7 @@ public class DisplayChapter {
 
     public String getBookFileName() {
         if (null == bookFileName) {
+            //throw new IllegalStateException("Book filename has not be set.");
             Log.i("CurrentChapter.getBookFileName()", "Book filename is null.");
         }
         return bookFileName;
@@ -67,11 +67,4 @@ public class DisplayChapter {
         return navFile;
     }
 
-    public String getVerse() {
-        return verse;
-    }
-
-    public void setVerse(String verse) {
-        this.verse = verse;
-    }
 }
