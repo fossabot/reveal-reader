@@ -169,7 +169,7 @@ public class YbkService extends Service {
             public void protectedRun() {
                 try {
                     Completion callbacks[] = callbackMap.get(intent.getLongExtra(CALLBACKS_KEY, 0));
-                    List<String> downloads = Util.fetchTitle(new File(intent.getExtras().getString(TARGET_KEY)),
+                    List<String> downloads = Util.fetchTitle(new File(intent.getStringExtra(TARGET_KEY)),
                             getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
                             context, callbacks);
 

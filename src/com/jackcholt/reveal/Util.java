@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -736,10 +737,11 @@ public class Util {
             // but won't cause us to block forever
             connection.setConnectTimeout(300000);
             connection.setReadTimeout(300000);
-            StatFs statFs = new StatFs(Environment.getExternalStorageDirectory().getName());
-            if (connection.getContentLength() * 2 > statFs.getAvailableBlocks() * statFs.getBlockSize()) {
+
+            if (!hasEnoughDiskspace(connection)) {
                 throw new IOException(context.getResources().getString(R.string.sdcard_full));
             }
+
             in = connection.getInputStream();
             if (in == null) {
                 // getInputStream isn't suppose to return null, but we sometimes get a null pointer exception later on
@@ -755,7 +757,7 @@ public class Util {
             out = new FileOutputStream(tempFile);
 
             int bytesRead = 0;
-            int totalBytesRead = 0;
+            long totalBytesRead = 0;
             while (-1 != (bytesRead = in.read(buffer, 0, buffer.length))) {
                 if ((0 == totalBytesRead) && hasZipHeader(buffer)) {
                     isZip = true;
@@ -763,7 +765,11 @@ public class Util {
                 totalBytesRead += bytesRead;
                 out.write(buffer, 0, bytesRead);
                 for (Completion callback : callbacks) {
-                    callback.completed(true, ((totalBytesRead * 100) / connection.getContentLength()) + "%");
+                    callback.completed(
+                            true,
+                            BigInteger.valueOf(totalBytesRead * 100).divide(
+                                    BigInteger.valueOf(connection.getContentLength()))
+                                    + "%");
                 }
             }
             success = true;
@@ -845,6 +851,18 @@ public class Util {
         }
 
         return downloaded;
+    }
+
+    private static boolean hasEnoughDiskspace(URLConnection connection) {
+        return BigInteger
+                .valueOf(connection.getContentLength())
+                .multiply(BigInteger.valueOf(2))
+                .compareTo(
+                        BigInteger.valueOf(
+                                new StatFs(Environment.getExternalStorageDirectory().getName()).getAvailableBlocks())
+                                .multiply(
+                                        BigInteger.valueOf(new StatFs(Environment.getExternalStorageDirectory()
+                                                .getName()).getBlockSize()))) == -1;
     }
 
     private static boolean hasZipHeader(byte[] buffer) {
