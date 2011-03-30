@@ -174,7 +174,7 @@ public class Util {
         }
 
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (null == connMgr) {
+        if (null == connMgr || null == connMgr.getNetworkInfo(netType)) {
             return false;
         }
 
