@@ -428,7 +428,7 @@ public class Main extends ListActivity {
         setListAdapter(new IconicAdapter(this));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     class IconicAdapter extends ArrayAdapter {
         private static final float NEW_WIDTH = 30;
         private static final float NEW_HEIGHT = 37;
