@@ -62,6 +62,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private String mOrigChapName;
     private Handler mHandler = new Handler();
     private boolean mPageScrollSize = true;
+    private boolean mPageScroll = false;
 
     private static final String TAG = "reveal.YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
@@ -1566,8 +1567,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         int keyCode = event.getKeyCode();
         
         mPageScrollSize = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("page_scrollsize", true);
-        
-        if (!mPageScrollSize) { 
+        mPageScroll = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("page_scroll", false);
+       
+        if (!mPageScrollSize && mPageScroll) { 
             WebView wv = (WebView) findWebView();     
 	            switch (keyCode) {
 	            case KeyEvent.KEYCODE_VOLUME_UP:
@@ -1583,7 +1585,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 	            default:
 	                return super.dispatchKeyEvent(event);
 	            }
-        } else if (mPageScrollSize){
+        } else if (mPageScrollSize && mPageScroll){
         	WebView wv = (WebView) findWebView();     
             switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:

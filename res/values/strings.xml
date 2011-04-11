@@ -161,16 +161,19 @@
     <string name="note_label">Note</string>
     <string name="menu_annotate">Note/Highlight</string>
     <string name="menu_goto_top">Go to top</string>
-    
     <string name="label_zoom">Reading Zoom</string>
     <string name="label_scrollsize">Reading Vol Key Scroll</string>
-    
+
+    <string name="label_scroll">Enable Vol Key Scroll</string>
+
     <string name="summary_on_zoom">Zoom button does display</string>
     <string name="summary_off_zoom">Zoom button does not display</string>
-    
     <string name="summary_on_scrollsize">Vol Scroll 4 Lines</string>
     <string name="summary_off_scrollsize">Vol Scroll Full Page</string>
-        
+
+    <string name="summary_on_scroll">Vol Scroll On</string>
+    <string name="summary_off_scroll">Vol Scroll Off</string>
+
     <string name="cannot_find_url">We cannot find that reference.</string>
     <string name="cannot_hilite">Cannot highlight or annotate this chapter.</string>
     <string name="menu_move_to_folder">Move eBook to Folder...</string>

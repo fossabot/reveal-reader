@@ -25,6 +25,13 @@
             android:defaultValue="false"/>
 
         <CheckBoxPreference
+	        android:key="page_scroll"
+	        android:title="@string/label_scroll"
+	        android:summaryOn="@string/summary_on_scroll" 
+	        android:summaryOff="@string/summary_off_scroll" 
+            android:defaultValue="false"/>
+
+        <CheckBoxPreference
 	        android:key="page_scrollsize"
 	        android:title="@string/label_scrollsize"
 	        android:summaryOn="@string/summary_on_scrollsize" 
