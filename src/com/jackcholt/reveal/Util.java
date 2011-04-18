@@ -57,6 +57,7 @@ import android.os.Process;
 import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.text.Html;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -854,15 +855,22 @@ public class Util {
     }
 
     private static boolean hasEnoughDiskspace(URLConnection connection) {
+        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            return false;
+        }
+
+        String extDir = Environment.getExternalStorageDirectory().getName();
+        if (TextUtils.isEmpty(extDir)) {
+            return false;
+        }
+
+        StatFs statFs = new StatFs(extDir);
         return BigInteger
                 .valueOf(connection.getContentLength())
                 .multiply(BigInteger.valueOf(2))
                 .compareTo(
-                        BigInteger.valueOf(
-                                new StatFs(Environment.getExternalStorageDirectory().getName()).getAvailableBlocks())
-                                .multiply(
-                                        BigInteger.valueOf(new StatFs(Environment.getExternalStorageDirectory()
-                                                .getName()).getBlockSize()))) == -1;
+                        BigInteger.valueOf(statFs.getAvailableBlocks()).multiply(
+                                BigInteger.valueOf(statFs.getBlockSize()))) == -1;
     }
 
     private static boolean hasZipHeader(byte[] buffer) {
