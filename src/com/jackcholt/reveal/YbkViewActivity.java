@@ -1575,9 +1575,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         switch (event.getKeyCode()) {
         case KeyEvent.KEYCODE_VOLUME_UP:
-            if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (mScroll4Lines) {
-                    findWebView().scrollTo(0, findWebView().getScrollY() - 100);
+            if (event.getAction() == KeyEvent.ACTION_DOWN ) {
+                if (mScroll4Lines && findWebView().getScrollY() > 100) {
+                    findWebView().scrollBy(0, -100);
                 } else {
                     findWebView().pageUp(false);
                 }
@@ -1585,8 +1585,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             return true;
         case KeyEvent.KEYCODE_VOLUME_DOWN:
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (mScroll4Lines) {
-                    findWebView().scrollTo(0, findWebView().getScrollY() + 100);
+                if (mScroll4Lines && findWebView().getScrollY() < (findWebView().getContentHeight() - 100)) {
+                    findWebView().scrollBy(0, 100);
                 } else {
                     findWebView().pageDown(false);
                 }
