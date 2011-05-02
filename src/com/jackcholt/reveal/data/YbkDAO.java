@@ -173,7 +173,7 @@ public class YbkDAO {
     public void initAnnotHilites() {
         mAnnotHiliteList = new ArrayList<AnnotHilite>();
     }
-    
+
     public ArrayList<AnnotHilite> getAnnotHilites() {
         synchronized (mAnnotHiliteList) {
             ArrayList<AnnotHilite> ah = new ArrayList<AnnotHilite>(mAnnotHiliteList);
@@ -228,19 +228,14 @@ public class YbkDAO {
     private static final Comparator<AnnotHilite> annotHiliteComparator = new Comparator<AnnotHilite>() {
 
         public int compare(AnnotHilite ah1, AnnotHilite ah2) {
-            if ((ah1.bookFilename + ah1.chapterFilename).compareToIgnoreCase(ah2.bookFilename + ah2.chapterFilename) == -1) { 
-                return -1;
+            int compareFileVal = (ah1.bookFilename + ah1.chapterFilename).compareToIgnoreCase(ah2.bookFilename
+                    + ah2.chapterFilename);
+
+            if (compareFileVal != 0) {
+                return compareFileVal;
             }
-            if ((ah1.bookFilename + ah1.chapterFilename).compareToIgnoreCase(ah2.bookFilename + ah2.chapterFilename) == 0) { 
-                if (ah1.verse < ah2.verse) {
-                    return -1;
-                }
-                if (ah1.verse == ah2.verse) {
-                    return 0;
-                }
-                return 1;
-            }
-            return 1;
+
+            return Integer.valueOf(ah1.verse).compareTo(ah2.verse);
         }
     };
 

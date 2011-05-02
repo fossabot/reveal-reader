@@ -61,8 +61,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private int mBookWalkIndex = -1;
     private String mOrigChapName;
     private Handler mHandler = new Handler();
-    private boolean mPageScrollSize = true;
-    private boolean mPageScroll = false;
+    private boolean mScroll4Lines = true;
+    private boolean mPageScrollEnabled = false;
 
     private static final String TAG = "reveal.YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
@@ -89,8 +89,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     public static final int SHOW_BOOK = 5;
 
     private GestureDetector mGestureScanner = new GestureDetector(this);
-
-    //private int mThemeId = -1;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -569,7 +567,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (null == intent) {
             return;
         }
-        
+
         Bundle extras;
 
         try {
@@ -619,7 +617,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 return;
 
             case CALL_BOOKMARK:
-                
+
                 extras = intent.getExtras();
 
                 boolean addBookMark = extras.getBoolean(BookmarkDialog.ADD_BOOKMARK);
@@ -712,7 +710,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 if (null == mCurrChap) {
                     break;
                 }
-                
+
                 mCurrChap.setBookFileName(intent.getStringExtra(YbkDAO.FILENAME));
                 mCurrChap.setChapFileName(intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
                 mCurrChap.setFragment(intent.getStringExtra(YbkDAO.VERSE));
@@ -1173,6 +1171,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent msg) {
+        Log.d(TAG, "In onKeyDown");
+
         try {
             if (keyCode != KeyEvent.KEYCODE_BACK) {
                 return super.onKeyDown(keyCode, msg);
@@ -1561,50 +1561,42 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         setProgressBarIndeterminateVisibility(false);
     }
 
-  
     public boolean dispatchKeyEvent(KeyEvent event) {
-        int action = event.getAction();
-        int keyCode = event.getKeyCode();
-        
-        mPageScrollSize = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("page_scrollsize", true);
-        mPageScroll = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("page_scroll", false);
-       
-        if (!mPageScrollSize && mPageScroll) { 
-            WebView wv = (WebView) findWebView();     
-	            switch (keyCode) {
-	            case KeyEvent.KEYCODE_VOLUME_UP:
-	                if (action == KeyEvent.ACTION_DOWN) {
-	                    wv.pageUp(false);   
-	                }
-	                return true;
-	            case KeyEvent.KEYCODE_VOLUME_DOWN:
-	                if (action == KeyEvent.ACTION_DOWN) {
-	                    wv.pageDown(false);
-	                }
-	                return true;
-	            default:
-	                return super.dispatchKeyEvent(event);
-	            }
-        } else if (mPageScrollSize && mPageScroll){
-        	WebView wv = (WebView) findWebView();     
-            switch (keyCode) {
-            case KeyEvent.KEYCODE_VOLUME_UP:
-                if (action == KeyEvent.ACTION_DOWN) {
-                    wv.scrollTo(0, wv.getScrollY() - 100);
-                }
-                return true;
-            case KeyEvent.KEYCODE_VOLUME_DOWN:
-                if (action == KeyEvent.ACTION_DOWN) {
-                    wv.scrollTo(0, wv.getScrollY() + 100);
-                }
-                return true;
-            default:
-                return super.dispatchKeyEvent(event);
-            }
+        Log.d(TAG, "In dispatchKeyEvent");
+
+        mPageScrollEnabled = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("page_scroll",
+                false);
+        if (!mPageScrollEnabled) {
+            return super.dispatchKeyEvent(event);
         }
-        return false;
-    } 
-    
+
+        mScroll4Lines = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("page_scrollsize",
+                true);
+
+        switch (event.getKeyCode()) {
+        case KeyEvent.KEYCODE_VOLUME_UP:
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (mScroll4Lines) {
+                    findWebView().scrollTo(0, findWebView().getScrollY() - 100);
+                } else {
+                    findWebView().pageUp(false);
+                }
+            }
+            return true;
+        case KeyEvent.KEYCODE_VOLUME_DOWN:
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (mScroll4Lines) {
+                    findWebView().scrollTo(0, findWebView().getScrollY() + 100);
+                } else {
+                    findWebView().pageDown(false);
+                }
+            }
+            return true;
+        default:
+            return super.dispatchKeyEvent(event);
+        }
+    }
+
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         return true;
     }
@@ -1628,9 +1620,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         .putExtra(YbkDAO.BOOK_FILENAME, intent.getStringExtra(YbkDAO.BOOK_FILENAME)), CALL_NOTE_EDITED);
     }
 
-	@Override
-	public void onLongPress(MotionEvent arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void onLongPress(MotionEvent arg0) {
+        // TODO Auto-generated method stub
+
+    }
 }

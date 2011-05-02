@@ -48,8 +48,11 @@ public class Settings extends PreferenceActivity {
                                 return true;
                             }
 
-                            Toast.makeText(prefContext, getResources().getString(R.string.ebook_dir_invalid,
-                                    Environment.getExternalStorageDirectory().toString()), Toast.LENGTH_LONG).show();
+                            Toast.makeText(
+                                    prefContext,
+                                    getResources().getString(R.string.ebook_dir_invalid,
+                                            Environment.getExternalStorageDirectory().toString()), Toast.LENGTH_LONG)
+                                    .show();
 
                             return false;
                         }
