@@ -814,7 +814,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         // check the format of the internal file name
         if (!chapter.equals("index") && chapter.toLowerCase().indexOf(".html") == -1) {
-            // showDialog(INVALID_CHAPTER);
             Log.e(TAG, "The chapter is invalid: " + chapter);
             return false;
         }
@@ -824,7 +823,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         String chap = chapter.replace("%20", " ");
 
         String content = "";
-        // mCurrChap.setFragment(null);
 
         File testFile = new File(getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY,
                 Settings.DEFAULT_EBOOK_DIRECTORY), filePath);
@@ -1074,7 +1072,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                             mCurrChap.getChapFileName(), findWebView().getScrollY(), bookmarkNumber);
 
                                 } catch (IOException ioe) {
-                                    // TODO - add a friendly message
                                     Util.displayError(YbkViewActivity.this, ioe,
                                             getResources().getString(R.string.error_bookmark_save));
                                 }
@@ -1320,22 +1317,22 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 if (url.indexOf('@') != -1) {
                     if (getEmailPattern().matcher(url).matches()) {
                         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url)));
-                    } else {
-                        // pop up a context menu
-                        try {
-                            int verse = obtainVerse(url);
-                            if (verse > 0) {
-                                startActivityForResult(
-                                        new Intent(view.getContext(), VerseContextDialog.class)
-                                                .putExtra(YbkDAO.VERSE, verse)
-                                                .putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
-                                                .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
-                                        CALL_VERSE_CONTEXT_MENU);
-                            }
-                        } catch (NumberFormatException nfe) {
-                            Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG)
-                                    .show();
+                        return HANDLED_BY_HOST_APP;
+                    }
+                    
+                    // pop up a context menu
+                    try {
+                        int verse = obtainVerse(url);
+                        if (verse > 0) {
+                            startActivityForResult(
+                                    new Intent(view.getContext(), VerseContextDialog.class)
+                                            .putExtra(YbkDAO.VERSE, verse)
+                                            .putExtra(YbkDAO.BOOK_FILENAME, getBookFileName())
+                                            .putExtra(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName()),
+                                    CALL_VERSE_CONTEXT_MENU);
                         }
+                    } catch (NumberFormatException nfe) {
+                        Toast.makeText(getBaseContext(), getText(R.string.cannot_find_url), Toast.LENGTH_LONG).show();
                     }
                     return HANDLED_BY_HOST_APP;
                 }
@@ -1575,7 +1572,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         switch (event.getKeyCode()) {
         case KeyEvent.KEYCODE_VOLUME_UP:
-            if (event.getAction() == KeyEvent.ACTION_DOWN ) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (mScroll4Lines && findWebView().getScrollY() > 100) {
                     findWebView().scrollBy(0, -100);
                 } else {
@@ -1622,7 +1619,5 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     @Override
     public void onLongPress(MotionEvent arg0) {
-        // TODO Auto-generated method stub
-
     }
 }

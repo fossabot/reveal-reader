@@ -168,11 +168,11 @@
 
     <string name="summary_on_zoom">Zoom button does display</string>
     <string name="summary_off_zoom">Zoom button does not display</string>
-    <string name="summary_on_scrollsize">Vol Scroll 4 Lines</string>
-    <string name="summary_off_scrollsize">Vol Scroll Full Page</string>
+    <string name="summary_on_scrollsize">Volume scroll 4 lines</string>
+    <string name="summary_off_scrollsize">Volume scroll full page</string>
 
-    <string name="summary_on_scroll">Vol Scroll On</string>
-    <string name="summary_off_scroll">Vol Scroll Off</string>
+    <string name="summary_on_scroll">Volume scroll on</string>
+    <string name="summary_off_scroll">Volume scroll off</string>
 
     <string name="cannot_find_url">We cannot find that reference.</string>
     <string name="cannot_hilite">Cannot highlight or annotate this chapter.</string>
@@ -199,4 +199,7 @@
     <string name="title_search">Search</string>
     <string name="bmLongPressHint">Press and hold on a bookmark for more options.</string>
     <string name="more">More</string>
+    <string name="paragraph_numbers">Show Paragraph #s</string>
+    <string name="summary_on_paragraph_numbers">Paragraphs will be numbered.</string>
+    <string name="summary_off_paragraph_numbers">Paragraphs will not be numbered</string>
 </resources>

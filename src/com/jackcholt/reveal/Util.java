@@ -403,7 +403,7 @@ public class Util {
             return null;
         }
 
-        StringBuffer newContent = new StringBuffer();
+        StringBuilder newContent = new StringBuilder();
 
         int verseStartPos = 0;
         int verseEndPos = 0;
@@ -447,9 +447,9 @@ public class Util {
      * @param ah The AnnotHilite object that contains the annotation and highlight data.
      * @return The chapter with the verse highlighted.
      */
-    public static StringBuffer annotHiliteVerse(String content, final AnnotHilite ah) {
+    public static StringBuilder annotHiliteVerse(String content, final AnnotHilite ah) {
         if (ah.color == Color.TRANSPARENT && ah.note.length() == 0) {
-            return new StringBuffer(content);
+            return new StringBuilder(content);
         }
 
         String annot = (ah.note.length() > 0) ? " <img src='file:///android_asset/note.png'/> " : "";
@@ -462,18 +462,12 @@ public class Util {
                     + colorHex.substring(2) + "; color : black;\">";
             hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</div>";
         }
-        return new StringBuffer().append(hiliteDivStart).append(annot).append(content).append(hiliteDivEnd);
+        
+        return new StringBuilder().append(hiliteDivStart).append(annot).append(content).append(hiliteDivEnd);
     }
 
     private static String getVerseAnchorTagRegExp(int verse) {
         return "(?is)<a\\s+href=\"@" + Integer.toString(verse) + ",\\d+,\\d+\">.*";
-    }
-
-    /**
-     * @deprecated Use {@link #htmlize(String,SharedPreferences,String)} instead
-     */
-    public static final String htmlize(final String text, final SharedPreferences sharedPref) {
-        return htmlize(text, sharedPref, "0");
     }
 
     public static final String htmlize(final String text, final SharedPreferences sharedPref, String navFile) {
@@ -864,7 +858,13 @@ public class Util {
             return false;
         }
 
-        StatFs statFs = new StatFs(extDir);
+        StatFs statFs;
+        try {
+            statFs = new StatFs(extDir);
+        } catch (IllegalArgumentException iae) {
+            throw new IllegalArgumentException("The directory " + extDir + " is invalid.", iae);
+        }
+        
         return BigInteger
                 .valueOf(connection.getContentLength())
                 .multiply(BigInteger.valueOf(2))

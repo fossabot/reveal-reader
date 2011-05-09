@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.jackcholt.reveal"
-    android:installLocation="auto" android:versionCode="728" android:versionName="2.5">
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:name="RevealApplication"
-        android:theme="@style/Theme.DayMode" android:debuggable="true">
-        <activity android:name=".Main" android:screenOrientation="sensor" android:multiprocess="true"
+    android:installLocation="auto" 
+    android:versionCode="728" 
+    android:versionName="2.5">
+    <application android:icon="@drawable/icon" 
+        android:label="@string/app_name" 
+        android:name="RevealApplication"
+        android:theme="@style/Theme.DayMode" 
+        android:debuggable="true">
+        <activity android:name=".Main"
             android:label="@string/app_name" android:clearTaskOnLaunch="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -11,30 +16,43 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".Settings" android:label="@string/settings_name" android:screenOrientation="sensor"
+        <activity android:name=".Settings" 
+            android:label="@string/settings_name"
             android:theme="@android:style/Theme.Dialog" />
-        <activity android:name=".YbkViewActivity" android:label="@string/reveal_ybk_view" />
-        <provider android:multiprocess="true" android:authorities="com.jackcholt.reveal" android:name=".YbkProvider"
-            android:screenOrientation="sensor"></provider>
-        <activity android:label="@string/title_browser_name" android:screenOrientation="sensor" android:name="TitleBrowser" />
+        <activity android:name=".YbkViewActivity" 
+            android:label="@string/reveal_ybk_view" />
+        <provider android:authorities="com.jackcholt.reveal" 
+            android:name=".YbkProvider"/>
+        <activity android:label="@string/title_browser_name" 
+            android:name="TitleBrowser" />
 
-        <activity android:multiprocess="true" android:name=".HistoryDialog" android:label="@string/menu_history"
-            android:screenOrientation="sensor" android:theme="@android:style/Theme.Dialog" />
-        <activity android:multiprocess="true" android:name=".BookmarkDialog" android:label="@string/menu_bookmark"
-            android:screenOrientation="sensor" android:theme="@android:style/Theme.Dialog" />
-        <activity android:multiprocess="true" android:name=".MoveDialog" android:label="@string/menu_move_to_folder"
-            android:screenOrientation="sensor" android:theme="@android:style/Theme.Dialog" />
-        <activity android:name=".ErrorDialog" android:label="@string/error_title" android:screenOrientation="sensor"
-            android:multiprocess="false" android:theme="@android:style/Theme.Dialog" />
-        <service android:name=".YbkService" android:exported="false" />
+        <activity android:name=".HistoryDialog" 
+            android:label="@string/menu_history"
+            android:theme="@android:style/Theme.Dialog" />
+        <activity android:name=".BookmarkDialog" 
+            android:label="@string/menu_bookmark"
+            android:theme="@android:style/Theme.Dialog" />
+        <activity android:name=".MoveDialog" 
+            android:label="@string/menu_move_to_folder"
+            android:theme="@android:style/Theme.Dialog" />
+        <activity android:name=".ErrorDialog" 
+            android:label="@string/error_title"
+            android:theme="@android:style/Theme.Dialog" />
+        <service android:name=".YbkService" 
+            android:exported="false" />
 
-        <activity android:name=".YbkPopupActivity" android:label="@string/reveal_ybk_view" android:theme="@android:style/Theme.Dialog" />
-        <activity android:name=".VerseContextDialog" android:theme="@android:style/Theme.Dialog" />
-        <activity android:name=".AnnotationDialog" android:theme="@android:style/Theme.Dialog" />
-        <activity android:name=".ReloadMainActivity" android:screenOrientation="sensor" android:multiprocess="true"
-            android:label="@string/app_name" android:clearTaskOnLaunch="true" />
-        <activity android:name=".ReloadYbkViewActivity" android:screenOrientation="sensor" android:multiprocess="true"
-            android:label="@string/app_name" android:clearTaskOnLaunch="true" />
+        <activity android:name=".YbkPopupActivity" 
+            android:label="@string/reveal_ybk_view" 
+            android:theme="@android:style/Theme.Dialog" />
+        <activity android:name=".VerseContextDialog" 
+            android:theme="@android:style/Theme.Dialog" />
+        <activity android:name=".AnnotationDialog" 
+            android:theme="@android:style/Theme.Dialog" />
+        <activity android:name=".ReloadMainActivity"
+            android:label="@string/app_name" 
+            android:clearTaskOnLaunch="true" />
+        <activity android:name=".ReloadYbkViewActivity"
+            android:label="@string/app_name"/>
         <activity android:name=".NotesListActivity"/>
     </application>
 

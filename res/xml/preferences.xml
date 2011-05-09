@@ -2,12 +2,12 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-	    <CheckBoxPreference
-	        android:key="show_splash_screen"
-	        android:title="@string/label_splash_screen"
-	        android:summaryOn="@string/summary_on_show_splash_screen" 
-	        android:summaryOff="@string/summary_off_show_splash_screen" 
-	        android:defaultValue="true"/>
+    <CheckBoxPreference
+        android:key="show_splash_screen"
+        android:title="@string/label_splash_screen"
+        android:summaryOn="@string/summary_on_show_splash_screen" 
+        android:summaryOff="@string/summary_off_show_splash_screen" 
+        android:defaultValue="true"/>
     
     <PreferenceCategory android:title="@string/prefs_display">
         <CheckBoxPreference
@@ -38,7 +38,7 @@
 	        android:summaryOff="@string/summary_off_scrollsize" 
             android:defaultValue="false"/>
     
-            <CheckBoxPreference
+        <CheckBoxPreference
             android:key="make_touchable"
             android:title="@string/label_touchable"
             android:summaryOn="@string/summary_on_touchable" 
@@ -51,6 +51,14 @@
             android:summaryOn="@string/summary_on_scroll_tab" 
             android:summaryOff="@string/summary_off_scroll_tab" 
             android:defaultValue="true"/>
+            
+        <CheckBoxPreference
+            android:key="show_ah"
+            android:title="@string/paragraph_numbers"
+            android:summaryOn="@string/summary_on_paragraph_numbers" 
+            android:summaryOff="@string/summary_off_paragraph_numbers" 
+            android:defaultValue="false" 
+            android:summary="Controls display of paragraph numbers in non-scripture to allow highlighting and annotation"/>
             
     </PreferenceCategory>
 	
