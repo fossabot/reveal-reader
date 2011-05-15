@@ -410,7 +410,7 @@ public class Util {
         Matcher endMatcher = Pattern.compile("(?is)<br.*|</p.*").matcher(content);
 
         for (int index = 0, listSize = ahList.size(); index < listSize; index++) {
-            int startPos = verseEndPos;
+            final int startPos = verseEndPos;
             AnnotHilite ah = ahList.get(index);
             Matcher startMatcher = Pattern.compile(getVerseAnchorTagRegExp(ah.verse)).matcher(content);
             if (startMatcher.find(startPos)) {
@@ -458,8 +458,8 @@ public class Util {
         String hiliteDivStart = "";
         String hiliteDivEnd = "";
         if (colorHex.length() > 2) {
-            hiliteDivStart = (ah.color == Color.TRANSPARENT) ? "" : "<div style=\"background : #"
-                    + colorHex.substring(2) + "; color : black;\">";
+            hiliteDivStart = (ah.color == Color.TRANSPARENT) ? "" : "<div style=\"background:#"
+                    + colorHex.substring(2) + ";color:black;margin-top:-1.2em;margin-bottom:-1.2em\">";
             hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</div>";
         }
         

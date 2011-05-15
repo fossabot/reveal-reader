@@ -438,13 +438,8 @@ public class Main extends ListActivity {
         private String strRevealDir = sharedPref.getString(Settings.EBOOK_DIRECTORY_KEY,
                 Settings.DEFAULT_EBOOK_DIRECTORY);
 
-        // Needed to avoid a deprecated method in SDK 1.6+
-        // private Resources res;
-
         IconicAdapter(Main context) {
             super(context, R.layout.book_list_row, mCurrentList);
-            // See the comment above the declaration of this variable
-            // res = context.getResources();
         }
 
         public View getView(int location, View convertView, ViewGroup parent) {
@@ -487,13 +482,9 @@ public class Main extends ListActivity {
 
                 Matrix matrix = new Matrix();
                 matrix.postScale(NEW_WIDTH / bitmap.getWidth(), NEW_HEIGHT / bitmap.getHeight());
-                icon.setImageDrawable(new BitmapDrawable(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
-                        bitmap.getHeight(), matrix, true)));
-                /*
-                 * TODO change the above (which is deprecated in 1.6+) to the following when we move to 1.6+ of the SDK
-                 * icon.setImageDrawable(new BitmapDrawable(res, Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
-                 * bitmap .getHeight(), matrix, true)));
-                 */
+                
+                icon.setImageDrawable(new BitmapDrawable(getResources(), Bitmap.createBitmap(bitmap, 0, 0,
+                        bitmap.getWidth(), bitmap.getHeight(), matrix, true)));
 
             } else {
                 String labelText = item.toString();
@@ -560,7 +551,7 @@ public class Main extends ListActivity {
                     YbkViewActivity.SHOW_BOOK);
             return;
         }
-    
+
         // open folder
         mCurrentFolder = item.toString();
         if (mCurrentFolder.equals(getResources().getString(R.string.top_level_folder))) {
