@@ -115,9 +115,9 @@ public class NotesListActivity extends ListActivity {
                 chapFilename = chapFilename.substring(0, chapFilename.lastIndexOf('.'));
             }
             String[] tokens = chapFilename.split("/");
-            String ref = tokens[1] + " -";
+            String ref = tokens[1].toUpperCase() + " -";
             for (int index = 2; index < tokens.length; index++) {
-                ref += " " + tokens[index];
+                ref += " " + Util.capitalize(tokens[index], " -".toCharArray());
             }
 
             return ref + ":" + ah.verse;
