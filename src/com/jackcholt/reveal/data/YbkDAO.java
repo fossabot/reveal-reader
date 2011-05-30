@@ -61,6 +61,7 @@ public class YbkDAO {
     public static final String BOOKMARK_NUMBER = "bookmarkNumber";
 
     public static final String NOTE = "com.jackcholt.reveal.YbkDAO.note";
+    public static final String ANNOTHILITE = "com.jackcholt.reveal.YbkDAO.annot_hilite";
     public static final String COLOR = "com.jackcholt.reveal.YbkDAO.color";
     public static final String VERSE = "com.jackcholt.reveal.YbkDAO.verse";
     public static final String BOOK_FILENAME = "com.jackcholt.reveal.YbkDAO.book_filename";
@@ -239,6 +240,27 @@ public class YbkDAO {
         }
     };
 
+    /**
+     * Remove an AnnotHilite from the in-memory list and save the modified list to disk for persistence.
+     * 
+     * @param ah The AnnotHilite to delete.
+     * @return the status of whether the removal was successful.
+     */
+    public boolean deleteAnnotHilite(AnnotHilite ah) {
+        AnnotHilite ah2delete = null;
+        synchronized (mAnnotHiliteList) {
+            for(AnnotHilite ahItem : mAnnotHiliteList) {
+                if (ahItem.equals(ah)) {
+                    ah2delete = ahItem;
+                    break;
+                }
+            }
+            boolean success = mAnnotHiliteList.remove(ah2delete);
+            storeAnnotHiliteList();
+            return success;
+        }
+    }
+    
     /**
      * Insert a book into the database.
      * 

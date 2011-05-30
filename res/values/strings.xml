@@ -202,4 +202,9 @@
     <string name="paragraph_numbers">Show Paragraph #s</string>
     <string name="summary_on_paragraph_numbers">Paragraphs will be numbered.</string>
     <string name="summary_off_paragraph_numbers">Paragraphs will not be numbered</string>
+    <string name="delete_note">Delete Note and Highlight</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="really_delete">Do you really want to delete that note?</string>
+    <string name="note_deleted">The note and highlight has been removed</string>
 </resources>

@@ -14,13 +14,12 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
-
 import com.jackcholt.reveal.data.AnnotHilite;
 import com.jackcholt.reveal.data.YbkDAO;
 
 public class AnnotationDialog extends Activity {
     public static final String TAG = AnnotationDialog.class.getSimpleName();
-    
+
     public static final int RED_HILITE = Color.parseColor("#ffaaaa");
     public static final int PINK_HILITE = Color.parseColor("#ffcccc");
     public static final int BLUE_HILITE = Color.parseColor("#ccccff");
@@ -39,8 +38,8 @@ public class AnnotationDialog extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);        
-        
+        super.onCreate(savedInstanceState);
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setTheme(android.R.style.Theme_Dialog);
         setContentView(R.layout.annotation_layout);
@@ -49,9 +48,11 @@ public class AnnotationDialog extends Activity {
         final String bookFilename = getIntent().getStringExtra(YbkDAO.BOOK_FILENAME);
         final String chapterFilename = getIntent().getStringExtra(YbkDAO.CHAPTER_FILENAME);
 
-        AnnotHilite ah = YbkDAO.getInstance(this).getAnnotHilite(verse, bookFilename, chapterFilename);
+        final AnnotHilite ah = YbkDAO.getInstance(this).getAnnotHilite(verse, bookFilename, chapterFilename);
 
-        if (ah != null) {
+        if (null == ah) {
+            findDeleteButton().setVisibility(View.GONE);
+        } else {
             findNoteField().setText(ah.note);
             int colorKey = getColorKeyByValue(ah.color);
             Log.d(TAG, "color key: " + colorKey);
@@ -63,11 +64,20 @@ public class AnnotationDialog extends Activity {
 
         findOkButton().setOnClickListener(new OnClickListener() {
             public void onClick(final View v) {
-                setResult(RESULT_OK, new Intent(getBaseContext(), YbkViewActivity.class).putExtra(YbkDAO.VERSE, verse)
-                        .putExtra(YbkDAO.BOOK_FILENAME, bookFilename)
-                        .putExtra(YbkDAO.CHAPTER_FILENAME, chapterFilename).putExtra(YbkDAO.NOTE,
-                                findNoteField().getText().toString()).putExtra(YbkDAO.COLOR,
-                                COLOR_MAP.get(findHiliteGroup().getCheckedRadioButtonId())));
+                setResult(
+                        RESULT_OK,
+                        new Intent(getBaseContext(), YbkViewActivity.class).putExtra(YbkDAO.VERSE, verse)
+                                .putExtra(YbkDAO.BOOK_FILENAME, bookFilename)
+                                .putExtra(YbkDAO.CHAPTER_FILENAME, chapterFilename)
+                                .putExtra(YbkDAO.NOTE, findNoteField().getText().toString())
+                                .putExtra(YbkDAO.COLOR, COLOR_MAP.get(findHiliteGroup().getCheckedRadioButtonId())));
+                finish();
+            }
+        });
+
+        findDeleteButton().setOnClickListener(new OnClickListener() {
+            public void onClick(final View v) {
+                setResult(RESULT_OK, new Intent().putExtra(YbkDAO.ANNOTHILITE, ah));
                 finish();
             }
         });
@@ -94,6 +104,10 @@ public class AnnotationDialog extends Activity {
 
     private Button findCancelButton() {
         return (Button) findViewById(R.id.annotCancelButton);
+    }
+
+    private Button findDeleteButton() {
+        return (Button) findViewById(R.id.annotDeleteButton);
     }
 
     private EditText findNoteField() {

@@ -35,13 +35,27 @@
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:checked="true" android:background="@drawable/color_white"/>
 	</RadioGroup>
-	<LinearLayout android:id="@+id/LinearLayout03"
-		android:layout_height="wrap_content" android:layout_width="fill_parent">
-		<Button android:layout_height="wrap_content" android:text="@string/ok"
-			android:id="@+id/annotOkButton" android:layout_width="fill_parent"
+	<LinearLayout 
+        android:id="@+id/LinearLayout03"
+		android:layout_height="wrap_content" 
+        android:layout_width="fill_parent">
+		<Button 
+            android:layout_height="wrap_content" 
+            android:text="@string/ok"
+			android:id="@+id/annotOkButton" 
+            android:layout_width="fill_parent"
 			android:layout_weight="1"/>
-		<Button android:layout_height="wrap_content"
-			android:layout_width="fill_parent" android:text="@string/cancel"
-			android:id="@+id/annotCancelButton" android:layout_weight="1"/>
+		<Button 
+            android:layout_height="wrap_content"
+			android:layout_width="fill_parent" 
+            android:text="@string/cancel"
+			android:id="@+id/annotCancelButton" 
+            android:layout_weight="1"/>
+        <Button 
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent" 
+            android:text="@string/delete"
+            android:id="@+id/annotDeleteButton" 
+            android:layout_weight="1"/>
 	</LinearLayout>
 </LinearLayout>

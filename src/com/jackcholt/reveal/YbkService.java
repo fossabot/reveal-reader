@@ -89,7 +89,7 @@ public class YbkService extends Service {
     @Override
     public void onStart(final Intent intent, final int startId) {
         try {
-            switch (intent.getExtras().getInt(ACTION_KEY)) {
+            switch (intent.getIntExtra(ACTION_KEY, 0)) {
             case ADD_BOOK:
                 Log.i(TAG, "Received request to add book: " + intent.getExtras().getString(TARGET_KEY));
                 if (null == intent.getExtras().getString(TARGET_KEY)) {
@@ -155,13 +155,13 @@ public class YbkService extends Service {
             throw new IllegalArgumentException("Intent for downloading a book is null.");
         }
 
-        if (null == intent.getExtras().getString(TARGET_KEY) || null == intent.getExtras().getString(SOURCE_KEY)) {
+        if (null == intent.getStringExtra(TARGET_KEY) || null == intent.getStringExtra(SOURCE_KEY)) {
             Log.e(TAG, "Download book request missing target or filename.");
             return;
         }
 
-        Log.i(TAG, "Received request to download book: " + intent.getExtras().getString(SOURCE_KEY) + " to: "
-                + intent.getExtras().getString(TARGET_KEY));
+        Log.i(TAG, "Received request to download book: " + intent.getStringExtra(SOURCE_KEY) + " to: "
+                + intent.getStringExtra(TARGET_KEY));
 
         final Context context = this;
         Runnable job = new SafeRunnable() {

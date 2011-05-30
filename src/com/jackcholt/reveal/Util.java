@@ -409,10 +409,9 @@ public class Util {
         int verseEndPos = 0;
         Matcher endMatcher = Pattern.compile("(?is)<br.*|</p.*").matcher(content);
 
-        for (int index = 0, listSize = ahList.size(); index < listSize; index++) {
+        for(AnnotHilite ahItem : ahList) {
             final int startPos = verseEndPos;
-            AnnotHilite ah = ahList.get(index);
-            Matcher startMatcher = Pattern.compile(getVerseAnchorTagRegExp(ah.verse)).matcher(content);
+            Matcher startMatcher = Pattern.compile(getVerseAnchorTagRegExp(ahItem.verse)).matcher(content);
             if (startMatcher.find(startPos)) {
                 verseStartPos = startMatcher.start();
 
@@ -422,7 +421,6 @@ public class Util {
             }
 
             // append the new text.
-            Log.d(TAG, "verseStartPos/verseEndPos: " + verseStartPos + "/" + verseEndPos);
             if (!isVersePosValid(verseStartPos, verseEndPos, startPos, content.length())) {
                 if (null != _this) {
                     Toast.makeText(_this, R.string.cannot_hilite, Toast.LENGTH_LONG).show();
@@ -430,7 +428,7 @@ public class Util {
                 return content;
             }
             newContent.append(content.substring(startPos, verseStartPos)).append(
-                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ah));
+                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ahItem));
         }
 
         return newContent.append(content.substring(verseEndPos)).toString();
@@ -454,7 +452,6 @@ public class Util {
 
         String annot = (ah.note.length() > 0) ? " <img src='file:///android_asset/note.png'/> " : "";
         String colorHex = Integer.toHexString(ah.color);
-        Log.d(TAG, "colorHex: " + colorHex);
         String hiliteDivStart = "";
         String hiliteDivEnd = "";
         if (colorHex.length() > 2) {

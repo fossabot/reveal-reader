@@ -333,7 +333,6 @@ public class TitleBrowser extends ListActivity {
             }
         };
 
-        // String message = getResources().getString(id, formatArgs)
         ConfirmActionDialog.confirmedAction(this, R.string.title_browser_name, title.getSynopsis(), R.string.download,
                 action);
     }

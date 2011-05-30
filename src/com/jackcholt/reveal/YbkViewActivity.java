@@ -43,6 +43,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.jackcholt.reveal.data.AnnotHilite;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
@@ -63,7 +64,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private Handler mHandler = new Handler();
     private boolean mScroll4Lines = true;
     private boolean mPageScrollEnabled = false;
-
+    private YbkViewActivity mThis = this;
+    
     private static final String TAG = "reveal.YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
@@ -689,21 +691,49 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 break;
 
             case CALL_NOTE_EDITED:
-                YbkDAO.getInstance(this).insertAnnotHilite(intent.getStringExtra(YbkDAO.NOTE),
-                        intent.getIntExtra(YbkDAO.COLOR, AnnotationDialog.NO_HILITE),
-                        intent.getIntExtra(YbkDAO.VERSE, -1), intent.getStringExtra(YbkDAO.BOOK_FILENAME),
-                        intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
+                String note = intent.getStringExtra(YbkDAO.NOTE);
 
-                try {
-                    setProgressBarIndeterminateVisibility(true);
-                    mCurrChap.setScrollYPos(findWebView().getScrollY());
-                    loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), false, true);
-                    findWebView().scrollTo(0, mCurrChap.getScrollYPos());
-                } catch (IOException ioe) {
-                    throw new IllegalStateException("Couldn't reload chapter", ioe);
-                } finally {
-                    setProgressBarIndeterminateVisibility(false);
+                if (null == note) {
+                    // No note was passed so we must be deleting
+                    new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_alert)
+                            .setTitle(R.string.delete_note).setMessage(R.string.really_delete)
+                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    YbkDAO.getInstance(mThis).deleteAnnotHilite(
+                                            (AnnotHilite) intent.getSerializableExtra(YbkDAO.ANNOTHILITE));
+
+                                    Toast.makeText(mThis, R.string.note_deleted, Toast.LENGTH_SHORT);
+                                    try {
+                                        setProgressBarIndeterminateVisibility(true);
+                                        mCurrChap.setScrollYPos(findWebView().getScrollY());
+                                        loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), false, true);
+                                        findWebView().scrollTo(0, mCurrChap.getScrollYPos());
+                                    } catch (IOException ioe) {
+                                        throw new IllegalStateException("Couldn't reload chapter", ioe);
+                                    } finally {
+                                        setProgressBarIndeterminateVisibility(false);
+                                    }
+                                }
+                            }).setNegativeButton(R.string.no, null).show();
+                } else {
+                    YbkDAO.getInstance(this).insertAnnotHilite(note,
+                            intent.getIntExtra(YbkDAO.COLOR, AnnotationDialog.NO_HILITE),
+                            intent.getIntExtra(YbkDAO.VERSE, -1), intent.getStringExtra(YbkDAO.BOOK_FILENAME),
+                            intent.getStringExtra(YbkDAO.CHAPTER_FILENAME));
+                    try {
+                        setProgressBarIndeterminateVisibility(true);
+                        mCurrChap.setScrollYPos(findWebView().getScrollY());
+                        loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), false, true);
+                        findWebView().scrollTo(0, mCurrChap.getScrollYPos());
+                    } catch (IOException ioe) {
+                        throw new IllegalStateException("Couldn't reload chapter", ioe);
+                    } finally {
+                        setProgressBarIndeterminateVisibility(false);
+                    }
                 }
+                
                 break;
 
             case NOTE_BROWSER_ID:
@@ -1319,7 +1349,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + url)));
                         return HANDLED_BY_HOST_APP;
                     }
-                    
+
                     // pop up a context menu
                     try {
                         int verse = obtainVerse(url);
