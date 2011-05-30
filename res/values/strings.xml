@@ -47,7 +47,7 @@
 <string name="close">Close</string>
 <string name="delete">Delete</string>
 <string name="title_download_url">http://www.thecoffeys.net/ebooks/xmlbooks.asp</string>
-<string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK's, Format and other eBook tools</string>
+<string name="credit_to_others">Special Thanks to Bryce Yancey, Mark Coffey and Darren Remington for the wonderful resources, YBK\'s, Format and other eBook tools</string>
 <string name="download">Download</string>
 <string name="cancel">Cancel</string>
 <string name="ebook_download_started">eBook Download Started</string>
