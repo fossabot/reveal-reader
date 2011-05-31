@@ -28,25 +28,26 @@ public class ConfirmActionDialog extends Dialog implements View.OnClickListener 
         super(_this);
         setContentView(R.layout.dialog_confirm_action);
 
-        Button ok = (Button) findViewById(R.id.ok_btn);
-        ok.setOnClickListener(new View.OnClickListener() {
+        ((Button) findViewById(R.id.ok_btn)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 action.run();
                 dismiss();
             }
         });
 
-        if (okButtonLabel != null)
-            ok.setText(okButtonLabel);
+        if (okButtonLabel != null) {
+            ((Button) findViewById(R.id.ok_btn)).setText(okButtonLabel);
+        }
 
-        Button cancel = (Button) findViewById(R.id.cancel_btn);
-        cancel.setOnClickListener(this);
+        ((Button) findViewById(R.id.cancel_btn)).setOnClickListener(this);
 
-        if (message != null)
+        if (message != null) {
             ((TextView) findViewById(R.id.confirm_message)).setText(message);
+        }
 
-        if (title != null)
+        if (title != null) {
             setTitle(title);
+        }
     }
 
     public void onClick(View v) {
