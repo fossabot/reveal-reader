@@ -428,7 +428,8 @@ public class Util {
                 return content;
             }
             newContent.append(content.substring(startPos, verseStartPos)).append(
-                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ahItem));
+                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ahItem, endMatcher.group().toLowerCase()
+                            .contains("</p")));
         }
 
         return newContent.append(content.substring(verseEndPos)).toString();
@@ -445,18 +446,18 @@ public class Util {
      * @param ah The AnnotHilite object that contains the annotation and highlight data.
      * @return The chapter with the verse highlighted.
      */
-    public static StringBuilder annotHiliteVerse(String content, final AnnotHilite ah) {
+    public static StringBuilder annotHiliteVerse(String content, final AnnotHilite ah, boolean endsWithPara) {
         if (ah.color == Color.TRANSPARENT && ah.note.length() == 0) {
             return new StringBuilder(content);
         }
-
+        
         String annot = (ah.note.length() > 0) ? " <img src='file:///android_asset/note.png'/> " : "";
         String colorHex = Integer.toHexString(ah.color);
         String hiliteDivStart = "";
         String hiliteDivEnd = "";
         if (colorHex.length() > 2) {
             hiliteDivStart = (ah.color == Color.TRANSPARENT) ? "" : "<div style=\"background:#" + colorHex.substring(2)
-                    + ";color:black;margin-top:-1.2em;margin-bottom:-1.2em\">";
+                    + ";color:black;" + (endsWithPara ? "" : "margin-top:-1.2em;") + "margin-bottom:-1.2em;\">";
             hiliteDivEnd = (ah.color == Color.TRANSPARENT) ? "" : "</div>";
         }
 
@@ -731,7 +732,8 @@ public class Util {
             connection.setReadTimeout(300000);
 
             if (!hasEnoughDiskspace(connection)) {
-                throw new IOException(context.getResources().getString(R.string.sdcard_full));
+                Toast.makeText(context, R.string.sdcard_full, Toast.LENGTH_LONG);
+                return null;
             }
 
             in = connection.getInputStream();

@@ -200,7 +200,7 @@ public class YbkFileReader {
 
         mCtx = ctx;
         mFilename = fileName;
-        mFile = new File(libDir, fileName);
+        mFile = new File(libDir + (libDir.endsWith(File.separator) ? "" : File.separator), fileName);
         mCharset = DEFAULT_YBK_CHARSET;
         mFileIO = new RandomAccessFile(mFile, "r");
         mChannel = mFileIO.getChannel();

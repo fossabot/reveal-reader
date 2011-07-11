@@ -173,7 +173,7 @@ public class YbkService extends Service {
                             getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY),
                             context, callbacks);
 
-                    if (downloads.isEmpty()) {
+                    if (null == downloads || downloads.isEmpty()) {
                         throw new FileNotFoundException();
                     }
 

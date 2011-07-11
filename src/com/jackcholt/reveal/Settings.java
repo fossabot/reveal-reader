@@ -1,5 +1,7 @@
 package com.jackcholt.reveal;
 
+import java.io.File;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -48,11 +50,8 @@ public class Settings extends PreferenceActivity {
                                 return true;
                             }
 
-                            Toast.makeText(
-                                    prefContext,
-                                    getResources().getString(R.string.ebook_dir_invalid,
-                                            Environment.getExternalStorageDirectory().toString()), Toast.LENGTH_LONG)
-                                    .show();
+                            Toast.makeText(prefContext, getResources().getString(R.string.ebook_dir_invalid, //
+                                    Environment.getExternalStorageDirectory().toString()), Toast.LENGTH_LONG).show();
 
                             return false;
                         }
@@ -68,40 +67,24 @@ public class Settings extends PreferenceActivity {
                                 }
 
                                 String ebookDir = sharedPref.getString(EBOOK_DIRECTORY_KEY, DEFAULT_EBOOK_DIRECTORY);
+                                ebookDir += ebookDir.endsWith(File.separator) ? "" : File.separator;
 
                                 if (!ebookDir.startsWith(Environment.getExternalStorageDirectory().toString())) {
-                                    String ebookDirTemp = ebookDir;
-
-                                    if (!ebookDir.startsWith("/")) {
-                                        ebookDir = Environment.getExternalStorageDirectory().toString() + "/"
-                                                + ebookDirTemp;
-                                    } else {
-                                        ebookDir = Environment.getExternalStorageDirectory().toString() + ebookDirTemp;
-                                    }
-                                    Editor edit = sharedPref.edit();
-                                    edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
-                                    edit.commit();
+                                    ebookDir = Environment.getExternalStorageDirectory().toString()
+                                            + (ebookDir.startsWith(File.separator) ? "" : File.separator) + ebookDir;
 
                                     Log.d(TAG, "default ebook directory changed to: " + ebookDir);
-
-                                    // exit here to avoid recursiveness
-                                    return;
-                                }
-
-                                if (!ebookDir.endsWith("/")) {
-                                    ebookDir += "/";
-                                    Editor edit = sharedPref.edit();
-                                    edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
-                                    edit.commit();
-
-                                    // exit here to avoid recursiveness
-                                    return;
                                 }
 
                                 // if the ebook directory changed, recreate
                                 Util.createDefaultDirs(getBaseContext());
                                 setResult(RESULT_OK, returnIntent.putExtra(EBOOK_DIR_CHANGED, true));
 
+                                Editor edit = sharedPref.edit();
+                                edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
+                                edit.commit();
+
+                                return;
                             } catch (RuntimeException rte) {
                                 Util.unexpectedError(Settings.this, rte);
                             } catch (Error e) {
