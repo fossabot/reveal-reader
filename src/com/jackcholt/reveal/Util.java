@@ -408,8 +408,8 @@ public class Util {
         int verseStartPos = 0;
         int verseEndPos = 0;
         Matcher endMatcher = Pattern.compile("(?is)<br.*|</p.*").matcher(content);
-
-        for(AnnotHilite ahItem : ahList) {
+        
+        for (AnnotHilite ahItem : ahList) {
             final int startPos = verseEndPos;
             Matcher startMatcher = Pattern.compile(getVerseAnchorTagRegExp(ahItem.verse)).matcher(content);
             if (startMatcher.find(startPos)) {
@@ -427,9 +427,18 @@ public class Util {
                 }
                 return content;
             }
+            
+            String matchGroup;
+            try {
+                matchGroup = endMatcher.group();
+            } catch (IllegalStateException ise) {
+                Log.w(TAG, "No verse seperator tags were found (<br/> or </p>)");
+                newContent.append(content.subSequence(startPos, verseEndPos));
+                continue;
+            }
             newContent.append(content.substring(startPos, verseStartPos)).append(
-                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ahItem, endMatcher.group().toLowerCase()
-                            .contains("</p")));
+                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ahItem, matchGroup
+                            .toLowerCase().contains("</p")));
         }
 
         return newContent.append(content.substring(verseEndPos)).toString();
@@ -450,7 +459,7 @@ public class Util {
         if (ah.color == Color.TRANSPARENT && ah.note.length() == 0) {
             return new StringBuilder(content);
         }
-        
+
         String annot = (ah.note.length() > 0) ? " <img src='file:///android_asset/note.png'/> " : "";
         String colorHex = Integer.toHexString(ah.color);
         String hiliteDivStart = "";
