@@ -862,10 +862,15 @@ public class Util {
         }
 
         String extDir = Environment.getExternalStorageDirectory().getName();
+        
         if (TextUtils.isEmpty(extDir)) {
             return false;
         }
 
+        if (!extDir.startsWith("/")) {
+            extDir = "/" + extDir;
+        }
+        
         StatFs statFs;
         try {
             statFs = new StatFs(extDir);
