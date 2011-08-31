@@ -50,7 +50,6 @@ public class NotesListActivity extends ListActivity {
 
     private class NotesAdapter extends BaseAdapter {
 
-        @Override
         public int getCount() {
             if (null == mNotesList) {
                 return 0;
@@ -58,7 +57,6 @@ public class NotesListActivity extends ListActivity {
             return mNotesList.size();
         }
 
-        @Override
         public Object getItem(int position) {
             if (null == mNotesList) {
                 throw new IllegalStateException("The notes list is empty");
@@ -69,12 +67,10 @@ public class NotesListActivity extends ListActivity {
             return mNotesList.get(position);
         }
 
-        @Override
         public long getItemId(int position) {
             return position;
         }
 
-        @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             TwoLineListItem view = (null == convertView) ? createView(parent) : (TwoLineListItem) convertView;
             bindView(view, (AnnotHilite) getItem(position));

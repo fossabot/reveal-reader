@@ -104,7 +104,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             String content = null;
             String strUrl = null;
 
-            @SuppressWarnings("unchecked")
+            @SuppressWarnings({ "unchecked", "rawtypes" })
             HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
             if (statusMap != null) {
                 mCurrChap.setBookFileName((String) statusMap.get("bookFileName"));
@@ -699,7 +699,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                             .setTitle(R.string.delete_note).setMessage(R.string.really_delete)
                             .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
 
-                                @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     YbkDAO.getInstance(mThis).deleteAnnotHilite(
                                             (AnnotHilite) intent.getSerializableExtra(YbkDAO.ANNOTHILITE));
@@ -1647,7 +1646,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         .putExtra(YbkDAO.BOOK_FILENAME, intent.getStringExtra(YbkDAO.BOOK_FILENAME)), CALL_NOTE_EDITED);
     }
 
-    @Override
     public void onLongPress(MotionEvent arg0) {
     }
 }

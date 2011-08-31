@@ -260,7 +260,6 @@ public class TitleBrowser extends ListActivity {
         }
 
         searchDialog.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
-            @Override
             public void onClick(DialogInterface dialog, int which) {
                 SpannableStringBuilder value = new SpannableStringBuilder(input.getText());
 
@@ -375,13 +374,11 @@ public class TitleBrowser extends ListActivity {
             Element category = root.getChild(CATEGORY_TAG);
             {
                 category.setStartElementListener(new StartElementListener() {
-                    @Override
                     public void start(Attributes attributes) {
                         mCurrentCategory.setId(attributes.getValue(CATEGORY_ID), 0);
                     }
                 });
                 category.setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentCategory.setName(body);
                         mListCategories.add(mCurrentCategory.copy());
@@ -393,56 +390,47 @@ public class TitleBrowser extends ListActivity {
             Element book = root.getChild(BOOK_TAG);
             {
                 book.setEndElementListener(new EndElementListener() {
-                    @Override
                     public void end() {
                         mListTitles.add(mCurrentTitle.copy());
                         mCurrentTitle.clear();
                     }
                 });
                 book.getChild(TITLE_ID_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setId(body, 0);
                     }
                 });
                 book.getChild(TITLE_NAME_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setName(body);
                     }
                 });
                 book.getChild(TITLE_SIZE_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setFileSize(body, 0);
                     }
                 });
                 book.getChild(TITLE_URL_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setUrl(body);
                     }
                 });
                 book.getChild(TITLE_DESCRIPTION_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setDescription(body);
                     }
                 });
                 book.getChild(TITLE_CREATED_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setCreated(body, null);
                     }
                 });
                 book.getChild(TITLE_FILENAME_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setFileName(body);
                     }
                 });
                 book.getChild(TITLE_FORMAT_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    @Override
                     public void end(String body) {
                         mCurrentTitle.setFileFormat(body);
                     }
