@@ -215,6 +215,8 @@ public class Main extends ListActivity {
 
             refreshBookList();
 
+            indexBooks();
+            
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -222,6 +224,21 @@ public class Main extends ListActivity {
         }
     }
 
+    /**
+     * Create records in the Lucene index for all verses/paragraphs of all books that are not yet indexed.
+     */
+    private void indexBooks() {
+        ArrayList<String> bookNames = new ArrayList<String>();
+        
+        for(Book book : YbkDAO.getInstance(this).getBookTitles()) {
+            if (!book.indexed) {
+                bookNames.add(book.fileName);
+            }
+        }
+        
+        YbkService.requestIndexBooks(this, bookNames.toArray(new String[0]));
+    }
+    
     @Override
     public void setTheme(int resid) {
         // bug workaround alert: see http://code.google.com/p/android/issues/detail?id=4394

@@ -19,6 +19,7 @@ public class Book implements Serializable {
     public String title;
     public String shortTitle;
     public String charset;
+    public boolean indexed;
 
     public String toString() {
         return title;

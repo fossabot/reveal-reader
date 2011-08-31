@@ -151,6 +151,25 @@ public class YbkDAO {
     }
 
     /**
+     * Marks a book as Lucene indexed or not.
+     * 
+     * @param bookFileName The filename of the book file.
+     * @param indexed True 
+     * @return
+     */
+    public boolean setBookIndexed(final String bookFileName, final boolean indexed) {
+        Book book = getBook(bookFileName);
+
+        if (null == book) {
+            return false;
+        }
+
+        book.indexed = indexed;
+        storeBookList();
+        return true;
+    }
+
+    /**
      * Get a List for history records that are bookmarks sorted by title.
      * 
      * @return
@@ -168,7 +187,6 @@ public class YbkDAO {
         public int compare(History hist1, History hist2) {
             return String.CASE_INSENSITIVE_ORDER.compare(hist1.title, hist2.title);
         }
-
     };
 
     public void initAnnotHilites() {
@@ -249,7 +267,7 @@ public class YbkDAO {
     public boolean deleteAnnotHilite(AnnotHilite ah) {
         AnnotHilite ah2delete = null;
         synchronized (mAnnotHiliteList) {
-            for(AnnotHilite ahItem : mAnnotHiliteList) {
+            for (AnnotHilite ahItem : mAnnotHiliteList) {
                 if (ahItem.equals(ah)) {
                     ah2delete = ahItem;
                     break;
@@ -260,7 +278,7 @@ public class YbkDAO {
             return success;
         }
     }
-    
+
     /**
      * Insert a book into the database.
      * 
@@ -895,7 +913,7 @@ public class YbkDAO {
                 bookList.get(0);
                 // perform a sanity check on the type
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             Log.w(TAG, "Unable to load existing book list, creating a new one instead.");
         }
         if (bookList == null) {

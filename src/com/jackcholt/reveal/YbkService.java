@@ -6,6 +6,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.util.Version;
+import org.jsoup.Jsoup;
 
 import android.app.NotificationManager;
 import android.app.Service;
@@ -18,14 +28,17 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Process;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 
+import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.YbkDAO;
+import com.jackcholt.reveal.search.LuceneManager;
 
 /**
  * Service that initiates and coordinates all the background activities of downloading books and updating the library so
  * the don't step on each other's feet.
  * 
- * @author Shon Vella
+ * @author Shon Vella, Jack C. Holt
  * 
  */
 public class YbkService extends Service {
@@ -36,6 +49,7 @@ public class YbkService extends Service {
     public static final String SOURCE_KEY = "source";
     public static final String CALLBACKS_KEY = "callbacks";
     public static final String CHARSET_KEY = "charset";
+    public static final String INDEX_BOOK_LIST = "index_book_list";
 
     public static final int ADD_BOOK = 1;
     public static final int REMOVE_BOOK = 2;
@@ -43,19 +57,18 @@ public class YbkService extends Service {
     public static final int ADD_HISTORY = 4;
     public static final int REMOVE_HISTORY = 5;
     public static final int UPDATE_HISTORY = 6;
+    public static final int INDEX_BOOKS = 7;
 
     private volatile Looper mLibLooper;
     private volatile Handler mLibHandler;
     private volatile Looper mDownloadLooper;
     private volatile Handler mDownloadHandler;
-    @SuppressWarnings("unused")
+    private volatile Looper mLuceneIndexLooper;
+    private volatile Handler mLuceneIndexHandler;
     private NotificationManager mNotifMgr;
-    @SuppressWarnings("unused")
-    private volatile int mNotifId = Integer.MIN_VALUE;
 
-    // kludge to get around the fact that we can't pass callbacks through the
-    // service simply even though
-    // the service is only for the local process.
+    // kludge to get around the fact that we can't pass callbacks through the service simply even though the service is
+    // only for the local process.
 
     private static Map<Long, Completion[]> callbackMap = new TreeMap<Long, Completion[]>();
 
@@ -74,6 +87,12 @@ public class YbkService extends Service {
             libThread.setPriority(Process.THREAD_PRIORITY_BACKGROUND);
             mDownloadLooper = downloadThread.getLooper();
             mDownloadHandler = new Handler(mDownloadLooper);
+
+            HandlerThread luceneIndexThread = new HandlerThread("LuceneIndexWorker");
+            luceneIndexThread.start();
+            luceneIndexThread.setPriority(Process.THREAD_PRIORITY_BACKGROUND);
+            mLuceneIndexLooper = luceneIndexThread.getLooper();
+            mLuceneIndexHandler = new Handler(mLuceneIndexLooper);
 
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
@@ -102,44 +121,41 @@ public class YbkService extends Service {
                 break;
             case REMOVE_BOOK:
                 Log.i(TAG, "Received request to remove book: " + intent.getExtras().getString(TARGET_KEY));
-                if (intent.getExtras().getString(TARGET_KEY) != null) {
-                    Runnable removeJob = new SafeRunnable() {
-                        @Override
-                        public void protectedRun() {
-                            String bookName = new File(intent.getExtras().getString(TARGET_KEY)).getName()
-                                    .replaceFirst("\\.[^\\.]$", "");
-                            boolean succeeded;
-                            String message;
-                            YbkDAO ybkDAO = YbkDAO.getInstance(YbkService.this);
-                            if (ybkDAO.deleteBook(intent.getExtras().getString(TARGET_KEY))) {
-                                succeeded = true;
-                                message = "Removed '" + bookName + "' from the library";
-                            } else {
-                                message = "Could not remove book '" + bookName + "'.";
-                                succeeded = true;
-                            }
-                            if (succeeded)
-                                Log.i(TAG, message);
-                            else
-                                Log.e(TAG, message);
-                            if ((long) Long.valueOf(intent.getExtras().getLong(CALLBACKS_KEY)) != 0) {
-                                for (Completion callback : callbackMap.remove(Long.valueOf((long) Long.valueOf(intent
-                                        .getExtras().getLong(CALLBACKS_KEY))))) {
-                                    callback.completed(succeeded, message);
-                                }
-                            }
-                        }
-                    };
-                    mLibHandler.post(removeJob);
-                } else {
+                if (null == intent.getExtras().getString(TARGET_KEY)) {
                     Log.e(TAG, "Remove book request missing target.");
+                    break;
                 }
+
+                mLibHandler.post(new SafeRunnable() {
+                    @Override
+                    public void protectedRun() {
+                        String bookName = new File(intent.getStringExtra(TARGET_KEY)).getName().replaceFirst(
+                                "\\.[^\\.]$", "");
+                        String message = (YbkDAO.getInstance(YbkService.this).deleteBook(intent
+                                .getStringExtra(TARGET_KEY))) ? "Removed '" + bookName + "' from the library"
+                                : "Could not remove book '" + bookName + "'.";
+
+                        Log.i(TAG, message);
+
+                        if (intent.getExtras().getLong(CALLBACKS_KEY) == 0) {
+                            return;
+                        }
+
+                        for (Completion callback : callbackMap.remove(intent.getExtras().getLong(CALLBACKS_KEY))) {
+                            callback.completed(true, message);
+                        }
+                    }
+                });
+
                 break;
             case DOWNLOAD_BOOK:
                 downloadBook(intent);
                 break;
+            case INDEX_BOOKS:
+                mLuceneIndexHandler.post(new IndexBooksJob(intent));
+                break;
             default:
-                Log.w(TAG, "Received request to perform unrecognized action: " + intent.getExtras().getInt(ACTION_KEY));
+                Log.w(TAG, "Received request to perform unrecognized action: " + intent.getIntExtra(ACTION_KEY, 0));
                 return;
             }
         } catch (RuntimeException rte) {
@@ -160,8 +176,8 @@ public class YbkService extends Service {
             return;
         }
 
-        Log.i(TAG, "Received request to download book: " + intent.getStringExtra(SOURCE_KEY) + " to: "
-                + intent.getStringExtra(TARGET_KEY));
+        Log.i(TAG, "Received request to download book: " + intent.getStringExtra(SOURCE_KEY) //
+                + " to: " + intent.getStringExtra(TARGET_KEY));
 
         final Context context = this;
         Runnable job = new SafeRunnable() {
@@ -199,6 +215,7 @@ public class YbkService extends Service {
         try {
             mLibLooper.quit();
             mDownloadLooper.quit();
+            mLuceneIndexLooper.quit();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -270,6 +287,11 @@ public class YbkService extends Service {
         context.startService(intent);
     }
 
+    public static void requestIndexBooks(Context context, String[] bookArray) {
+        context.startService(new Intent(context, YbkService.class).putExtra(ACTION_KEY, INDEX_BOOKS).putExtra(
+                INDEX_BOOK_LIST, bookArray));
+    }
+
     public static void stop(Context ctx) {
         ctx.stopService(new Intent(ctx, YbkService.class));
     }
@@ -337,6 +359,100 @@ public class YbkService extends Service {
             }
 
             return YbkFileReader.DEFAULT_YBK_CHARSET;
+        }
+    }
+
+    private final class IndexBooksJob extends SafeRunnable {
+        private final Intent intent;
+
+        private IndexBooksJob(Intent intent) {
+            this.intent = intent;
+        }
+
+        @Override
+        public void protectedRun() {
+            if (!LuceneManager.isDirReady(YbkService.this)) {
+                Log.e(TAG, "Could not get the Lucene Directory. Aborting.");
+                return;
+            }
+
+            String[] bookTitles = intent.getStringArrayExtra(INDEX_BOOK_LIST);
+
+            for (int i = 0; i < bookTitles.length; i++) {
+                IndexWriter indexWriter;
+                try {
+                    indexWriter = new IndexWriter(LuceneManager.getDirectory(), new IndexWriterConfig(
+                            Version.LUCENE_33, new StandardAnalyzer(Version.LUCENE_33)));
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Couldn't get the Lucene IndexWriter. " + ioe.getMessage());
+                    return;
+                }
+                YbkFileReader reader;
+                try {
+                    reader = YbkFileReader.getReader(YbkService.this, bookTitles[i]);
+                } catch (IOException e) {
+                    Log.e(TAG, "Couldn't read " + bookTitles[i] + " while indexing. " + e.getMessage());
+                    continue;
+                }
+
+                int chapterIndex = 0;
+                Chapter chapter;
+                while (null != (chapter = reader.getChapterByIndex(chapterIndex++))) {
+                    if (TextUtils.isEmpty(chapter.orderName) || chapter.orderName.endsWith("_")) {
+                        continue;
+                    }
+
+                    try {
+                        String chapHtml = reader.readInternalFile(chapter.fileName);
+                        Matcher verseMatcher = Pattern.compile("<a\\s+href=\"@(\\d+),\\d+,\\d+\">.*(<br.*|</p.*)",
+                                Pattern.CASE_INSENSITIVE).matcher(chapHtml);
+                        while (verseMatcher.find()) {
+                            String verse = stripAnchorTags(chapHtml.substring(verseMatcher.start(), verseMatcher.end()));
+                            verse = Jsoup.parse(verse).text();
+                            Document doc = new Document();
+                            doc.add(new Field("verseText", verse, Field.Store.YES, Field.Index.ANALYZED));
+                            doc.add(new Field("book", bookTitles[i], Field.Store.YES, Field.Index.NO));
+                            doc.add(new Field("chapter", chapter.fileName, Field.Store.YES, Field.Index.NO));
+                            doc.add(new Field("verseNumber", verseMatcher.group(1), Field.Store.YES, Field.Index.NO));
+                            indexWriter.addDocument(doc);
+                        }
+
+                    } catch (IOException e) {
+                        Log.e(TAG, "Couldn't read " + chapter.fileName + " while indexing " //
+                                + bookTitles[i] + ". " + e.getMessage());
+                        continue;
+                    }
+                }
+                try {
+                    indexWriter.optimize();
+                    indexWriter.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Had a problem optimizing and closing the indexWriter. " + e.getMessage());
+                }
+
+                if (null != reader) {
+                    reader.unuse();
+                    reader = null;
+                }
+
+                YbkDAO.getInstance(YbkService.this).setBookIndexed(bookTitles[i], true);
+                Util.sendNotification(YbkService.this, "Indexing done for " + bookTitles[i], R.drawable.ebooksmall,
+                        getResources().getString(R.string.app_name), i, mNotifMgr, Main.class, true);
+            }
+
+            /*
+             * if (intent.getLongExtra(CALLBACKS_KEY, 0) == 0 || null == callbackMap) { return; }
+             * 
+             * Completion[] comps = callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0)); if (null == comps) {
+             * return; }
+             * 
+             * for (int index = 0, compLen = comps.length; index < compLen; index++) { comps[index].completed(succeeded,
+             * "Added '" + bookName + "' to the library"); }
+             */
+        }
+
+        private String stripAnchorTags(String verse) {
+            return verse.replaceAll("(?i)<a.*?>.*?</a>", "");
         }
     }
 
