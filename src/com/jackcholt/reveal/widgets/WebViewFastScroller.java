@@ -195,6 +195,7 @@ class WebViewFastScroller {
                 / (mView.getContentHeight() * mView.getScale() - mView.getHeight()));
 
         final int y = mThumbY + mView.getScrollY();
+        final int x = mView.getScrollX();
         final int viewWidth = mView.getWidth();
         final WebViewFastScroller.ScrollFade scrollFade = mScrollFade;
 
@@ -209,9 +210,9 @@ class WebViewFastScroller {
             mChangedBounds = true;
         }
 
-        canvas.translate(0, y);
+        canvas.translate(x, y);
         mThumbDrawable.draw(canvas);
-        canvas.translate(0, -y);
+        canvas.translate(-x, -y);
 
         // TODO - it may be useful to draw the verse number in the overlay
 
