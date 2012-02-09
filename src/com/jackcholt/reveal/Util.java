@@ -859,7 +859,8 @@ public class Util {
         try {
             statFs = new StatFs(extDir);
         } catch (IllegalArgumentException iae) {
-            throw new IllegalArgumentException("The directory " + extDir + " is invalid.", iae);
+            Log.e(TAG, "The directory " + extDir + " is invalid." + iae.getMessage() + " " + iae.getCause());
+            return false;
         }
 
         return BigInteger
