@@ -1,12 +1,12 @@
 package com.jackcholt.reveal;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.webkit.WebView;
-
-
+import android.os.AsyncTask;
+import android.widget.Toast;
 
 /**
  * DonateDialog for online Donations system
@@ -15,28 +15,50 @@ import android.webkit.WebView;
  */
 
 public class DonateDialog extends Dialog {
-    public DonateDialog(Context _this) {
-        super(_this);
+    Context mCtx;
+    final String TAG = this.getClass().getSimpleName();
+    private ProgressDialog mProgDialog;
+
+    public DonateDialog(Context ctx) {
+        super(ctx);
+
+        mCtx = ctx;
 
         setContentView(R.layout.dialog_donate);
 
-
-        WebView wv = (WebView) findViewById(R.id.donateView);
-        wv.clearCache(true);
-        wv.getSettings().setJavaScriptEnabled(true);
-        if (Util.areNetworksUp(_this)) {
-            Uri uri = Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7668278");
-            _this.startActivity(new Intent(Intent.ACTION_VIEW, uri));
-        } else {
-            wv.loadData("Cannot get to the Donation website.  Your network is currently down.", "text/plain", "utf-8");
-        }
-
-        //show();
-
+        mProgDialog = new ProgressDialog(ctx);
+        mProgDialog.setCancelable(true);
+        mProgDialog.setMessage(ctx.getResources().getText(R.string.please_wait));
+        mProgDialog.show();
+        
+        // Need to use an AsyncTask to avoid doing network stuff on the UI thread.
+        new LoadPaypal().execute();
     }
 
-    public static DonateDialog create(Context _this) {
-        DonateDialog dlg = new DonateDialog(_this);
-        return dlg;
+    public static DonateDialog create(Context ctx) {
+        return new DonateDialog(ctx);
+    }
+
+    private class LoadPaypal extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Void... arg0) {
+            return Util.areNetworksUp(mCtx);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isNetworkUp) {
+            if (isNetworkUp) {
+                mCtx.startActivity(new Intent(Intent.ACTION_VIEW, Uri
+                        .parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7668278")));
+            } else {
+                Log.w(TAG, mCtx.getResources().getString(R.string.cant_get_donation_website));
+                Toast.makeText(mCtx, mCtx.getResources().getString(R.string.cant_get_donation_website),
+                        Toast.LENGTH_LONG).show();
+            }
+
+            mProgDialog.dismiss();
+            super.onPostExecute(isNetworkUp);
+        }
     }
 }

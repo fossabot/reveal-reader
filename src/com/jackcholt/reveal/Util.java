@@ -1,5 +1,6 @@
 package com.jackcholt.reveal;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -8,10 +9,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.io.Reader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -125,8 +129,9 @@ public class Util {
             return (canGetVersionManifest(streamVersion));
         } finally {
             try {
-                if (null != streamVersion)
+                if (null != streamVersion) {
                     streamVersion.close();
+                }
             } catch (IOException e) {
             }
         }
@@ -147,7 +152,6 @@ public class Util {
     }
 
     private static InputStream getVersionInputStream() {
-        InputStream streamVersion = null;
         URL urlVersion = null;
         try {
             urlVersion = new URL("http://revealreader.thepackhams.com/revealVersion.xml?ClientVer="
@@ -162,11 +166,12 @@ public class Util {
                 cnVersion.setConnectTimeout(10000);
                 cnVersion.setDefaultUseCaches(false);
                 cnVersion.connect();
-                streamVersion = cnVersion.getInputStream();
+                return cnVersion.getInputStream();
             } catch (IOException ioe) {
+                Log.w(TAG, "Couldn't connect to the version source: " + ioe.getMessage() + " " + ioe.getCause());
             }
         }
-        return streamVersion;
+        return null;
     }
 
     private static boolean isNetworkUp(Context context, int netType) {
@@ -294,8 +299,7 @@ public class Util {
             throw new IllegalArgumentException("The pos parameter is larger than the size of the byte array.");
         }
 
-        // Need to use some bit manipulation to make the bytes be treated as
-        // unsigned
+        // Need to use some bit manipulation to make the bytes be treated as unsigned
         iArray[0] = (0x000000FF & (int) ba[pos]);
         iArray[1] = (0x000000FF & (int) ba[pos + 1]);
         iArray[2] = (0x000000FF & (int) ba[pos + 2]);
@@ -408,7 +412,7 @@ public class Util {
         int verseStartPos = 0;
         int verseEndPos = 0;
         Matcher endMatcher = Pattern.compile("(?is)<br.*|</p.*").matcher(content);
-        
+
         for (AnnotHilite ahItem : ahList) {
             final int startPos = verseEndPos;
             Matcher startMatcher = Pattern.compile(getVerseAnchorTagRegExp(ahItem.verse)).matcher(content);
@@ -427,7 +431,7 @@ public class Util {
                 }
                 return content;
             }
-            
+
             String matchGroup;
             try {
                 matchGroup = endMatcher.group();
@@ -437,8 +441,8 @@ public class Util {
                 continue;
             }
             newContent.append(content.substring(startPos, verseStartPos)).append(
-                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ahItem, matchGroup
-                            .toLowerCase().contains("</p")));
+                    annotHiliteVerse(content.substring(verseStartPos, verseEndPos), ahItem, matchGroup.toLowerCase()
+                            .contains("</p")));
         }
 
         return newContent.append(content.substring(verseEndPos)).toString();
@@ -643,22 +647,6 @@ public class Util {
     }
 
     /**
-     * Convert ahtags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by the
-     * number of the ahtag.
-     * 
-     * @param content The content containing the ahtags to convert.
-     * @return The converted content.
-     */
-    /*
-     * public static String convertAhtag(final String content) { String fixedContent =
-     * content.replaceAll("<ahtag num=(\\d+)>(.+)</ahtag>", "<span class=\"ah\" id=\"ah$1\">$2</span>");
-     * 
-     * return fixedContent;
-     * 
-     * }
-     */
-
-    /**
      * Convert ifvar tags into span tags using &quot;ah&quot; as the class and making the id &quot;ah&quot; appended by
      * the number of the ahtag.
      * 
@@ -694,15 +682,11 @@ public class Util {
                 lazyZeroOrMoreAnyCharacterCapturingGroup + //
                 "<endvar=" + spanName + ">";
 
-        // Log.d(TAG, "findString: " + findString);
-
         String fixedString = content
                 .replaceAll(
                         findString,
                         "<span class=\"_show$1\">$2<a href=\"javascript:hideSpan('$1')\">"
                                 + "$3</a>$4</span><span class=\"_hide$1\">$5<a href=\"javascript:showSpan('$1')\">$6</a>$7</span>");
-
-        // Log.d(TAG, "fixedString: " + fixedString);
 
         return fixedString;
 
@@ -862,7 +846,7 @@ public class Util {
         }
 
         String extDir = Environment.getExternalStorageDirectory().getName();
-        
+
         if (TextUtils.isEmpty(extDir)) {
             return false;
         }
@@ -870,7 +854,7 @@ public class Util {
         if (!extDir.startsWith("/")) {
             extDir = "/" + extDir;
         }
-        
+
         StatFs statFs;
         try {
             statFs = new StatFs(extDir);
@@ -1324,5 +1308,31 @@ public class Util {
             }
         }
         return false;
+    }
+
+    public static String convertStreamToString(InputStream is) throws IOException {
+        /*
+         * To convert the InputStream to String we use the Reader.read(char[] buffer) method. We iterate until the
+         * Reader return -1 which means there's no more data to read. We use the StringWriter class to produce the
+         * string.
+         */
+        if (null == is) {
+            return "";
+        }
+    
+        Writer writer = new StringWriter();
+
+        char[] buffer = new char[1024];
+        try {
+            Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+            int n;
+            while ((n = reader.read(buffer)) != -1) {
+                writer.write(buffer, 0, n);
+            }
+        } finally {
+            is.close();
+        }
+        
+        return writer.toString();
     }
 }

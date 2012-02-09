@@ -30,6 +30,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -91,7 +92,7 @@ public class Main extends ListActivity {
     private NotificationManager mNotifMgr;
     private boolean mBOOLshowSplashScreen;
     private static boolean mBOOLsplashed = false;
-    private static boolean mBOOLcheckedOnline = false;
+    private static boolean mCheckedOnline = false;
     private boolean mBOOLshowFullScreen;
 
     private final Handler mHandler = new Handler();
@@ -158,25 +159,7 @@ public class Main extends ListActivity {
                 }
             }
 
-            // Is Network up or not?
-            if (!mBOOLcheckedOnline && Util.areNetworksUp(this)) {
-                // only check once per process instantiation
-                mBOOLcheckedOnline = true;
-
-                // and wait a little bit to kick it off so it won't slow down
-                // the initial display of the list
-                mHandler.postDelayed(new SafeRunnable() {
-                    @Override
-                    public void protectedRun() {
-                        // Actually go ONLINE and check... duhhhh
-                        UpdateChecker.checkForNewerVersion(Main.this, Global.SVN_VERSION);
-                        // Check for a message from US :)
-                        MOTDDialog.create(Main.this);
-                        // Check for version Notes Unique for this REV
-                        RevNotesDialog.create(Main.this);
-                    }
-                }, 5000);
-            }
+            new CheckForUpdates().execute();
 
             if (!(isConfigChanged())) {
                 // Check for SDcard presence
@@ -337,41 +320,43 @@ public class Main extends ListActivity {
         removeFiles.removeAll(fileSet);
 
         final int count = addFiles.size() + removeFiles.size();
-        if (count != 0) {
+        if (count == 0) {
+            return;
+        }
 
-            final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++,
-                    R.drawable.ebooksmall, getResources().getString(R.string.refreshing_library));
-            progressNotification.update(count, 0);
+        final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++,
+                R.drawable.ebooksmall, getResources().getString(R.string.refreshing_library));
+        progressNotification.update(count, 0);
 
-            Completion callback = new Completion() {
-                volatile int remaining = count;
+        Completion callback = new Completion() {
+            volatile int remaining = count;
 
-                public void completed(boolean succeeded, String message) {
-                    if (succeeded) {
-                        scheduleRefreshBookList();
-                    } else {
-                        Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning, getResources()
-                                .getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
-                    }
-                    remaining--;
-                    progressNotification.update(count, count - remaining);
-                    if (remaining <= 0) {
-                        progressNotification.hide();
-                        refreshNotify(getResources().getString(R.string.refreshed_library));
-                    }
+            public void completed(boolean succeeded, String message) {
+                if (succeeded) {
+                    scheduleRefreshBookList();
+                } else {
+                    Util.sendNotification(Main.this, message, android.R.drawable.stat_sys_warning, getResources()
+                            .getString(R.string.app_name), mNotifMgr, mNotifId++, Main.class);
                 }
-            };
-
-            progressNotification.show();
-
-            // schedule the deletion of the db entries that are not on disk
-            for (String file : removeFiles)
-                YbkService.requestRemoveBook(this, file, callback);
-
-            // schedule the adding of books on disk that are not in the db
-            for (String file : addFiles) {
-                YbkService.requestAddBook(this, file, null, callback);
+                remaining--;
+                progressNotification.update(count, count - remaining);
+                if (remaining <= 0) {
+                    progressNotification.hide();
+                    refreshNotify(getResources().getString(R.string.refreshed_library));
+                }
             }
+        };
+
+        progressNotification.show();
+
+        // schedule the deletion of the db entries that are not on disk
+        for (String file : removeFiles) {
+            YbkService.requestRemoveBook(this, file, callback);
+        }
+
+        // schedule the adding of books on disk that are not in the db
+        for (String file : addFiles) {
+            YbkService.requestAddBook(this, file, null, callback);
         }
     }
 
@@ -428,7 +413,7 @@ public class Main extends ListActivity {
         setListAdapter(new IconicAdapter(this));
     }
 
-     class IconicAdapter extends ArrayAdapter<Object> {
+    class IconicAdapter extends ArrayAdapter<Object> {
         private static final float NEW_WIDTH = 30;
         private static final float NEW_HEIGHT = 37;
         private SharedPreferences sharedPref = getSharedPrefs();
@@ -481,7 +466,7 @@ public class Main extends ListActivity {
 
                 Matrix matrix = new Matrix();
                 matrix.postScale(NEW_WIDTH / bitmap.getWidth(), NEW_HEIGHT / bitmap.getHeight());
-                
+
                 icon.setImageDrawable(new BitmapDrawable(getResources(), Bitmap.createBitmap(bitmap, 0, 0,
                         bitmap.getWidth(), bitmap.getHeight(), matrix, true)));
 
@@ -1153,4 +1138,27 @@ public class Main extends ListActivity {
         return super.onKeyDown(keyCode, msg);
     }
 
+    private class CheckForUpdates extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if (mCheckedOnline || !Util.areNetworksUp(Main.this)) {
+                return null;
+            }
+            // only check once per process instantiation
+            mCheckedOnline = true;
+
+            UpdateChecker.checkForNewerVersion(Main.this, Global.SVN_VERSION);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            // Check for a message from US :)
+            MOTDDialog.create(Main.this);
+            // Check for version Notes Unique for this REV
+            RevNotesDialog.create(Main.this);
+            super.onPostExecute(result);
+        }
+    }
 }

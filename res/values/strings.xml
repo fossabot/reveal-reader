@@ -36,7 +36,7 @@
     <string name="library_not_created">Could not create the default eBook folder.</string>
     <string name="update_browser">Online Update</string>
     <string name="update_url">http://revealreader.thepackhams.com/revealVersion.xml?ClientVer=</string>
-    <string name="checking_ebooks">Updating eBook Catalog... This may take a few minutes depending on your connection speed.</string>
+    <string name="checking_ebooks">Updating eBook Catalog&#8230; This may take a few minutes depending on your connection speed.</string>
     <string name="ebook_update_complete">Finished Updating eBook Catalog</string>
     <string name="author">Jack Holt, Dave Packham, Joe Wiggins, Shon Vella, Blake VandeMerwe</string>
     <string name="contact">Contact Info for our developers.  jackcholt@gmail.com dave@thepackhams.com</string>
@@ -88,8 +88,8 @@
     <string name="menu_help">Online Help</string>
     <string name="add_bookmark">Add bookmark here</string>
     <string name="no_bookmark">No bookmarks</string>
-    <string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background...  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
-    <string name="wait_for_db_update">Please wait while we UPGRADE the eBook library database listing in the background...  this process will take a few minutes to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
+    <string name="wait_for_refresh">Please wait while we refresh the eBooks listing in the background&#8230;  this process will take some time to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
+    <string name="wait_for_db_update">Please wait while we UPGRADE the eBook library database listing in the background&#8230;  this process will take a few minutes to complete so please be patient.  eBooks will appear in the main list as they are processed.</string>
     <string name="refresh_title">Refreshing eBooks.</string>
     <string name="upgrade_database">Upgrading Database.</string>
     <string name="error_reporting">An unexpected error has occurred. Would you like to help improve Reveal by anonymously sending the following information to the Reveal developers?    </string>
@@ -138,7 +138,7 @@
     <string name="choose_charset">Choose Character Set</string>
     <string-array name="charsets">
         <item>Latin 1</item>
-        <item>ISO-8859-1</item>
+        <item>ISO&#8211;8859&#8211;1</item>
         <item>Cyrillic</item>
         <item>CP1251</item>
     </string-array>
@@ -147,8 +147,8 @@
     <string name="version_notes_title">Version Notes</string>
     <string name="paypalURL">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=4146444</string>
     <string name="title_download_url_ourDB">http://revealreader.thepackhams.com/ebooks</string>
-    <string name="no_swipe_available">No Swipe Info Available Here...</string>
-    <string name="refreshing_library">Refreshing library...</string>
+    <string name="no_swipe_available">No Swipe Info Available Here&#8230;</string>
+    <string name="refreshing_library">Refreshing library&#8230;</string>
     <string name="refreshed_library">Refreshed library.</string>
     <string name="downloading">"Downloading ''{0}''."</string>
     <string name="hidden_ebook">The eBook you are about to download is what we call a "Hidden eBook" and does NOT display on the main list of eBooks beacuse it\'s only referenced by other eBooks.  An example of this is the "Study Help Images" eBook that cannot be opened by itself and used by the "Study Helps" eBook to display images.</string>
@@ -172,11 +172,11 @@
     <string name="summary_off_scroll">Volume scroll off</string>
     <string name="cannot_find_url">We cannot find that reference.</string>
     <string name="cannot_hilite">Cannot highlight or annotate this chapter.</string>
-    <string name="menu_move_to_folder">Move eBook to Folder...</string>
+    <string name="menu_move_to_folder">Move eBook to Folder&#8230;</string>
     <string name="menu_open_folder">Open Folder</string>
     <string name="menu_delete_folder">Delete Folder</string>
-    <string name="menu_rename_folder">Rename Folder...</string>
-    <string name="add_folder">Add Folder...</string>
+    <string name="menu_rename_folder">Rename Folder&#8230;</string>
+    <string name="add_folder">Add Folder&#8230;</string>
     <string name="top_level_folder"/>
     <string name="all_books_folder"> * </string>
     <string name="no_folder">No Folders</string>
@@ -203,4 +203,10 @@
     <string name="no">No</string>
     <string name="really_delete">Do you really want to delete that note?</string>
     <string name="note_deleted">The note and highlight has been removed</string>
+    <string name="cant_get_donation_website">Cannot get to the Donation website.  Your network is currently down.</string>
+    <string name="cant_get_help_website">Cannot get online help.  Your network is currently down.</string>
+    <string name="help_dialog_title">Reveal Online Help</string>
+    <string name="search_title">Search</string>
+    <string name="list_is_loading">List is loading. Please wait&#8230;</string>
+    <string name="please_wait">Please wait&#8230;</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.jackcholt.reveal;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,12 +14,15 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.NotificationManager;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.sax.Element;
@@ -27,6 +31,7 @@ import android.sax.EndTextElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.util.Xml;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -62,7 +67,8 @@ public class TitleBrowser extends ListActivity {
     private List<Category> mListCategories = new ArrayList<Category>();
     private SharedPreferences mSharedPref;
     private boolean mBusy = false;
-    private boolean BOOLshowFullScreen;
+    private boolean mShowFullScreen;
+    public ProgressDialog mProgDialog;
     private static final int SEARCH_ID = Menu.FIRST;
 
     /** Called when the activity is first created. */
@@ -78,10 +84,10 @@ public class TitleBrowser extends ListActivity {
             requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
             mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-            BOOLshowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
+            mShowFullScreen = mSharedPref.getBoolean("show_fullscreen", false);
             requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
-            if (BOOLshowFullScreen) {
+            if (mShowFullScreen) {
                 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -254,10 +260,8 @@ public class TitleBrowser extends ListActivity {
         final TitleBrowser caller = this;
 
         AlertDialog.Builder searchDialog = new AlertDialog.Builder(this);
-        {
-            searchDialog.setTitle("Search");
-            searchDialog.setView(input);
-        }
+        searchDialog.setTitle(R.string.search_title);
+        searchDialog.setView(input);
 
         searchDialog.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -295,7 +299,7 @@ public class TitleBrowser extends ListActivity {
         final ProgressNotification progressNotification = new ProgressNotification(this, mNotifId++,
                 R.drawable.ebooksmall, MessageFormat.format(getResources().getString(R.string.downloading),
                         title.getName()));
-        
+
         final Completion callback = new Completion() {
             public void completed(boolean succeeded, String message) {
                 Main main = Main.getMainApplication();
@@ -315,7 +319,7 @@ public class TitleBrowser extends ListActivity {
                     progressNotification.update(100, percent);
                     return;
                 }
-            
+
                 progressNotification.hide();
                 main.refreshNotify(message);
                 main.scheduleRefreshBookList();
@@ -372,78 +376,125 @@ public class TitleBrowser extends ListActivity {
             RootElement root = new RootElement(LISTING);
 
             Element category = root.getChild(CATEGORY_TAG);
-            {
-                category.setStartElementListener(new StartElementListener() {
-                    public void start(Attributes attributes) {
-                        mCurrentCategory.setId(attributes.getValue(CATEGORY_ID), 0);
-                    }
-                });
-                category.setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentCategory.setName(body);
-                        mListCategories.add(mCurrentCategory.copy());
-                        mCurrentCategory.clear();
-                    }
-                });
-            }
+
+            category.setStartElementListener(new StartElementListener() {
+                public void start(Attributes attributes) {
+                    mCurrentCategory.setId(attributes.getValue(CATEGORY_ID), 0);
+                }
+            });
+            category.setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentCategory.setName(body);
+                    mListCategories.add(mCurrentCategory.copy());
+                    mCurrentCategory.clear();
+                }
+            });
 
             Element book = root.getChild(BOOK_TAG);
-            {
-                book.setEndElementListener(new EndElementListener() {
-                    public void end() {
-                        mListTitles.add(mCurrentTitle.copy());
-                        mCurrentTitle.clear();
-                    }
-                });
-                book.getChild(TITLE_ID_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setId(body, 0);
-                    }
-                });
-                book.getChild(TITLE_NAME_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setName(body);
-                    }
-                });
-                book.getChild(TITLE_SIZE_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setFileSize(body, 0);
-                    }
-                });
-                book.getChild(TITLE_URL_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setUrl(body);
-                    }
-                });
-                book.getChild(TITLE_DESCRIPTION_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setDescription(body);
-                    }
-                });
-                book.getChild(TITLE_CREATED_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setCreated(body, null);
-                    }
-                });
-                book.getChild(TITLE_FILENAME_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setFileName(body);
-                    }
-                });
-                book.getChild(TITLE_FORMAT_TAG).setEndTextElementListener(new EndTextElementListener() {
-                    public void end(String body) {
-                        mCurrentTitle.setFileFormat(body);
-                    }
-                });
-            }
+
+            book.setEndElementListener(new EndElementListener() {
+                public void end() {
+                    mListTitles.add(mCurrentTitle.copy());
+                    mCurrentTitle.clear();
+                }
+            });
+            book.getChild(TITLE_ID_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setId(body, 0);
+                }
+            });
+            book.getChild(TITLE_NAME_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setName(body);
+                }
+            });
+            book.getChild(TITLE_SIZE_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setFileSize(body, 0);
+                }
+            });
+            book.getChild(TITLE_URL_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setUrl(body);
+                }
+            });
+            book.getChild(TITLE_DESCRIPTION_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setDescription(body);
+                }
+            });
+            book.getChild(TITLE_CREATED_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setCreated(body, null);
+                }
+            });
+            book.getChild(TITLE_FILENAME_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setFileName(body);
+                }
+            });
+            book.getChild(TITLE_FORMAT_TAG).setEndTextElementListener(new EndTextElementListener() {
+                public void end(String body) {
+                    mCurrentTitle.setFileFormat(body);
+                }
+            });
+
+            mProgDialog = new ProgressDialog(TitleBrowser.this);
+            mProgDialog.setCancelable(true);
+            mProgDialog.setMessage(TitleBrowser.this.getResources().getText(R.string.list_is_loading));
+            mProgDialog.show();
+
+            new UpdateTitleList().execute(new Object[] { url, root });
+        }
+    }
+
+    private class UpdateTitleList extends AsyncTask<Object, Void, String> {
+        RootElement mRoot;
+
+        @Override
+        protected String doInBackground(Object... params) {
+            URL url = (URL) params[0];
+            mRoot = (RootElement) params[1];
 
             try {
                 URLConnection connection = url.openConnection();
                 connection.setConnectTimeout(POPULATE_TIMEOUT);
-                Xml.parse(connection.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
-            } catch (Exception e) {
-                Toast.makeText(TitleBrowser.this, R.string.ebook_list_failed, Toast.LENGTH_LONG).show();
-                finish();
+                return Util.convertStreamToString(connection.getInputStream());
+            } catch (IOException ioe) {
+                Log.w(TAG, "List update failed on IOException. " + ioe.getMessage() + " " + ioe.getCause());
+                return "";
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            try {
+                if (TextUtils.isEmpty(result)) {
+                    Toast.makeText(TitleBrowser.this, R.string.ebook_list_failed, Toast.LENGTH_LONG).show();
+                    finish();
+                    return;
+                }
+
+                try {
+                    Xml.parse(result, mRoot.getContentHandler());
+                } catch (SAXException se) {
+                    Log.w(TAG, "List update failed on SAXException. " + se.getMessage() + " " + se.getCause());
+                    Toast.makeText(TitleBrowser.this, R.string.ebook_list_failed, Toast.LENGTH_LONG).show();
+                    finish();
+                    return;
+                }
+
+                if (mListTitles.size() > 0) {
+                    setListAdapter(new ArrayAdapter<Title>(TitleBrowser.this, R.layout.browser_list_item,
+                            R.id.book_name, mListTitles));
+                    return;
+                }
+
+                setListAdapter(new ArrayAdapter<Category>(TitleBrowser.this, R.layout.browser_list_item,
+                        R.id.book_name, mListCategories));
+            } finally {
+                mProgDialog.dismiss();
+                super.onPostExecute(result);
             }
         }
     }

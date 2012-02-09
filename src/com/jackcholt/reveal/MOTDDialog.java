@@ -3,7 +3,7 @@ package com.jackcholt.reveal;
 import android.app.Activity;
 
 /**
- * Checks for updates to the MOTD and display them
+ * Checks for updates to the MOTD and displays them
  * 
  * by Dave Packham, Shon Vella
  */

@@ -104,7 +104,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             String content = null;
             String strUrl = null;
 
-            @SuppressWarnings({ "unchecked", "rawtypes" })
+            @SuppressWarnings("unchecked")
             HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
             if (statusMap != null) {
                 mCurrChap.setBookFileName((String) statusMap.get("bookFileName"));
