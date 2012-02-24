@@ -3,6 +3,7 @@ package com.jackcholt.reveal;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -294,6 +295,11 @@ public class YbkService extends Service {
                 // Add the book.
                 ybkRdr = YbkFileReader.addBook(YbkService.this, intent.getStringExtra(TARGET_KEY), determineCharset());
                 bookName = ybkRdr.getBook().title == null ? bookName : ybkRdr.getBook().title;
+            } catch (UnsupportedEncodingException uee) {
+                succeeded = false;
+                Log.e(TAG, "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.");
+                Util.displayError(Main.getMainApplication(), null,
+                        getResources().getString(R.string.error_invalid_encoding) + ". " + uee.getMessage(), bookName);
             } catch (InvalidFileFormatException ioe) {
                 succeeded = false;
                 Log.e(TAG, "Could not add '" + Util.lookupBookName(YbkService.this, bookName) + "'.");

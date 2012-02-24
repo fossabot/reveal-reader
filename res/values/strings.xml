@@ -113,6 +113,7 @@
     <string name="new_ebooks">New eBooks</string>
     <string name="error_unloadable_chapter">The chapter could not be opened.  The book may have a corrupted file.  You may want to get a new copy of the book.</string>
     <string name="error_damaged_ebook">The eBook \'\'{0}\'\' appears to be damaged or incomplete. Please download a new copy.</string>
+    <string name="error_invalid_encoding">The eBook \'\'{0}\'\' appears to use an invalid character set. Please download it again.</string>
     <string name="update_bookmark">Update Bookmark</string>
     <string name="delete_bookmark">Delete Bookmark</string>
     <string name="goto_bookmark">Go to Bookmark</string>
