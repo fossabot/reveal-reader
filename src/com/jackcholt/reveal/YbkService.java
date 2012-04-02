@@ -37,6 +37,7 @@ public class YbkService extends Service {
     public static final String SOURCE_KEY = "source";
     public static final String CALLBACKS_KEY = "callbacks";
     public static final String CHARSET_KEY = "charset";
+    public static final String CHAPTER_KEY = "chapter";
 
     public static final int ADD_BOOK = 1;
     public static final int REMOVE_BOOK = 2;
@@ -44,6 +45,8 @@ public class YbkService extends Service {
     public static final int ADD_HISTORY = 4;
     public static final int REMOVE_HISTORY = 5;
     public static final int UPDATE_HISTORY = 6;
+    public static final int INDEX_BOOK = 7;
+    public static final int INDEX_CHAPTER = 8;
 
     private volatile Looper mLibLooper;
     private volatile Handler mLibHandler;
@@ -119,10 +122,12 @@ public class YbkService extends Service {
                                 message = "Could not remove book '" + bookName + "'.";
                                 succeeded = true;
                             }
-                            if (succeeded)
+                            if (succeeded) {
                                 Log.i(TAG, message);
-                            else
+                                YbkIndexer.removeBook(intent.getExtras().getString(TARGET_KEY));
+                            } else {
                                 Log.e(TAG, message);
+                            }
                             if ((long) Long.valueOf(intent.getExtras().getLong(CALLBACKS_KEY)) != 0) {
                                 for (Completion callback : callbackMap.remove(Long.valueOf((long) Long.valueOf(intent
                                         .getExtras().getLong(CALLBACKS_KEY))))) {
@@ -138,6 +143,12 @@ public class YbkService extends Service {
                 break;
             case DOWNLOAD_BOOK:
                 downloadBook(intent);
+                break;
+            case INDEX_BOOK:
+                indexBook(intent);
+                break;
+            case INDEX_CHAPTER:
+                indexChapter(intent);
                 break;
             default:
                 Log.w(TAG, "Received request to perform unrecognized action: " + intent.getExtras().getInt(ACTION_KEY));
@@ -188,6 +199,78 @@ public class YbkService extends Service {
                                 "Could not download '" + new File(intent.getStringExtra(TARGET_KEY)).getName() + "'. "
                                         + ioe.toString());
                     }
+                }
+            }
+        };
+
+        mDownloadHandler.post(job);
+    }
+
+    private void indexBook(final Intent intent) {
+
+        if (null == intent) {
+            throw new IllegalArgumentException("Intent for indexing a book is null.");
+        }
+
+        final String filename = intent.getStringExtra(SOURCE_KEY);
+        if (null == filename) {
+            Log.e(TAG, "Index book request missing filename.");
+            return;
+        }
+
+        Log.i(TAG, "Received request to index book: " + intent.getStringExtra(SOURCE_KEY));
+
+        final Context context = this;
+        Runnable job = new SafeRunnable() {
+            @Override
+            public void protectedRun() {
+                try {
+                    Completion callbacks[] = callbackMap.get(intent.getLongExtra(CALLBACKS_KEY, 0));
+                    // remove the book if already indexed
+                    YbkIndexer.removeBook(filename);
+                    // queue up the request to index the first chapter
+                    requestIndexChapter(context, filename, 0, callbacks);
+                } finally {
+                    callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0));
+                }
+            }
+        };
+
+        mDownloadHandler.post(job);
+    }
+
+    private void indexChapter(final Intent intent) {
+
+        if (null == intent) {
+            throw new IllegalArgumentException("Intent for indexing a book is null.");
+        }
+
+        final String filename = intent.getStringExtra(SOURCE_KEY);
+        final int chapterIndex = intent.getIntExtra(CHAPTER_KEY, -1);
+        if (null == filename || -1 == chapterIndex) {
+            Log.e(TAG, "Index chapter request missing filename or chapterIndex.");
+            return;
+        }
+
+        final Context context = this;
+        Runnable job = new SafeRunnable() {
+            @Override
+            public void protectedRun() {
+                try {
+                    Completion callbacks[] = callbackMap.get(intent.getLongExtra(CALLBACKS_KEY, 0));
+                    YbkIndexer indexer = YbkIndexer.getYbkIndexer(context, filename);
+                    if (indexer.addChapter(chapterIndex)) {
+                        // queue up the request to index the next chapter
+                        requestIndexChapter(context, filename, chapterIndex + 1, callbacks);
+                    } else {
+                        indexer.close();
+                    }
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    YbkIndexer.removeBook(filename);
+                } finally {
+                    callbackMap.remove(intent.getLongExtra(CALLBACKS_KEY, 0));
                 }
             }
         };
@@ -271,6 +354,46 @@ public class YbkService extends Service {
         context.startService(intent);
     }
 
+    /**
+     * Requests that a book be indexed.
+     * 
+     * @param context the caller's context.
+     * @param book the filename of the book to be indexed.
+     * @param callbacks (optional) completion callback.
+     */
+    public static void requestIndexBook(Context context, String filename, Completion... callbacks) {
+        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, INDEX_BOOK)
+                .putExtra(SOURCE_KEY, filename);
+
+        if (callbacks != null && callbacks.length != 0) {
+            Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
+            callbackMap.put(callbackID, callbacks);
+            intent.putExtra(CALLBACKS_KEY, callbackID);
+        }
+
+        context.startService(intent);
+    }
+
+    /**
+     * Requests that a chapter be indexed.
+     * 
+     * @param context the caller's context.
+     * @param book the filename of the book to be added.
+     * @param callbacks (optional) completion callback.
+     */
+    public static void requestIndexChapter(Context context, String filename, int chapterIndex, Completion... callbacks) {
+        Intent intent = new Intent(context, YbkService.class).putExtra(ACTION_KEY, INDEX_CHAPTER)
+                .putExtra(SOURCE_KEY, filename).putExtra(CHAPTER_KEY, chapterIndex);
+
+        if (callbacks != null && callbacks.length != 0) {
+            Long callbackID = Long.valueOf(Util.getUniqueTimeStamp());
+            callbackMap.put(callbackID, callbacks);
+            intent.putExtra(CALLBACKS_KEY, callbackID);
+        }
+
+        context.startService(intent);
+    }
+
     public static void stop(Context ctx) {
         ctx.stopService(new Intent(ctx, YbkService.class));
     }
@@ -316,6 +439,8 @@ public class YbkService extends Service {
                 }
             }
 
+            requestIndexBook(YbkService.this, intent.getStringExtra(TARGET_KEY));
+            
             if (intent.getLongExtra(CALLBACKS_KEY, 0) == 0 || null == callbackMap) {
                 return;
             }

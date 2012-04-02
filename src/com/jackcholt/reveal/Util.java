@@ -1121,6 +1121,27 @@ public class Util {
     }
 
     /**
+     * Delete directory and everything under it recursively.
+     * 
+     * @param dir directory
+     */
+    public static void deleteDir(File dir) {
+        File[] files = dir.listFiles();
+
+        if (null == files) {
+            dir.delete();
+        } else {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDir(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+    }
+    
+    /**
      * Wrapper for String.substring(start) that returns a substring that is not dependent on the buffer of the original
      * and therefore doesn't keep the larger buffer from being garbage collected.
      * 

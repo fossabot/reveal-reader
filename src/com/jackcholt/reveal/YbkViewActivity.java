@@ -105,7 +105,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             String strUrl = null;
 
             @SuppressWarnings("unchecked")
-            HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
+            HashMap<String, Comparable<?>> statusMap = (HashMap<String, Comparable<?>>) getLastNonConfigurationInstance();
             if (statusMap != null) {
                 mCurrChap.setBookFileName((String) statusMap.get("bookFileName"));
                 mCurrChap.setChapFileName((String) statusMap.get("chapFileName"));
@@ -1106,7 +1106,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                 }
                             }
                         }).create();
-
             }
         } catch (RuntimeException rte) {
             unexpectedError(rte);
@@ -1200,46 +1199,53 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         Log.d(TAG, "In onKeyDown");
 
         try {
-            if (keyCode != KeyEvent.KEYCODE_BACK) {
-                return super.onKeyDown(keyCode, msg);
-            }
-
-            if (isPopup()) {
-                finish();
-                return super.onKeyDown(keyCode, msg);
-            }
-
-            setProgressBarIndeterminateVisibility(true);
-
-            while (true) {
-                History hist = YbkDAO.getInstance(this).popBackStack();
-
-                if (hist == null) {
-                    Log.d(TAG, "backStack is empty. Going to main menu.");
+            switch (keyCode) {
+            case KeyEvent.KEYCODE_SEARCH:
+               SearchDialog.searchPrompt(this);
+                break;
+            case KeyEvent.KEYCODE_BACK:
+            {
+                if (isPopup()) {
                     finish();
+                    return super.onKeyDown(keyCode, msg);
+                }
+    
+                setProgressBarIndeterminateVisibility(true);
+    
+                while (true) {
+                    History hist = YbkDAO.getInstance(this).popBackStack();
+    
+                    if (hist == null) {
+                        Log.d(TAG, "backStack is empty. Going to main menu.");
+                        finish();
+                        break;
+                    }
+    
+                    Book book = YbkDAO.getInstance(this).getBook(hist.bookFileName);
+                    if (book == null) {
+                        Log.e(TAG, "Major error.  There was a history in the back stack for which no "
+                                + "book could be found");
+                        continue;
+                    }
+                    mCurrChap.setScrollYPos(hist.scrollYPos);
+    
+                    Log.d(TAG, "Going back to: " + hist.bookFileName + ", " + hist.chapterName);
+    
+                    mBackButtonPressed = true;
+                    try {
+                        if (loadChapter(hist.bookFileName, hist.chapterName, false)) {
+                            initFolderBookChapButtons(book.shortTitle, hist.bookFileName, hist.chapterName);
+                        }
+                    } catch (IOException ioe) {
+                        Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
+                        continue;
+                    }
+                    mBackButtonPressed = false;
                     break;
                 }
-
-                Book book = YbkDAO.getInstance(this).getBook(hist.bookFileName);
-                if (book == null) {
-                    Log.e(TAG, "Major error.  There was a history in the back stack for which no "
-                            + "book could be found");
-                    continue;
-                }
-                mCurrChap.setScrollYPos(hist.scrollYPos);
-
-                Log.d(TAG, "Going back to: " + hist.bookFileName + ", " + hist.chapterName);
-
-                mBackButtonPressed = true;
-                try {
-                    if (loadChapter(hist.bookFileName, hist.chapterName, false)) {
-                        initFolderBookChapButtons(book.shortTitle, hist.bookFileName, hist.chapterName);
-                    }
-                } catch (IOException ioe) {
-                    Log.e(TAG, "Could not return to the previous page " + ioe.getMessage());
-                    continue;
-                }
-                mBackButtonPressed = false;
+                break;
+            }
+            default:
                 break;
             }
         } catch (RuntimeException rte) {
