@@ -56,7 +56,6 @@ import android.widget.Toast;
 import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
-import com.nullwire.trace.ExceptionHandler;
 
 public class Main extends ListActivity {
     private static final String TAG = "reveal.Main";
@@ -118,7 +117,7 @@ public class Main extends ListActivity {
             }
 
             // and enable the one that emails us :)
-            ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
+            //ExceptionHandler.register(this, "http://revealreader.thepackhams.com/exception.php");
 
             mApplication = this;
 
