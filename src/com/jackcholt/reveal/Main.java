@@ -130,6 +130,7 @@ public class Main extends ListActivity {
                 editor.putBoolean("show_fullscreen", false);
                 editor.putBoolean("show_zoom", false);
                 editor.putString("default_ebook_dir", Settings.DEFAULT_EBOOK_DIRECTORY);
+                editor.putBoolean("keep_screen_on", false);
                 editor.commit();
             }
 
@@ -144,6 +145,12 @@ public class Main extends ListActivity {
                 requestWindowFeature(Window.FEATURE_NO_TITLE);
             }
 
+            if (getSharedPrefs().getBoolean("keep_screen_on", false)) {
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            } else {
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+            
             setContentView(R.layout.main);
 
             // To capture LONG_PRESS gestures

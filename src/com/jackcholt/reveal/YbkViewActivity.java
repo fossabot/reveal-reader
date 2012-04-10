@@ -49,6 +49,7 @@ import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
+@SuppressWarnings("deprecation")
 public class YbkViewActivity extends Activity implements OnGestureListener {
     private DisplayChapter mCurrChap = new DisplayChapter();
     private YbkFileReader mYbkReader;
@@ -315,14 +316,20 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         if (getSharedPrefs().getBoolean("show_fullscreen", false)) {
             getWindow()
                     .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
         }
-        if (isPopup()) {
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
+            
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+            
+        if (getSharedPrefs().getBoolean("keep_screen_on", false)) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
+        
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }
+        
         if (!isPopup()) {
             Util.setTheme(getSharedPrefs(), this);
         }

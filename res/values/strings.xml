@@ -210,4 +210,7 @@
     <string name="search_title">Search</string>
     <string name="list_is_loading">List is loading. Please wait&#8230;</string>
     <string name="please_wait">Please wait&#8230;</string>
+    <string name="wont_dim">Screen will not dim while reading</string>
+    <string name="will_dim">Screen will dim while reading</string>
+    <string name="keep_screen_on">Keep Screen On</string>
 </resources>

@@ -12,6 +12,7 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 public class Settings extends PreferenceActivity {
@@ -19,6 +20,7 @@ public class Settings extends PreferenceActivity {
     public static final String DEFAULT_EBOOK_DIRECTORY = Environment.getExternalStorageDirectory().toString()
             + "/reveal/ebooks/";
     public static final String EBOOK_DIRECTORY_KEY = "default_ebook_dir";
+    public static final String KEEP_SCREEN_ON_KEY = "keep_screen_on";
     public static final String EBOOK_DIR_CHANGED = "ebook_dir_changed";
     public static final String PREFS_NAME = "com.jackcholt.reveal_preferences";
     public static final String HISTORY_ENTRY_AMOUNT_KEY = "history_entry_amount";
@@ -42,7 +44,7 @@ public class Settings extends PreferenceActivity {
             // always return an OK result
             setResult(RESULT_OK, returnIntent);
 
-            ((EditTextPreference) findPreference("default_ebook_dir"))
+            ((EditTextPreference) findPreference(EBOOK_DIRECTORY_KEY))
                     .setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
                         public boolean onPreferenceChange(Preference preference, Object newValue) {
                             if (((String) newValue).startsWith(Environment.getExternalStorageDirectory().toString())) {
@@ -62,27 +64,19 @@ public class Settings extends PreferenceActivity {
                         public void onSharedPreferenceChanged(final SharedPreferences sharedPref, final String key) {
                             Log.d(TAG, "In onSharedPreferenceChanged");
                             try {
-                                if (!key.equals(EBOOK_DIRECTORY_KEY)) {
+                                if (key.equals(EBOOK_DIRECTORY_KEY)) {
+                                    changeEbookDir(sharedPref);
                                     return;
                                 }
 
-                                String ebookDir = sharedPref.getString(EBOOK_DIRECTORY_KEY, DEFAULT_EBOOK_DIRECTORY);
-                                ebookDir += ebookDir.endsWith(File.separator) ? "" : File.separator;
-
-                                if (!ebookDir.startsWith(Environment.getExternalStorageDirectory().toString())) {
-                                    ebookDir = Environment.getExternalStorageDirectory().toString()
-                                            + (ebookDir.startsWith(File.separator) ? "" : File.separator) + ebookDir;
-
-                                    Log.d(TAG, "default ebook directory changed to: " + ebookDir);
+                                if (key.equals(KEEP_SCREEN_ON_KEY)) {
+                                    if (sharedPref.getBoolean("keep_screen_on", false)) {
+                                        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                    } else {
+                                        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                                    }
+                                    return;
                                 }
-
-                                // if the ebook directory changed, recreate
-                                Util.createDefaultDirs(getBaseContext());
-                                setResult(RESULT_OK, returnIntent.putExtra(EBOOK_DIR_CHANGED, true));
-
-                                Editor edit = sharedPref.edit();
-                                edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
-                                edit.commit();
 
                                 return;
                             } catch (RuntimeException rte) {
@@ -90,6 +84,26 @@ public class Settings extends PreferenceActivity {
                             } catch (Error e) {
                                 Util.unexpectedError(Settings.this, e);
                             }
+                        }
+
+                        private void changeEbookDir(final SharedPreferences sharedPref) {
+                            String ebookDir = sharedPref.getString(EBOOK_DIRECTORY_KEY, DEFAULT_EBOOK_DIRECTORY);
+                            ebookDir += ebookDir.endsWith(File.separator) ? "" : File.separator;
+
+                            if (!ebookDir.startsWith(Environment.getExternalStorageDirectory().toString())) {
+                                ebookDir = Environment.getExternalStorageDirectory().toString()
+                                        + (ebookDir.startsWith(File.separator) ? "" : File.separator) + ebookDir;
+
+                                Log.d(TAG, "default ebook directory changed to: " + ebookDir);
+                            }
+
+                            // if the ebook directory changed, recreate
+                            Util.createDefaultDirs(getBaseContext());
+                            setResult(RESULT_OK, returnIntent.putExtra(EBOOK_DIR_CHANGED, true));
+
+                            Editor edit = sharedPref.edit();
+                            edit.putString(EBOOK_DIRECTORY_KEY, ebookDir);
+                            edit.commit();
                         }
                     });
         } catch (RuntimeException rte) {

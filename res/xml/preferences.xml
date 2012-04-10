@@ -59,6 +59,14 @@
             android:summaryOff="@string/summary_off_paragraph_numbers" 
             android:defaultValue="false" 
             android:summary="Controls display of paragraph numbers in non-scripture to allow highlighting and annotation"/>
+        
+        <CheckBoxPreference 
+            android:summaryOff="@string/will_dim" 
+            android:title="@string/keep_screen_on" 
+            android:summaryOn="@string/wont_dim" 
+            android:key="keep_screen_on" 
+            android:summary="Controls whether the screen is allowed to time out and dim then turn off" 
+            android:defaultValue="false"/>
             
     </PreferenceCategory>
 	
