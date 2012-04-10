@@ -76,8 +76,8 @@
     <string name="helpdialog_no_ebooks">You have no eBooks Available!  Please hit \'MENU\' then \'Online eBook Download\'  to get new eBooks or \'Refresh eBook Library\' to add eBooks already on your memory card</string>
     <string name="helpdialog_if_you_need_help">If you need more help with Reveal Reader please visit the website and forums listed below.</string>
     <string name="label_fullscreen">Enable Fullscreen View</string>
-    <string name="summary_on_fullscreen">Display is fullscreen</string>
-    <string name="summary_off_fullscreen">Display is full screen</string>
+    <string name="summary_on_fullscreen">Display is full screen</string>
+    <string name="summary_off_fullscreen">Display is not full screen</string>
     <string name="enable_night_mode">Enable Night Mode</string>
     <string name="summaryOn_enable_night_mode">Night mode is on</string>
     <string name="summaryOff_enable_night_mode">Night mode is off</string>
