@@ -708,9 +708,11 @@ public class Util {
         boolean success = false;
         boolean isZip = false;
 
+        String correctedLibDir = libDir + (libDir.endsWith(File.separator) ? "" : File.separator);
+        
         ArrayList<File> files = new ArrayList<File>();
 
-        File tempFile = new File(libDir, fileName.getName() + TMP_EXTENSION);
+        File tempFile = new File(correctedLibDir, fileName.getName() + TMP_EXTENSION);
         FileOutputStream out = null;
         InputStream in = null;
 
@@ -789,11 +791,11 @@ public class Util {
                     if (!entryName.endsWith(".ybk")) {
                         continue;
                     }
-                    if (entryName.contains("/")) {
-                        entryName = entryName.substring(entryName.lastIndexOf('/'));
+                    if (entryName.contains(File.separator)) {
+                        entryName = entryName.substring(entryName.lastIndexOf(File.separator));
                     }
 
-                    File file = new File(libDir + entryName);
+                    File file = new File(correctedLibDir + entryName);
 
                     // check to see if they already have this title
                     if (file.exists()) {
@@ -801,7 +803,7 @@ public class Util {
                         YbkDAO.getInstance(context).deleteBook(entryName);
                     }
 
-                    file = new File(libDir + entryName + TMP_EXTENSION);
+                    file = new File(correctedLibDir + entryName + TMP_EXTENSION);
                     out = new FileOutputStream(file);
                     files.add(file);
                     try {
