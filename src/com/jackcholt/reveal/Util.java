@@ -737,9 +737,8 @@ public class Util {
                 // diagnose what is going on.
                 throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
             }
-            Log.d(TAG,
-                    "download from " + DOWNLOAD_MIRROR
-                            + URLEncoder.encode(fileName.getName(), "UTF-8").replace("+", "%20"));
+            Log.d(TAG, "download from " + DOWNLOAD_MIRROR + URLEncoder.encode(fileName.getName(), "UTF-8") //
+                    .replace("+", "%20"));
 
             out = new FileOutputStream(tempFile);
 
@@ -751,12 +750,12 @@ public class Util {
                 }
                 totalBytesRead += bytesRead;
                 out.write(buffer, 0, bytesRead);
+
+                if (null == callbacks)
+                    continue;
                 for (Completion callback : callbacks) {
-                    callback.completed(
-                            true,
-                            BigInteger.valueOf(totalBytesRead * 100).divide(
-                                    BigInteger.valueOf(connection.getContentLength()))
-                                    + "%");
+                    callback.completed(true, BigInteger.valueOf(totalBytesRead * 100) //
+                            .divide(BigInteger.valueOf(connection.getContentLength())) + "%");
                 }
             }
             success = true;
@@ -1320,7 +1319,7 @@ public class Util {
         if (null == is) {
             return "";
         }
-    
+
         Writer writer = new StringWriter();
 
         char[] buffer = new char[1024];
@@ -1333,7 +1332,7 @@ public class Util {
         } finally {
             is.close();
         }
-        
+
         return writer.toString();
     }
 }
