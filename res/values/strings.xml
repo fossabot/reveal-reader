@@ -213,4 +213,6 @@
     <string name="wont_dim">Screen will not dim while reading</string>
     <string name="will_dim">Screen will dim while reading</string>
     <string name="keep_screen_on">Keep Screen On</string>
+    <string name="book_list_button">Book List Button</string>
+    <string name="folder_button">Folder Button</string>
 </resources>

@@ -66,7 +66,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private boolean mScroll4Lines = true;
     private boolean mPageScrollEnabled = false;
     private YbkViewActivity mThis = this;
-    
+
     private static final String TAG = "reveal.YbkViewActivity";
     private static final int FILE_NONEXIST = 1;
     private static final int INVALID_CHAPTER = 2;
@@ -196,9 +196,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
             } catch (IOException ioe) {
-                Log.e(TAG,
-                        "Could not load: " + mCurrChap.getBookFileName() + " chapter: " + mCurrChap.getChapFileName()
-                                + ". " + ioe.getMessage());
+                Log.e(TAG, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " //
+                        + mCurrChap.getChapFileName() + ". " + ioe.getMessage());
                 Toast.makeText(this, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " //
                         + mCurrChap.getChapFileName() + ". Please report this at " + //
                         getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
@@ -314,22 +313,22 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
     private void initDisplayFeatures() {
         if (getSharedPrefs().getBoolean("show_fullscreen", false)) {
-            getWindow()
-                    .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, //
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
-            
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-            
+
         if (getSharedPrefs().getBoolean("keep_screen_on", false)) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
-        
+
         if (!requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
             Log.w(TAG, "Progress bar is not supported");
         }
-        
+
         if (!isPopup()) {
             Util.setTheme(getSharedPrefs(), this);
         }
@@ -714,7 +713,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     try {
                                         setProgressBarIndeterminateVisibility(true);
                                         mCurrChap.setScrollYPos(findWebView().getScrollY());
-                                        loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), false, true);
+                                        loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), false,
+                                                true);
                                         findWebView().scrollTo(0, mCurrChap.getScrollYPos());
                                     } catch (IOException ioe) {
                                         throw new IllegalStateException("Couldn't reload chapter", ioe);
@@ -739,7 +739,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                         setProgressBarIndeterminateVisibility(false);
                     }
                 }
-                
+
                 break;
 
             case NOTE_BROWSER_ID:
