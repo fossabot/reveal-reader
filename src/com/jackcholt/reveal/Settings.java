@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -41,6 +42,9 @@ public class Settings extends PreferenceActivity {
             // Load the XML preferences file
             addPreferencesFromResource(R.xml.preferences);
 
+            Preference pref = findPreference("default_ebook_dir");
+            pref.setSummary(((FileManagerPreference) pref).getText());
+            
             // always return an OK result
             setResult(RESULT_OK, returnIntent);
 
@@ -129,8 +133,10 @@ public class Settings extends PreferenceActivity {
     protected void onStop() {
         try {
             super.onStop();
-            // Save user preferences. We need an Editor object to make changes. All objects are from
-            // android.context.Context
+            /*
+             * Save user preferences. We need an Editor object to make changes. All objects are from
+             * android.context.Context
+             */
             SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             SharedPreferences.Editor editor = settings.edit();
 
@@ -142,5 +148,21 @@ public class Settings extends PreferenceActivity {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode != RESULT_OK || Main.ACTIVITY_SETTINGS != requestCode) {
+            return;
+        }
+
+        findPreference("default_ebook_dir").setSummary(data.getData().getPath());
+        Editor edit = PreferenceManager.getDefaultSharedPreferences(Main.mApplication).edit();
+        edit.putString(EBOOK_DIRECTORY_KEY, data.getData().getPath() + File.separator);
+        edit.commit();
+        
+        returnIntent.putExtra(Settings.EBOOK_DIR_CHANGED, true);
     }
 }

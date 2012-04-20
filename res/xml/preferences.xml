@@ -80,11 +80,10 @@
 	</PreferenceCategory>
 
 	<PreferenceCategory android:title="@string/prefs_ebook_info">
-	    <EditTextPreference
+	    <com.jackcholt.reveal.FileManagerPreference
 	   		android:key="default_ebook_dir"
 	   		android:title="@string/title_default_ebook_dir" 
 	   		android:summary="@string/summary_default_ebook_dir"/>
-	    		
 		<ListPreference  
 			android:key="default_font_size"  
 			android:title="@string/title_default_font_size"  

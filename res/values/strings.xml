@@ -215,4 +215,6 @@
     <string name="keep_screen_on">Keep Screen On</string>
     <string name="book_list_button">Book List Button</string>
     <string name="folder_button">Folder Button</string>
+    <string name="choose_lib_folder">Choose a library folder</string>
+    <string name="use_folder">Use this folder</string>
 </resources>
