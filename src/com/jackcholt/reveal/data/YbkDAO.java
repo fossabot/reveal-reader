@@ -66,6 +66,7 @@ public class YbkDAO {
     public static final String VERSE = "com.jackcholt.reveal.YbkDAO.verse";
     public static final String BOOK_FILENAME = "com.jackcholt.reveal.YbkDAO.book_filename";
     public static final String CHAPTER_FILENAME = "com.jackcholt.reveal.YbkDAO.chapter_filename";
+    public static final String SCROLL_Y_POS = "com.jackcholt.reveal.YbkDAO.scroll_y_pos";
 
     private static YbkDAO instance = null;
 

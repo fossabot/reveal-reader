@@ -20,7 +20,7 @@ public class DisplayChapter {
 
     public String getBookFileName() {
         if (null == bookFileName) {
-            Log.i("CurrentChapter.getBookFileName()", "Book filename is null.");
+            Log.i("DisplayChapter.getBookFileName()", "Book filename is null.");
         }
         return bookFileName;
     }

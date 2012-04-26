@@ -103,20 +103,20 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             setContentView();
 
-            mCurrChap = restoreState(savedInstanceState);
-            mHistTitle = mCurrChap.getTitle();
+            DisplayChapter currChap = mCurrChap = restoreState(savedInstanceState);
+            mHistTitle = currChap.getTitle();
 
-            if (null == mCurrChap.getBookFileName()) {
+            if (null == currChap.getBookFileName()) {
                 Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
                 Log.e(TAG, "In onCreate(): Book not loaded");
                 finish();
                 return;
             }
 
-            Log.d(TAG, "BookFileName: " + mCurrChap.getBookFileName());
+            Log.d(TAG, "BookFileName: " + currChap.getBookFileName());
 
             // check online for updated thumbnail
-            Util.thumbOnlineUpdate(mCurrChap.getBookFileName().replaceAll(".ybk$", ""));
+            Util.thumbOnlineUpdate(currChap.getBookFileName().replaceAll(".ybk$", ""));
 
             configWebView();
             checkAndSetFontSize(getSharedPrefs(), findWebView());
@@ -124,27 +124,27 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             setupBreadcrumbButtons();
 
             try {
-                mYbkReader = YbkFileReader.getReader(this, mCurrChap.getBookFileName());
+                mYbkReader = YbkFileReader.getReader(this, currChap.getBookFileName());
                 Book book = mYbkReader.getBook();
                 if (book == null) {
                     mYbkReader.unuse();
                     mYbkReader = null;
-                    throw new FileNotFoundException(mCurrChap.getBookFileName());
+                    throw new FileNotFoundException(currChap.getBookFileName());
                 }
 
-                if (null == mCurrChap.getChapFileName()) {
-                    mCurrChap.setChapFileName("\\" + book.shortTitle + ".html");
+                if (null == currChap.getChapFileName()) {
+                    currChap.setChapFileName("\\" + book.shortTitle + ".html");
                 }
 
-                if (!isPopup() && loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
-                    initFolderBookChapButtons(book.shortTitle, mCurrChap.getBookFileName(), mCurrChap.getChapFileName());
+                if (!isPopup() && loadChapter(currChap.getBookFileName(), currChap.getChapFileName(), true)) {
+                    initFolderBookChapButtons(book.shortTitle, currChap.getBookFileName(), currChap.getChapFileName());
                 }
 
             } catch (IOException ioe) {
-                Log.e(TAG, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " //
-                        + mCurrChap.getChapFileName() + ". " + ioe.getMessage());
-                Toast.makeText(this, "Could not load: " + mCurrChap.getBookFileName() + " chapter: " //
-                        + mCurrChap.getChapFileName() + ". Please report this at " + //
+                Log.e(TAG, "Could not load: " + currChap.getBookFileName() + " chapter: " //
+                        + currChap.getChapFileName() + ". " + ioe.getMessage());
+                Toast.makeText(this, "Could not load: " + currChap.getBookFileName() + " chapter: " //
+                        + currChap.getChapFileName() + ". Please report this at " + //
                         getResources().getText(R.string.website), Toast.LENGTH_LONG).show();
             }
             setWebViewClient();
@@ -162,6 +162,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
         if (statusMap != null) {
+            // restoring after orientation (configuration) change
             dispChapter.setBookFileName((String) statusMap.get("bookFileName"));
             dispChapter.setChapFileName((String) statusMap.get("chapFileName"));
             dispChapter.setScrollYPos((Integer) statusMap.get("scrollYPos"));
@@ -170,21 +171,24 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             dispChapter.setTitle(statusMap.get("histTitle"));
 
             if (isPopup()) {
-                String baseUrl = (String) statusMap.get("strUrl");
-                String content = (String) statusMap.get("content");
-                findWebView().loadDataWithBaseURL(baseUrl, content, "text/html", "utf-8", "");
+                findWebView().loadDataWithBaseURL((String) statusMap.get("strUrl"), (String) statusMap.get("content"),
+                        "text/html", "utf-8", "");
             }
 
             return dispChapter;
         }
 
-        if (savedInstanceState != null) {
-            dispChapter.setBookFileName((String) savedInstanceState.get("bookFileName"));
+        if (null != savedInstanceState) {
+            // restoring after getting killed
+            dispChapter.setBookFileName(savedInstanceState.getString(YbkDAO.BOOK_FILENAME));
+            dispChapter.setChapFileName(savedInstanceState.getString(YbkDAO.CHAPTER_FILENAME));
+            dispChapter.setScrollYPos(savedInstanceState.getInt(YbkDAO.SCROLL_Y_POS, 0));
             return dispChapter;
         }
-
+        
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
+            // initial instantiation of the activity with a book to look at
             long historyId = extras.getLong(YbkDAO.HISTORY_ID);
             if (historyId != 0) {
                 History hist = YbkDAO.getInstance(this).getHistory(historyId);
@@ -890,6 +894,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 // use the dreaded break <label> in order to simplify conditional nesting
+                // FIXME: I should never have used break <label>.  It didn't simplify conditional nesting.  Jack Holt
                 label_get_content: if (hashLoc != -1) {
                     mCurrChap.setFragment(Util.independentSubstring(chap, hashLoc + 1));
                     if (mCurrChap.getFragment().indexOf(".") != -1) {
@@ -1259,10 +1264,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 stateMap.put("scrollYPos", findWebView().getScrollY());
                 Log.d(TAG, "Scroll Y Pos: " + findWebView().getScrollY());
             }
-            
+
             stateMap.put("strUrl", getIntent().getExtras().getString("strUrl"));
             stateMap.put("content", getIntent().getExtras().getString("content"));
-            
+
             return stateMap;
         } catch (RuntimeException rte) {
             unexpectedError(rte);
@@ -1275,7 +1280,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
         try {
-            outState.putString(YbkDAO.FILENAME, mCurrChap.getBookFileName());
+            outState.putString(YbkDAO.BOOK_FILENAME, mCurrChap.getBookFileName());
+            outState.putString(YbkDAO.CHAPTER_FILENAME, mCurrChap.getChapFileName());
+            outState.putInt(YbkDAO.SCROLL_Y_POS, mCurrChap.getScrollYPos());
             super.onSaveInstanceState(outState);
         } catch (RuntimeException rte) {
             unexpectedError(rte);

@@ -176,7 +176,8 @@ public class Util {
 
     private static boolean isNetworkUp(Context context, int netType) {
         if (null == context) {
-            throw new IllegalArgumentException("Context is null");
+            Log.e(TAG, "Could not check the network. Context is null.");
+            return false;
         }
 
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
