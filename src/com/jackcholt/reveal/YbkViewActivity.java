@@ -101,6 +101,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             setProgressBarIndeterminateVisibility(true);
 
+            setContentView();
+
             mCurrChap = restoreState(savedInstanceState);
             mHistTitle = mCurrChap.getTitle();
 
@@ -116,7 +118,6 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             // check online for updated thumbnail
             Util.thumbOnlineUpdate(mCurrChap.getBookFileName().replaceAll(".ybk$", ""));
 
-            setContentView();
             configWebView();
             checkAndSetFontSize(getSharedPrefs(), findWebView());
 
@@ -161,16 +162,17 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
         HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
         if (statusMap != null) {
-            dispChapter.setBookFileName((String) statusMap.get("bookFileName")); 
+            dispChapter.setBookFileName((String) statusMap.get("bookFileName"));
             dispChapter.setChapFileName((String) statusMap.get("chapFileName"));
             dispChapter.setScrollYPos((Integer) statusMap.get("scrollYPos"));
             Log.d(TAG, "Scroll Position Y: " + dispChapter.getScrollYPos());
 
             dispChapter.setTitle(statusMap.get("histTitle"));
 
-            if (savedInstanceState != null && isPopup()) {
-                findWebView().loadDataWithBaseURL(savedInstanceState.getString("strUrl"),
-                        savedInstanceState.getString("content"), "text/html", "utf-8", "");
+            if (isPopup()) {
+                String baseUrl = (String) statusMap.get("strUrl");
+                String content = (String) statusMap.get("content");
+                findWebView().loadDataWithBaseURL(baseUrl, content, "text/html", "utf-8", "");
             }
 
             return dispChapter;
@@ -195,8 +197,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             dispChapter.setChapFileName(extras.getString(YbkDAO.CHAPTER_FILENAME));
             dispChapter.setFragment(extras.getString(YbkDAO.VERSE));
             if (isPopup()) {
-                findWebView().loadDataWithBaseURL((String) extras.getString("strUrl"), extras.getString("content"),
-                        "text/html", "utf-8", "");
+                findWebView().loadDataWithBaseURL(extras.getString("strUrl"), extras.getString("content"), "text/html",
+                        "utf-8", "");
             }
         }
 
@@ -235,12 +237,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private void configWebView() {
         findWebView().getSettings().setJavaScriptEnabled(true);
         findWebView().addJavascriptInterface(this, "App");
-
-        if (getSharedPrefs().getBoolean("show_zoom", false)) {
-            findWebView().getSettings().setBuiltInZoomControls(true);
-        } else {
-            findWebView().getSettings().setBuiltInZoomControls(false);
-        }
+        findWebView().getSettings().setBuiltInZoomControls(getSharedPrefs().getBoolean("show_zoom", false));
     }
 
     private WebView findWebView() {
@@ -1262,7 +1259,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 stateMap.put("scrollYPos", findWebView().getScrollY());
                 Log.d(TAG, "Scroll Y Pos: " + findWebView().getScrollY());
             }
-
+            
+            stateMap.put("strUrl", getIntent().getExtras().getString("strUrl"));
+            stateMap.put("content", getIntent().getExtras().getString("content"));
+            
             return stateMap;
         } catch (RuntimeException rte) {
             unexpectedError(rte);
