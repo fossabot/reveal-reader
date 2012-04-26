@@ -709,7 +709,7 @@ public class Util {
         boolean isZip = false;
 
         String correctedLibDir = libDir + (libDir.endsWith(File.separator) ? "" : File.separator);
-        
+
         ArrayList<File> files = new ArrayList<File>();
 
         File tempFile = new File(correctedLibDir, fileName.getName() + TMP_EXTENSION);
@@ -1193,14 +1193,12 @@ public class Util {
                         InputStream is = connection.getInputStream();
 
                         if (is == null) {
-                            // getInputStream isn't suppose to return null, but we sometimes getting null pointer
-                            // exception
-                            // later on
-                            // that could only happen if it does. Best guess is that it happens with HTTP responses that
-                            // don't
-                            // actually have content, but by throwing an exception with the response message we might be
-                            // able to
-                            // diagnose what is going on.
+                            /*
+                             * getInputStream isn't suppose to return null, but we sometimes getting null pointer
+                             * exception later on that could only happen if it does. Best guess is that it happens with
+                             * HTTP responses that don't actually have content, but by throwing an exception with the
+                             * response message we might be able to diagnose what is going on.
+                             */
                             throw new FileNotFoundException(((HttpURLConnection) connection).getResponseMessage());
                         }
                         Log.d(TAG, "download from " + myFileUrl);

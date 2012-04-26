@@ -30,7 +30,11 @@ public class YbkPopupActivity extends YbkViewActivity {
 
 	@Override
 	protected void setContentView() {
-
 		setContentView(R.layout.view_popup_ybk);
+	}
+	
+	@Override
+	protected void setupBreadcrumbButtons() {
+	    // do nothing so the BreadCrumb buttons aren't setup for popups
 	}
 }

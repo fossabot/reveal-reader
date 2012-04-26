@@ -49,7 +49,6 @@ import com.jackcholt.reveal.data.Chapter;
 import com.jackcholt.reveal.data.History;
 import com.jackcholt.reveal.data.YbkDAO;
 
-@SuppressWarnings("deprecation")
 public class YbkViewActivity extends Activity implements OnGestureListener {
     private DisplayChapter mCurrChap = new DisplayChapter();
     private YbkFileReader mYbkReader;
@@ -102,46 +101,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
 
             setProgressBarIndeterminateVisibility(true);
 
-            String content = null;
-            String strUrl = null;
+            mCurrChap = restoreState(savedInstanceState);
+            mHistTitle = mCurrChap.getTitle();
 
-            @SuppressWarnings("unchecked")
-            HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
-            if (statusMap != null) {
-                mCurrChap.setBookFileName((String) statusMap.get("bookFileName"));
-                mCurrChap.setChapFileName((String) statusMap.get("chapFileName"));
-                mHistTitle = (String) statusMap.get("histTitle");
-                mCurrChap.setScrollYPos((Integer) statusMap.get("scrollYPos"));
-                Log.d(TAG, "Scroll Position Y: " + mCurrChap.getScrollYPos());
-
-                if (savedInstanceState != null) {
-                    content = (String) savedInstanceState.get("content");
-                    strUrl = (String) savedInstanceState.getString("strUrl");
-                }
-            } else { // statusMap == null
-                long historyId = 0;
-                if (savedInstanceState != null) {
-                    mCurrChap.setBookFileName((String) savedInstanceState.get("bookFileName"));
-                } else {
-                    Bundle extras = getIntent().getExtras();
-                    if (extras != null) {
-                        historyId = extras.getLong(YbkDAO.HISTORY_ID);
-                        mCurrChap.setBookFileName(extras.getString(YbkDAO.FILENAME));
-                        mCurrChap.setChapFileName(extras.getString(YbkDAO.CHAPTER_FILENAME));
-                        mCurrChap.setFragment(extras.getString(YbkDAO.VERSE));
-                        content = (String) extras.get("content");
-                        strUrl = (String) extras.getString("strUrl");
-                        mBookWalk = extras.get(Main.BOOK_WALK_INDEX) != null;
-                    }
-                }
-                if (historyId != 0) {
-                    History hist = YbkDAO.getInstance(this).getHistory(historyId);
-                    mCurrChap.setBookFileName(hist.bookFileName);
-                    mCurrChap.setChapFileName(hist.chapterName);
-                    mCurrChap.setScrollYPos(hist.scrollYPos);
-                    mHistTitle = hist.title;
-                }
-            }
             if (null == mCurrChap.getBookFileName()) {
                 Toast.makeText(this, R.string.book_not_loaded, Toast.LENGTH_LONG).show();
                 Log.e(TAG, "In onCreate(): Book not loaded");
@@ -158,11 +120,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             configWebView();
             checkAndSetFontSize(getSharedPrefs(), findWebView());
 
-            if ((isPopup())) {
-                findWebView().loadDataWithBaseURL(strUrl, content, "text/html", "utf-8", "");
-            } else {
-                setupBreadcrumbButtons();
-            }
+            setupBreadcrumbButtons();
 
             try {
                 mYbkReader = YbkFileReader.getReader(this, mCurrChap.getBookFileName());
@@ -174,21 +132,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 if (null == mCurrChap.getChapFileName()) {
-                    if (mBookWalk) {
-                        mBookWalkIndex = -1;
-                        Chapter firstChapter = getNextBookWalkerChapter();
-                        if (firstChapter == null) {
-                            setResult(
-                                    RESULT_OK,
-                                    new Intent().putExtra(Main.BOOK_WALK_INDEX,
-                                            getIntent().getExtras().getInt(Main.BOOK_WALK_INDEX, -1)));
-                            finish();
-                        } else {
-                            mCurrChap.setChapFileName(firstChapter.fileName);
-                        }
-                    } else {
-                        mCurrChap.setChapFileName("\\" + book.shortTitle + ".html");
-                    }
+                    mCurrChap.setChapFileName("\\" + book.shortTitle + ".html");
                 }
 
                 if (!isPopup() && loadChapter(mCurrChap.getBookFileName(), mCurrChap.getChapFileName(), true)) {
@@ -212,7 +156,54 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         }
     }
 
-    private void setupBreadcrumbButtons() {
+    private DisplayChapter restoreState(final Bundle savedInstanceState) {
+        DisplayChapter dispChapter = new DisplayChapter();
+
+        HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
+        if (statusMap != null) {
+            dispChapter.setBookFileName((String) statusMap.get("bookFileName")); 
+            dispChapter.setChapFileName((String) statusMap.get("chapFileName"));
+            dispChapter.setScrollYPos((Integer) statusMap.get("scrollYPos"));
+            Log.d(TAG, "Scroll Position Y: " + dispChapter.getScrollYPos());
+
+            dispChapter.setTitle(statusMap.get("histTitle"));
+
+            if (savedInstanceState != null && isPopup()) {
+                findWebView().loadDataWithBaseURL(savedInstanceState.getString("strUrl"),
+                        savedInstanceState.getString("content"), "text/html", "utf-8", "");
+            }
+
+            return dispChapter;
+        }
+
+        if (savedInstanceState != null) {
+            dispChapter.setBookFileName((String) savedInstanceState.get("bookFileName"));
+            return dispChapter;
+        }
+
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            long historyId = extras.getLong(YbkDAO.HISTORY_ID);
+            if (historyId != 0) {
+                History hist = YbkDAO.getInstance(this).getHistory(historyId);
+                dispChapter.setBookFileName(hist.bookFileName);
+                dispChapter.setChapFileName(hist.chapterName);
+                dispChapter.setScrollYPos(hist.scrollYPos);
+                dispChapter.setTitle(hist.title);
+            }
+            dispChapter.setBookFileName(extras.getString(YbkDAO.FILENAME));
+            dispChapter.setChapFileName(extras.getString(YbkDAO.CHAPTER_FILENAME));
+            dispChapter.setFragment(extras.getString(YbkDAO.VERSE));
+            if (isPopup()) {
+                findWebView().loadDataWithBaseURL((String) extras.getString("strUrl"), extras.getString("content"),
+                        "text/html", "utf-8", "");
+            }
+        }
+
+        return dispChapter;
+    }
+
+    protected void setupBreadcrumbButtons() {
         findChapterButton().setOnClickListener(new OnClickListener() {
             public void onClick(final View v) {
                 // set the chapter button so it scrolls the window to the top
@@ -1265,8 +1256,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             stateMap.put("bookFileName", mCurrChap.getBookFileName());
             stateMap.put("chapFileName", mCurrChap.getChapFileName());
             stateMap.put("histTitle", mHistTitle);
-            WebView wv = findWebView();
-            if (null == wv) {
+            if (null == findWebView()) {
                 stateMap.put("scrollYPos", 0);
             } else {
                 stateMap.put("scrollYPos", findWebView().getScrollY());
@@ -1292,6 +1282,12 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         } catch (Error e) {
             unexpectedError(e);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        // TODO Auto-generated method stub
+        super.onPause();
     }
 
     @Override

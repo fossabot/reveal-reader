@@ -12,6 +12,7 @@ public class DisplayChapter {
     private int chapOrderNbr = 0;
     private String navFile = "1";
     private String verse;
+    private String title; 
 
     public void setBookFileName(String bookFileName) {
         this.bookFileName = bookFileName;
@@ -73,5 +74,15 @@ public class DisplayChapter {
 
     public void setVerse(String verse) {
         this.verse = verse;
+    }
+
+    public void setTitle(Object title) {
+        if (title instanceof String) {
+            this.title = (String) title;
+        }
+    }
+
+    public String getTitle() {
+        return title;
     }
 }
