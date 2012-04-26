@@ -28,7 +28,6 @@
               android:layout_height="fill_parent"
               android:visibility="invisible"
               android:textSize="@dimen/button_font_size" 
-              android:height="51sp"
               android:textColor="#3b5d74"
               android:ellipsize="end"
               />
@@ -37,16 +36,16 @@
               android:layout_height="fill_parent"
               android:visibility="invisible"
               android:textSize="@dimen/button_font_size" 
-              android:height="51sp"
               android:textColor="#3b5d74"
               android:ellipsize="start"
               android:singleLine="true"
         />
     </LinearLayout>
-    <com.jackcholt.reveal.widgets.FastScrollWebView android:id="@+id/ybkView"
-          android:layout_width="fill_parent"
-          android:layout_height="fill_parent"
-          android:longClickable="true"
-          android:textSize="@dimen/font_size"
-          android:fadingEdge="vertical"/>                    
+    <com.jackcholt.reveal.widgets.FastScrollWebView 
+        android:id="@+id/ybkView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:longClickable="true"
+        android:textSize="@dimen/font_size"
+    />                    
 </LinearLayout>
