@@ -205,7 +205,6 @@ public class YbkService extends Service {
         } catch (Error e) {
             Util.unexpectedError(this, e);
         }
-
     }
 
     @Override
@@ -361,5 +360,4 @@ public class YbkService extends Service {
          */
         void completed(boolean succeeded, String message);
     }
-
 }
