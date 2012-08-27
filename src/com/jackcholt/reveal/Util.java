@@ -847,7 +847,7 @@ public class Util {
             return false;
         }
 
-        String extDir = Environment.getExternalStorageDirectory().getName();
+        String extDir = Environment.getExternalStorageDirectory().getAbsolutePath();
 
         if (TextUtils.isEmpty(extDir)) {
             return false;
