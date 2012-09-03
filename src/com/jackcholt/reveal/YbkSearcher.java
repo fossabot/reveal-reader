@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -74,19 +75,11 @@ public class YbkSearcher {
         mMultiReader.close();
     }
     
-    public String search(String searchString) throws ParseException, IOException {
+    public TopDocs search(String searchString) throws ParseException, IOException {
         QueryParser queryParser = new QueryParser(Version.LUCENE_35, YbkIndexer.CONTENT_FIELDNAME, new StandardAnalyzer(
                     Version.LUCENE_35));
         Query query = queryParser.parse(searchString);
-        TopDocs topDocs = mIndexSearcher.search(query, 100);
-        if (topDocs.totalHits > 0) {
-            Document doc = mIndexSearcher.doc(topDocs.scoreDocs[0].doc);
-            String bookName = doc.getField(YbkIndexer.FILE_FIELDNAME).stringValue();
-            String chapterName = doc.getField(YbkIndexer.CHAPTER_FIELDNAME).stringValue();
-            return bookName + "#" + chapterName;
-        } else {
-            return null;
-        }
+       return mIndexSearcher.search(query, 100);
     }
 
 }

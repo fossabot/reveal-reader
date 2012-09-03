@@ -1201,8 +1201,8 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         try {
             switch (keyCode) {
             case KeyEvent.KEYCODE_SEARCH:
-               SearchDialog.searchPrompt(this);
-                break;
+               startActivity(new Intent(this, SearchActivity.class);
+               break;
             case KeyEvent.KEYCODE_BACK:
             {
                 if (isPopup()) {

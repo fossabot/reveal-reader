@@ -32,6 +32,7 @@ public class YbkIndexer {
 
     public static final String FILE_FIELDNAME = "file";
     public static final String CHAPTER_FIELDNAME = "chapter";
+    public static final String TITLE_FIELDNAME = "title";
     public static final String CONTENT_FIELDNAME = "content";
 
     public static final Map<String, YbkIndexer> cachedIndexers = new TreeMap<String, YbkIndexer>(
@@ -46,6 +47,7 @@ public class YbkIndexer {
     // reusing fields is supposed to speed up indexing per Lucene docs
     private final Field fileField = new Field(FILE_FIELDNAME, "", Store.YES, Index.NOT_ANALYZED_NO_NORMS);
     private final Field chapterField = new Field(CHAPTER_FIELDNAME, "", Store.YES, Index.NO);
+    private final Field titleField = new Field(TITLE_FIELDNAME, "", Store.YES, Index.NO);
     private final Field contentField = new Field(CONTENT_FIELDNAME, "", Store.NO, Index.ANALYZED_NO_NORMS);
 
     private YbkIndexer(Context ctx, String bookName) throws IOException {
@@ -87,6 +89,18 @@ public class YbkIndexer {
         // appropriate analyzer
         return new StandardAnalyzer(Version.LUCENE_35);
     }
+
+    private static String getChapterTitle(final String chapterName, final String content) {
+        // look for the fullname tag in the content
+        String title = content.replaceAll("(?is)^.*<fn>(.*)<nf>.*$", "$1");
+        if (title.length() == 0 || title.length() == content.length()) {
+            // nothing there, use the simple part of the chapter filename
+            File chapterFile = new File(chapterName);
+            title = chapterFile.getName().replaceFirst("\\..*", "");
+        }
+        return title;
+    }
+
 
     /**
      * Get or create an indexer for a book
@@ -153,12 +167,16 @@ public class YbkIndexer {
      */
     public void addChapter(Chapter chapter) throws IOException {
         Log.d(TAG, "Adding chapter " + chapter.fileName + " to index");
-        String chapterText = Html.fromHtml(mReader.readInternalFile(chapter.fileName)).toString();
+        String chapterContent = mReader.readInternalFile(chapter.fileName);
+        String chapterText = Html.fromHtml(chapterContent).toString();
         Document doc = new Document();
         fileField.setValue(mBookname);
         doc.add(fileField);
         chapterField.setValue(chapter.fileName);
         doc.add(chapterField);
+        titleField.setValue(getChapterTitle(chapter.fileName, chapterContent));
+        doc.add(titleField);
+        chapterContent = null;
         contentField.setValue(chapterText);
         doc.add(contentField);
         mIndexWriter.addDocument(doc);

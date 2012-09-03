@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component>
+	<exclude-output/>
+	<contentEntry url="file://$MODULE_DIR$"/>
+	<lib name="trace.jar" scope="COMPILE">
+		<relative-module-cls project-related="jar://$PROJECT_DIR$/revealreader/lib/trace.jar!/"/>
+	</lib>
+	<lib name="lucene-core-3.5.0.jar" scope="COMPILE">
+		<relative-module-cls project-related="jar://$PROJECT_DIR$/revealreader/lib/lucene-core-3.5.0.jar!/"/>
+	</lib>
+</component>
