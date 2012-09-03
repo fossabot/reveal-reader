@@ -56,5 +56,6 @@
         <activity android:name=".ReloadYbkViewActivity"
             android:label="@string/app_name"/>
         <activity android:name=".NotesListActivity"/>
-    </application>
+        <activity android:name=".SearchActivity"/>
+        </application>
 </manifest> 

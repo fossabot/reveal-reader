@@ -1201,7 +1201,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         try {
             switch (keyCode) {
             case KeyEvent.KEYCODE_SEARCH:
-               startActivity(new Intent(this, SearchActivity.class);
+               startActivity(new Intent(this, SearchActivity.class));
                break;
             case KeyEvent.KEYCODE_BACK:
             {

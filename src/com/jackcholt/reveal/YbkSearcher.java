@@ -4,36 +4,27 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.util.Version;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.text.Html;
-
-import com.jackcholt.reveal.data.Chapter;
 
 public class YbkSearcher {
 
@@ -75,11 +66,20 @@ public class YbkSearcher {
         mMultiReader.close();
     }
     
-    public TopDocs search(String searchString) throws ParseException, IOException {
+    public List<Map<String, String>> search(String searchString) throws ParseException, IOException {
         QueryParser queryParser = new QueryParser(Version.LUCENE_35, YbkIndexer.CONTENT_FIELDNAME, new StandardAnalyzer(
                     Version.LUCENE_35));
         Query query = queryParser.parse(searchString);
-       return mIndexSearcher.search(query, 100);
+       TopDocs topDocs = mIndexSearcher.search(query, 100);
+       List<Map<String, String>> list = new ArrayList<Map<String,String>>(topDocs.scoreDocs.length);
+       for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+           Map<String,String> map = new HashMap<String,String>();
+           Document doc = mIndexSearcher.doc(scoreDoc.doc);
+           map.put(YbkIndexer.FILE_FIELDNAME, doc.get(YbkIndexer.FILE_FIELDNAME));
+           map.put(YbkIndexer.CHAPTER_FIELDNAME, doc.get(YbkIndexer.CHAPTER_FIELDNAME));
+           map.put(YbkIndexer.TITLE_FIELDNAME, doc.get(YbkIndexer.TITLE_FIELDNAME));
+       }
+       return list;
     }
 
 }

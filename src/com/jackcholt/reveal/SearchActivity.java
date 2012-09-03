@@ -1,78 +1,39 @@
 package com.jackcholt.reveal;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.search.TopDocs;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ListActivity;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.preference.PreferenceManager;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.Spinner;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.jackcholt.reveal.YbkService.Completion;
 import com.jackcholt.reveal.data.Book;
 import com.jackcholt.reveal.data.YbkDAO;
-import com.nullwire.trace.ExceptionHandler;
 
-public class SearchView extends ListActivity {
+public class SearchActivity extends ListActivity {
     private static final String TAG = "reveal.Search";
 
     public static int mNotifId = 1;
 
-    private final Handler mHandler = new Handler();
-    
     private String mSearchString = "";
-    
+
     private YbkSearcher mSearcher;
+    
+    private ImageButton mButton;
+    
+    private EditText mSearchStringEdit;
 
     /** Called when the activity is first created. */
     @Override
@@ -85,11 +46,28 @@ public class SearchView extends ListActivity {
             }
 
             setContentView(R.layout.search);
-            
+
             if (mSearchString.length() > 0) {
                 findViewById(R.id.searchString);
             }
             mSearcher = new YbkSearcher();
+            mButton = ((ImageButton)findViewById(R.id.searchButton));
+            mSearchStringEdit = ((EditText)findViewById(R.id.searchString));
+            
+            mButton.setOnClickListener(new View.OnClickListener() {
+                
+                public void onClick(View v) {
+                    search();
+                }
+            });
+            
+            mSearchStringEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                
+                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                    search();
+                    return true;
+                }
+            });
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -124,9 +102,7 @@ public class SearchView extends ListActivity {
 
     protected void openItem(Object item) {
         setProgressBarIndeterminateVisibility(true);
-        startActivity(
-                new Intent(this, YbkViewActivity.class)
-                    .putExtra(YbkDAO.FILENAME, ((Book) item).fileName));
+        startActivity(new Intent(this, YbkViewActivity.class).putExtra(YbkDAO.FILENAME, ((Book) item).fileName));
     }
 
     @Override
@@ -159,54 +135,38 @@ public class SearchView extends ListActivity {
         outState.putString("mSearchString", mSearchString);
     }
 
-    private class Search extends AsyncTask<String, Void, TopDocs> {
+    private void search() {
+        String searchString = ((EditText)findViewById(R.id.searchString)).getText().toString();
+        if (searchString.length() > 0) {
+            new SearchTask().execute(searchString);
+        }
+    }
+    private class SearchTask extends AsyncTask<String, Void, List<Map<String, String>>> {
 
         @Override
-        protected TopDocs doInBackground(String... params) {
+        protected List<Map<String, String>> doInBackground(String... params) {
             if (mSearcher != null) {
                 try {
                     return mSearcher.search(params[0]);
                 } catch (ParseException e) {
                     // TODO Auto-generated catch block
-                    e.printStackTrace();
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
-                    e.printStackTrace();
                 }
-            } else {
-                return null;
             }
+            return null;
         }
 
         @Override
-        protected void onPostExecute(TopDocs topdocs) {
-            super.onPostExecute(topdocs);
-            setListAdapter(new TopDocsAdapter(topdocs));
+        protected void onPostExecute(List<Map<String,String>> results) {
+            super.onPostExecute(results);
+            SimpleAdapter adapter = new SimpleAdapter(
+                    SearchActivity.this,
+                    results,
+                    android.R.layout.simple_list_item_1,
+                    new String[] {YbkIndexer.TITLE_FIELDNAME},
+                    new int[] { android.R.id.text1 });
+            setListAdapter(adapter);
         }
-
-    }
-    
-    private class TopDocsAdapter extends BaseAdapter {
-        TopDocs topdocs;
-        
-        public TopDocsAdapter(TopDocs topdocs) {
-            this.topdocs = topdocs;
-        }
-
-        public int getCount() {
-            return topdocs.scoreDocs.length;
-        }
-
-        public Object getItem(int position) {
-        }
-
-        public long getItemId(int position) {
-            return topdocs.scoreDocs[position].doc;
-        }
-
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return null;
-        }
-    }
     }
 }
