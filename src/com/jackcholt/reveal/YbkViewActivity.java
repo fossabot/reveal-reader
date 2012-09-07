@@ -185,7 +185,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
             dispChapter.setScrollYPos(savedInstanceState.getInt(YbkDAO.SCROLL_Y_POS, 0));
             return dispChapter;
         }
-        
+
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             // initial instantiation of the activity with a book to look at
@@ -196,7 +196,9 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 dispChapter.setChapFileName(hist.chapterName);
                 dispChapter.setScrollYPos(hist.scrollYPos);
                 dispChapter.setTitle(hist.title);
+                return dispChapter;
             }
+            
             dispChapter.setBookFileName(extras.getString(YbkDAO.FILENAME));
             dispChapter.setChapFileName(extras.getString(YbkDAO.CHAPTER_FILENAME));
             dispChapter.setFragment(extras.getString(YbkDAO.VERSE));
@@ -204,8 +206,10 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 findWebView().loadDataWithBaseURL(extras.getString("strUrl"), extras.getString("content"), "text/html",
                         "utf-8", "");
             }
+            return dispChapter;
         }
-
+        
+        Log.w(TAG, "returning raw DisplayChapter object");
         return dispChapter;
     }
 
@@ -894,7 +898,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                 }
 
                 // use the dreaded break <label> in order to simplify conditional nesting
-                // FIXME: I should never have used break <label>.  It didn't simplify conditional nesting.  Jack Holt
+                // FIXME: I should never have used break <label>. It didn't simplify conditional nesting. Jack Holt
                 label_get_content: if (hashLoc != -1) {
                     mCurrChap.setFragment(Util.independentSubstring(chap, hashLoc + 1));
                     if (mCurrChap.getFragment().indexOf(".") != -1) {
