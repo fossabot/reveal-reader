@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.jackcholt.reveal"
     android:installLocation="auto" 
-    android:versionCode="747" android:versionName="2.6.3">
+    android:versionCode="779" android:versionName="2.8.0">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="10"/>
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="19"/>
     <supports-screens android:largeScreens="true" 
         android:anyDensity="true" 
         android:smallScreens="true" 

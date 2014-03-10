@@ -9,6 +9,7 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -160,6 +161,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
     private DisplayChapter restoreState(final Bundle savedInstanceState) {
         DisplayChapter dispChapter = new DisplayChapter();
 
+        @SuppressWarnings({ "deprecation", "rawtypes", "unchecked" })
         HashMap<String, Comparable> statusMap = (HashMap<String, Comparable>) getLastNonConfigurationInstance();
         if (statusMap != null) {
             // restoring after orientation (configuration) change
@@ -242,6 +244,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
         });
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void configWebView() {
         findWebView().getSettings().setJavaScriptEnabled(true);
         findWebView().addJavascriptInterface(this, "App");
@@ -705,7 +708,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                                     YbkDAO.getInstance(mThis).deleteAnnotHilite(
                                             (AnnotHilite) intent.getSerializableExtra(YbkDAO.ANNOTHILITE));
 
-                                    Toast.makeText(mThis, R.string.note_deleted, Toast.LENGTH_SHORT);
+                                    Toast.makeText(mThis, R.string.note_deleted, Toast.LENGTH_SHORT).show();
                                     try {
                                         setProgressBarIndeterminateVisibility(true);
                                         mCurrChap.setScrollYPos(findWebView().getScrollY());
@@ -937,7 +940,7 @@ public class YbkViewActivity extends Activity implements OnGestureListener {
                     }
 
                     // if we haven't reached a break statement yet, we have a problem.
-                    Toast.makeText(this, "Could not read chapter '" + chap + "'", Toast.LENGTH_LONG);
+                    Toast.makeText(this, "Could not read chapter '" + chap + "'", Toast.LENGTH_LONG).show();
                     findWebView().loadData(getResources().getString(R.string.error_unloadable_chapter), "text/plain",
                             "utf-8");
                     return false;

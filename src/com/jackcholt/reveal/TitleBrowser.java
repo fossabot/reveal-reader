@@ -160,12 +160,13 @@ public class TitleBrowser extends ListActivity {
                         R.id.book_name, mListTitles);
 
                 setListAdapter(titleAdapter);
-            } else {
-                ArrayAdapter<Category> categoryAdapter = new ArrayAdapter<Category>(this, R.layout.browser_list_item,
-                        R.id.book_name, mListCategories);
-
-                setListAdapter(categoryAdapter);
+                return;
             }
+
+            ArrayAdapter<Category> categoryAdapter = new ArrayAdapter<Category>(this, R.layout.browser_list_item,
+                    R.id.book_name, mListCategories);
+
+            setListAdapter(categoryAdapter);
         } finally {
             setProgressBarIndeterminateVisibility(false);
         }
@@ -176,21 +177,20 @@ public class TitleBrowser extends ListActivity {
         try {
             super.onListItemClick(l, v, position, id);
 
-            Object selected = (Object) l.getItemAtPosition(position);
-
+            Object selected = l.getItemAtPosition(position);
             if (selected instanceof Title) {
                 if (mBusy) {
                     Toast.makeText(this, R.string.ebook_download_busy, Toast.LENGTH_LONG).show();
-                } else {
-                    downloadTitle((Title) selected);
+                    return;
                 }
-            } else {
-                Category category = (Category) selected;
 
-                mBreadCrumb.push(new URL(mDownloadServer + "?c=" + category.getId()));
-
-                updateScreen();
+                downloadTitle((Title) selected);
+                return;
             }
+
+            Category category = (Category) selected;
+            mBreadCrumb.push(new URL(mDownloadServer + "?c=" + category.getId()));
+            updateScreen();
         } catch (RuntimeException rte) {
             Util.unexpectedError(this, rte);
         } catch (Error e) {
@@ -211,7 +211,10 @@ public class TitleBrowser extends ListActivity {
                 } else {
                     finish();
                 }
-            } else if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+                return false;
+            }
+
+            if (keyCode == KeyEvent.KEYCODE_SEARCH) {
                 startSearch();
                 return true;
             }
@@ -241,8 +244,7 @@ public class TitleBrowser extends ListActivity {
     @Override
     public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         try {
-            switch (item.getItemId()) {
-            case SEARCH_ID:
+            if (SEARCH_ID == item.getItemId()) {
                 startSearch();
                 return true;
             }
@@ -259,25 +261,24 @@ public class TitleBrowser extends ListActivity {
         final EditText input = new EditText(this);
         final TitleBrowser caller = this;
 
-        AlertDialog.Builder searchDialog = new AlertDialog.Builder(this);
-        searchDialog.setTitle(R.string.search_title);
-        searchDialog.setView(input);
+        AlertDialog.Builder searchDialog = new AlertDialog.Builder(this)
+                .setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            mBreadCrumb.push(new URL(
+                                    mDownloadServer
+                                            + "?s="
+                                            + URLEncoder.encode(new SpannableStringBuilder(input.getText()).toString(),
+                                                    "UTF-8")));
+                        } catch (MalformedURLException e) {
+                            Util.unexpectedError(caller, e);
+                        } catch (UnsupportedEncodingException e) {
+                            Util.unexpectedError(caller, e);
+                        }
 
-        searchDialog.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                SpannableStringBuilder value = new SpannableStringBuilder(input.getText());
-
-                try {
-                    mBreadCrumb.push(new URL(mDownloadServer + "?s=" + URLEncoder.encode(value.toString(), "UTF-8")));
-                } catch (MalformedURLException e) {
-                    Util.unexpectedError(caller, e);
-                } catch (UnsupportedEncodingException e) {
-                    Util.unexpectedError(caller, e);
-                }
-
-                updateScreen();
-            }
-        });
+                        updateScreen();
+                    }
+                }).setTitle(R.string.search_title).setView(input);
 
         searchDialog.show();
     }

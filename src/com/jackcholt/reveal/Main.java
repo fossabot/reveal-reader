@@ -124,14 +124,10 @@ public class Main extends ListActivity {
 
             // If this is the first time we've run (the default) then we need to init some values
             if (getSharedPrefs().getBoolean("first_run", true)) {
-                SharedPreferences.Editor editor = getSharedPrefs().edit();
-                editor.putBoolean("first_run", false);
-                editor.putBoolean("show_splash_screen", true);
-                editor.putBoolean("show_fullscreen", false);
-                editor.putBoolean("show_zoom", false);
-                editor.putString("default_ebook_dir", Settings.DEFAULT_EBOOK_DIRECTORY);
-                editor.putBoolean("keep_screen_on", false);
-                editor.commit();
+                getSharedPrefs().edit().putBoolean("first_run", false).putBoolean("show_splash_screen", true)
+                        .putBoolean("show_fullscreen", false).putBoolean("show_zoom", false)
+                        .putString("default_ebook_dir", Settings.DEFAULT_EBOOK_DIRECTORY)
+                        .putBoolean("keep_screen_on", false).commit();
             }
 
             mNotifMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -150,7 +146,7 @@ public class Main extends ListActivity {
             } else {
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
-            
+
             setContentView(R.layout.main);
 
             // To capture LONG_PRESS gestures
@@ -169,8 +165,7 @@ public class Main extends ListActivity {
             new CheckForUpdates().execute();
 
             if (!(isConfigChanged())) {
-                // Check for SDcard presence
-                // if we have one create the dirs and look fer ebooks
+                // Check for SDcard presence. if we have one create the dirs and look for ebooks
                 if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
                     Toast.makeText(this, getResources().getString(R.string.sdcard_required), Toast.LENGTH_LONG).show();
                     return;
@@ -181,25 +176,8 @@ public class Main extends ListActivity {
 
             String libDir = getSharedPrefs().getString(Settings.EBOOK_DIRECTORY_KEY, Settings.DEFAULT_EBOOK_DIRECTORY);
 
-            boolean upgrading = false;
-
-            // delete old versions of databases
-            File oldDBFiles[] = { new File("/data/data/com.jackcholt.reveal/databases/reveal_ybk.db"),
-                    new File(libDir, "reveal_ybk.db"), new File(libDir, "reveal_ybk.lg") };
-
-            for (File oldDBFile : oldDBFiles) {
-                if (oldDBFile.exists()) {
-                    oldDBFile.delete();
-                    upgrading = true;
-                }
-            }
-
             // if new version of db doesn't exist, create it
             if (!(new File(new File(libDir, YbkDAO.DATA_DIR), YbkDAO.BOOKS_FILE).exists())) {
-                if (upgrading) {
-                    // had older version, do upgrading message
-                    RefreshDialog.create(this, RefreshDialog.UPGRADE_DB);
-                }
                 updateBookList();
             }
 
@@ -282,9 +260,11 @@ public class Main extends ListActivity {
     /**
      * Refresh the eBook directory.
      * 
-     * @param strLibDir the path to the library directory.
-     * @param addNewBooks If true, run the code that will add new books to the database as well as the code that removes
-     *        missing books from the database (which runs regardless).
+     * @param strLibDir
+     *            the path to the library directory.
+     * @param addNewBooks
+     *            If true, run the code that will add new books to the database as well as the code that removes missing
+     *            books from the database (which runs regardless).
      */
     private void refreshLibrary(final String strLibDir, final boolean addNewBooks) {
 
@@ -1102,8 +1082,6 @@ public class Main extends ListActivity {
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY), ".*\\.(tmp|lg|db)");
                     Util.deleteFiles(new File(Settings.DEFAULT_EBOOK_DIRECTORY, "data"), "books\\.dat|.*\\.chp");
                 }
-                // cleanup any sqlite databases
-                Util.deleteFiles(new File("/data/data/com.jackcholt.reveal/databases"), ".*\\.db");
 
                 // cleanup preferences (can't seem to delete file, so tell the preferences manager to clear them all)
                 getSharedPrefs().edit().clear().commit();
